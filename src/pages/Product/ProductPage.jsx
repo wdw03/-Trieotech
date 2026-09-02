@@ -743,19 +743,19 @@ export const ProductPage = () => {
       )}
 
       {/* Mobile Sticky Bottom CTA Bar */}
-      <div className="fixed bottom-0 inset-x-0 bg-white/95 dark:bg-[#140D08]/95 backdrop-blur-md border-t border-gold-500/30 p-3 z-30 lg:hidden flex items-center justify-between gap-3 shadow-2xl">
-        <div className="min-w-0">
+      <div className="fixed bottom-0 inset-x-0 w-full max-w-full bg-white/95 dark:bg-[#140D08]/95 backdrop-blur-md border-t border-gold-500/30 p-2.5 sm:p-3 z-30 lg:hidden flex items-center justify-between gap-2 shadow-2xl overflow-hidden">
+        <div className="min-w-0 flex-1">
           <span className="text-[10px] text-stone-500 block truncate">{selectedColor?.name || product.name}</span>
-          <span className="font-serif font-bold text-base text-maroon-800 dark:text-gold-400 leading-none">
+          <span className="font-serif font-bold text-sm sm:text-base text-maroon-800 dark:text-gold-400 leading-none">
             ₹{activePrice.toLocaleString('en-IN')}
           </span>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5 shrink-0">
           <button
             onClick={() => toggleWishlist(product)}
-            className={`p-2.5 rounded-xl border ${
-              isWishlisted ? 'bg-maroon-700 text-white' : 'border-stone-300 dark:border-stone-700 text-stone-700'
+            className={`p-2 rounded-xl border ${
+              isWishlisted ? 'bg-maroon-700 text-white' : 'border-stone-300 dark:border-stone-700 text-stone-700 dark:text-stone-300'
             }`}
             aria-label="Wishlist"
           >
@@ -765,7 +765,7 @@ export const ProductPage = () => {
           <button
             onClick={handleAddToCart}
             disabled={!product.inStock}
-            className="btn-primary py-2.5 px-4 text-xs font-bold uppercase tracking-wider flex items-center gap-1.5"
+            className="btn-primary py-2 px-3 text-[11px] font-bold uppercase tracking-wider flex items-center gap-1"
           >
             <ShoppingBag className="w-3.5 h-3.5" />
             <span>Add</span>
@@ -774,7 +774,7 @@ export const ProductPage = () => {
           <button
             onClick={handleBuyNow}
             disabled={!product.inStock}
-            className="btn-gold py-2.5 px-4 text-xs font-bold uppercase tracking-wider flex items-center gap-1.5"
+            className="btn-gold py-2 px-3 text-[11px] font-bold uppercase tracking-wider flex items-center gap-1"
           >
             <Zap className="w-3.5 h-3.5 fill-current" />
             <span>Buy</span>

@@ -30,48 +30,48 @@ export const Footer = () => {
   };
 
   return (
-    <footer className="bg-[#140D08] text-stone-300 border-t border-gold-500/30 pt-12 pb-24 lg:pb-12 mt-16 font-sans">
+    <footer className="bg-[#140D08] text-stone-300 border-t border-gold-500/30 pt-12 pb-24 lg:pb-12 mt-16 font-sans w-full max-w-full overflow-hidden">
       {/* Top Trust Features Strip */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 pb-12 border-b border-gold-500/20">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-6 sm:gap-8">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6 lg:gap-8">
           
-          <div className="flex items-center gap-3.5 p-3 rounded-2xl bg-[#1C120B] border border-gold-500/20">
-            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-maroon-700 to-maroon-900 flex items-center justify-center text-gold-400 shrink-0 shadow-maroon-sm">
-              <Award className="w-6 h-6" />
+          <div className="flex items-center gap-3 p-3 rounded-2xl bg-[#1C120B] border border-gold-500/20 min-w-0">
+            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gradient-to-br from-maroon-700 to-maroon-900 flex items-center justify-center text-gold-400 shrink-0 shadow-maroon-sm">
+              <Award className="w-5 h-5 sm:w-6 sm:h-6" />
             </div>
-            <div>
-              <h4 className="font-serif font-bold text-sm text-gold-300">100% Handcrafted</h4>
-              <p className="text-[11px] text-stone-400">Directly from Indian Karigars</p>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-3.5 p-3 rounded-2xl bg-[#1C120B] border border-gold-500/20">
-            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-maroon-700 to-maroon-900 flex items-center justify-center text-gold-400 shrink-0 shadow-maroon-sm">
-              <Truck className="w-6 h-6" />
-            </div>
-            <div>
-              <h4 className="font-serif font-bold text-sm text-gold-300">Free Express Shipping</h4>
-              <p className="text-[11px] text-stone-400">On all orders above ₹999</p>
+            <div className="min-w-0">
+              <h4 className="font-serif font-bold text-xs sm:text-sm text-gold-300 truncate">100% Handcrafted</h4>
+              <p className="text-[10px] sm:text-[11px] text-stone-400 truncate">Direct from Karigars</p>
             </div>
           </div>
 
-          <div className="flex items-center gap-3.5 p-3 rounded-2xl bg-[#1C120B] border border-gold-500/20">
-            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-maroon-700 to-maroon-900 flex items-center justify-center text-gold-400 shrink-0 shadow-maroon-sm">
-              <RotateCcw className="w-6 h-6" />
+          <div className="flex items-center gap-3 p-3 rounded-2xl bg-[#1C120B] border border-gold-500/20 min-w-0">
+            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gradient-to-br from-maroon-700 to-maroon-900 flex items-center justify-center text-gold-400 shrink-0 shadow-maroon-sm">
+              <Truck className="w-5 h-5 sm:w-6 sm:h-6" />
             </div>
-            <div>
-              <h4 className="font-serif font-bold text-sm text-gold-300">7-Day Replacement</h4>
-              <p className="text-[11px] text-stone-400">Easy &amp; hassle-free returns</p>
+            <div className="min-w-0">
+              <h4 className="font-serif font-bold text-xs sm:text-sm text-gold-300 truncate">Free Express Ship</h4>
+              <p className="text-[10px] sm:text-[11px] text-stone-400 truncate">Orders above ₹999</p>
             </div>
           </div>
 
-          <div className="flex items-center gap-3.5 p-3 rounded-2xl bg-[#1C120B] border border-gold-500/20">
-            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-maroon-700 to-maroon-900 flex items-center justify-center text-gold-400 shrink-0 shadow-maroon-sm">
-              <ShieldCheck className="w-6 h-6" />
+          <div className="flex items-center gap-3 p-3 rounded-2xl bg-[#1C120B] border border-gold-500/20 min-w-0">
+            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gradient-to-br from-maroon-700 to-maroon-900 flex items-center justify-center text-gold-400 shrink-0 shadow-maroon-sm">
+              <RotateCcw className="w-5 h-5 sm:w-6 sm:h-6" />
             </div>
-            <div>
-              <h4 className="font-serif font-bold text-sm text-gold-300">100% Secure Checkout</h4>
-              <p className="text-[11px] text-stone-400">UPI, Cards, NetBanking &amp; COD</p>
+            <div className="min-w-0">
+              <h4 className="font-serif font-bold text-xs sm:text-sm text-gold-300 truncate">7-Day Return</h4>
+              <p className="text-[10px] sm:text-[11px] text-stone-400 truncate">Hassle-free guarantee</p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-3 p-3 rounded-2xl bg-[#1C120B] border border-gold-500/20 min-w-0">
+            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gradient-to-br from-maroon-700 to-maroon-900 flex items-center justify-center text-gold-400 shrink-0 shadow-maroon-sm">
+              <ShieldCheck className="w-5 h-5 sm:w-6 sm:h-6" />
+            </div>
+            <div className="min-w-0">
+              <h4 className="font-serif font-bold text-xs sm:text-sm text-gold-300 truncate">Secure Checkout</h4>
+              <p className="text-[10px] sm:text-[11px] text-stone-400 truncate">UPI, Cards, Net &amp; COD</p>
             </div>
           </div>
 
@@ -116,11 +116,11 @@ export const Footer = () => {
                   placeholder="Enter your email address"
                   value={newsletterEmail}
                   onChange={(e) => setNewsletterEmail(e.target.value)}
-                  className="flex-1 px-3.5 py-2.5 bg-[#1E140D] rounded-xl border border-gold-500/30 text-xs text-stone-200 placeholder:text-stone-500 outline-none focus:border-gold-400"
+                  className="flex-1 px-3.5 py-2.5 bg-[#1E140D] rounded-xl border border-gold-500/30 text-xs text-stone-200 placeholder:text-stone-500 outline-none focus:border-gold-400 min-w-0"
                 />
                 <button
                   type="submit"
-                  className="btn-gold px-4 py-2.5 text-xs uppercase tracking-wider font-bold rounded-xl"
+                  className="btn-gold px-4 py-2.5 text-xs uppercase tracking-wider font-bold rounded-xl shrink-0"
                   aria-label="Subscribe"
                 >
                   <Send className="w-3.5 h-3.5" />
@@ -211,7 +211,7 @@ export const Footer = () => {
       {/* Bottom Copyright & Payment Methods */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 pt-6 border-t border-gold-500/20 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-stone-500">
         <p>© {new Date().getFullYear()} Trio Ecart. Handcrafted with devotion in India. All Rights Reserved.</p>
-        <div className="flex items-center gap-2 text-[10px] font-bold text-stone-400">
+        <div className="flex items-center gap-2 text-[10px] font-bold text-stone-400 flex-wrap">
           <span className="px-2 py-0.5 rounded bg-[#1E140D] border border-gold-500/20">UPI</span>
           <span className="px-2 py-0.5 rounded bg-[#1E140D] border border-gold-500/20">RuPay</span>
           <span className="px-2 py-0.5 rounded bg-[#1E140D] border border-gold-500/20">Visa</span>

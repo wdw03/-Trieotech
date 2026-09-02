@@ -186,8 +186,8 @@ export const CheckoutPage = () => {
       <Breadcrumb items={[{ name: 'Cart', url: '/cart' }, { name: 'Checkout', url: '/checkout' }]} />
 
       {/* Checkout Progress Stepper */}
-      <div className="ethnic-card p-4 sm:p-6 rounded-3xl">
-        <div className="flex items-center justify-between max-w-3xl mx-auto">
+      <div className="ethnic-card p-3.5 sm:p-6 rounded-3xl w-full max-w-full overflow-hidden">
+        <div className="flex items-center justify-between max-w-3xl mx-auto w-full min-w-0">
           {steps.map((step, idx) => {
             const Icon = step.icon;
             const isCompleted = currentStep > step.num;
@@ -195,20 +195,20 @@ export const CheckoutPage = () => {
 
             return (
               <React.Fragment key={step.num}>
-                <div className="flex flex-col items-center gap-1.5 text-center">
+                <div className="flex flex-col items-center gap-1 text-center min-w-0 shrink-0">
                   <div
-                    className={`w-9 h-9 sm:w-10 sm:h-10 rounded-2xl flex items-center justify-center transition-all ${
+                    className={`w-8 h-8 sm:w-10 sm:h-10 rounded-2xl flex items-center justify-center transition-all ${
                       isCompleted
                         ? 'bg-emerald-700 text-white shadow-emerald-950/30'
                         : isCurrent
-                        ? 'bg-maroon-700 text-white shadow-maroon-md ring-4 ring-gold-500/30'
+                        ? 'bg-maroon-700 text-white shadow-maroon-md ring-2 sm:ring-4 ring-gold-500/30'
                         : 'bg-stone-200 dark:bg-stone-800 text-stone-500'
                     }`}
                   >
-                    {isCompleted ? <CheckCircle2 className="w-5 h-5" /> : <Icon className="w-5 h-5" />}
+                    {isCompleted ? <CheckCircle2 className="w-4 h-4 sm:w-5 sm:h-5" /> : <Icon className="w-4 h-4 sm:w-5 sm:h-5" />}
                   </div>
                   <span
-                    className={`text-[10px] sm:text-xs font-bold ${
+                    className={`text-[9px] sm:text-xs font-bold max-w-[65px] sm:max-w-none truncate ${
                       isCurrent
                         ? 'text-maroon-800 dark:text-gold-400'
                         : isCompleted
@@ -221,7 +221,7 @@ export const CheckoutPage = () => {
                 </div>
                 {idx < steps.length - 1 && (
                   <div
-                    className={`flex-1 h-0.5 mx-2 sm:mx-4 transition-colors ${
+                    className={`flex-1 h-0.5 mx-1 sm:mx-4 min-w-[12px] transition-colors ${
                       currentStep > idx + 1 ? 'bg-emerald-600' : 'bg-stone-200 dark:bg-stone-800'
                     }`}
                   />

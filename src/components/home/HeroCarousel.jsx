@@ -60,7 +60,7 @@ export const HeroCarousel = () => {
 
   return (
     <div
-      className="relative overflow-hidden bg-gradient-to-b from-[#2A0E0E] via-[#1E0909] to-[#120505] text-white py-12 md:py-20 border-b border-gold-500/30"
+      className="relative overflow-hidden w-full max-w-full bg-gradient-to-b from-[#2A0E0E] via-[#1E0909] to-[#120505] text-white py-12 md:py-20 border-b border-gold-500/30"
       onMouseEnter={() => setIsPaused(true)}
       onMouseLeave={() => setIsPaused(false)}
     >

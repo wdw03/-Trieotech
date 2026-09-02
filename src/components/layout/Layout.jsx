@@ -13,9 +13,9 @@ export const Layout = ({ children }) => {
   }, [pathname]);
 
   return (
-    <div className="min-h-screen flex flex-col bg-ivory-100 dark:bg-ethnic-dark text-stone-900 dark:text-ethnic-text transition-colors duration-200">
+    <div className="min-h-screen flex flex-col w-full max-w-full overflow-x-hidden bg-ivory-100 dark:bg-ethnic-dark text-stone-900 dark:text-ethnic-text transition-colors duration-200">
       <Navbar />
-      <main className="flex-1 w-full">
+      <main className="flex-1 w-full max-w-full overflow-x-hidden">
         {children}
       </main>
       <Footer />
