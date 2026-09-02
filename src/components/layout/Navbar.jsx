@@ -383,14 +383,21 @@ export const Navbar = () => {
 
       {/* Mobile Drawer Menu */}
       {isMobileMenuOpen && (
-        <div className="lg:hidden fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex">
-          <div className="w-4/5 max-w-sm bg-white dark:bg-[#1A110B] h-full overflow-y-auto p-6 flex flex-col justify-between shadow-2xl animate-fade-in">
+        <div
+          className="lg:hidden fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex"
+          onClick={() => setIsMobileMenuOpen(false)}
+        >
+          <div
+            className="w-4/5 max-w-sm bg-white dark:bg-[#1A110B] h-[100dvh] max-h-screen overflow-y-auto overscroll-contain p-6 pb-32 sm:pb-28 shadow-2xl animate-fade-in flex flex-col justify-between gap-8"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="space-y-6">
               <div className="flex items-center justify-between pb-4 border-b border-gold-500/20">
                 <TrioLogo />
                 <button
                   onClick={() => setIsMobileMenuOpen(false)}
-                  className="p-1 text-stone-500 hover:text-maroon-700"
+                  className="p-1.5 text-stone-500 hover:text-maroon-700 dark:hover:text-gold-400 rounded-lg hover:bg-stone-100 dark:hover:bg-stone-800 transition-colors"
+                  aria-label="Close menu"
                 >
                   <X className="w-6 h-6" />
                 </button>
@@ -398,10 +405,10 @@ export const Navbar = () => {
 
               {/* Navigation Links */}
               <div className="space-y-2 text-sm font-semibold">
-                <Link to="/" className="block py-2 text-stone-900 dark:text-ivory-100 hover:text-maroon-700">
+                <Link to="/" className="block py-2 text-stone-900 dark:text-ivory-100 hover:text-maroon-700 dark:hover:text-gold-400 transition-colors">
                   Home
                 </Link>
-                <Link to="/shop" className="block py-2 text-stone-900 dark:text-ivory-100 hover:text-maroon-700">
+                <Link to="/shop" className="block py-2 text-stone-900 dark:text-ivory-100 hover:text-maroon-700 dark:hover:text-gold-400 transition-colors">
                   All Products
                 </Link>
                 
@@ -412,42 +419,50 @@ export const Navbar = () => {
                   </span>
                   <div className="pl-3 mt-2 space-y-2 text-xs text-stone-600 dark:text-stone-300 border-l border-gold-500/30">
                     {categories.map(c => (
-                      <Link key={c.id} to={`/category/${c.slug}`} className="block py-1 hover:text-maroon-700">
+                      <Link key={c.id} to={`/category/${c.slug}`} className="block py-1 hover:text-maroon-700 dark:hover:text-gold-400 transition-colors">
                         {c.name}
                       </Link>
                     ))}
                   </div>
                 </div>
 
-                <Link to="/blog" className="block py-2 text-stone-900 dark:text-ivory-100 hover:text-maroon-700">
+                <Link to="/blog" className="block py-2 text-stone-900 dark:text-ivory-100 hover:text-maroon-700 dark:hover:text-gold-400 transition-colors">
                   Craft Journal &amp; Guides
                 </Link>
-                <Link to="/track-order" className="block py-2 text-stone-900 dark:text-ivory-100 hover:text-maroon-700">
+                <Link to="/track-order" className="block py-2 text-stone-900 dark:text-ivory-100 hover:text-maroon-700 dark:hover:text-gold-400 transition-colors">
                   Track Order
                 </Link>
-                <Link to="/about" className="block py-2 text-stone-900 dark:text-ivory-100 hover:text-maroon-700">
+                <Link to="/about" className="block py-2 text-stone-900 dark:text-ivory-100 hover:text-maroon-700 dark:hover:text-gold-400 transition-colors">
                   About Our Artisan Guild
                 </Link>
-                <Link to="/contact" className="block py-2 text-stone-900 dark:text-ivory-100 hover:text-maroon-700">
+                <Link to="/contact" className="block py-2 text-stone-900 dark:text-ivory-100 hover:text-maroon-700 dark:hover:text-gold-400 transition-colors">
                   Contact Us
                 </Link>
               </div>
             </div>
 
             {/* Mobile Footer Auth Section */}
-            <div className="pt-6 border-t border-gold-500/20">
+            <div className="pt-6 border-t border-gold-500/20 shrink-0 mt-auto">
               {isAuthenticated ? (
                 <div className="space-y-3">
                   <div className="flex items-center gap-3">
                     <img src={user.avatar} alt="avatar" className="w-10 h-10 rounded-full object-cover border border-gold-500" />
-                    <div>
-                      <p className="font-bold text-xs text-stone-900 dark:text-ivory-100">{user.name}</p>
-                      <p className="text-[10px] text-stone-400">{user.email}</p>
+                    <div className="min-w-0">
+                      <p className="font-bold text-xs text-stone-900 dark:text-ivory-100 truncate">{user.name}</p>
+                      <p className="text-[10px] text-stone-400 truncate">{user.email}</p>
                     </div>
                   </div>
-                  <Link to="/profile" className="block w-full py-2 text-center btn-primary text-xs font-bold">
-                    My Account
-                  </Link>
+                  <div className="grid grid-cols-2 gap-2">
+                    <Link to="/profile" className="block w-full py-2 text-center btn-primary text-xs font-bold">
+                      My Account
+                    </Link>
+                    <button
+                      onClick={logout}
+                      className="block w-full py-2 text-center btn-outline-maroon text-xs font-bold"
+                    >
+                      Sign Out
+                    </button>
+                  </div>
                 </div>
               ) : (
                 <div className="grid grid-cols-2 gap-2">
