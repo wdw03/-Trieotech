@@ -136,6 +136,15 @@ export const AuthProvider = ({ children }) => {
     addToast('Address removed', 'info');
   };
 
+  const updateProfile = (updatedData) => {
+    setUser(prev => {
+      const updated = { ...prev, ...updatedData };
+      return updated;
+    });
+    addToast('Profile updated successfully!', 'success');
+    return { success: true };
+  };
+
   const addOrder = (order) => {
     setUserOrders(prev => [order, ...prev]);
   };
@@ -151,6 +160,7 @@ export const AuthProvider = ({ children }) => {
         logout,
         addAddress,
         deleteAddress,
+        updateProfile,
         addOrder,
       }}
     >
