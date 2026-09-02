@@ -64,19 +64,19 @@
 @layer components {
   /* Ethnic Buttons */
   .btn-primary {
-    @apply inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-maroon-700 via-maroon-800 to-maroon-900 text-white font-semibold text-sm shadow-maroon-sm hover:shadow-maroon-md hover:from-maroon-600 hover:to-maroon-800 active:scale-[0.98] transition-all duration-200 border border-gold-500/30;
+    @apply inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-maroon-700 via-maroon-800 to-maroon-900 text-white font-semibold text-sm shadow-maroon-sm hover:shadow-maroon-md hover:from-maroon-600 hover:to-maroon-800 active:scale-95 active:brightness-90 active:shadow-inner transition-all duration-150 border border-gold-500/30 select-none cursor-pointer touch-manipulation;
   }
 
   .btn-gold {
-    @apply inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-gold-600 via-gold-500 to-gold-600 text-maroon-950 font-bold text-sm shadow-gold-sm hover:shadow-gold-md hover:brightness-105 active:scale-[0.98] transition-all duration-200 border border-white/40;
+    @apply inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-gold-600 via-gold-500 to-gold-600 text-maroon-950 font-bold text-sm shadow-gold-sm hover:shadow-gold-md hover:brightness-105 active:scale-95 active:brightness-90 active:shadow-inner transition-all duration-150 border border-white/40 select-none cursor-pointer touch-manipulation;
   }
 
   .btn-outline-maroon {
-    @apply inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl border-2 border-maroon-700 text-maroon-700 dark:border-gold-500 dark:text-gold-400 font-semibold text-sm hover:bg-maroon-700 hover:text-white dark:hover:bg-gold-500 dark:hover:text-maroon-950 active:scale-[0.98] transition-all duration-200;
+    @apply inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl border-2 border-maroon-700 text-maroon-700 dark:border-gold-500 dark:text-gold-400 font-semibold text-sm hover:bg-maroon-700 hover:text-white dark:hover:bg-gold-500 dark:hover:text-maroon-950 active:scale-95 active:bg-maroon-800 active:text-white active:border-maroon-800 dark:active:bg-gold-400 dark:active:text-maroon-950 dark:active:border-gold-400 active:shadow-inner transition-all duration-150 select-none cursor-pointer touch-manipulation;
   }
 
   .btn-ghost-gold {
-    @apply inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl text-gold-600 dark:text-gold-400 font-medium text-sm hover:bg-gold-500/10 active:scale-[0.98] transition-all duration-200;
+    @apply inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl text-gold-600 dark:text-gold-400 font-medium text-sm hover:bg-gold-500/10 active:scale-95 active:bg-gold-500/20 transition-all duration-150 select-none cursor-pointer touch-manipulation;
   }
 
   /* Cards */

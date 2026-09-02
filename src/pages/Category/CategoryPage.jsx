@@ -250,9 +250,9 @@ export const CategoryPage = () => {
             <div className="flex items-center gap-3">
               <button
                 onClick={() => setIsMobileFilterOpen(true)}
-                className="lg:hidden btn-outline-maroon py-2 px-3.5 text-xs font-bold flex items-center gap-1.5"
+                className="lg:hidden btn-outline-maroon py-2 px-3.5 text-xs font-bold flex items-center gap-1.5 active:scale-90 active:bg-maroon-800 active:text-white dark:active:bg-gold-500 dark:active:text-maroon-950 transition-all duration-150 select-none cursor-pointer touch-manipulation shadow-xs active:shadow-inner"
               >
-                <Filter className="w-3.5 h-3.5" />
+                <Filter className="w-3.5 h-3.5 transition-transform group-active:scale-90" />
                 <span>Filters</span>
               </button>
 
