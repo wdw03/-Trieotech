@@ -3,15 +3,15 @@ import { Helmet } from 'react-helmet-async';
 
 export const SEO = ({
   title,
-  description = "Shop exquisite handcrafted Indian embroidery patches, pure copper bottles, pooja aasans, cotton gamchas, and festive decor from master karigars at Trio Ecart.",
-  keywords = "trio ecart, indian handicrafts, embroidery patches, zardosi, pooja aasan, copper bottle, paranda, gamcha",
-  image = "/products/shreenathji-statement-patch-1.jpg",
-  url = "https://trioecart.com",
+  description = "Shop exquisite handcrafted Indian embroidery patches, pure copper bottles, pooja aasans, cotton gamchas, and festive decor from master karigars at Trio Enterprises.",
+  keywords = "trio enterprises, indian handicrafts, embroidery patches, zardosi, pooja aasan, copper bottle, paranda, gamcha",
+  image = "/logo.png",
+  url = "https://trioenterprises.com",
   product = null,
   breadcrumbs = null,
 }) => {
-  const fullTitle = title ? `${title} | Trio Ecart - Indian Handicrafts & Ethnic Decor` : "Trio Ecart | Handcrafted Indian Ethnic Elegance & Devotional Crafts";
-  const origin = typeof window !== 'undefined' ? window.location.origin : 'https://trioecart.com';
+  const fullTitle = title ? `${title} | Trio Enterprises - Indian Handicrafts & Ethnic Decor` : "Trio Enterprises | Handcrafted Indian Ethnic Elegance & Devotional Crafts";
+  const origin = typeof window !== 'undefined' ? window.location.origin : 'https://trioenterprises.com';
   const fullImage = image?.startsWith('http') ? image : `${origin}${image}`;
 
   // Structured Data (JSON-LD)
@@ -23,7 +23,7 @@ export const SEO = ({
     "description": product.shortDescription || product.description,
     "brand": {
       "@type": "Brand",
-      "name": product.brand || "Trio Ecart"
+      "name": product.brand || "Trio Enterprises"
     },
     "offers": {
       "@type": "Offer",
@@ -66,7 +66,7 @@ export const SEO = ({
       <meta property="og:description" content={description} />
       <meta property="og:image" content={fullImage} />
       <meta property="og:url" content={typeof window !== 'undefined' ? window.location.href : url} />
-      <meta property="og:site_name" content="Trio Ecart" />
+      <meta property="og:site_name" content="Trio Enterprises" />
 
       {/* Twitter */}
       <meta property="twitter:card" content="summary_large_image" />

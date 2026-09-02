@@ -86,7 +86,7 @@ export const Footer = () => {
           <div className="lg:col-span-2 space-y-4">
             <TrioLogo />
             <p className="text-xs text-stone-400 leading-relaxed max-w-sm">
-              Trio Ecart celebrates India's rich artisanal heritage. We bring you hand-embroidered Zardosi patches, sacred pooja essentials, Ayurvedic copper drinkware, and festive wedding embellishments crafted with generational mastery.
+              Trio Enterprises celebrates India's rich artisanal heritage. We bring you hand-embroidered Zardosi patches, sacred pooja essentials, Ayurvedic copper drinkware, and festive wedding embellishments crafted with generational mastery.
             </p>
             
             <div className="space-y-2 text-xs text-stone-300 pt-2">
@@ -100,7 +100,7 @@ export const Footer = () => {
               </div>
               <div className="flex items-center gap-2">
                 <Mail className="w-4 h-4 text-gold-400 shrink-0" />
-                <span>care@trioecart.com</span>
+                <span>care@trioenterprises.com</span>
               </div>
             </div>
 
@@ -210,7 +210,7 @@ export const Footer = () => {
 
       {/* Bottom Copyright & Payment Methods */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 pt-6 border-t border-gold-500/20 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-stone-500">
-        <p>© {new Date().getFullYear()} Trio Ecart. Handcrafted with devotion in India. All Rights Reserved.</p>
+        <p>© {new Date().getFullYear()} Trio Enterprises. Handcrafted with devotion in India. All Rights Reserved.</p>
         <div className="flex items-center gap-2 text-[10px] font-bold text-stone-400 flex-wrap">
           <span className="px-2 py-0.5 rounded bg-[#1E140D] border border-gold-500/20">UPI</span>
           <span className="px-2 py-0.5 rounded bg-[#1E140D] border border-gold-500/20">RuPay</span>
