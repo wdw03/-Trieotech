@@ -1,0 +1,142 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --color-maroon-primary: #8B1A1A;
+    --color-maroon-deep: #5B0E0E;
+    --color-gold-primary: #C5A028;
+    --color-gold-light: #DEC068;
+    --color-ivory-bg: #FAF7F2;
+    --color-ivory-card: #FFFFFF;
+    --color-emerald-accent: #065F46;
+  }
+
+  body {
+    @apply bg-[#FAF7F2] text-stone-900 transition-colors duration-300;
+  }
+
+  .dark body {
+    @apply bg-[#120B07] text-[#F5EBE1];
+  }
+
+  h1, h2, h3, .font-heading {
+    font-family: 'Playfair Display', Georgia, serif;
+  }
+
+  .font-brand {
+    font-family: 'Cinzel', serif;
+  }
+}
+
+@layer components {
+  /* Ethnic Buttons */
+  .btn-primary {
+    @apply inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-maroon-700 via-maroon-800 to-maroon-900 text-white font-semibold text-sm shadow-maroon-sm hover:shadow-maroon-md hover:from-maroon-600 hover:to-maroon-800 active:scale-[0.98] transition-all duration-200 border border-gold-500/30;
+  }
+
+  .btn-gold {
+    @apply inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-gold-600 via-gold-500 to-gold-600 text-maroon-950 font-bold text-sm shadow-gold-sm hover:shadow-gold-md hover:brightness-105 active:scale-[0.98] transition-all duration-200 border border-white/40;
+  }
+
+  .btn-outline-maroon {
+    @apply inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl border-2 border-maroon-700 text-maroon-700 dark:border-gold-500 dark:text-gold-400 font-semibold text-sm hover:bg-maroon-700 hover:text-white dark:hover:bg-gold-500 dark:hover:text-maroon-950 active:scale-[0.98] transition-all duration-200;
+  }
+
+  .btn-ghost-gold {
+    @apply inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl text-gold-600 dark:text-gold-400 font-medium text-sm hover:bg-gold-500/10 active:scale-[0.98] transition-all duration-200;
+  }
+
+  /* Cards */
+  .ethnic-card {
+    @apply bg-white dark:bg-[#1A110B] rounded-2xl border border-gold-500/20 shadow-ethnic hover:shadow-ethnic-hover transition-all duration-300;
+  }
+
+  .glass-header {
+    @apply bg-white/90 dark:bg-[#140D08]/90 backdrop-blur-md border-b border-gold-500/20 shadow-xs;
+  }
+
+  /* Badge Ribbons */
+  .badge-ribbon {
+    @apply text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full shadow-xs;
+  }
+
+  .badge-bestseller {
+    @apply bg-gradient-to-r from-gold-600 to-gold-500 text-maroon-950 font-extrabold border border-gold-300;
+  }
+
+  .badge-festival {
+    @apply bg-gradient-to-r from-maroon-700 to-red-600 text-white font-bold border border-white/30;
+  }
+
+  .badge-wedding {
+    @apply bg-gradient-to-r from-purple-700 to-pink-700 text-white font-bold border border-purple-300/40;
+  }
+
+  .badge-handmade {
+    @apply bg-gradient-to-r from-emerald-800 to-emerald-700 text-emerald-50 font-bold border border-emerald-400/40;
+  }
+
+  .badge-trending {
+    @apply bg-gradient-to-r from-amber-600 to-orange-600 text-white font-bold border border-amber-300/40;
+  }
+
+  .badge-new {
+    @apply bg-gradient-to-r from-blue-700 to-indigo-700 text-white font-bold border border-blue-300/40;
+  }
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 7px;
+  height: 7px;
+}
+
+::-webkit-scrollbar-track {
+  background: #FAF7F2;
+}
+
+.dark ::-webkit-scrollbar-track {
+  background: #140D08;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #C5A028;
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #8B1A1A;
+}
+
+/* Custom Patterns & Utilities */
+.text-gold-gradient {
+  background: linear-gradient(135deg, #D4AF37 0%, #C5A028 50%, #FAF6E8 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.text-maroon-gradient {
+  background: linear-gradient(135deg, #8B1A1A 0%, #B91C1C 50%, #D4AF37 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.gold-border-glow {
+  border: 1px solid rgba(197, 160, 40, 0.35);
+  box-shadow: 0 0 15px rgba(197, 160, 40, 0.12);
+}
+
+.mandala-bg {
+  background-image: radial-gradient(circle at center, rgba(197, 160, 40, 0.08) 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+
+.hero-gradient {
+  background: radial-gradient(circle at 50% 50%, rgba(139, 26, 26, 0.15) 0%, rgba(250, 247, 242, 1) 70%);
+}
+
+.dark .hero-gradient {
+  background: radial-gradient(circle at 50% 50%, rgba(139, 26, 26, 0.35) 0%, rgba(18, 11, 7, 1) 75%);
+}

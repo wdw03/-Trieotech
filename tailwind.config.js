@@ -1,0 +1,121 @@
+/** @type {import('tailwindcss').Config} */
+export default {
+  content: [
+    "./index.html",
+    "./src/**/*.{js,ts,jsx,tsx}",
+  ],
+  darkMode: 'class',
+  theme: {
+    extend: {
+      colors: {
+        maroon: {
+          50: '#FDF4F4',
+          100: '#FCE7E7',
+          200: '#F7C4C4',
+          300: '#EE9494',
+          400: '#E05D5D',
+          500: '#C92A2A',
+          600: '#B91C1C',
+          700: '#8B1A1A',
+          800: '#6B1212',
+          900: '#4D0C0C',
+          950: '#2F0606',
+        },
+        gold: {
+          50: '#FDFCF7',
+          100: '#FAF6E8',
+          200: '#F4EAC8',
+          300: '#EBD89E',
+          400: '#DEC068',
+          500: '#D4AF37',
+          600: '#C5A028',
+          700: '#9E7E19',
+          800: '#7D6315',
+          900: '#5C4811',
+          950: '#382B08',
+        },
+        ivory: {
+          50: '#FDFCFB',
+          100: '#FAF7F2',
+          200: '#F4EFE6',
+          300: '#EBE3D3',
+          400: '#DDD2BD',
+          500: '#C8B99D',
+          600: '#A99676',
+          700: '#8A7757',
+          800: '#6E5D42',
+          900: '#534531',
+        },
+        emerald: {
+          50: '#F0FDF4',
+          100: '#DCFCE7',
+          600: '#059669',
+          700: '#047857',
+          800: '#065F46',
+          900: '#064E3B',
+          950: '#022C22',
+        },
+        saffron: {
+          500: '#F59E0B',
+          600: '#D97706',
+          700: '#B45309',
+        },
+        ethnic: {
+          dark: '#140D08',
+          card: '#1F140D',
+          border: '#332216',
+          text: '#F5EBE1',
+          muted: '#A99686',
+        }
+      },
+      fontFamily: {
+        serif: ['"Playfair Display"', 'Georgia', 'serif'],
+        cinzel: ['"Cinzel"', 'serif'],
+        cormorant: ['"Cormorant Garamond"', 'serif'],
+        sans: ['"Plus Jakarta Sans"', 'Inter', '-apple-system', 'sans-serif'],
+      },
+      boxShadow: {
+        '2xs': '0 1px 2px 0 rgba(0, 0, 0, 0.05)',
+        'xs': '0 1px 2px 0 rgba(0, 0, 0, 0.05)',
+        'gold-sm': '0 2px 10px rgba(197, 160, 40, 0.15)',
+        'gold-md': '0 4px 20px rgba(197, 160, 40, 0.25)',
+        'gold-lg': '0 8px 30px rgba(197, 160, 40, 0.35)',
+        'maroon-sm': '0 2px 10px rgba(139, 26, 26, 0.18)',
+        'maroon-md': '0 6px 20px rgba(139, 26, 26, 0.28)',
+        'maroon-lg': '0 10px 30px rgba(139, 26, 26, 0.38)',
+        'ethnic': '0 10px 30px -5px rgba(20, 13, 8, 0.08), 0 0 0 1px rgba(197, 160, 40, 0.12)',
+        'ethnic-hover': '0 20px 40px -10px rgba(139, 26, 26, 0.18), 0 0 0 1px rgba(197, 160, 40, 0.35)',
+      },
+      animation: {
+        'fade-in': 'fadeIn 0.4s ease-out forwards',
+        'fade-up': 'fadeUp 0.5s ease-out forwards',
+        'shimmer': 'shimmer 2.5s infinite linear',
+        'float': 'float 4s ease-in-out infinite',
+        'pulse-subtle': 'pulseSubtle 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+      },
+      keyframes: {
+        fadeIn: {
+          '0%': { opacity: '0' },
+          '100%': { opacity: '1' },
+        },
+        fadeUp: {
+          '0%': { opacity: '0', transform: 'translateY(16px)' },
+          '100%': { opacity: '1', transform: 'translateY(0)' },
+        },
+        shimmer: {
+          '0%': { backgroundPosition: '-200% 0' },
+          '100%': { backgroundPosition: '200% 0' },
+        },
+        float: {
+          '0%, 100%': { transform: 'translateY(0px)' },
+          '50%': { transform: 'translateY(-6px)' },
+        },
+        pulseSubtle: {
+          '0%, 100%': { opacity: '1', transform: 'scale(1)' },
+          '50%': { opacity: '0.85', transform: 'scale(1.02)' },
+        },
+      },
+    },
+  },
+  plugins: [],
+}
