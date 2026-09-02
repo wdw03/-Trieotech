@@ -107,14 +107,14 @@ export const Navbar = () => {
       </div>
 
       {/* Main Navigation Bar */}
-      <div className="bg-white/95 dark:bg-[#140D08]/95 backdrop-blur-md border-b border-gold-500/20 py-3 px-3 sm:px-6 w-full max-w-full overflow-hidden">
-        <div className="max-w-7xl mx-auto flex items-center justify-between gap-2 sm:gap-4 w-full min-w-0">
+      <div className="bg-white/95 dark:bg-[#140D08]/95 backdrop-blur-md border-b border-gold-500/20 py-2 sm:py-3 px-2 sm:px-6 w-full max-w-full overflow-hidden">
+        <div className="max-w-7xl mx-auto flex items-center justify-between gap-1 xs:gap-2 sm:gap-4 w-full min-w-0">
           
           {/* Mobile Menu Toggle & Logo */}
-          <div className="flex items-center gap-2 sm:gap-3 min-w-0 shrink-0">
+          <div className="flex items-center gap-1 xs:gap-1.5 sm:gap-3 min-w-0 shrink-0">
             <button
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className="lg:hidden p-1.5 sm:p-2 text-stone-700 dark:text-stone-300 hover:text-maroon-700 dark:hover:text-gold-400 rounded-lg hover:bg-stone-100 dark:hover:bg-stone-800 transition-colors shrink-0"
+              className="lg:hidden p-1 xs:p-1.5 sm:p-2 text-stone-700 dark:text-stone-300 hover:text-maroon-700 dark:hover:text-gold-400 rounded-lg hover:bg-stone-100 dark:hover:bg-stone-800 transition-colors shrink-0 active:scale-90"
               aria-label="Toggle menu"
             >
               {isMobileMenuOpen ? <X className="w-5 h-5 sm:w-6 sm:h-6" /> : <Menu className="w-5 h-5 sm:w-6 sm:h-6" />}
@@ -187,11 +187,11 @@ export const Navbar = () => {
           </div>
 
           {/* Right Action Utilities (Theme, Wishlist, Cart, Account) */}
-          <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
+          <div className="flex items-center gap-1 xs:gap-1.5 sm:gap-3 shrink-0">
             {/* Theme Toggle Button */}
             <button
               onClick={toggleTheme}
-              className="p-1.5 sm:p-2 rounded-xl text-stone-700 dark:text-stone-300 hover:text-gold-600 dark:hover:text-gold-400 hover:bg-stone-100 dark:hover:bg-stone-800 transition-colors"
+              className="p-1.5 sm:p-2 rounded-xl text-stone-700 dark:text-stone-300 hover:text-gold-600 dark:hover:text-gold-400 hover:bg-stone-100 dark:hover:bg-stone-800 transition-colors active:scale-90"
               aria-label="Toggle dark mode"
               title={isDark ? "Switch to light theme" : "Switch to dark theme"}
             >
@@ -201,7 +201,7 @@ export const Navbar = () => {
             {/* Wishlist Icon */}
             <Link
               to="/wishlist"
-              className="relative p-1.5 sm:p-2 rounded-xl text-stone-700 dark:text-stone-300 hover:text-maroon-700 dark:hover:text-gold-400 hover:bg-stone-100 dark:hover:bg-stone-800 transition-colors"
+              className="relative p-1.5 sm:p-2 rounded-xl text-stone-700 dark:text-stone-300 hover:text-maroon-700 dark:hover:text-gold-400 hover:bg-stone-100 dark:hover:bg-stone-800 transition-colors active:scale-90"
               aria-label="Wishlist"
               title="My Wishlist"
             >
@@ -216,7 +216,7 @@ export const Navbar = () => {
             {/* Cart Icon & Trigger */}
             <button
               onClick={openCart}
-              className="relative flex items-center gap-1.5 sm:gap-2 p-1.5 sm:px-3.5 sm:py-2 rounded-xl bg-gradient-to-r from-maroon-700 to-maroon-900 text-white shadow-maroon-sm hover:from-maroon-600 hover:to-maroon-800 transition-all cursor-pointer shrink-0"
+              className="relative flex items-center gap-1.5 sm:gap-2 p-1.5 sm:px-3.5 sm:py-2 rounded-xl bg-gradient-to-r from-maroon-700 to-maroon-900 text-white shadow-maroon-sm hover:from-maroon-600 hover:to-maroon-800 transition-all cursor-pointer shrink-0 active:scale-90"
               aria-label="Open Cart"
             >
               <div className="relative">
