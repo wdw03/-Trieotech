@@ -73,32 +73,38 @@ export const ProfilePage = () => {
 
       {/* User Banner Header */}
       <div className="ethnic-card p-6 sm:p-8 rounded-3xl flex flex-col sm:flex-row items-center justify-between gap-6 bg-gradient-to-r from-ivory-100 via-white to-ivory-100 dark:from-[#1A110B] dark:via-[#140D08] dark:to-[#1A110B]">
-        <div className="flex items-center gap-4 text-center sm:text-left flex-col sm:flex-row">
+        <div className="flex items-center gap-4 text-center sm:text-left flex-col sm:flex-row w-full sm:w-auto">
           <img
             src={user.avatar}
             alt={user.name}
-            className="w-20 h-20 rounded-2xl object-cover border-2 border-gold-500/40 shadow-md"
+            className="w-20 h-20 rounded-2xl object-cover border-2 border-gold-500/40 shadow-md shrink-0"
           />
-          <div className="space-y-1">
-            <div className="flex items-center gap-2 justify-center sm:justify-start">
+          <div className="space-y-2 min-w-0 flex-1">
+            <div className="flex items-center gap-2 justify-center sm:justify-start flex-wrap">
               <h1 className="font-serif font-black text-xl sm:text-2xl text-stone-900 dark:text-ivory-100">
                 {user.name}
               </h1>
-              <span className="badge-ribbon bg-gold-500/20 text-gold-800 dark:text-gold-300 font-bold border border-gold-500/30">
+              <span className="badge-ribbon bg-gold-500/20 text-gold-800 dark:text-gold-300 font-bold border border-gold-500/30 shrink-0">
                 Verified Patron
               </span>
             </div>
-            <p className="text-xs text-stone-500 flex items-center gap-2 justify-center sm:justify-start">
-              <Mail className="w-3.5 h-3.5 text-gold-600" /> {user.email}
-              <span>•</span>
-              <Phone className="w-3.5 h-3.5 text-gold-600" /> {user.phone}
-            </p>
+            <div className="flex flex-col sm:flex-row sm:items-center gap-1.5 sm:gap-3 text-xs text-stone-600 dark:text-stone-300 justify-center sm:justify-start">
+              <span className="inline-flex items-center justify-center sm:justify-start gap-1.5 min-w-0">
+                <Mail className="w-3.5 h-3.5 text-gold-600 shrink-0" />
+                <span className="truncate">{user.email}</span>
+              </span>
+              <span className="hidden sm:inline text-stone-300 dark:text-stone-700 select-none">•</span>
+              <span className="inline-flex items-center justify-center sm:justify-start gap-1.5 whitespace-nowrap shrink-0">
+                <Phone className="w-3.5 h-3.5 text-gold-600 shrink-0" />
+                <span className="font-medium tracking-wide whitespace-nowrap">{user.phone}</span>
+              </span>
+            </div>
           </div>
         </div>
 
         <button
           onClick={logout}
-          className="btn-outline-maroon py-2.5 px-5 text-xs font-bold flex items-center gap-2"
+          className="btn-outline-maroon py-2.5 px-5 text-xs font-bold flex items-center gap-2 shrink-0 self-center sm:self-auto"
         >
           <LogOut className="w-4 h-4" />
           <span>Sign Out</span>
@@ -272,7 +278,10 @@ export const ProfilePage = () => {
                 <p className="text-xs text-stone-600 dark:text-stone-300 leading-relaxed">
                   {addr.address}, {addr.city}, {addr.state} - {addr.zip}
                 </p>
-                <p className="text-[11px] text-stone-500">Phone: {addr.phone}</p>
+                <p className="text-[11px] text-stone-500 flex items-center gap-1.5 whitespace-nowrap pt-1">
+                  <Phone className="w-3 h-3 text-gold-600 shrink-0" />
+                  <span>{addr.phone}</span>
+                </p>
               </div>
 
               <div className="flex justify-end pt-2 border-t border-gold-500/10">

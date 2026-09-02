@@ -284,7 +284,10 @@ export const CheckoutPage = () => {
                           <p className="text-xs text-stone-600 dark:text-stone-300 leading-relaxed">
                             {addr.address}, {addr.city}, {addr.state} - {addr.zip}
                           </p>
-                          <p className="text-[11px] text-stone-500 font-medium">Phone: {addr.phone}</p>
+                          <p className="text-[11px] text-stone-500 font-medium flex items-center gap-1.5 whitespace-nowrap pt-0.5">
+                            <Phone className="w-3 h-3 text-gold-600 shrink-0" />
+                            <span>{addr.phone}</span>
+                          </p>
                         </div>
                       </label>
                     ))}
