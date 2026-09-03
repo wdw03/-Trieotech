@@ -46,14 +46,17 @@ export const Navbar = () => {
   // Detect scroll on desktop for sticky compact header
   useEffect(() => {
     const handleScroll = () => {
-      if (window.scrollY > 30) {
-        setIsScrolled(true);
-      } else {
-        setIsScrolled(false);
-      }
+      const scrollPos = window.pageYOffset || document.documentElement.scrollTop || window.scrollY || 0;
+      setIsScrolled(scrollPos > 30);
     };
+
+    handleScroll();
     window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => window.removeEventListener('scroll', handleScroll);
+    document.addEventListener('scroll', handleScroll, { passive: true });
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+      document.removeEventListener('scroll', handleScroll);
+    };
   }, []);
 
   // Perform debounced search for instant dropdown
@@ -96,12 +99,12 @@ export const Navbar = () => {
 
   return (
     <header className="sticky top-0 z-40 w-full max-w-full shadow-sm transition-all duration-300">
-      {/* Top Announcement Bar - Smoothly hidden on desktop scroll */}
+      {/* Top Announcement Bar - Smoothly collapsed on desktop scroll */}
       <div
-        className={`bg-gradient-to-r from-maroon-950 via-maroon-800 to-maroon-950 text-gold-200 border-b border-gold-500/20 w-full max-w-full overflow-hidden transition-all duration-300 ease-in-out ${
+        className={`bg-gradient-to-r from-maroon-950 via-maroon-800 to-maroon-950 text-gold-200 w-full max-w-full overflow-hidden transition-all duration-300 ease-in-out text-[11px] sm:text-xs font-medium ${
           isScrolled
-            ? 'md:max-h-0 md:opacity-0 md:py-0 md:border-b-0 py-1.5 px-3 sm:px-4 text-[11px] sm:text-xs font-medium'
-            : 'max-h-12 opacity-100 py-1.5 px-3 sm:px-4 text-[11px] sm:text-xs font-medium'
+            ? 'py-1.5 px-3 border-b border-gold-500/20 md:max-h-0 md:py-0 md:opacity-0 md:border-b-0 md:invisible pointer-events-auto md:pointer-events-none'
+            : 'py-1.5 px-3 sm:px-4 border-b border-gold-500/20 max-h-14 opacity-100'
         }`}
       >
         <div className="max-w-7xl mx-auto flex items-center justify-between gap-2 w-full min-w-0">
