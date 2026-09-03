@@ -38,9 +38,23 @@ export const Navbar = () => {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isUserDropdownOpen, setIsUserDropdownOpen] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
 
   const debouncedSearch = useDebounce(searchQuery, 250);
   const searchContainerRef = useRef(null);
+
+  // Detect scroll on desktop for sticky compact header
+  useEffect(() => {
+    const handleScroll = () => {
+      if (window.scrollY > 30) {
+        setIsScrolled(true);
+      } else {
+        setIsScrolled(false);
+      }
+    };
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   // Perform debounced search for instant dropdown
   useEffect(() => {
@@ -81,9 +95,15 @@ export const Navbar = () => {
   };
 
   return (
-    <header className="sticky top-0 z-40 w-full max-w-full overflow-hidden shadow-sm">
-      {/* Top Announcement Bar */}
-      <div className="bg-gradient-to-r from-maroon-950 via-maroon-800 to-maroon-950 text-gold-200 py-1.5 px-3 sm:px-4 text-[11px] sm:text-xs font-medium border-b border-gold-500/20 w-full max-w-full overflow-hidden">
+    <header className="sticky top-0 z-40 w-full max-w-full shadow-sm transition-all duration-300">
+      {/* Top Announcement Bar - Smoothly hidden on desktop scroll */}
+      <div
+        className={`bg-gradient-to-r from-maroon-950 via-maroon-800 to-maroon-950 text-gold-200 border-b border-gold-500/20 w-full max-w-full overflow-hidden transition-all duration-300 ease-in-out ${
+          isScrolled
+            ? 'md:max-h-0 md:opacity-0 md:py-0 md:border-b-0 py-1.5 px-3 sm:px-4 text-[11px] sm:text-xs font-medium'
+            : 'max-h-12 opacity-100 py-1.5 px-3 sm:px-4 text-[11px] sm:text-xs font-medium'
+        }`}
+      >
         <div className="max-w-7xl mx-auto flex items-center justify-between gap-2 w-full min-w-0">
           <div className="flex items-center gap-2 min-w-0 flex-1 overflow-hidden">
             <span className="hidden sm:inline-flex items-center gap-1 bg-gold-500/20 text-gold-300 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border border-gold-500/30 shrink-0">
@@ -106,8 +126,14 @@ export const Navbar = () => {
         </div>
       </div>
 
-      {/* Main Navigation Bar */}
-      <div className="bg-white/95 dark:bg-[#140D08]/95 backdrop-blur-md border-b border-gold-500/20 py-2 sm:py-3 px-2 sm:px-6 w-full max-w-full overflow-hidden">
+      {/* Main Navigation Bar - Compact on Desktop Scroll */}
+      <div
+        className={`bg-white/95 dark:bg-[#140D08]/95 backdrop-blur-md border-b border-gold-500/20 w-full max-w-full overflow-hidden transition-all duration-300 ease-in-out ${
+          isScrolled
+            ? 'py-2 sm:py-2 md:py-2 px-2 sm:px-6 shadow-md'
+            : 'py-2 sm:py-3 px-2 sm:px-6'
+        }`}
+      >
         <div className="max-w-7xl mx-auto flex items-center justify-between gap-1 xs:gap-2 sm:gap-4 w-full min-w-0">
           
           {/* Mobile Menu Toggle & Logo */}
@@ -120,11 +146,11 @@ export const Navbar = () => {
               {isMobileMenuOpen ? <X className="w-5 h-5 sm:w-6 sm:h-6" /> : <Menu className="w-5 h-5 sm:w-6 sm:h-6" />}
             </button>
 
-            <TrioLogo />
+            <TrioLogo isCompact={isScrolled} />
           </div>
 
           {/* Desktop Search Bar with Live Dropdown */}
-          <div ref={searchContainerRef} className="hidden md:block flex-1 max-w-xl mx-4 relative min-w-0">
+          <div ref={searchContainerRef} className={`hidden md:block flex-1 max-w-xl mx-4 relative min-w-0 transition-all duration-300 ${isScrolled ? 'scale-[0.98]' : 'scale-100'}`}>
             <form onSubmit={handleSearchSubmit} className="relative">
               <input
                 type="text"
@@ -318,7 +344,11 @@ export const Navbar = () => {
       </div>
 
       {/* Desktop Secondary Category Navigation Links */}
-      <nav className="hidden lg:block bg-ivory-200/90 dark:bg-[#1B1109]/90 border-b border-gold-500/20 px-6 py-2.5 w-full overflow-hidden">
+      <nav
+        className={`hidden lg:block bg-ivory-200/95 dark:bg-[#1B1109]/95 backdrop-blur-md border-b border-gold-500/20 px-6 w-full overflow-hidden transition-all duration-300 ease-in-out ${
+          isScrolled ? 'py-1.5 shadow-sm' : 'py-2.5'
+        }`}
+      >
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-7 text-xs font-semibold">
             
