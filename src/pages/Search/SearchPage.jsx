@@ -7,7 +7,7 @@ import ProductCard from '../../components/common/ProductCard';
 import QuickViewModal from '../../components/common/QuickViewModal';
 import EmptyState from '../../components/common/EmptyState';
 import { products, searchProducts } from '../../data/products';
-import { Search as SearchIcon, Filter, Sparkles, X, Clock, Flame } from 'lucide-react';
+import { Search as SearchIcon, Filter, Sparkles, X, Clock, Flame, ArrowRight, Package } from 'lucide-react';
 import useDebounce from '../../hooks/useDebounce';
 
 const TRENDING_SEARCHES = [
@@ -150,6 +150,25 @@ export const SearchPage = () => {
     return result;
   }, [rawResults, filters, sortBy]);
 
+  // Similar & Related Products Pipeline
+  const similarProducts = useMemo(() => {
+    const matchedIds = new Set(filteredResults.map(p => p.id));
+    const matchedCategories = [...new Set(rawResults.map(p => p.category))];
+
+    // First preference: crafts in the same categories but not in current result list
+    let pool = products.filter(p => !matchedIds.has(p.id) && matchedCategories.includes(p.category));
+
+    // Fallback/supplement: trending or best seller crafts
+    if (pool.length < 4) {
+      const extra = products.filter(
+        p => !matchedIds.has(p.id) && !pool.some(c => c.id === p.id) && (p.isTrending || p.isBestSeller)
+      );
+      pool = [...pool, ...extra];
+    }
+
+    return pool.slice(0, 4);
+  }, [rawResults, filteredResults]);
+
   const handleSelectSearchTerm = (term) => {
     setInputQuery(term);
     setSearchParams({ q: term });
@@ -161,16 +180,16 @@ export const SearchPage = () => {
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 space-y-6">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 pt-4 sm:pt-6 pb-16 space-y-6 relative z-10">
       <SEO
         title={queryFromUrl ? `Search results for "${queryFromUrl}"` : "Search Handcrafted Ethnic Collection"}
-        description="Search through handcrafted embroidery patches, copper drinkware, pooja aasans, and festive items at Trio Ecart."
+        description="Search through handcrafted embroidery patches, copper drinkware, pooja aasans, and festive items at Trio Enterprises."
       />
 
       <Breadcrumb items={[{ name: 'Search', url: '/search' }]} />
 
       {/* Main Search Header Bar */}
-      <div className="ethnic-card p-6 sm:p-8 rounded-3xl space-y-4">
+      <div className="ethnic-card p-5 sm:p-8 rounded-3xl space-y-4 shadow-sm relative z-10">
         <div className="relative max-w-2xl mx-auto">
           <input
             type="text"
@@ -178,7 +197,6 @@ export const SearchPage = () => {
             value={inputQuery}
             onChange={(e) => setInputQuery(e.target.value)}
             className="w-full pl-12 pr-10 py-3.5 bg-ivory-100 dark:bg-stone-900 text-stone-900 dark:text-ivory-100 rounded-2xl border-2 border-gold-500/40 text-sm focus:border-maroon-700 dark:focus:border-gold-500 outline-none shadow-xs"
-            autoFocus
           />
           <SearchIcon className="w-5 h-5 text-gold-600 absolute left-4 top-1/2 -translate-y-1/2" />
           {inputQuery && (
@@ -188,6 +206,7 @@ export const SearchPage = () => {
                 setSearchParams({});
               }}
               className="absolute right-4 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-700"
+              aria-label="Clear search"
             >
               <X className="w-4 h-4" />
             </button>
@@ -198,7 +217,7 @@ export const SearchPage = () => {
         <div className="space-y-3 pt-2">
           {/* Trending */}
           <div className="flex items-center gap-2 flex-wrap text-xs">
-            <span className="text-gold-700 dark:text-gold-400 font-bold flex items-center gap-1">
+            <span className="text-gold-700 dark:text-gold-400 font-bold flex items-center gap-1 shrink-0">
               <Flame className="w-3.5 h-3.5" /> Trending:
             </span>
             {TRENDING_SEARCHES.map((term) => (
@@ -215,7 +234,7 @@ export const SearchPage = () => {
           {/* Recent */}
           {recentSearches.length > 0 && (
             <div className="flex items-center gap-2 flex-wrap text-xs pt-1">
-              <span className="text-stone-400 font-bold flex items-center gap-1">
+              <span className="text-stone-400 font-bold flex items-center gap-1 shrink-0">
                 <Clock className="w-3.5 h-3.5" /> Recent:
               </span>
               {recentSearches.map((term) => (
@@ -239,7 +258,7 @@ export const SearchPage = () => {
       </div>
 
       {/* Results Layout */}
-      <div className="flex gap-8 items-start">
+      <div className="flex gap-8 items-start relative z-10">
         
         {/* Desktop Filter Sidebar */}
         <FilterSidebar
@@ -251,13 +270,13 @@ export const SearchPage = () => {
         {/* Results Column */}
         <div className="flex-1 space-y-6 min-w-0">
           
-          {/* Top Bar */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-2xl ethnic-card">
+          {/* Top Bar (Results count, mobile filter trigger, sorting) */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-2xl ethnic-card shadow-xs">
             
             <div className="flex items-center gap-3">
               <button
                 onClick={() => setIsMobileFilterOpen(true)}
-                className="lg:hidden btn-outline-maroon py-2 px-3.5 text-xs font-bold flex items-center gap-1.5"
+                className="lg:hidden btn-outline-maroon py-2 px-3.5 text-xs font-bold flex items-center gap-1.5 active:scale-90 transition-all cursor-pointer"
               >
                 <Filter className="w-3.5 h-3.5" />
                 <span>Filters</span>
@@ -278,7 +297,7 @@ export const SearchPage = () => {
               <select
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value)}
-                className="px-3 py-1.5 rounded-xl bg-ivory-100 dark:bg-stone-900 border border-gold-500/30 text-stone-900 dark:text-ivory-100 text-xs font-semibold outline-none"
+                className="px-3 py-1.5 rounded-xl bg-ivory-100 dark:bg-stone-900 border border-gold-500/30 text-stone-900 dark:text-ivory-100 text-xs font-semibold outline-none focus:ring-1 focus:ring-gold-500"
               >
                 <option value="relevance">Relevance</option>
                 <option value="price-asc">Price: Low to High</option>
@@ -292,21 +311,87 @@ export const SearchPage = () => {
 
           {/* Results Grid */}
           {filteredResults.length === 0 ? (
-            <EmptyState
-              title={`No crafts found for "${queryFromUrl}"`}
-              description="Check your spelling, try generic terms like 'patches' or 'bottle', or explore our full collection."
-              actionText="Browse All Crafts"
-              actionUrl="/shop"
-            />
+            <div className="space-y-8">
+              <EmptyState
+                title={`No crafts found for "${queryFromUrl}"`}
+                description="Check your spelling, try generic terms like 'patches' or 'bottle', or explore our recommended collection below."
+                actionText="Browse All Crafts"
+                actionUrl="/shop"
+              />
+
+              {/* Curated Recommendations when search has no direct match */}
+              {similarProducts.length > 0 && (
+                <div className="pt-4 border-t border-gold-500/20 space-y-4">
+                  <div>
+                    <span className="text-[11px] font-bold text-gold-700 dark:text-gold-400 uppercase tracking-widest flex items-center gap-1.5">
+                      <Sparkles className="w-3.5 h-3.5" /> Handcrafted For You
+                    </span>
+                    <h3 className="font-serif font-bold text-lg sm:text-xl text-stone-900 dark:text-ivory-100 mt-0.5">
+                      Popular Artisan Recommendations
+                    </h3>
+                  </div>
+
+                  <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6">
+                    {similarProducts.map((product) => (
+                      <ProductCard
+                        key={`fallback-${product.id}`}
+                        product={product}
+                        onQuickView={setQuickViewProduct}
+                      />
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
           ) : (
-            <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6">
-              {filteredResults.map((product) => (
-                <ProductCard
-                  key={product.id}
-                  product={product}
-                  onQuickView={setQuickViewProduct}
-                />
-              ))}
+            <div className="space-y-10">
+              {/* Main Product Cards Grid */}
+              <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6">
+                {filteredResults.map((product) => (
+                  <ProductCard
+                    key={product.id}
+                    product={product}
+                    onQuickView={setQuickViewProduct}
+                  />
+                ))}
+              </div>
+
+              {/* Similar & Related Products Section */}
+              {similarProducts.length > 0 && (
+                <div className="pt-10 border-t border-gold-500/20 space-y-6">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div>
+                      <span className="text-[11px] font-bold text-gold-700 dark:text-gold-400 uppercase tracking-widest flex items-center gap-1.5">
+                        <Sparkles className="w-3.5 h-3.5" /> Artisan Guild Suggestions
+                      </span>
+                      <h3 className="font-serif font-bold text-xl sm:text-2xl text-stone-900 dark:text-ivory-100 mt-1">
+                        Similar &amp; Related Handcrafted Pieces
+                      </h3>
+                      <p className="text-xs text-stone-500 mt-0.5">
+                        Authentic handcrafted creations complementary to your search.
+                      </p>
+                    </div>
+
+                    <Link
+                      to="/shop"
+                      className="btn-outline-maroon py-2 px-4 text-xs font-bold self-start sm:self-auto flex items-center gap-1.5"
+                    >
+                      <span>Explore All Crafts</span>
+                      <ArrowRight className="w-3.5 h-3.5" />
+                    </Link>
+                  </div>
+
+                  <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6">
+                    {similarProducts.map((product) => (
+                      <ProductCard
+                        key={`similar-${product.id}`}
+                        product={product}
+                        onQuickView={setQuickViewProduct}
+                      />
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           )}
 

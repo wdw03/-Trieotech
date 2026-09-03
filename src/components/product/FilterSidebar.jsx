@@ -252,7 +252,7 @@ export const FilterSidebar = ({
   }
 
   return (
-    <aside className="w-64 shrink-0 ethnic-card p-5 h-fit sticky top-28 hidden lg:block">
+    <aside className="w-64 shrink-0 ethnic-card p-5 h-fit sticky top-[140px] hidden lg:block z-20 max-h-[calc(100vh-160px)] overflow-y-auto overscroll-contain shadow-sm">
       {content}
     </aside>
   );

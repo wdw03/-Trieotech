@@ -131,7 +131,7 @@ export const Navbar = () => {
 
       {/* Main Navigation Bar - Compact on Desktop Scroll */}
       <div
-        className={`bg-white/95 dark:bg-[#140D08]/95 backdrop-blur-md border-b border-gold-500/20 w-full max-w-full overflow-hidden transition-all duration-300 ease-in-out ${
+        className={`bg-white/95 dark:bg-[#140D08]/95 backdrop-blur-md border-b border-gold-500/20 w-full max-w-full overflow-visible transition-all duration-300 ease-in-out ${
           isScrolled
             ? 'py-2 sm:py-2 md:py-2 px-2 sm:px-6 shadow-md'
             : 'py-2 sm:py-3 px-2 sm:px-6'
@@ -348,7 +348,7 @@ export const Navbar = () => {
 
       {/* Desktop Secondary Category Navigation Links */}
       <nav
-        className={`hidden lg:block bg-ivory-200/95 dark:bg-[#1B1109]/95 backdrop-blur-md border-b border-gold-500/20 px-6 w-full overflow-hidden transition-all duration-300 ease-in-out ${
+        className={`hidden lg:block bg-ivory-200/95 dark:bg-[#1B1109]/95 backdrop-blur-md border-b border-gold-500/20 px-6 w-full overflow-visible transition-all duration-300 ease-in-out ${
           isScrolled ? 'py-1.5 shadow-sm' : 'py-2.5'
         }`}
       >
