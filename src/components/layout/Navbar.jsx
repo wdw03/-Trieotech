@@ -42,6 +42,7 @@ export const Navbar = () => {
 
   const debouncedSearch = useDebounce(searchQuery, 250);
   const searchContainerRef = useRef(null);
+  const mobileSearchContainerRef = useRef(null);
 
   // Detect scroll on desktop for sticky compact header
   useEffect(() => {
@@ -62,7 +63,7 @@ export const Navbar = () => {
   // Perform debounced search for instant dropdown
   useEffect(() => {
     if (debouncedSearch.trim().length > 1) {
-      const results = searchProducts(debouncedSearch).slice(0, 5);
+      const results = searchProducts(debouncedSearch).slice(0, 6);
       setSearchResults(results);
       setIsSearchOpen(true);
     } else {
@@ -71,23 +72,37 @@ export const Navbar = () => {
     }
   }, [debouncedSearch]);
 
-  // Close search dropdown on click outside
+  // Close search dropdown on click outside or Escape
   useEffect(() => {
     const handleClickOutside = (e) => {
-      if (searchContainerRef.current && !searchContainerRef.current.contains(e.target)) {
+      const insideDesktop = searchContainerRef.current && searchContainerRef.current.contains(e.target);
+      const insideMobile = mobileSearchContainerRef.current && mobileSearchContainerRef.current.contains(e.target);
+      if (!insideDesktop && !insideMobile) {
         setIsSearchOpen(false);
       }
       setIsUserDropdownOpen(false);
     };
+
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        setIsSearchOpen(false);
+        setIsUserDropdownOpen(false);
+      }
+    };
+
     document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      window.removeEventListener('keydown', handleKeyDown);
+    };
   }, []);
 
-  // Close mobile menu on route change
+  // Close mobile menu and search dropdown on route change
   useEffect(() => {
     setIsMobileMenuOpen(false);
     setIsSearchOpen(false);
-  }, [location]);
+  }, [location.pathname, location.search]);
 
   const handleSearchSubmit = (e) => {
     e.preventDefault();
@@ -131,7 +146,7 @@ export const Navbar = () => {
 
       {/* Main Navigation Bar - Compact on Desktop Scroll */}
       <div
-        className={`bg-white/95 dark:bg-[#140D08]/95 backdrop-blur-md border-b border-gold-500/20 w-full max-w-full overflow-visible transition-all duration-300 ease-in-out ${
+        className={`relative z-30 bg-white/95 dark:bg-[#140D08]/95 backdrop-blur-md border-b border-gold-500/20 w-full max-w-full overflow-visible transition-all duration-300 ease-in-out ${
           isScrolled
             ? 'py-2 sm:py-2 md:py-2 px-2 sm:px-6 shadow-md'
             : 'py-2 sm:py-3 px-2 sm:px-6'
@@ -152,8 +167,8 @@ export const Navbar = () => {
             <TrioLogo isCompact={isScrolled} />
           </div>
 
-          {/* Desktop Search Bar with Live Dropdown */}
-          <div ref={searchContainerRef} className={`hidden md:block flex-1 max-w-xl mx-4 relative min-w-0 transition-all duration-300 ${isScrolled ? 'scale-[0.98]' : 'scale-100'}`}>
+          {/* Desktop Search Bar with Live Dropdown Floating Above Content */}
+          <div ref={searchContainerRef} className={`hidden md:block flex-1 max-w-xl mx-4 relative z-40 min-w-0 transition-all duration-300 ${isScrolled ? 'scale-[0.98]' : 'scale-100'}`}>
             <form onSubmit={handleSearchSubmit} className="relative">
               <input
                 type="text"
@@ -172,17 +187,20 @@ export const Navbar = () => {
               </button>
             </form>
 
-            {/* Live Instant Search Dropdown */}
+            {/* Live Instant Search Dropdown - Directly Below Search Bar & Above Navbar/Content */}
             {isSearchOpen && searchResults.length > 0 && (
-              <div className="absolute left-0 right-0 top-full mt-2 bg-white dark:bg-[#1A110B] rounded-2xl border border-gold-500/30 shadow-2xl overflow-hidden z-50 animate-fade-in divide-y divide-stone-100 dark:divide-stone-800">
-                <div className="p-2.5 bg-ivory-100 dark:bg-stone-900/50 flex justify-between items-center text-[11px] text-stone-500">
-                  <span>Quick Results ({searchResults.length})</span>
+              <div className="absolute left-0 right-0 top-full mt-2.5 bg-white dark:bg-[#1A110B] rounded-2xl border-2 border-gold-500/40 shadow-2xl overflow-hidden z-50 animate-fade-in divide-y divide-stone-100 dark:divide-stone-800 max-h-[min(480px,70vh)] overflow-y-auto overscroll-contain">
+                <div className="p-3 bg-ivory-100 dark:bg-stone-900/80 flex justify-between items-center text-xs text-stone-500 sticky top-0 z-10 backdrop-blur-md border-b border-gold-500/20">
+                  <span className="font-semibold text-stone-800 dark:text-stone-200">
+                    Product Matches ({searchResults.length})
+                  </span>
                   <Link
                     to={`/search?q=${encodeURIComponent(searchQuery)}`}
                     onClick={() => setIsSearchOpen(false)}
-                    className="text-maroon-700 dark:text-gold-400 font-bold hover:underline"
+                    className="text-maroon-700 dark:text-gold-400 font-bold hover:underline inline-flex items-center gap-1 text-xs"
                   >
-                    View All Results →
+                    <span>View All Results</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
                   </Link>
                 </div>
                 {searchResults.map((p) => (
@@ -190,9 +208,9 @@ export const Navbar = () => {
                     key={p.id}
                     to={`/product/${p.slug}`}
                     onClick={() => setIsSearchOpen(false)}
-                    className="flex items-center gap-3 p-3 hover:bg-gold-50/50 dark:hover:bg-stone-800/60 transition-colors group"
+                    className="flex items-center gap-3.5 p-3 hover:bg-gold-50/60 dark:hover:bg-stone-800/70 transition-colors group"
                   >
-                    <div className="w-12 h-12 rounded-lg overflow-hidden bg-stone-100 shrink-0 border border-stone-200 dark:border-stone-700">
+                    <div className="w-12 h-12 rounded-xl overflow-hidden bg-stone-100 dark:bg-stone-800 shrink-0 border border-gold-500/30">
                       <img
                         src={p.images?.[0] || '/products/shreenathji-statement-patch-1.jpg'}
                         alt={p.name}
@@ -205,7 +223,7 @@ export const Navbar = () => {
                       </h4>
                       <div className="flex items-center gap-2 mt-0.5 text-[11px]">
                         <span className="text-gold-700 dark:text-gold-400 font-semibold">{p.category}</span>
-                        <span className="text-stone-300">•</span>
+                        <span className="text-stone-300 dark:text-stone-600">•</span>
                         <span className="font-bold text-maroon-800 dark:text-gold-400">₹{p.price.toLocaleString('en-IN')}</span>
                       </div>
                     </div>
@@ -325,14 +343,15 @@ export const Navbar = () => {
           </div>
         </div>
 
-        {/* Mobile Search Bar Row */}
-        <div className="md:hidden mt-2.5 pt-2.5 border-t border-gold-500/10 w-full">
+        {/* Mobile Search Bar Row with Live Dropdown */}
+        <div ref={mobileSearchContainerRef} className="md:hidden mt-2.5 pt-2.5 border-t border-gold-500/10 w-full relative z-40">
           <form onSubmit={handleSearchSubmit} className="relative w-full">
             <input
               type="text"
               placeholder="Search patches, copper bottles, pooja items..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
+              onFocus={() => debouncedSearch.trim().length > 1 && setIsSearchOpen(true)}
               className="w-full pl-8 pr-16 py-2 bg-ivory-100 dark:bg-stone-900 text-stone-900 dark:text-ivory-100 text-xs rounded-full border border-gold-500/30 focus:outline-none focus:ring-1 focus:ring-gold-500"
             />
             <Search className="w-3.5 h-3.5 text-stone-400 absolute left-2.5 top-1/2 -translate-y-1/2" />
@@ -343,12 +362,57 @@ export const Navbar = () => {
               Search
             </button>
           </form>
+
+          {/* Mobile Instant Search Dropdown Floating Above Content */}
+          {isSearchOpen && searchResults.length > 0 && (
+            <div className="absolute left-0 right-0 top-full mt-2 bg-white dark:bg-[#1A110B] rounded-2xl border-2 border-gold-500/40 shadow-2xl overflow-hidden z-50 animate-fade-in divide-y divide-stone-100 dark:divide-stone-800 max-h-[55vh] overflow-y-auto overscroll-contain">
+              <div className="p-2.5 bg-ivory-100 dark:bg-stone-900/80 flex justify-between items-center text-[11px] text-stone-500 sticky top-0 z-10 backdrop-blur-md border-b border-gold-500/20">
+                <span className="font-semibold text-stone-800 dark:text-stone-200">
+                  Matches ({searchResults.length})
+                </span>
+                <Link
+                  to={`/search?q=${encodeURIComponent(searchQuery)}`}
+                  onClick={() => setIsSearchOpen(false)}
+                  className="text-maroon-700 dark:text-gold-400 font-bold hover:underline inline-flex items-center gap-1"
+                >
+                  <span>View All</span>
+                  <ArrowRight className="w-3 h-3" />
+                </Link>
+              </div>
+              {searchResults.map((p) => (
+                <Link
+                  key={p.id}
+                  to={`/product/${p.slug}`}
+                  onClick={() => setIsSearchOpen(false)}
+                  className="flex items-center gap-3 p-2.5 hover:bg-gold-50/60 dark:hover:bg-stone-800/70 transition-colors"
+                >
+                  <div className="w-10 h-10 rounded-lg overflow-hidden bg-stone-100 dark:bg-stone-800 shrink-0 border border-gold-500/30">
+                    <img
+                      src={p.images?.[0] || '/products/shreenathji-statement-patch-1.jpg'}
+                      alt={p.name}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h4 className="text-xs font-bold text-stone-900 dark:text-ivory-100 truncate">
+                      {p.name}
+                    </h4>
+                    <div className="flex items-center gap-1.5 text-[10px]">
+                      <span className="text-gold-700 dark:text-gold-400 font-semibold">{p.category}</span>
+                      <span className="text-stone-300 dark:text-stone-600">•</span>
+                      <span className="font-bold text-maroon-800 dark:text-gold-400">₹{p.price.toLocaleString('en-IN')}</span>
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          )}
         </div>
       </div>
 
       {/* Desktop Secondary Category Navigation Links */}
       <nav
-        className={`hidden lg:block bg-ivory-200/95 dark:bg-[#1B1109]/95 backdrop-blur-md border-b border-gold-500/20 px-6 w-full overflow-visible transition-all duration-300 ease-in-out ${
+        className={`relative z-10 hidden lg:block bg-ivory-200/95 dark:bg-[#1B1109]/95 backdrop-blur-md border-b border-gold-500/20 px-6 w-full overflow-visible transition-all duration-300 ease-in-out ${
           isScrolled ? 'py-1.5 shadow-sm' : 'py-2.5'
         }`}
       >
