@@ -30,6 +30,19 @@ export default function ShopClient() {
   });
 
   const [sortBy, setSortBy] = useState(searchParams.get('sort') || 'featured');
+  const [allProducts, setAllProducts] = useState(products);
+
+  React.useEffect(() => {
+    const apiBase = process.env.NEXT_PUBLIC_API_URL || '/api';
+    fetch(`${apiBase}/products?limit=100`)
+      .then((res) => res.json())
+      .then((data) => {
+        if (data?.products?.length) {
+          setAllProducts(data.products);
+        }
+      })
+      .catch((err) => console.warn('Live products fetch notice:', err));
+  }, []);
 
   const resetFilters = () => {
     setFilters({
@@ -48,7 +61,7 @@ export default function ShopClient() {
 
   // Filter and Sort Pipeline
   const filteredProducts = useMemo(() => {
-    let result = [...products];
+    let result = [...allProducts];
 
     // Category Filter
     if (filters.categories && filters.categories.length > 0) {
@@ -165,7 +178,7 @@ export default function ShopClient() {
               </button>
 
               <span className="text-xs font-medium text-stone-600 dark:text-stone-400">
-                Showing <strong className="text-stone-900 dark:text-ivory-100">{filteredProducts.length}</strong> of {products.length} crafts
+                Showing <strong className="text-stone-900 dark:text-ivory-100">{filteredProducts.length}</strong> of {allProducts.length} crafts
               </span>
             </div>
 

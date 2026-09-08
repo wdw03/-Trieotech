@@ -104,7 +104,8 @@ export default function CheckoutClient() {
     try {
       const isCod = paymentMethod === 'cod';
 
-      const response = await fetch('/api/orders/create', {
+      const apiBase = process.env.NEXT_PUBLIC_API_URL || '/api';
+        const response = await fetch(`${apiBase}/orders/create`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

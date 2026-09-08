@@ -42,7 +42,7 @@ export default function RazorpayCheckout({
     }
 
     const options = {
-      key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
+      key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || 'rzp_live_TZUoFoXCMkJNkx',
       amount: Math.round(amount * 100), // paise
       currency,
       name: 'Trio Enterprises',
@@ -70,7 +70,8 @@ export default function RazorpayCheckout({
       handler: async (response) => {
         // Payment successful — verify on server
         try {
-          const verifyRes = await fetch('/api/payments/verify', {
+          const apiBase = process.env.NEXT_PUBLIC_API_URL || '/api';
+          const verifyRes = await fetch(`${apiBase}/payments/verify`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
