@@ -46,19 +46,24 @@ export const Navbar = () => {
   const searchContainerRef = useRef(null);
   const mobileSearchContainerRef = useRef(null);
 
-  // Detect scroll on desktop for sticky compact header
+  // Detect scroll for subtle header shadow elevation without layout shifts
   useEffect(() => {
+    let ticking = false;
     const handleScroll = () => {
-      const scrollPos = window.pageYOffset || document.documentElement.scrollTop || window.scrollY || 0;
-      setIsScrolled(scrollPos > 30);
+      if (!ticking) {
+        window.requestAnimationFrame(() => {
+          const scrollPos = window.scrollY || window.pageYOffset || 0;
+          setIsScrolled(scrollPos > 10);
+          ticking = false;
+        });
+        ticking = true;
+      }
     };
 
     handleScroll();
     window.addEventListener('scroll', handleScroll, { passive: true });
-    document.addEventListener('scroll', handleScroll, { passive: true });
     return () => {
       window.removeEventListener('scroll', handleScroll);
-      document.removeEventListener('scroll', handleScroll);
     };
   }, []);
 
@@ -115,15 +120,9 @@ export const Navbar = () => {
   };
 
   return (
-    <header className="sticky top-0 z-40 w-full max-w-full shadow-sm transition-all duration-300">
-      {/* Top Announcement Bar - Smoothly collapsed on desktop scroll */}
-      <div
-        className={`bg-gradient-to-r from-maroon-950 via-maroon-800 to-maroon-950 text-gold-200 w-full max-w-full overflow-hidden transition-all duration-300 ease-in-out text-[11px] sm:text-xs font-medium ${
-          isScrolled
-            ? 'py-1.5 px-3 border-b border-gold-500/20 md:max-h-0 md:py-0 md:opacity-0 md:border-b-0 md:invisible pointer-events-auto md:pointer-events-none'
-            : 'py-1.5 px-3 sm:px-4 border-b border-gold-500/20 max-h-14 opacity-100'
-        }`}
-      >
+    <>
+      {/* Top Announcement Bar - Natural document flow, zero sticky layout shifts */}
+      <div className="bg-gradient-to-r from-maroon-950 via-maroon-800 to-maroon-950 text-gold-200 w-full max-w-full overflow-hidden text-[11px] sm:text-xs font-medium py-1.5 px-3 sm:px-4 border-b border-gold-500/20">
         <div className="max-w-7xl mx-auto flex items-center justify-between gap-2 w-full min-w-0">
           <div className="flex items-center gap-2 min-w-0 flex-1 overflow-hidden">
             <span className="hidden sm:inline-flex items-center gap-1 bg-gold-500/20 text-gold-300 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border border-gold-500/30 shrink-0">
@@ -146,14 +145,10 @@ export const Navbar = () => {
         </div>
       </div>
 
-      {/* Main Navigation Bar - Compact on Desktop Scroll */}
-      <div
-        className={`relative z-30 bg-white/95 dark:bg-[#140D08]/95 backdrop-blur-md border-b border-gold-500/20 w-full max-w-full overflow-visible transition-all duration-300 ease-in-out ${
-          isScrolled
-            ? 'py-2 sm:py-2 md:py-2 px-2 sm:px-6 shadow-md'
-            : 'py-2 sm:py-3 px-2 sm:px-6'
-        }`}
-      >
+      {/* Main Sticky Header - Completely stable and flicker-free */}
+      <header className={`sticky top-0 z-40 w-full max-w-full transition-shadow duration-200 ${isScrolled ? 'shadow-md' : 'shadow-sm'}`}>
+        {/* Main Navigation Bar */}
+        <div className="relative z-30 bg-white/95 dark:bg-[#140D08]/95 backdrop-blur-md border-b border-gold-500/20 w-full max-w-full overflow-visible py-2 sm:py-2.5 px-2 sm:px-6">
         <div className="max-w-7xl mx-auto flex items-center justify-between gap-1 xs:gap-2 sm:gap-4 w-full min-w-0">
           
           {/* Mobile Menu Toggle & Logo */}
@@ -166,11 +161,11 @@ export const Navbar = () => {
               {isMobileMenuOpen ? <X className="w-5 h-5 sm:w-6 sm:h-6" /> : <Menu className="w-5 h-5 sm:w-6 sm:h-6" />}
             </button>
 
-            <TrioLogo isCompact={isScrolled} />
+            <TrioLogo />
           </div>
 
           {/* Desktop Search Bar with Live Dropdown Floating Above Content */}
-          <div ref={searchContainerRef} className={`hidden md:block flex-1 max-w-xl mx-4 relative z-40 min-w-0 transition-all duration-300 ${isScrolled ? 'scale-[0.98]' : 'scale-100'}`}>
+          <div ref={searchContainerRef} className="hidden md:block flex-1 max-w-xl mx-4 relative z-40 min-w-0">
             <form onSubmit={handleSearchSubmit} className="relative">
               <input
                 type="text"
@@ -413,11 +408,7 @@ export const Navbar = () => {
       </div>
 
       {/* Desktop Secondary Category Navigation Links */}
-      <nav
-        className={`relative z-10 hidden lg:block bg-ivory-200/95 dark:bg-[#1B1109]/95 backdrop-blur-md border-b border-gold-500/20 px-6 w-full overflow-visible transition-all duration-300 ease-in-out ${
-          isScrolled ? 'py-1.5 shadow-sm' : 'py-2.5'
-        }`}
-      >
+      <nav className="relative z-10 hidden lg:block bg-ivory-200/95 dark:bg-[#1B1109]/95 backdrop-blur-md border-b border-gold-500/20 px-6 py-2 w-full overflow-visible">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-7 text-xs font-semibold">
             
@@ -578,6 +569,7 @@ export const Navbar = () => {
         </div>
       )}
     </header>
+  </>
   );
 };
 
