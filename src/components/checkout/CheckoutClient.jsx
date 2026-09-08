@@ -63,7 +63,7 @@ export default function CheckoutClient() {
     if (cartItems.length === 0) {
       router.push('/cart');
     }
-  }, [cartItems, navigate]);
+  }, [cartItems, router]);
 
   const activeShippingAddress = selectedAddressId !== 'new' && user?.addresses
     ? user.addresses.find(a => a.id === selectedAddressId)
