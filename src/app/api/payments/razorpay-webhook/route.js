@@ -2,6 +2,7 @@ export const dynamic = 'force-dynamic';
 import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '../../../../lib/supabase/admin';
 import { verifyWebhookSignature } from '../../../../lib/razorpay';
+import { sendOrderConfirmation } from '../../../../lib/resend';
 
 // POST: Razorpay webhook handler
 export async function POST(request) {
@@ -44,11 +45,42 @@ export async function POST(request) {
           .single();
 
         if (paymentRecord) {
-          await supabaseAdmin
+          const { data: updatedOrder } = await supabaseAdmin
             .from('orders')
             .update({ status: 'confirmed' })
             .eq('id', paymentRecord.order_id)
-            .eq('status', 'pending_payment');
+            .eq('status', 'pending_payment')
+            .select('*, order_items(*)')
+            .single();
+
+          if (updatedOrder) {
+            try {
+              let recipientEmail = updatedOrder.shipping_address?.email;
+              if (!recipientEmail && updatedOrder.user_id) {
+                const { data: u } = await supabaseAdmin.auth.admin.getUserById(updatedOrder.user_id);
+                recipientEmail = u?.user?.email;
+              }
+
+              if (recipientEmail) {
+                await sendOrderConfirmation({
+                  to: recipientEmail,
+                  orderNumber: updatedOrder.order_number,
+                  orderId: updatedOrder.id,
+                  orderDate: updatedOrder.created_at,
+                  paymentMethod: 'razorpay',
+                  items: updatedOrder.order_items,
+                  subtotal: updatedOrder.subtotal,
+                  discount: updatedOrder.discount,
+                  couponCode: updatedOrder.coupon_code,
+                  shippingCost: updatedOrder.shipping_cost,
+                  total: updatedOrder.total,
+                  shippingAddress: updatedOrder.shipping_address,
+                });
+              }
+            } catch (emailErr) {
+              console.warn('Webhook email error:', emailErr);
+            }
+          }
         }
         break;
       }

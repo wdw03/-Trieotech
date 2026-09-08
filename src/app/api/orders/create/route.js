@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server';
 import { createClient } from '../../../../lib/supabase/server';
 import { supabaseAdmin } from '../../../../lib/supabase/admin';
 import { createRazorpayOrder } from '../../../../lib/razorpay';
+import { sendOrderConfirmation } from '../../../../lib/resend';
 
 export async function POST(request) {
   try {
@@ -245,6 +246,34 @@ export async function POST(request) {
         status: 'created',
         method: 'cod',
       });
+
+      // Send Order Confirmation & Invoice Details Email
+      try {
+        let recipientEmail = user?.email || body.shippingAddress?.email || body.email;
+        if (!recipientEmail && user?.id) {
+          const { data: u } = await supabaseAdmin.auth.admin.getUserById(user.id);
+          recipientEmail = u?.user?.email;
+        }
+
+        if (recipientEmail) {
+          await sendOrderConfirmation({
+            to: recipientEmail,
+            orderNumber: order.order_number,
+            orderId: order.id,
+            orderDate: order.created_at,
+            paymentMethod: 'cod',
+            items: validatedItems,
+            subtotal: order.subtotal,
+            discount: order.discount,
+            couponCode: order.coupon_code,
+            shippingCost: order.shipping_cost,
+            total: order.total,
+            shippingAddress: order.shipping_address,
+          });
+        }
+      } catch (emailErr) {
+        console.warn('Failed to send COD order confirmation email:', emailErr);
+      }
 
       return NextResponse.json({
         success: true,

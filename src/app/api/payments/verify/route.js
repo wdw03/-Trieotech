@@ -157,14 +157,26 @@ export async function POST(request) {
       // Shiprocket order can be created manually later
     }
 
-    // 9. Send confirmation email (async, don't block response)
+    // 9. Send confirmation email & invoice (async, don't block response)
     try {
-      const recipientEmail = user?.email || order.shipping_address?.email;
+      let recipientEmail = user?.email || order.shipping_address?.email;
+      if (!recipientEmail && order.user_id) {
+        const { data: u } = await supabaseAdmin.auth.admin.getUserById(order.user_id);
+        recipientEmail = u?.user?.email;
+      }
+
       if (recipientEmail) {
         await sendOrderConfirmation({
           to: recipientEmail,
           orderNumber: order.order_number,
+          orderId: order.id,
+          orderDate: order.created_at,
+          paymentMethod: 'razorpay',
           items: order.order_items,
+          subtotal: order.subtotal,
+          discount: order.discount,
+          couponCode: order.coupon_code,
+          shippingCost: order.shipping_cost,
           total: order.total,
           shippingAddress: order.shipping_address,
         });

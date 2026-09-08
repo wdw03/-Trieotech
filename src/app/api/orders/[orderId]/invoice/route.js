@@ -4,40 +4,68 @@ import { createClient } from '../../../../../lib/supabase/server';
 import { supabaseAdmin } from '../../../../../lib/supabase/admin';
 import { generateInvoiceHTML } from '../../../../../lib/invoice';
 
-// GET: Download invoice for an order
+// GET: View or Download official invoice for an order
 export async function GET(request, { params }) {
   try {
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    let user = null;
+    try {
+      const supabase = await createClient();
+      const { data: { user: u } } = await supabase.auth.getUser();
+      user = u;
+    } catch (_) {}
 
     const { orderId } = await params;
+    const { searchParams } = new URL(request.url);
+    const shouldDownload = searchParams.get('download') === 'true';
 
-    const { data: order, error } = await supabaseAdmin
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(orderId);
+
+    let query = supabaseAdmin
       .from('orders')
-      .select(`*, order_items (*)`)
-      .eq('id', orderId)
-      .eq('user_id', user.id)
-      .single();
+      .select(`*, order_items (*)`);
+
+    if (isUuid) {
+      query = query.eq('id', orderId);
+    } else {
+      query = query.eq('order_number', orderId);
+    }
+
+    const { data: order, error } = await query.single();
 
     if (error || !order) {
       return NextResponse.json({ error: 'Order not found' }, { status: 404 });
     }
 
-    // Only generate invoice for confirmed/delivered orders
-    if (order.status === 'pending_payment' || order.status === 'payment_failed') {
-      return NextResponse.json({ error: 'Invoice not available for this order' }, { status: 400 });
+    // Authorization check: if authenticated user is present and order belongs to a user, check matching ID (unless admin)
+    if (order.user_id && user) {
+      const isAdmin = user.email === 'trioent19@gmail.com' || user.user_metadata?.role === 'admin';
+      if (!isAdmin && order.user_id !== user.id) {
+        return NextResponse.json({ error: 'Unauthorized to view this invoice' }, { status: 403 });
+      }
+    }
+
+    // If order is payment_failed, do not issue an invoice
+    if (order.status === 'payment_failed') {
+      return NextResponse.json(
+        { error: 'Invoice not available for unpaid / cancelled orders' },
+        { status: 400 }
+      );
     }
 
     const html = generateInvoiceHTML(order);
 
+    const disposition = shouldDownload
+      ? `attachment; filename="Invoice-${order.order_number}.html"`
+      : `inline; filename="Invoice-${order.order_number}.html"`;
+
     return new NextResponse(html, {
       headers: {
         'Content-Type': 'text/html; charset=utf-8',
-        'Content-Disposition': `inline; filename="invoice-${order.order_number}.html"`,
+        'Content-Disposition': disposition,
       },
     });
   } catch (err) {
-    return NextResponse.json({ error: err.message }, { status: 500 });
+    console.error('Invoice generation error:', err);
+    return NextResponse.json({ error: err.message || 'Failed to generate invoice' }, { status: 500 });
   }
 }

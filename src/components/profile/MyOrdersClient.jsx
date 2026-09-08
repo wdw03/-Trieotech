@@ -5,7 +5,7 @@ import Breadcrumb from '../../components/common/Breadcrumb';
 import EmptyState from '../../components/common/EmptyState';
 import { useAuth } from '../../context/AuthContext';
 import { useCart } from '../../context/CartContext';
-import { Package, Truck, ArrowRight, CheckCircle2, Clock, RotateCcw, FileText } from 'lucide-react';
+import { Package, Truck, ArrowRight, CheckCircle2, Clock, RotateCcw, FileText, Download } from 'lucide-react';
 
 export default function MyOrdersClient() {
   const { userOrders } = useAuth();
@@ -115,13 +115,22 @@ export default function MyOrdersClient() {
 
               <div className="flex items-center flex-wrap gap-2.5">
                 <a
+                  href={`/api/orders/${order.dbId || order.id}/invoice?download=true`}
+                  className="px-3 py-2 rounded-xl bg-gold-500/15 border border-gold-500/40 text-maroon-900 dark:text-gold-300 hover:bg-gold-500/25 text-xs font-bold flex items-center gap-1.5 transition-colors"
+                  title="Download Invoice as file"
+                >
+                  <Download className="w-3.5 h-3.5 text-gold-600" />
+                  <span>Download Invoice</span>
+                </a>
+                <a
                   href={`/api/orders/${order.dbId || order.id}/invoice`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="px-3 py-2 rounded-xl border border-gold-500/40 text-stone-700 dark:text-stone-300 hover:bg-gold-500/10 text-xs font-bold flex items-center gap-1.5 transition-colors"
+                  className="px-3 py-2 rounded-xl border border-stone-200 dark:border-stone-800 text-stone-600 dark:text-stone-400 hover:bg-stone-100 dark:hover:bg-stone-800 text-xs font-medium flex items-center gap-1.5 transition-colors"
+                  title="View and Print Invoice"
                 >
-                  <FileText className="w-3.5 h-3.5 text-gold-600" />
-                  <span>Invoice</span>
+                  <FileText className="w-3.5 h-3.5" />
+                  <span>View</span>
                 </a>
                 <button
                   onClick={() => handleReorder(order)}
