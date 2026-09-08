@@ -13,7 +13,20 @@ export async function GET() {
 
     if (profileErr) throw profileErr;
 
-    // 2. Get orders to aggregate total spent and order counts
+    // 2. Get auth users to map emails
+    let authUsersMap = {};
+    try {
+      const { data: userList } = await supabaseAdmin.auth.admin.listUsers();
+      if (userList?.users) {
+        userList.users.forEach((u) => {
+          if (u.id && u.email) {
+            authUsersMap[u.id] = u.email;
+          }
+        });
+      }
+    } catch (_) {}
+
+    // 3. Get orders to aggregate total spent and order counts
     const { data: orders } = await supabaseAdmin
       .from('orders')
       .select('id, user_id, total, status, created_at, shipping_address');
@@ -22,17 +35,24 @@ export async function GET() {
     const customerMap = {};
 
     (profiles || []).forEach((p) => {
+      const email = p.email || authUsersMap[p.id] || '';
+      const name = p.full_name || email.split('@')[0] || 'Artisan Patron';
       customerMap[p.id] = {
         id: p.id,
-        name: p.full_name || p.email?.split('@')[0] || 'Customer',
-        email: p.email || '',
+        name,
+        email,
         phone: p.phone || '',
+        totalOrders: 0,
         ordersCount: 0,
         totalSpent: 0,
         status: 'Active',
-        city: '',
-        state: '',
-        joinedDate: p.created_at ? new Date(p.created_at).toLocaleDateString() : 'Recent',
+        city: 'Jaipur',
+        state: 'Rajasthan',
+        tags: ['Artisan Patron'],
+        avatar: name.slice(0, 2).toUpperCase(),
+        addresses: [],
+        notes: '',
+        joinedDate: p.created_at ? new Date(p.created_at).toLocaleDateString('en-IN') : 'Recent',
       };
     });
 
@@ -43,34 +63,60 @@ export async function GET() {
       const orderTotal = Number(ord.total || 0);
 
       if (uId && customerMap[uId]) {
+        customerMap[uId].totalOrders += 1;
         customerMap[uId].ordersCount += 1;
         if (ord.status !== 'cancelled' && ord.status !== 'payment_failed') {
           customerMap[uId].totalSpent += orderTotal;
         }
-        if (addr.city && !customerMap[uId].city) customerMap[uId].city = addr.city;
-        if (addr.state && !customerMap[uId].state) customerMap[uId].state = addr.state;
+        if (addr.city) customerMap[uId].city = addr.city;
+        if (addr.state) customerMap[uId].state = addr.state;
         if (addr.phone && !customerMap[uId].phone) customerMap[uId].phone = addr.phone;
+        if (addr.address_line || addr.address) {
+          customerMap[uId].addresses.push({
+            type: 'Delivery',
+            text: `${addr.address_line || addr.address}, ${addr.city || ''}, ${addr.state || ''} - ${addr.pincode || addr.zip || ''}`
+          });
+        }
       } else if (!uId && addr.email) {
         // Guest customer from order
-        const guestKey = `guest-${addr.email}`;
+        const guestKey = `guest-${addr.email.toLowerCase()}`;
         if (!customerMap[guestKey]) {
+          const guestName = `${addr.firstName || addr.name || ''} ${addr.lastName || ''}`.trim() || 'Guest Patron';
           customerMap[guestKey] = {
             id: guestKey,
-            name: `${addr.firstName || ''} ${addr.lastName || ''}`.trim() || 'Guest Customer',
+            name: guestName,
             email: addr.email,
             phone: addr.phone || '',
+            totalOrders: 1,
             ordersCount: 1,
             totalSpent: orderTotal,
             status: 'Active',
-            city: addr.city || '',
+            city: addr.city || 'India',
             state: addr.state || '',
-            joinedDate: new Date(ord.created_at).toLocaleDateString(),
+            tags: ['Guest Patron'],
+            avatar: guestName.slice(0, 2).toUpperCase(),
+            addresses: addr.address ? [{ type: 'Order Address', text: `${addr.address}, ${addr.city || ''}` }] : [],
+            notes: 'Placed order as guest',
+            joinedDate: new Date(ord.created_at).toLocaleDateString('en-IN'),
           };
         } else {
+          customerMap[guestKey].totalOrders += 1;
           customerMap[guestKey].ordersCount += 1;
           customerMap[guestKey].totalSpent += orderTotal;
         }
       }
+    });
+
+    // Compute tags based on spend and orders
+    Object.values(customerMap).forEach((c) => {
+      const tags = ['Artisan Patron'];
+      if (c.totalSpent > 5000 || c.totalOrders >= 3) {
+        tags.push('VIP');
+        tags.push('High Value');
+      } else if (c.totalOrders === 1) {
+        tags.push('New Buyer');
+      }
+      c.tags = tags;
     });
 
     const customers = Object.values(customerMap);
