@@ -1,6 +1,7 @@
 import { Resend } from 'resend';
 
-export const resend = new Resend(process.env.RESEND_API_KEY);
+const resendApiKey = process.env.RESEND_API_KEY || 're_placeholder_for_build';
+export const resend = new Resend(resendApiKey);
 
 const FROM_EMAIL = 'Trio Enterprises <onboarding@resend.dev>';
 
