@@ -1,22 +1,40 @@
 'use client';
 import React, { useState } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '../../context/AuthContext';
 import TrioLogo from '../../components/common/TrioLogo';
-import { Mail, Lock, ArrowRight, Sparkles } from 'lucide-react';
+import { Mail, Lock, ArrowRight, Sparkles, Loader2 } from 'lucide-react';
 
 export default function LoginClient() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { login } = useAuth();
 
-  const [email, setEmail] = useState('radhika.singhania@example.com');
-  const [password, setPassword] = useState('password123');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
 
-  const handleSubmit = (e) => {
+  const redirectTo = searchParams.get('redirect') || '/profile';
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    login(email, password);
-    router.push('/profile');
+    setError('');
+    setIsLoading(true);
+
+    try {
+      const result = await login(email, password);
+      if (result.success) {
+        router.push(redirectTo);
+      } else {
+        setError(result.error || 'Invalid email or password');
+      }
+    } catch (err) {
+      setError('Something went wrong. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -33,6 +51,12 @@ export default function LoginClient() {
           </p>
         </div>
 
+        {error && (
+          <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 text-xs rounded-xl px-4 py-3">
+            {error}
+          </div>
+        )}
+
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-1">
             <label className="text-xs font-bold text-stone-700 dark:text-stone-300">Email Address</label>
@@ -40,9 +64,11 @@ export default function LoginClient() {
               <input
                 type="email"
                 required
+                placeholder="your@email.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-ivory-100 dark:bg-stone-900 border border-gold-500/30 text-xs outline-none focus:border-maroon-700"
+                disabled={isLoading}
+                className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-ivory-100 dark:bg-stone-900 border border-gold-500/30 text-xs outline-none focus:border-maroon-700 disabled:opacity-50"
               />
               <Mail className="w-4 h-4 text-gold-600 absolute left-3.5 top-1/2 -translate-y-1/2" />
             </div>
@@ -59,9 +85,11 @@ export default function LoginClient() {
               <input
                 type="password"
                 required
+                placeholder="••••••••"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-ivory-100 dark:bg-stone-900 border border-gold-500/30 text-xs outline-none focus:border-maroon-700"
+                disabled={isLoading}
+                className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-ivory-100 dark:bg-stone-900 border border-gold-500/30 text-xs outline-none focus:border-maroon-700 disabled:opacity-50"
               />
               <Lock className="w-4 h-4 text-gold-600 absolute left-3.5 top-1/2 -translate-y-1/2" />
             </div>
@@ -69,10 +97,20 @@ export default function LoginClient() {
 
           <button
             type="submit"
-            className="w-full btn-primary py-3 rounded-xl text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 shadow-maroon-md"
+            disabled={isLoading}
+            className="w-full btn-primary py-3 rounded-xl text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 shadow-maroon-md disabled:opacity-50"
           >
-            <span>Sign In to Account</span>
-            <ArrowRight className="w-4 h-4" />
+            {isLoading ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin" />
+                <span>Signing In...</span>
+              </>
+            ) : (
+              <>
+                <span>Sign In to Account</span>
+                <ArrowRight className="w-4 h-4" />
+              </>
+            )}
           </button>
         </form>
 
@@ -85,6 +123,4 @@ export default function LoginClient() {
       </div>
     </div>
   );
-};
-
-
+}

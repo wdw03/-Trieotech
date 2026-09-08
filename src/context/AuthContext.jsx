@@ -1,168 +1,357 @@
 'use client';
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { useToast } from './ToastContext';
-import { mockOrders } from '../data/orders';
+import { createClient } from '../lib/supabase/client';
 
 const AuthContext = createContext();
 
-const DEFAULT_USER = {
-  id: "USR-78219",
-  name: "Radhika Singhania",
-  email: "radhika.singhania@example.com",
-  phone: "+91 98234 56789",
-  avatar: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=160&auto=format&fit=crop&q=80",
-  addresses: [
-    {
-      id: "ADDR-1",
-      name: "Radhika Singhania (Home)",
-      phone: "+91 98234 56789",
-      address: "Flat 402, Royal Palms Residency, MG Road",
-      city: "Jaipur",
-      state: "Rajasthan",
-      zip: "302001",
-      country: "India",
-      isDefault: true
-    },
-    {
-      id: "ADDR-2",
-      name: "Radhika Singhania (Design Boutique Studio)",
-      phone: "+91 98234 56789",
-      address: "Studio 14, Johari Bazaar Artisan Square",
-      city: "Jaipur",
-      state: "Rajasthan",
-      zip: "302003",
-      country: "India",
-      isDefault: false
-    }
-  ]
-};
-
 export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(() => {
-    try {
-      const saved = localStorage.getItem('trio_user');
-      return saved ? JSON.parse(saved) : DEFAULT_USER;
-    } catch {
-      return DEFAULT_USER;
-    }
-  });
-
-  const [userOrders, setUserOrders] = useState(() => {
-    try {
-      const saved = localStorage.getItem('trio_user_orders');
-      return saved ? JSON.parse(saved) : mockOrders;
-    } catch {
-      return mockOrders;
-    }
-  });
-
+  const [user, setUser] = useState(null);
+  const [profile, setProfile] = useState(null);
+  const [addresses, setAddresses] = useState([]);
+  const [userOrders, setUserOrders] = useState([]);
+  const [loading, setLoading] = useState(true);
   const { addToast } = useToast();
 
-  useEffect(() => {
+  const supabase = createClient();
+
+  // ── Fetch profile + addresses from Supabase ──
+  const fetchProfile = useCallback(async (userId) => {
     try {
-      if (user) {
-        localStorage.setItem('trio_user', JSON.stringify(user));
-      } else {
-        localStorage.removeItem('trio_user');
+      const { data: prof, error: profError } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', userId)
+        .single();
+
+      if (profError) throw profError;
+      setProfile(prof);
+
+      const { data: addrs } = await supabase
+        .from('addresses')
+        .select('*')
+        .eq('user_id', userId)
+        .order('is_default', { ascending: false });
+
+      setAddresses(addrs || []);
+
+      return prof;
+    } catch (err) {
+      console.error('Error fetching profile:', err);
+      return null;
+    }
+  }, [supabase]);
+
+  // ── Fetch user orders from Supabase ──
+  const fetchOrders = useCallback(async (userId) => {
+    try {
+      const { data: orders, error } = await supabase
+        .from('orders')
+        .select(`
+          *,
+          order_items (*),
+          payments (*),
+          shipments (*)
+        `)
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      const normalized = (orders || []).map((o) => ({
+        ...o,
+        id: o.order_number || o.id,
+        dbId: o.id,
+        date: new Date(o.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' }),
+        items: (o.order_items || []).map((item) => ({
+          productId: item.product_id,
+          name: item.name,
+          image: item.image,
+          price: Number(item.price),
+          quantity: item.quantity,
+          color: item.color,
+          size: item.size,
+        })),
+        trackingNumber: o.shipments?.[0]?.awb_number || `BLUEDART-${(o.order_number || o.id).slice(-6)}`,
+        carrier: o.shipments?.[0]?.courier_name || 'BlueDart Express',
+        total: Number(o.total),
+      }));
+
+      setUserOrders(normalized);
+    } catch (err) {
+      console.error('Error fetching orders:', err);
+      setUserOrders([]);
+    }
+  }, [supabase]);
+
+  // ── Initialize auth state ──
+  useEffect(() => {
+    const initAuth = async () => {
+      try {
+        const { data: { user: authUser } } = await supabase.auth.getUser();
+        if (authUser) {
+          setUser(authUser);
+          await fetchProfile(authUser.id);
+          await fetchOrders(authUser.id);
+        }
+      } catch (err) {
+        console.error('Auth init error:', err);
+      } finally {
+        setLoading(false);
       }
-    } catch (e) {
-      console.error('Failed to save user', e);
-    }
-  }, [user]);
+    };
 
-  useEffect(() => {
+    initAuth();
+
+    // Listen for auth state changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        if (event === 'SIGNED_IN' && session?.user) {
+          setUser(session.user);
+          await fetchProfile(session.user.id);
+          await fetchOrders(session.user.id);
+        } else if (event === 'SIGNED_OUT') {
+          setUser(null);
+          setProfile(null);
+          setAddresses([]);
+          setUserOrders([]);
+        }
+      }
+    );
+
+    return () => subscription.unsubscribe();
+  }, [supabase, fetchProfile, fetchOrders]);
+
+  // ── Login ──
+  const login = async (email, password) => {
     try {
-      localStorage.setItem('trio_user_orders', JSON.stringify(userOrders));
-    } catch (e) {
-      console.error('Failed to save orders', e);
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (error) {
+        addToast(error.message || 'Login failed', 'error');
+        return { success: false, error: error.message };
+      }
+
+      addToast('Welcome back to Trio Ecart!', 'success');
+      return { success: true };
+    } catch (err) {
+      addToast('Something went wrong', 'error');
+      return { success: false, error: err.message };
     }
-  }, [userOrders]);
-
-  const login = (email, password) => {
-    const loggedUser = {
-      ...DEFAULT_USER,
-      email: email || DEFAULT_USER.email
-    };
-    setUser(loggedUser);
-    addToast('Welcome back to Trio Ecart!', 'success');
-    return { success: true };
   };
 
-  const register = (formData) => {
-    const newUser = {
-      id: `USR-${Date.now().toString().slice(-5)}`,
-      name: formData.name || 'Artisan Patron',
-      email: formData.email,
-      phone: formData.phone || '',
-      avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=160&auto=format&fit=crop&q=80",
-      addresses: []
-    };
-    setUser(newUser);
-    addToast('Welcome to Trio Ecart artisan family!', 'success');
-    return { success: true };
+  // ── Register ──
+  const register = async (formData) => {
+    try {
+      const { data, error } = await supabase.auth.signUp({
+        email: formData.email,
+        password: formData.password,
+        options: {
+          data: {
+            full_name: formData.name || '',
+            phone: formData.phone || '',
+          },
+        },
+      });
+
+      if (error) {
+        addToast(error.message || 'Registration failed', 'error');
+        return { success: false, error: error.message };
+      }
+
+      // Update profile with phone
+      if (data.user) {
+        await supabase
+          .from('profiles')
+          .update({
+            full_name: formData.name || '',
+            phone: formData.phone || '',
+          })
+          .eq('id', data.user.id);
+      }
+
+      addToast('Welcome to Trio Ecart artisan family! Check your email to verify.', 'success');
+      return { success: true, needsVerification: !data.session };
+    } catch (err) {
+      addToast('Something went wrong', 'error');
+      return { success: false, error: err.message };
+    }
   };
 
-  const logout = () => {
+  // ── Logout ──
+  const logout = async () => {
+    await supabase.auth.signOut();
     setUser(null);
+    setProfile(null);
+    setAddresses([]);
+    setUserOrders([]);
     addToast('Logged out successfully', 'info');
   };
 
-  const addAddress = (addressData) => {
-    const newAddr = {
-      ...addressData,
-      id: `ADDR-${Date.now().toString().slice(-4)}`,
-      isDefault: user.addresses.length === 0 ? true : !!addressData.isDefault
-    };
+  // ── Forgot Password ──
+  const resetPassword = async (email) => {
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/login?reset=true`,
+      });
 
-    let updatedAddresses = [...user.addresses];
-    if (newAddr.isDefault) {
-      updatedAddresses = updatedAddresses.map(a => ({ ...a, isDefault: false }));
+      if (error) {
+        addToast(error.message, 'error');
+        return { success: false };
+      }
+
+      addToast('Password reset email sent! Check your inbox.', 'success');
+      return { success: true };
+    } catch (err) {
+      addToast('Something went wrong', 'error');
+      return { success: false };
     }
-    updatedAddresses.push(newAddr);
-
-    setUser(prev => ({
-      ...prev,
-      addresses: updatedAddresses
-    }));
-
-    addToast('New delivery address added', 'success');
-    return newAddr;
   };
 
-  const deleteAddress = (addressId) => {
-    setUser(prev => ({
-      ...prev,
-      addresses: prev.addresses.filter(a => a.id !== addressId)
-    }));
-    addToast('Address removed', 'info');
+  // ── Add Address ──
+  const addAddress = async (addressData) => {
+    if (!user) return null;
+
+    try {
+      // If setting as default, unset all others first
+      if (addressData.isDefault || addresses.length === 0) {
+        await supabase
+          .from('addresses')
+          .update({ is_default: false })
+          .eq('user_id', user.id);
+      }
+
+      const { data: newAddr, error } = await supabase
+        .from('addresses')
+        .insert({
+          user_id: user.id,
+          name: addressData.name,
+          phone: addressData.phone,
+          address_line: addressData.address || addressData.address_line,
+          city: addressData.city,
+          state: addressData.state,
+          pincode: addressData.zip || addressData.pincode,
+          country: addressData.country || 'India',
+          is_default: addressData.isDefault || addresses.length === 0,
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      // Refresh addresses
+      await fetchProfile(user.id);
+      addToast('New delivery address added', 'success');
+      return newAddr;
+    } catch (err) {
+      console.error('Error adding address:', err);
+      addToast('Failed to add address', 'error');
+      return null;
+    }
   };
 
-  const updateProfile = (updatedData) => {
-    setUser(prev => {
-      const updated = { ...prev, ...updatedData };
-      return updated;
-    });
-    addToast('Profile updated successfully!', 'success');
-    return { success: true };
+  // ── Delete Address ──
+  const deleteAddress = async (addressId) => {
+    if (!user) return;
+
+    try {
+      const { error } = await supabase
+        .from('addresses')
+        .delete()
+        .eq('id', addressId)
+        .eq('user_id', user.id);
+
+      if (error) throw error;
+
+      setAddresses((prev) => prev.filter((a) => a.id !== addressId));
+      addToast('Address removed', 'info');
+    } catch (err) {
+      console.error('Error deleting address:', err);
+      addToast('Failed to remove address', 'error');
+    }
   };
 
+  // ── Update Profile ──
+  const updateProfile = async (updatedData) => {
+    if (!user) return { success: false };
+
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({
+          full_name: updatedData.name || updatedData.full_name || profile?.full_name,
+          phone: updatedData.phone || profile?.phone,
+          avatar_url: updatedData.avatar || updatedData.avatar_url || profile?.avatar_url,
+        })
+        .eq('id', user.id);
+
+      if (error) throw error;
+
+      await fetchProfile(user.id);
+      addToast('Profile updated successfully!', 'success');
+      return { success: true };
+    } catch (err) {
+      console.error('Error updating profile:', err);
+      addToast('Failed to update profile', 'error');
+      return { success: false };
+    }
+  };
+
+  // ── Add Order (called after payment verification) ──
   const addOrder = (order) => {
-    setUserOrders(prev => [order, ...prev]);
+    setUserOrders((prev) => [order, ...prev]);
   };
+
+  // ── Refresh Orders ──
+  const refreshOrders = async () => {
+    if (user) await fetchOrders(user.id);
+  };
+
+  // ── Computed user object for backward compatibility ──
+  const compatUser = user
+    ? {
+        id: user.id,
+        name: profile?.full_name || user.user_metadata?.full_name || user.email?.split('@')[0] || 'Artisan Patron',
+        email: user.email,
+        phone: profile?.phone || user.user_metadata?.phone || '',
+        avatar: profile?.avatar_url || user.user_metadata?.avatar_url || 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=160&auto=format&fit=crop&q=80',
+        role: profile?.role || user.user_metadata?.role || (user.email === 'trioent19@gmail.com' ? 'admin' : 'customer'),
+        addresses: addresses.map((a) => ({
+          id: a.id,
+          name: a.name,
+          phone: a.phone,
+          address: a.address_line,
+          city: a.city,
+          state: a.state,
+          zip: a.pincode,
+          country: a.country,
+          isDefault: a.is_default,
+        })),
+      }
+    : null;
 
   return (
     <AuthContext.Provider
       value={{
-        user,
+        user: compatUser,
+        authUser: user,
+        profile,
+        addresses,
         isAuthenticated: !!user,
+        loading,
         userOrders,
         login,
         register,
         logout,
+        resetPassword,
         addAddress,
         deleteAddress,
         updateProfile,
         addOrder,
+        refreshOrders,
       }}
     >
       {children}

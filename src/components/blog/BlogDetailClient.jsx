@@ -8,12 +8,12 @@ import { getBlogBySlug, blogs } from '../../data/blogs';
 import { Clock, Tag, Share2, ArrowLeft, ArrowRight, Sparkles, BookOpen } from 'lucide-react';
 import { useToast } from '../../context/ToastContext';
 
-export default function BlogDetailClient({ initialSlug }) {
+export default function BlogDetailClient({ initialSlug, initialBlog }) {
   const params = useParams();
   const slug = initialSlug || params?.slug;
   const { addToast } = useToast();
 
-  const blog = getBlogBySlug(slug);
+  const blog = initialBlog || getBlogBySlug(slug);
 
   const relatedBlogs = blogs.filter(b => b.slug !== slug).slice(0, 2);
 

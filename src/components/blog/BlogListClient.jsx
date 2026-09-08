@@ -5,14 +5,15 @@ import Breadcrumb from '../../components/common/Breadcrumb';
 import { blogs } from '../../data/blogs';
 import { Sparkles, Clock, ArrowRight, BookOpen, Tag } from 'lucide-react';
 
-export default function BlogListClient() {
+export default function BlogListClient({ initialBlogs }) {
+  const blogList = initialBlogs || blogs;
   const [selectedCategory, setSelectedCategory] = useState('All');
 
   const categories = ['All', 'Artisan Heritage', 'Wellness & Tradition', 'Devotion & Rituals'];
 
   const filteredBlogs = selectedCategory === 'All'
-    ? blogs
-    : blogs.filter(b => b.category === selectedCategory);
+    ? blogList
+    : blogList.filter(b => b.category === selectedCategory);
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 space-y-8">

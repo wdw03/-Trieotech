@@ -1,8 +1,10 @@
-import { blogs, getBlogBySlug } from '../../../data/blogs';
+import { getAllBlogs, getBlogBySlug } from '../../../lib/blogs';
+import { blogs as fallbackBlogs } from '../../../data/blogs';
 import BlogDetailClient from '../../../components/blog/BlogDetailClient';
 import { notFound } from 'next/navigation';
 
 export async function generateStaticParams() {
+  const blogs = getAllBlogs();
   return blogs.map((b) => ({
     slug: b.slug,
   }));
@@ -10,7 +12,7 @@ export async function generateStaticParams() {
 
 export async function generateMetadata({ params }) {
   const { slug } = await params;
-  const blog = getBlogBySlug(slug) || blogs.find(b => b.slug === slug);
+  const blog = getBlogBySlug(slug) || fallbackBlogs.find(b => b.slug === slug);
 
   if (!blog) {
     return {
@@ -48,7 +50,7 @@ export async function generateMetadata({ params }) {
 
 export default async function BlogPostPage({ params }) {
   const { slug } = await params;
-  const blog = getBlogBySlug(slug) || blogs.find(b => b.slug === slug);
+  const blog = getBlogBySlug(slug) || fallbackBlogs.find(b => b.slug === slug);
 
   if (!blog) {
     notFound();
@@ -59,7 +61,7 @@ export default async function BlogPostPage({ params }) {
     '@type': 'Article',
     headline: blog.title,
     description: blog.excerpt,
-    image: blog.image ? [`https://trioenterprises.com${blog.image}`] : [],
+    image: blog.image ? (blog.image.startsWith('http') ? [blog.image] : [`https://trioenterprises.com${blog.image}`]) : [],
     datePublished: blog.date,
     author: {
       '@type': 'Person',
@@ -85,7 +87,7 @@ export default async function BlogPostPage({ params }) {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
-      <BlogDetailClient initialSlug={slug} />
+      <BlogDetailClient initialSlug={slug} initialBlog={blog} />
     </>
   );
 }

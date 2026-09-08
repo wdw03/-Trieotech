@@ -12,9 +12,8 @@ const MobileNavLink = ({ href, children, exact = false }) => {
   return (
     <Link
       href={href}
-      className={`flex flex-col items-center gap-1 text-[10px] font-bold ${
-        isActive ? 'text-maroon-700 dark:text-gold-400' : 'text-stone-500 dark:text-stone-400'
-      }`}
+      className={`flex flex-col items-center gap-1 text-[10px] font-bold ${isActive ? 'text-maroon-700 dark:text-gold-400' : 'text-stone-500 dark:text-stone-400'
+        }`}
     >
       {children}
     </Link>
@@ -28,7 +27,7 @@ export const MobileNav = () => {
   return (
     <nav className="lg:hidden fixed bottom-0 inset-x-0 z-40 bg-white/95 dark:bg-[#140D08]/95 backdrop-blur-md border-t border-gold-500/30 py-2 px-3 shadow-2xl">
       <div className="flex items-center justify-around">
-        
+
         {/* Home */}
         <MobileNavLink href="/" exact>
           <Home className="w-5 h-5" />

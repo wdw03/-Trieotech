@@ -1,3 +1,4 @@
+import { getAllBlogs } from '../../lib/blogs';
 import BlogListClient from '../../components/blog/BlogListClient';
 
 export const metadata = {
@@ -14,5 +15,6 @@ export const metadata = {
 };
 
 export default function BlogPage() {
-  return <BlogListClient />;
+  const blogs = getAllBlogs();
+  return <BlogListClient initialBlogs={blogs} />;
 }

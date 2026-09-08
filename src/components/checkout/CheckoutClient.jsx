@@ -20,8 +20,10 @@ import {
   User,
   Sparkles,
   QrCode,
-  Wallet
+  Wallet,
+  Loader2
 } from 'lucide-react';
+import RazorpayCheckout from './RazorpayCheckout';
 
 export default function CheckoutClient() {
   const router = useRouter();
@@ -30,6 +32,8 @@ export default function CheckoutClient() {
   const { addToast } = useToast();
 
   const [currentStep, setCurrentStep] = useState(1); // 1: Address | 2: Delivery | 3: Payment | 4: Review
+  const [isPlacingOrder, setIsPlacingOrder] = useState(false);
+  const [razorpayData, setRazorpayData] = useState(null);
 
   // Address Selection & Form State
   const [selectedAddressId, setSelectedAddressId] = useState(user?.addresses?.[0]?.id || 'new');
@@ -93,84 +97,94 @@ export default function CheckoutClient() {
     setCurrentStep(4);
   };
 
-  const handlePlaceOrder = () => {
-    const orderId = `TRIO-${Math.floor(10000 + Math.random() * 90000)}`;
-    const trackingNumber = `BLUEDART-EXP-${Math.floor(10000000 + Math.random() * 90000000)}`;
+  const handlePlaceOrder = async () => {
+    if (isPlacingOrder) return;
+    setIsPlacingOrder(true);
 
-    const newOrder = {
-      id: orderId,
-      date: new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' }),
-      status: "Processing",
-      trackingNumber,
-      carrier: "BlueDart Express Courier",
-      items: cartItems.map(item => ({
-        productId: item.productId,
-        name: item.name,
-        image: item.image,
-        price: item.price,
-        quantity: item.quantity,
-        color: item.color,
-        size: item.size
-      })),
-      subtotal,
-      discount: couponDiscount,
-      shipping,
-      tax: 0,
-      total,
-      shippingAddress: activeShippingAddress,
-      paymentMethod: paymentMethod === 'upi' ? 'UPI (Google Pay / PhonePe)' :
-        paymentMethod === 'card' ? 'Credit / Debit Card' :
-        paymentMethod === 'cod' ? 'Cash on Delivery (COD)' : 'Net Banking',
-      estimatedDelivery: new Date(Date.now() + 4 * 86400000).toLocaleDateString('en-IN', {
-        day: 'numeric',
-        month: 'short',
-        year: 'numeric'
-      }),
-      deliveredDate: null,
-      timeline: [
-        {
-          status: "Order Placed",
-          date: `${new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}, ${new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}`,
-          completed: true,
-          details: "Order placed and confirmed in artisan system."
-        },
-        {
-          status: "Artisan Quality Checked",
-          date: "Pending",
-          completed: false,
-          details: "Craftsmanship & zarkan stone integrity verification."
-        },
-        {
-          status: "Packed in Eco-Friendly Box",
-          date: "Pending",
-          completed: false,
-          details: "Reinforced corner protection and sacred seals."
-        },
-        {
-          status: "Handed over to BlueDart",
-          date: "Pending",
-          completed: false,
-          details: `Tracking ID: ${trackingNumber}`
-        },
-        {
-          status: "Out for Delivery",
-          date: "Pending",
-          completed: false,
-          details: "Express courier doorstep delivery."
-        },
-        {
-          status: "Delivered with Love",
-          date: "Pending",
-          completed: false,
-          details: "Doorstep delivery with recipient signature."
+    try {
+      const isCod = paymentMethod === 'cod';
+
+      const response = await fetch('/api/orders/create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          addressId: selectedAddressId !== 'new' ? selectedAddressId : undefined,
+          shippingAddress: activeShippingAddress,
+          deliveryMethod,
+          paymentMethod: isCod ? 'cod' : 'razorpay',
+          couponCode: appliedCoupon?.code,
+          items: cartItems,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok || !data.success) {
+        addToast(data.error || 'Failed to initialize order. Please try again.', 'error');
+        setIsPlacingOrder(false);
+        return;
+      }
+
+      // COD Flow
+      if (isCod) {
+        const orderId = data.orderNumber || data.orderId;
+        const trackingNumber = `BLUEDART-EXP-${Math.floor(10000000 + Math.random() * 90000000)}`;
+
+        const newOrder = {
+          id: orderId,
+          dbId: data.orderId,
+          date: new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' }),
+          status: "Confirmed",
+          trackingNumber,
+          carrier: "BlueDart Express Courier",
+          items: cartItems.map(item => ({
+            productId: item.productId || item.id,
+            name: item.name,
+            image: item.image,
+            price: item.price,
+            quantity: item.quantity,
+            color: item.color,
+            size: item.size
+          })),
+          subtotal,
+          discount: couponDiscount,
+          shipping,
+          tax: 0,
+          total,
+          shippingAddress: activeShippingAddress,
+          paymentMethod: 'Cash on Delivery (COD)',
+          estimatedDelivery: new Date(Date.now() + 4 * 86400000).toLocaleDateString('en-IN', {
+            day: 'numeric',
+            month: 'short',
+            year: 'numeric'
+          }),
+        };
+
+        if (user && addOrder) {
+          addOrder(newOrder);
         }
-      ]
-    };
+        clearCart();
+        addToast('Order placed successfully with Cash on Delivery!', 'success');
+        router.push(`/order-success/${orderId}`);
+        return;
+      }
 
-    addOrder(newOrder);
-    clearCart();
-    addToast('Order placed successfully!', 'success');
-    router.push(`/order-success/${orderId}`);
+      // Online Razorpay Flow
+      setRazorpayData({
+        razorpayOrderId: data.razorpayOrderId,
+        amount: data.amount,
+        currency: data.currency || 'INR',
+        orderId: data.orderId,
+        orderNumber: data.orderNumber,
+        userEmail: user?.email || activeShippingAddress?.email || '',
+        userName: user?.name || activeShippingAddress?.name || '',
+        userPhone: user?.phone || activeShippingAddress?.phone || '',
+      });
+    } catch (err) {
+      console.error('Order placement error:', err);
+      addToast('An unexpected error occurred. Please try again.', 'error');
+      setIsPlacingOrder(false);
+    }
   };
 
   const steps = [
@@ -751,10 +765,20 @@ export default function CheckoutClient() {
                 <button
                   type="button"
                   onClick={handlePlaceOrder}
-                  className="w-full sm:flex-1 btn-gold py-3.5 px-8 text-xs sm:text-sm font-bold uppercase tracking-wider flex items-center justify-center gap-2 shadow-gold-md"
+                  disabled={isPlacingOrder}
+                  className="w-full sm:flex-1 btn-gold py-3.5 px-8 text-xs sm:text-sm font-bold uppercase tracking-wider flex items-center justify-center gap-2 shadow-gold-md disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  <Sparkles className="w-4 h-4" />
-                  <span>Place Order (₹{total?.toLocaleString('en-IN')})</span>
+                  {isPlacingOrder ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      <span>Securing Order with Gateway...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles className="w-4 h-4" />
+                      <span>{paymentMethod === 'cod' ? 'Confirm COD Order' : 'Proceed to Payment'} (₹{total?.toLocaleString('en-IN')})</span>
+                    </>
+                  )}
                 </button>
               </div>
             </div>
@@ -811,6 +835,45 @@ export default function CheckoutClient() {
         </div>
 
       </div>
+
+      {/* Razorpay Modal Trigger Component */}
+      {razorpayData && (
+        <RazorpayCheckout
+          {...razorpayData}
+          onSuccess={(result) => {
+            const orderId = result.orderNumber || razorpayData.orderNumber || razorpayData.orderId;
+            if (user && addOrder) {
+              addOrder({
+                id: orderId,
+                dbId: razorpayData.orderId,
+                date: new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' }),
+                status: "Confirmed",
+                trackingNumber: `BLUEDART-EXP-${Math.floor(10000000 + Math.random() * 90000000)}`,
+                carrier: "BlueDart Express Courier",
+                items: cartItems,
+                total: razorpayData.amount,
+                shippingAddress: activeShippingAddress,
+                paymentMethod: 'Razorpay Online Payment',
+              });
+            }
+            clearCart();
+            setIsPlacingOrder(false);
+            setRazorpayData(null);
+            addToast('Payment verified successfully! Your order is placed.', 'success');
+            router.push(`/order-success/${orderId}`);
+          }}
+          onFailure={(err) => {
+            setIsPlacingOrder(false);
+            setRazorpayData(null);
+            addToast(err?.error || 'Payment failed or cancelled. Please try again.', 'error');
+          }}
+          onDismiss={() => {
+            setIsPlacingOrder(false);
+            setRazorpayData(null);
+            addToast('Payment window closed.', 'info');
+          }}
+        />
+      )}
     </div>
   );
 };

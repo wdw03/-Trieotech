@@ -5,7 +5,7 @@ import Breadcrumb from '../../components/common/Breadcrumb';
 import EmptyState from '../../components/common/EmptyState';
 import { useAuth } from '../../context/AuthContext';
 import { useCart } from '../../context/CartContext';
-import { Package, Truck, ArrowRight, CheckCircle2, Clock, RotateCcw } from 'lucide-react';
+import { Package, Truck, ArrowRight, CheckCircle2, Clock, RotateCcw, FileText } from 'lucide-react';
 
 export default function MyOrdersClient() {
   const { userOrders } = useAuth();
@@ -113,7 +113,16 @@ export default function MyOrdersClient() {
                 Tracking ID: <strong className="font-mono text-stone-800 dark:text-stone-200">{order.trackingNumber}</strong>
               </div>
 
-              <div className="flex items-center gap-3">
+              <div className="flex items-center flex-wrap gap-2.5">
+                <a
+                  href={`/api/orders/${order.dbId || order.id}/invoice`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-3 py-2 rounded-xl border border-gold-500/40 text-stone-700 dark:text-stone-300 hover:bg-gold-500/10 text-xs font-bold flex items-center gap-1.5 transition-colors"
+                >
+                  <FileText className="w-3.5 h-3.5 text-gold-600" />
+                  <span>Invoice</span>
+                </a>
                 <button
                   onClick={() => handleReorder(order)}
                   className="btn-outline-maroon py-2 px-4 text-xs font-bold flex items-center gap-1.5"
