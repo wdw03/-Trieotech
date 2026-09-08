@@ -23,7 +23,7 @@ import {
 
 export default function AuthRequiredModal() {
   const { isAuthModalOpen, closeAuthModal, pendingProduct } = useCart();
-  const { login, register } = useAuth();
+  const { login, register, sendSignupOtp } = useAuth();
   const { addToast } = useToast();
 
   const [activeTab, setActiveTab] = useState('login'); // 'login' | 'register'
@@ -78,18 +78,28 @@ export default function AuthRequiredModal() {
     setIsLoading(true);
 
     try {
-      const res = await register({
-        name: regName,
-        email: regEmail,
-        phone: regPhone,
-        password: regPassword,
-      });
+      const res = await sendSignupOtp(regEmail, regName);
 
       if (!res.success) {
         setError(res.error || 'Registration failed. Please check details.');
-      } else if (res.needsVerification) {
-        addToast('Verification email sent! Please check your inbox.', 'info');
+      } else {
+        const payload = {
+          name: regName,
+          email: regEmail,
+          phone: regPhone,
+          password: regPassword,
+          verificationToken: res.verificationToken,
+          expiresAt: res.expiresAt,
+        };
+
+        try {
+          sessionStorage.setItem('trio_pending_signup', JSON.stringify(payload));
+          localStorage.setItem('trio_pending_signup', JSON.stringify(payload));
+        } catch (_) {}
+
         closeAuthModal();
+        const currentPath = typeof window !== 'undefined' ? (window.location.pathname + window.location.search) : '/';
+        window.location.href = `/verify-otp?email=${encodeURIComponent(regEmail)}&redirect=${encodeURIComponent(currentPath)}`;
       }
     } catch (err) {
       setError('Registration error: ' + (err.message || 'Something went wrong'));

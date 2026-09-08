@@ -8,6 +8,7 @@ import Badge from '../../components/common/Badge';
 import ProductCard from '../../components/common/ProductCard';
 import { useCart } from '../../context/CartContext';
 import { useWishlist } from '../../context/WishlistContext';
+import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
 import { useRecentlyViewed } from '../../hooks/useRecentlyViewed';
 import { getProductBySlug, getRelatedProducts, products as fallbackProducts } from '../../data/products';
@@ -38,6 +39,7 @@ export default function ProductClient({ initialSlug }) {
   const router = useRouter();
   const { addToCart, openCart } = useCart();
   const { isInWishlist, toggleWishlist } = useWishlist();
+  const { user } = useAuth();
   const { addToast } = useToast();
   const { recentlyViewed, addRecentlyViewed } = useRecentlyViewed();
 
@@ -168,6 +170,17 @@ export default function ProductClient({ initialSlug }) {
   };
 
   const handleBuyNow = () => {
+    if (!user) {
+      const pendingItem = { product, quantity, selectedColor: selectedColor?.name, selectedSize };
+      try {
+        localStorage.setItem('trio_pending_add_to_cart', JSON.stringify(pendingItem));
+      } catch (_) {}
+      addToast('Please sign in or create an account to proceed to checkout', 'info');
+      if (typeof window !== 'undefined') {
+        window.location.href = `/register?redirect=${encodeURIComponent('/checkout')}&action=buy`;
+      }
+      return;
+    }
     const success = addToCart(product, quantity, selectedColor?.name, selectedSize);
     if (success) {
       router.push('/checkout');

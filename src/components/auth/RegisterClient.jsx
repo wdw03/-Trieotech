@@ -15,13 +15,15 @@ import {
   KeyRound,
   RefreshCw,
   Edit2,
-  CheckCircle2
+  CheckCircle2,
+  ShoppingBag
 } from 'lucide-react';
 
 export default function RegisterClient() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const redirectTo = searchParams.get('redirect') || searchParams.get('next') || '/profile';
+  const action = searchParams.get('action');
 
   const { sendSignupOtp, verifySignupOtp, resendSignupOtp } = useAuth();
 
@@ -92,9 +94,13 @@ export default function RegisterClient() {
         setOtp('');
 
         // Dedicated URL navigation to /verify-otp
-        router.push(
-          `/verify-otp?email=${encodeURIComponent(formData.email)}&redirect=${encodeURIComponent(redirectTo)}`
-        );
+        if (typeof window !== 'undefined') {
+          window.location.href = `/verify-otp?email=${encodeURIComponent(formData.email)}&redirect=${encodeURIComponent(redirectTo)}`;
+        } else {
+          router.push(
+            `/verify-otp?email=${encodeURIComponent(formData.email)}&redirect=${encodeURIComponent(redirectTo)}`
+          );
+        }
       } else {
         setError(result.error || 'Failed to send verification code');
       }
@@ -293,6 +299,16 @@ export default function RegisterClient() {
             Create an account to enjoy 15% off your first order with code <strong>FIRSTBUY</strong>.
           </p>
         </div>
+
+        {(action === 'cart' || action === 'buy') && (
+          <div className="p-3.5 rounded-2xl bg-gold-500/10 border border-gold-500/30 text-xs text-maroon-800 dark:text-gold-300 flex items-center gap-2.5 shadow-xs animate-fade-in">
+            <ShoppingBag className="w-5 h-5 shrink-0 text-gold-600" />
+            <div className="leading-tight text-left">
+              <span className="font-bold block">One last step!</span>
+              <span className="text-[11px] opacity-90">Register or sign in below to finish adding your item to bag.</span>
+            </div>
+          </div>
+        )}
 
         {error && (
           <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 text-xs rounded-xl px-4 py-3">

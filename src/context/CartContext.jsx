@@ -132,7 +132,7 @@ export const CartProvider = ({ children }) => {
   const addToCart = (product, quantity = 1, selectedColor = null, selectedSize = null) => {
     if (!product) return false;
 
-    // If user is not logged in, block and prompt authentication modal
+    // If user is not logged in, block and redirect directly to register / login page
     if (!user) {
       const pendingItem = { product, quantity, selectedColor, selectedSize };
       setPendingProduct(pendingItem);
@@ -141,8 +141,13 @@ export const CartProvider = ({ children }) => {
       } catch (e) {
         console.error('Failed to save pending item', e);
       }
-      setIsAuthModalOpen(true);
-      addToast('Please sign in or register to add items to your cart', 'info');
+      setIsAuthModalOpen(false);
+      addToast('Please sign in or create an account to add items to your cart', 'info');
+
+      if (typeof window !== 'undefined') {
+        const currentPath = window.location.pathname + window.location.search;
+        window.location.href = `/register?redirect=${encodeURIComponent(currentPath)}&action=cart`;
+      }
       return false;
     }
 
