@@ -1,3 +1,4 @@
+export const dynamic = 'force-dynamic';
 import { NextResponse } from 'next/server';
 import { trackShipment, trackByOrderId } from '../../../../lib/shiprocket';
 import { supabaseAdmin } from '../../../../lib/supabase/admin';
