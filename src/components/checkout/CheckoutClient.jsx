@@ -732,7 +732,7 @@ export default function CheckoutClient() {
                         <span className="font-semibold text-stone-900 dark:text-ivory-100 truncate">{item.name} (x{item.quantity})</span>
                       </div>
                       <span className="font-serif font-bold text-maroon-800 dark:text-gold-400 shrink-0">
-                        ₹{(item.price * item.quantity).toLocaleString('en-IN')}
+                        ₹{(item.price * item.quantity)?.toLocaleString('en-IN')}
                       </span>
                     </div>
                   ))}
@@ -754,7 +754,7 @@ export default function CheckoutClient() {
                   className="w-full sm:flex-1 btn-gold py-3.5 px-8 text-xs sm:text-sm font-bold uppercase tracking-wider flex items-center justify-center gap-2 shadow-gold-md"
                 >
                   <Sparkles className="w-4 h-4" />
-                  <span>Place Order (₹{total.toLocaleString('en-IN')})</span>
+                  <span>Place Order (₹{total?.toLocaleString('en-IN')})</span>
                 </button>
               </div>
             </div>
@@ -773,18 +773,18 @@ export default function CheckoutClient() {
             <div className="space-y-2 text-xs text-stone-600 dark:text-stone-300">
               <div className="flex justify-between">
                 <span>Subtotal</span>
-                <span className="font-semibold text-stone-900 dark:text-ivory-100">₹{subtotal.toLocaleString('en-IN')}</span>
+                <span className="font-semibold text-stone-900 dark:text-ivory-100">₹{subtotal?.toLocaleString('en-IN')}</span>
               </div>
               {productSavings > 0 && (
                 <div className="flex justify-between text-emerald-700 dark:text-emerald-400">
                   <span>Product Savings</span>
-                  <span>-₹{productSavings.toLocaleString('en-IN')}</span>
+                  <span>-₹{productSavings?.toLocaleString('en-IN')}</span>
                 </div>
               )}
               {couponDiscount > 0 && (
                 <div className="flex justify-between text-emerald-700 dark:text-emerald-400 font-bold">
                   <span>Coupon ({appliedCoupon?.code})</span>
-                  <span>-₹{couponDiscount.toLocaleString('en-IN')}</span>
+                  <span>-₹{couponDiscount?.toLocaleString('en-IN')}</span>
                 </div>
               )}
               <div className="flex justify-between">
@@ -793,7 +793,7 @@ export default function CheckoutClient() {
               </div>
               <div className="flex justify-between text-sm font-serif font-black text-stone-900 dark:text-ivory-100 pt-2 border-t border-gold-500/20">
                 <span>Total Due</span>
-                <span className="text-lg text-maroon-800 dark:text-gold-400">₹{total.toLocaleString('en-IN')}</span>
+                <span className="text-lg text-maroon-800 dark:text-gold-400">₹{total?.toLocaleString('en-IN')}</span>
               </div>
             </div>
 

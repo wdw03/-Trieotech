@@ -108,7 +108,7 @@ export default function CartClient() {
             <div className="flex justify-between font-bold text-stone-800 dark:text-gold-300">
               <span className="flex items-center gap-1.5">
                 <Truck className="w-4 h-4 text-maroon-700 dark:text-gold-400" />
-                Add ₹{freeShippingRemaining.toLocaleString('en-IN')} more to unlock <strong>FREE Express Shipping</strong>
+                Add ₹{freeShippingRemaining?.toLocaleString('en-IN')} more to unlock <strong>FREE Express Shipping</strong>
               </span>
               <span>{Math.round(((999 - freeShippingRemaining) / 999) * 100)}%</span>
             </div>
@@ -168,11 +168,11 @@ export default function CartClient() {
                     {/* Unit Price */}
                     <div className="flex items-baseline gap-2 pt-0.5">
                       <span className="font-serif font-bold text-xs sm:text-sm text-maroon-800 dark:text-gold-400">
-                        ₹{item.price.toLocaleString('en-IN')}
+                        ₹{item.price?.toLocaleString('en-IN')}
                       </span>
                       {item.originalPrice && item.originalPrice > item.price && (
                         <span className="text-[11px] text-stone-400 line-through">
-                          ₹{item.originalPrice.toLocaleString('en-IN')}
+                          ₹{item.originalPrice?.toLocaleString('en-IN')}
                         </span>
                       )}
                     </div>
@@ -205,7 +205,7 @@ export default function CartClient() {
                   {/* Line Total */}
                   <div className="text-right min-w-20">
                     <span className="font-serif font-black text-sm sm:text-base text-stone-900 dark:text-ivory-100">
-                      ₹{(item.price * item.quantity).toLocaleString('en-IN')}
+                      ₹{(item.price * item.quantity)?.toLocaleString('en-IN')}
                     </span>
                   </div>
 
@@ -300,21 +300,21 @@ export default function CartClient() {
               <div className="flex justify-between">
                 <span>Items Subtotal</span>
                 <span className="font-semibold text-stone-900 dark:text-ivory-100">
-                  ₹{subtotal.toLocaleString('en-IN')}
+                  ₹{subtotal?.toLocaleString('en-IN')}
                 </span>
               </div>
 
               {productSavings > 0 && (
                 <div className="flex justify-between text-emerald-700 dark:text-emerald-400">
                   <span>Product Savings</span>
-                  <span>-₹{productSavings.toLocaleString('en-IN')}</span>
+                  <span>-₹{productSavings?.toLocaleString('en-IN')}</span>
                 </div>
               )}
 
               {couponDiscount > 0 && (
                 <div className="flex justify-between text-emerald-700 dark:text-emerald-400 font-bold">
                   <span>Coupon Discount</span>
-                  <span>-₹{couponDiscount.toLocaleString('en-IN')}</span>
+                  <span>-₹{couponDiscount?.toLocaleString('en-IN')}</span>
                 </div>
               )}
 
@@ -332,7 +332,7 @@ export default function CartClient() {
               <div className="flex justify-between text-sm font-serif font-black text-stone-900 dark:text-ivory-100 pt-3 border-t border-gold-500/20">
                 <span>Estimated Total</span>
                 <span className="text-lg text-maroon-800 dark:text-gold-400">
-                  ₹{total.toLocaleString('en-IN')}
+                  ₹{total?.toLocaleString('en-IN')}
                 </span>
               </div>
             </div>

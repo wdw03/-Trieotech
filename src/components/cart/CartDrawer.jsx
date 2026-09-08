@@ -85,7 +85,7 @@ export const CartDrawer = () => {
           {freeShippingRemaining > 0 ? (
             <div className="space-y-1.5">
               <div className="flex justify-between text-[11px] font-bold text-stone-700 dark:text-gold-300">
-                <span>Add ₹{freeShippingRemaining.toLocaleString('en-IN')} more for <strong>FREE Express Shipping</strong></span>
+                <span>Add ₹{freeShippingRemaining?.toLocaleString('en-IN')} more for <strong>FREE Express Shipping</strong></span>
                 <span>{Math.round(((999 - freeShippingRemaining) / 999) * 100)}%</span>
               </div>
               <div className="w-full h-1.5 bg-stone-200 dark:bg-stone-800 rounded-full overflow-hidden">
@@ -192,11 +192,11 @@ export const CartDrawer = () => {
 
                       <div className="text-right">
                         <span className="font-serif font-bold text-xs sm:text-sm text-maroon-800 dark:text-gold-400">
-                          ₹{(item.price * item.quantity).toLocaleString('en-IN')}
+                          ₹{(item.price * item.quantity)?.toLocaleString('en-IN')}
                         </span>
                         {item.originalPrice && item.originalPrice > item.price && (
                           <span className="block text-[10px] text-stone-400 line-through">
-                            ₹{(item.originalPrice * item.quantity).toLocaleString('en-IN')}
+                            ₹{(item.originalPrice * item.quantity)?.toLocaleString('en-IN')}
                           </span>
                         )}
                       </div>
@@ -279,18 +279,18 @@ export const CartDrawer = () => {
             <div className="space-y-1.5 text-xs text-stone-600 dark:text-stone-400">
               <div className="flex justify-between">
                 <span>Subtotal</span>
-                <span className="font-semibold text-stone-900 dark:text-ivory-100">₹{subtotal.toLocaleString('en-IN')}</span>
+                <span className="font-semibold text-stone-900 dark:text-ivory-100">₹{subtotal?.toLocaleString('en-IN')}</span>
               </div>
               {productSavings > 0 && (
                 <div className="flex justify-between text-emerald-600 dark:text-emerald-400">
                   <span>Product Savings</span>
-                  <span>-₹{productSavings.toLocaleString('en-IN')}</span>
+                  <span>-₹{productSavings?.toLocaleString('en-IN')}</span>
                 </div>
               )}
               {couponDiscount > 0 && (
                 <div className="flex justify-between text-emerald-600 dark:text-emerald-400 font-semibold">
                   <span>Coupon Discount</span>
-                  <span>-₹{couponDiscount.toLocaleString('en-IN')}</span>
+                  <span>-₹{couponDiscount?.toLocaleString('en-IN')}</span>
                 </div>
               )}
               <div className="flex justify-between">
@@ -299,7 +299,7 @@ export const CartDrawer = () => {
               </div>
               <div className="flex justify-between text-sm font-serif font-extrabold text-stone-900 dark:text-ivory-100 pt-2 border-t border-gold-500/20">
                 <span>Total Amount</span>
-                <span className="text-base text-maroon-800 dark:text-gold-400">₹{total.toLocaleString('en-IN')}</span>
+                <span className="text-base text-maroon-800 dark:text-gold-400">₹{total?.toLocaleString('en-IN')}</span>
               </div>
             </div>
 

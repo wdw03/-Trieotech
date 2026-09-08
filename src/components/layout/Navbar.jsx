@@ -226,7 +226,7 @@ export const Navbar = () => {
                       <div className="flex items-center gap-2 mt-0.5 text-[11px]">
                         <span className="text-gold-700 dark:text-gold-400 font-semibold">{p.category}</span>
                         <span className="text-stone-300 dark:text-stone-600">•</span>
-                        <span className="font-bold text-maroon-800 dark:text-gold-400">₹{p.price.toLocaleString('en-IN')}</span>
+                        <span className="font-bold text-maroon-800 dark:text-gold-400">₹{p.price?.toLocaleString('en-IN')}</span>
                       </div>
                     </div>
                   </Link>
@@ -278,7 +278,7 @@ export const Navbar = () => {
               </div>
               <div className="hidden lg:flex flex-col text-left">
                 <span className="text-[10px] text-gold-200/80 uppercase tracking-wider font-bold">Cart</span>
-                <span className="text-xs font-bold leading-none">₹{subtotal.toLocaleString('en-IN')}</span>
+                <span className="text-xs font-bold leading-none">₹{subtotal?.toLocaleString('en-IN')}</span>
               </div>
             </button>
 
@@ -402,7 +402,7 @@ export const Navbar = () => {
                     <div className="flex items-center gap-1.5 text-[10px]">
                       <span className="text-gold-700 dark:text-gold-400 font-semibold">{p.category}</span>
                       <span className="text-stone-300 dark:text-stone-600">•</span>
-                      <span className="font-bold text-maroon-800 dark:text-gold-400">₹{p.price.toLocaleString('en-IN')}</span>
+                      <span className="font-bold text-maroon-800 dark:text-gold-400">₹{p.price?.toLocaleString('en-IN')}</span>
                     </div>
                   </div>
                 </Link>

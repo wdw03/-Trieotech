@@ -118,11 +118,11 @@ export const QuickViewModal = ({ product, isOpen, onClose }) => {
             {/* Price */}
             <div className="flex items-baseline gap-3">
               <span className="font-serif font-black text-2xl text-maroon-800 dark:text-gold-400">
-                ₹{activePrice.toLocaleString('en-IN')}
+                ₹{activePrice?.toLocaleString('en-IN')}
               </span>
               {activeOriginalPrice && activeOriginalPrice > activePrice && (
                 <span className="text-sm text-stone-400 line-through">
-                  ₹{activeOriginalPrice.toLocaleString('en-IN')}
+                  ₹{activeOriginalPrice?.toLocaleString('en-IN')}
                 </span>
               )}
               {product.discount > 0 && (

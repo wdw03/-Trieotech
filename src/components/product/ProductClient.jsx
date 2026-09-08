@@ -278,11 +278,11 @@ export default function ProductClient({ initialSlug }) {
             {/* Price Box */}
             <div className="flex items-baseline gap-3.5 p-4 rounded-2xl bg-ivory-200/70 dark:bg-stone-900/70 border border-gold-500/30">
               <span className="font-serif font-black text-2xl sm:text-3xl text-maroon-800 dark:text-gold-400">
-                ₹{activePrice.toLocaleString('en-IN')}
+                ₹{activePrice?.toLocaleString('en-IN')}
               </span>
               {activeOriginalPrice && activeOriginalPrice > activePrice && (
                 <span className="text-sm text-stone-400 line-through">
-                  ₹{activeOriginalPrice.toLocaleString('en-IN')}
+                  ₹{activeOriginalPrice?.toLocaleString('en-IN')}
                 </span>
               )}
               {discountPercent > 0 && (
@@ -737,7 +737,7 @@ export default function ProductClient({ initialSlug }) {
         <div className="min-w-0 flex-1">
           <span className="text-[10px] text-stone-500 block truncate">{selectedColor?.name || product.name}</span>
           <span className="font-serif font-bold text-sm sm:text-base text-maroon-800 dark:text-gold-400 leading-none">
-            ₹{activePrice.toLocaleString('en-IN')}
+            ₹{activePrice?.toLocaleString('en-IN')}
           </span>
         </div>
 

@@ -220,7 +220,7 @@ export default function OrderTrackingClient() {
                     </div>
                   </div>
                   <span className="font-serif font-bold text-maroon-800 dark:text-gold-400">
-                    ₹{(item.price * item.quantity).toLocaleString('en-IN')}
+                    ₹{(item.price * item.quantity)?.toLocaleString('en-IN')}
                   </span>
                 </div>
               ))}

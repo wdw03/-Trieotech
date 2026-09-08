@@ -98,7 +98,7 @@ export const FilterSidebar = ({
         <div className="flex justify-between font-bold text-stone-900 dark:text-ivory-100">
           <span>Max Price</span>
           <span className="font-serif text-maroon-800 dark:text-gold-400">
-            ₹{filters.maxPrice ? filters.maxPrice.toLocaleString('en-IN') : '2,500'}
+            ₹{filters.maxPrice ? filters.maxPrice?.toLocaleString('en-IN') : '2,500'}
           </span>
         </div>
         <input

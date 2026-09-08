@@ -181,11 +181,11 @@ export const ProductCard = ({ product, onQuickView = null }) => {
         <div className="pt-2 border-t border-gold-500/10 dark:border-stone-800 flex items-center justify-between gap-2">
           <div className="flex items-baseline gap-1.5 flex-wrap">
             <span className="font-serif font-extrabold text-base sm:text-lg text-maroon-800 dark:text-gold-400">
-              ₹{activePrice.toLocaleString('en-IN')}
+              ₹{activePrice?.toLocaleString('en-IN')}
             </span>
             {activeOriginalPrice && activeOriginalPrice > activePrice && (
               <span className="text-xs text-stone-400 line-through">
-                ₹{activeOriginalPrice.toLocaleString('en-IN')}
+                ₹{activeOriginalPrice?.toLocaleString('en-IN')}
               </span>
             )}
           </div>
