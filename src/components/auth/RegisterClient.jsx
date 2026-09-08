@@ -25,7 +25,7 @@ export default function RegisterClient() {
   const redirectTo = searchParams.get('redirect') || searchParams.get('next') || '/profile';
   const action = searchParams.get('action');
 
-  const { sendSignupOtp, verifySignupOtp, resendSignupOtp } = useAuth();
+  const { sendSignupOtp, verifySignupOtp, resendSignupOtp, user } = useAuth();
 
   const [formData, setFormData] = useState({
     name: '',
@@ -307,6 +307,18 @@ export default function RegisterClient() {
               <span className="font-bold block">One last step!</span>
               <span className="text-[11px] opacity-90">Register or sign in below to finish adding your item to bag.</span>
             </div>
+          </div>
+        )}
+
+        {user && (
+          <div className="p-3.5 rounded-2xl bg-gold-500/10 border border-gold-500/30 text-xs text-maroon-800 dark:text-gold-300 flex items-center justify-between gap-2 shadow-xs">
+            <div className="min-w-0 flex-1">
+              <span className="font-bold block">Currently signed in as:</span>
+              <span className="text-[11px] opacity-90 truncate block">{user.email}</span>
+            </div>
+            <Link href="/profile" className="btn-gold py-1.5 px-3 rounded-xl text-[11px] font-bold shrink-0 shadow-xs">
+              Go to Account
+            </Link>
           </div>
         )}
 

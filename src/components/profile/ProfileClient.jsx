@@ -146,12 +146,32 @@ export default function ProfileClient() {
 
   if (!user) {
     return (
-      <div className="max-w-md mx-auto px-4 py-16 text-center space-y-4">
-        <h2 className="font-serif font-bold text-2xl text-stone-900 dark:text-ivory-100">Please Sign In</h2>
-        <p className="text-xs text-stone-500">Sign in to manage your addresses, orders, and wishlist.</p>
-        <Link href="/login" className="btn-primary text-xs font-bold uppercase tracking-wider inline-flex">
-          Sign In
-        </Link>
+      <div className="max-w-md mx-auto px-4 py-16 text-center space-y-6 animate-fade-in">
+        <div className="w-16 h-16 rounded-2xl bg-gold-500/15 border-2 border-gold-500/40 text-gold-600 flex items-center justify-center mx-auto shadow-md">
+          <User className="w-8 h-8" />
+        </div>
+        <div className="space-y-2">
+          <h2 className="font-serif font-black text-2xl text-stone-900 dark:text-ivory-100">
+            Artisan Patron Account
+          </h2>
+          <p className="text-xs text-stone-600 dark:text-stone-400 leading-relaxed">
+            Please sign in to view your profile, manage delivery addresses, track orders, and download official tax invoices.
+          </p>
+        </div>
+        <div className="grid grid-cols-2 gap-3 pt-2">
+          <Link
+            href="/login?redirect=/profile"
+            className="btn-primary py-3 rounded-xl text-xs font-bold uppercase tracking-wider text-center flex items-center justify-center gap-1.5 shadow-maroon-md"
+          >
+            <span>Sign In</span>
+          </Link>
+          <Link
+            href="/register?redirect=/profile"
+            className="btn-outline-maroon py-3 rounded-xl text-xs font-bold uppercase tracking-wider text-center flex items-center justify-center gap-1.5"
+          >
+            <span>Create Account</span>
+          </Link>
+        </div>
       </div>
     );
   }
@@ -225,6 +245,15 @@ export default function ProfileClient() {
             <Pencil className="w-3.5 h-3.5" />
             <span>Edit Profile</span>
           </button>
+
+          <Link
+            href="/register"
+            className="py-2.5 px-4 text-xs font-bold rounded-xl border border-gold-500/30 text-stone-700 dark:text-stone-300 hover:border-gold-500 hover:text-maroon-700 dark:hover:text-gold-400 transition-colors flex items-center justify-center gap-1.5 shrink-0"
+            title="Create another account"
+          >
+            <Plus className="w-3.5 h-3.5" />
+            <span>New Account</span>
+          </Link>
 
           <button
             onClick={logout}

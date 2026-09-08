@@ -9,7 +9,7 @@ import { Mail, Lock, ArrowRight, Sparkles, Loader2 } from 'lucide-react';
 export default function LoginClient() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { login } = useAuth();
+  const { login, user } = useAuth();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -50,6 +50,18 @@ export default function LoginClient() {
             Sign in to track handcrafted orders, view invoices, and access VIP festive discounts.
           </p>
         </div>
+
+        {user && (
+          <div className="p-3.5 rounded-2xl bg-gold-500/10 border border-gold-500/30 text-xs text-maroon-800 dark:text-gold-300 flex items-center justify-between gap-2 shadow-xs">
+            <div className="min-w-0 flex-1">
+              <span className="font-bold block">Currently signed in as:</span>
+              <span className="text-[11px] opacity-90 truncate block">{user.email}</span>
+            </div>
+            <Link href="/profile" className="btn-gold py-1.5 px-3 rounded-xl text-[11px] font-bold shrink-0 shadow-xs">
+              Go to Account
+            </Link>
+          </div>
+        )}
 
         {error && (
           <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 text-xs rounded-xl px-4 py-3">
@@ -116,7 +128,10 @@ export default function LoginClient() {
 
         <div className="text-center pt-2 text-xs text-stone-500">
           <span>New to Trio Ecart? </span>
-          <Link href="/register" className="font-bold text-maroon-700 dark:text-gold-400 hover:underline">
+          <Link
+            href={`/register${redirectTo ? `?redirect=${encodeURIComponent(redirectTo)}` : ''}`}
+            className="font-bold text-maroon-700 dark:text-gold-400 hover:underline"
+          >
             Create an Account
           </Link>
         </div>

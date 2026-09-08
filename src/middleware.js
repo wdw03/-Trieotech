@@ -5,9 +5,6 @@ import { NextResponse } from 'next/server';
 const PROTECTED_ROUTES = ['/profile', '/wishlist'];
 const PROTECTED_API_ROUTES = ['/api/orders/history', '/api/cart', '/api/wishlist'];
 
-// Routes that should redirect to profile if already logged in
-const AUTH_ROUTES = ['/login', '/register'];
-
 const SUPABASE_URL =
   process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://gkskeljvgphslkzctjfp.supabase.co';
 const SUPABASE_ANON_KEY =
@@ -82,10 +79,6 @@ export async function middleware(request) {
       pathname.startsWith(route)
     );
 
-    const isAuthRoute = AUTH_ROUTES.some((route) =>
-      pathname.startsWith(route)
-    );
-
     // Redirect unauthenticated users from protected pages to login
     if (isProtectedRoute && !user) {
       const url = request.nextUrl.clone();
@@ -102,13 +95,6 @@ export async function middleware(request) {
       );
       jsonRes.headers.set('Access-Control-Allow-Origin', '*');
       return jsonRes;
-    }
-
-    // Redirect authenticated users away from login/register
-    if (isAuthRoute && user) {
-      const url = request.nextUrl.clone();
-      url.pathname = '/profile';
-      return NextResponse.redirect(url);
     }
   } catch (err) {
     console.error('Middleware execution notice:', err);
