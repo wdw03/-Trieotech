@@ -173,10 +173,119 @@ export const AuthProvider = ({ children }) => {
           .eq('id', data.user.id);
       }
 
-      addToast('Welcome to Trio Ecart artisan family! Check your email to verify.', 'success');
-      return { success: true, needsVerification: !data.session };
+      if (data.session) {
+        addToast('Welcome to Trio Ecart artisan family!', 'success');
+        return { success: true, needsVerification: false };
+      }
+
+      addToast('Verification code sent to your email!', 'info');
+      return { success: true, needsVerification: true, email: formData.email };
     } catch (err) {
       addToast('Something went wrong', 'error');
+      return { success: false, error: err.message };
+    }
+  };
+
+  // ── Verify Signup OTP & Auto-Login ──
+  const verifySignupOtp = async (email, token, password) => {
+    try {
+      const cleanToken = token ? token.trim() : '';
+      if (!cleanToken) {
+        addToast('Please enter the verification OTP', 'error');
+        return { success: false, error: 'OTP is required' };
+      }
+
+      // 1. Try Supabase verifyOtp with type 'signup'
+      let { data, error } = await supabase.auth.verifyOtp({
+        email,
+        token: cleanToken,
+        type: 'signup',
+      });
+
+      // 2. If 'signup' fails, try 'email' type
+      if (error) {
+        const emailRetry = await supabase.auth.verifyOtp({
+          email,
+          token: cleanToken,
+          type: 'email',
+        });
+        if (!emailRetry.error && (emailRetry.data?.session || emailRetry.data?.user)) {
+          data = emailRetry.data;
+          error = null;
+        }
+      }
+
+      // 3. If client attempts failed, try server API fallback
+      if (error) {
+        try {
+          const apiRes = await fetch('/api/auth/verify-otp', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, otp: cleanToken })
+          });
+          const apiData = await apiRes.json();
+          if (apiRes.ok && apiData.success) {
+            error = null;
+            data = apiData;
+          }
+        } catch (apiErr) {
+          // ignore server fallback error
+        }
+      }
+
+      // 4. If session successfully established
+      if (data?.session && data?.user) {
+        setUser(data.user);
+        await fetchProfile(data.user.id);
+        await fetchOrders(data.user.id);
+        addToast('Account verified! Welcome to Trio Ecart.', 'success');
+        return { success: true, user: data.user, session: data.session };
+      }
+
+      // 4. If password was saved and user is now confirmed, sign in with password
+      if (password) {
+        const loginRes = await supabase.auth.signInWithPassword({
+          email,
+          password,
+        });
+        if (!loginRes.error && loginRes.data?.user) {
+          setUser(loginRes.data.user);
+          await fetchProfile(loginRes.data.user.id);
+          await fetchOrders(loginRes.data.user.id);
+          addToast('Account verified and logged in successfully!', 'success');
+          return { success: true, user: loginRes.data.user };
+        }
+      }
+
+      if (error) {
+        addToast(error.message || 'Invalid or expired OTP code', 'error');
+        return { success: false, error: error.message };
+      }
+
+      return { success: true };
+    } catch (err) {
+      addToast(err.message || 'OTP verification failed', 'error');
+      return { success: false, error: err.message };
+    }
+  };
+
+  // ── Resend Signup OTP ──
+  const resendSignupOtp = async (email) => {
+    try {
+      const { error } = await supabase.auth.resend({
+        type: 'signup',
+        email,
+      });
+
+      if (error) {
+        addToast(error.message || 'Failed to resend OTP', 'error');
+        return { success: false, error: error.message };
+      }
+
+      addToast('A new OTP code has been sent to your email!', 'success');
+      return { success: true };
+    } catch (err) {
+      addToast('Failed to resend OTP', 'error');
       return { success: false, error: err.message };
     }
   };
@@ -345,6 +454,8 @@ export const AuthProvider = ({ children }) => {
         userOrders,
         login,
         register,
+        verifySignupOtp,
+        resendSignupOtp,
         logout,
         resetPassword,
         addAddress,

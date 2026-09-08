@@ -1,3 +1,4 @@
+import { Suspense } from 'react';
 import RegisterClient from '../../components/auth/RegisterClient';
 
 export const metadata = {
@@ -10,5 +11,9 @@ export const metadata = {
 };
 
 export default function RegisterPage() {
-  return <RegisterClient />;
+  return (
+    <Suspense fallback={<div className="min-h-[80vh] flex items-center justify-center text-stone-500">Loading register...</div>}>
+      <RegisterClient />
+    </Suspense>
+  );
 }
