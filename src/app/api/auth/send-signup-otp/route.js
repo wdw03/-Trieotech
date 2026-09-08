@@ -92,6 +92,17 @@ export async function POST(request) {
               <div class="otp-code">${otp}</div>
               <div class="expiry">Valid for 10 minutes</div>
             </div>
+
+            <div style="margin: 20px 0 24px;">
+              <a href="https://trieotech.vercel.app/verify-otp?email=${encodeURIComponent(cleanEmail)}&otp=${otp}&token=${verificationToken}&expires=${expiresAt}"
+                 style="display: inline-block; background: linear-gradient(135deg, #7F1D1D 0%, #4a0404 100%); color: #ffffff; text-decoration: none; font-weight: 700; font-size: 14px; padding: 14px 28px; border-radius: 12px; border: 1px solid #D4AF37; letter-spacing: 0.5px; box-shadow: 0 4px 12px rgba(127, 29, 29, 0.3);">
+                ✨ Click Here to Verify &amp; Login Directly
+              </a>
+              <p style="font-size: 11px; color: #78716c; margin-top: 10px;">
+                Or open: <a href="https://trieotech.vercel.app/verify-otp?email=${encodeURIComponent(cleanEmail)}" style="color: #4a0404; font-weight: 600;">https://trieotech.vercel.app/verify-otp</a>
+              </p>
+            </div>
+
             <div class="security-note">
               Please do not share this one-time password (OTP) with anyone. Trio Enterprises will never ask for your OTP over phone or email.
             </div>

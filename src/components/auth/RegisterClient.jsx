@@ -69,6 +69,20 @@ export default function RegisterClient() {
     try {
       const result = await sendSignupOtp(formData.email, formData.name);
       if (result.success) {
+        const payload = {
+          name: formData.name,
+          email: formData.email,
+          phone: formData.phone,
+          password: formData.password,
+          verificationToken: result.verificationToken,
+          expiresAt: result.expiresAt,
+        };
+
+        try {
+          sessionStorage.setItem('trio_pending_signup', JSON.stringify(payload));
+          localStorage.setItem('trio_pending_signup', JSON.stringify(payload));
+        } catch (_) {}
+
         setTokenData({
           verificationToken: result.verificationToken,
           expiresAt: result.expiresAt,
@@ -76,6 +90,11 @@ export default function RegisterClient() {
         setShowVerification(true);
         setResendTimer(60);
         setOtp('');
+
+        // Dedicated URL navigation to /verify-otp
+        router.push(
+          `/verify-otp?email=${encodeURIComponent(formData.email)}&redirect=${encodeURIComponent(redirectTo)}`
+        );
       } else {
         setError(result.error || 'Failed to send verification code');
       }
