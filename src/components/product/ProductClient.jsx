@@ -120,13 +120,17 @@ export default function ProductClient({ initialSlug }) {
   };
 
   const handleAddToCart = () => {
-    addToCart(product, quantity, selectedColor?.name, selectedSize);
-    openCart();
+    const success = addToCart(product, quantity, selectedColor?.name, selectedSize);
+    if (success) {
+      openCart();
+    }
   };
 
   const handleBuyNow = () => {
-    addToCart(product, quantity, selectedColor?.name, selectedSize);
-    router.push('/checkout');
+    const success = addToCart(product, quantity, selectedColor?.name, selectedSize);
+    if (success) {
+      router.push('/checkout');
+    }
   };
 
   const handleCheckPincode = (e) => {

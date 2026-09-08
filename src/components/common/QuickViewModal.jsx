@@ -44,9 +44,11 @@ export const QuickViewModal = ({ product, isOpen, onClose }) => {
   const activeOriginalPrice = selectedColor?.originalPrice || product.originalPrice;
 
   const handleAddToCart = () => {
-    addToCart(product, quantity, selectedColor?.name, selectedSize);
-    onClose();
-    openCart();
+    const success = addToCart(product, quantity, selectedColor?.name, selectedSize);
+    if (success) {
+      onClose();
+      openCart();
+    }
   };
 
   return (

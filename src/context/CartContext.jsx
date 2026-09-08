@@ -1,6 +1,7 @@
 'use client';
 import React, { createContext, useContext, useState, useEffect, useMemo } from 'react';
 import { useToast } from './ToastContext';
+import { useAuth } from './AuthContext';
 
 const CartContext = createContext();
 
@@ -12,6 +13,9 @@ const COUPONS = {
 };
 
 export const CartProvider = ({ children }) => {
+  const { user } = useAuth();
+  const { addToast } = useToast();
+
   const [cartItems, setCartItems] = useState(() => {
     try {
       const saved = localStorage.getItem('trio_cart');
@@ -31,7 +35,8 @@ export const CartProvider = ({ children }) => {
   });
 
   const [isCartOpen, setIsCartOpen] = useState(false);
-  const { addToast } = useToast();
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [pendingProduct, setPendingProduct] = useState(null);
 
   useEffect(() => {
     try {
@@ -56,13 +61,25 @@ export const CartProvider = ({ children }) => {
   const openCart = () => setIsCartOpen(true);
   const closeCart = () => setIsCartOpen(false);
 
-  const addToCart = (product, quantity = 1, selectedColor = null, selectedSize = null) => {
-    if (!product) return;
+  const openAuthModal = (productData = null) => {
+    if (productData) setPendingProduct(productData);
+    setIsAuthModalOpen(true);
+  };
 
-    // determine variant price and image
+  const closeAuthModal = () => {
+    setIsAuthModalOpen(false);
+    setPendingProduct(null);
+  };
+
+  // Direct internal add to cart (used when user is authenticated or right after login)
+  const addToCartDirect = (product, quantity = 1, selectedColor = null, selectedSize = null) => {
+    if (!product) return false;
+
     let price = product.price;
     let originalPrice = product.originalPrice || product.price;
-    let image = product.images?.[0] || '/products/shreenathji-statement-patch-1.jpg';
+    let image = Array.isArray(product.images) && product.images.length > 0 
+      ? product.images[0] 
+      : (typeof product.images === 'string' ? product.images : product.image || '/products/shreenathji-statement-patch-1.jpg');
     let colorName = selectedColor;
 
     if (selectedColor && product.colors && product.colors.length > 0) {
@@ -78,8 +95,6 @@ export const CartProvider = ({ children }) => {
     }
 
     const sizeName = selectedSize || (product.sizes && product.sizes.length > 0 ? product.sizes[0] : null);
-
-    // unique cart item key based on product id, color, and size
     const cartItemId = `${product.id}-${colorName || 'default'}-${sizeName || 'default'}`;
 
     setCartItems(prevItems => {
@@ -110,7 +125,51 @@ export const CartProvider = ({ children }) => {
     });
 
     addToast(`Added "${product.name.substring(0, 25)}..." to cart!`, 'success');
+    return true;
   };
+
+  // Public addToCart that requires user authentication first
+  const addToCart = (product, quantity = 1, selectedColor = null, selectedSize = null) => {
+    if (!product) return false;
+
+    // If user is not logged in, block and prompt authentication modal
+    if (!user) {
+      const pendingItem = { product, quantity, selectedColor, selectedSize };
+      setPendingProduct(pendingItem);
+      try {
+        localStorage.setItem('trio_pending_add_to_cart', JSON.stringify(pendingItem));
+      } catch (e) {
+        console.error('Failed to save pending item', e);
+      }
+      setIsAuthModalOpen(true);
+      addToast('Please sign in or register to add items to your cart', 'info');
+      return false;
+    }
+
+    return addToCartDirect(product, quantity, selectedColor, selectedSize);
+  };
+
+  // Automatically process pending cart item when user logs in or registers
+  useEffect(() => {
+    if (user) {
+      try {
+        const saved = localStorage.getItem('trio_pending_add_to_cart');
+        if (saved) {
+          const pending = JSON.parse(saved);
+          localStorage.removeItem('trio_pending_add_to_cart');
+          if (pending?.product) {
+            addToCartDirect(pending.product, pending.quantity || 1, pending.selectedColor, pending.selectedSize);
+            addToast(`Welcome! "${pending.product.name.substring(0, 25)}..." added to your bag!`, 'success');
+            setIsAuthModalOpen(false);
+            setPendingProduct(null);
+            setIsCartOpen(true);
+          }
+        }
+      } catch (e) {
+        console.error('Failed to process pending cart item', e);
+      }
+    }
+  }, [user]);
 
   const updateQuantity = (cartItemId, newQty) => {
     if (newQty <= 0) {
@@ -219,6 +278,11 @@ export const CartProvider = ({ children }) => {
         openCart,
         closeCart,
         addToCart,
+        addToCartDirect,
+        isAuthModalOpen,
+        pendingProduct,
+        openAuthModal,
+        closeAuthModal,
         updateQuantity,
         removeFromCart,
         clearCart,

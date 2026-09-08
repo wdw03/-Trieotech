@@ -4,6 +4,7 @@ import Navbar from '../components/layout/Navbar';
 import Footer from '../components/layout/Footer';
 import MobileNav from '../components/layout/MobileNav';
 import CartDrawer from '../components/cart/CartDrawer';
+import AuthRequiredModal from '../components/auth/AuthRequiredModal';
 
 export const metadata = {
   metadataBase: new URL('https://trioenterprises.com'),
@@ -74,6 +75,7 @@ export default function RootLayout({ children }) {
             <Footer />
             <MobileNav />
             <CartDrawer />
+            <AuthRequiredModal />
           </div>
         </Providers>
       </body>
