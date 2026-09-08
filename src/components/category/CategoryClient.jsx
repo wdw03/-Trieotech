@@ -7,8 +7,9 @@ import FilterSidebar from '../../components/product/FilterSidebar';
 import ProductCard from '../../components/common/ProductCard';
 import QuickViewModal from '../../components/common/QuickViewModal';
 import EmptyState from '../../components/common/EmptyState';
-import { categories, getCategoryBySlug } from '../../data/categories';
-import { products } from '../../data/products';
+import { categories as fallbackCategories, getCategoryBySlug } from '../../data/categories';
+import { products as fallbackProducts } from '../../data/products';
+import { fetchLiveProducts, fetchLiveCategories, normalizeProduct } from '../../lib/api/store';
 import { Filter, LayoutGrid, List, Sparkles, X, ChevronRight } from 'lucide-react';
 
 export default function CategoryClient({ initialSlug }) {
@@ -18,15 +19,40 @@ export default function CategoryClient({ initialSlug }) {
   const [quickViewProduct, setQuickViewProduct] = useState(null);
   const [selectedSubcategory, setSelectedSubcategory] = useState(null);
   const [sortBy, setSortBy] = useState('featured');
+  const [categoriesList, setCategoriesList] = useState(fallbackCategories);
+  const [allProducts, setAllProducts] = useState(() => fallbackProducts.map(normalizeProduct));
+
+  React.useEffect(() => {
+    let isMounted = true;
+    fetchLiveCategories()
+      .then((cats) => {
+        if (isMounted && Array.isArray(cats) && cats.length > 0) {
+          setCategoriesList(cats);
+        }
+      })
+      .catch(() => {});
+
+    fetchLiveProducts({ limit: 100 })
+      .then((data) => {
+        if (isMounted && data?.products?.length) {
+          setAllProducts(data.products);
+        }
+      })
+      .catch(() => {});
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   // Find category details
   const currentCategory = useMemo(() => {
-    const found = getCategoryBySlug(slug);
+    const found = categoriesList.find(c => c.slug?.toLowerCase() === slug?.toLowerCase()) || getCategoryBySlug(slug);
     if (found) return found;
 
     // Fallback: match by product category name
-    const matchingProduct = products.find(
-      p => p.category.toLowerCase().replace(/ \/ /g, '-').replace(/ /g, '-') === slug?.toLowerCase()
+    const matchingProduct = allProducts.find(
+      p => p.category?.toLowerCase().replace(/ \/ /g, '-').replace(/ /g, '-') === slug?.toLowerCase()
     );
     if (matchingProduct) {
       return {
@@ -35,13 +61,13 @@ export default function CategoryClient({ initialSlug }) {
         slug: slug,
         image: matchingProduct.images?.[0] || '/products/shreenathji-statement-patch-1.jpg',
         description: `Explore our collection of authentic ${matchingProduct.category} handcrafted by Indian artisans.`,
-        productCount: products.filter(p => p.category === matchingProduct.category).length,
+        productCount: allProducts.filter(p => p.category === matchingProduct.category).length,
         subcategories: []
       };
     }
 
     return null;
-  }, [slug]);
+  }, [slug, categoriesList, allProducts]);
 
   const [filters, setFilters] = useState({
     categories: [],
@@ -75,12 +101,12 @@ export default function CategoryClient({ initialSlug }) {
   // Products belonging to this category
   const categoryProducts = useMemo(() => {
     if (!currentCategory) return [];
-    return products.filter(p => {
-      const matchCat = p.category.toLowerCase() === currentCategory.name.toLowerCase() ||
-        p.category.toLowerCase().replace(/ \/ /g, '-').replace(/ /g, '-') === currentCategory.slug.toLowerCase();
+    return allProducts.filter(p => {
+      const matchCat = p.category?.toLowerCase() === currentCategory.name?.toLowerCase() ||
+        p.category?.toLowerCase().replace(/ \/ /g, '-').replace(/ /g, '-') === currentCategory.slug?.toLowerCase();
       return matchCat;
     });
-  }, [currentCategory]);
+  }, [currentCategory, allProducts]);
 
   // Subcategories present in actual products
   const availableSubcategories = useMemo(() => {

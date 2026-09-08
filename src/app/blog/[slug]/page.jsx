@@ -3,6 +3,8 @@ import { blogs as fallbackBlogs } from '../../../data/blogs';
 import BlogDetailClient from '../../../components/blog/BlogDetailClient';
 import { notFound } from 'next/navigation';
 
+export const dynamicParams = true;
+
 export async function generateStaticParams() {
   const blogs = getAllBlogs();
   return blogs.map((b) => ({

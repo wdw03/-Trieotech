@@ -31,6 +31,7 @@ export async function getProducts({
   if (trending) query = query.eq('is_trending', true);
   if (weddingSpecial) query = query.eq('is_wedding_special', true);
   if (festivalSpecial) query = query.eq('is_festival_special', true);
+  if (handmade) query = query.eq('is_handmade', true);
   if (minPrice) query = query.gte('price', minPrice);
   if (maxPrice) query = query.lte('price', maxPrice);
 

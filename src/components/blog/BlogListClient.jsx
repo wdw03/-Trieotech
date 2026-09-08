@@ -1,13 +1,28 @@
 'use client';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Breadcrumb from '../../components/common/Breadcrumb';
-import { blogs } from '../../data/blogs';
+import { blogs as fallbackBlogs } from '../../data/blogs';
+import { fetchLiveBlogs } from '../../lib/api/store';
 import { Sparkles, Clock, ArrowRight, BookOpen, Tag } from 'lucide-react';
 
 export default function BlogListClient({ initialBlogs }) {
-  const blogList = initialBlogs || blogs;
+  const [blogList, setBlogList] = useState(initialBlogs || fallbackBlogs);
   const [selectedCategory, setSelectedCategory] = useState('All');
+
+  useEffect(() => {
+    let isMounted = true;
+    fetchLiveBlogs()
+      .then((data) => {
+        if (isMounted && Array.isArray(data) && data.length > 0) {
+          setBlogList(data);
+        }
+      })
+      .catch(() => {});
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   const categories = ['All', 'Artisan Heritage', 'Wellness & Tradition', 'Devotion & Rituals'];
 

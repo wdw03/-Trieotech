@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import HeroCarousel from './HeroCarousel';
 import CategoryGrid from './CategoryGrid';
@@ -15,19 +15,44 @@ import {
   getTrendingProducts,
   getWeddingProducts,
   getFestivalProducts,
-  getHandmadeProducts
+  getHandmadeProducts,
+  products as fallbackProducts,
 } from '../../data/products';
+import { fetchLiveProducts, normalizeProduct } from '../../lib/api/store';
 import { Sparkles, ArrowRight, Crown } from 'lucide-react';
 
 export default function HomeClient() {
   const [quickViewProduct, setQuickViewProduct] = useState(null);
+  const [allProducts, setAllProducts] = useState(() => fallbackProducts.map(normalizeProduct));
 
-  const bestSellers = getBestSellers();
-  const newArrivals = getNewArrivals();
-  const trending = getTrendingProducts();
-  const weddingSpecial = getWeddingProducts();
-  const festivalSpecial = getFestivalProducts();
-  const handmade = getHandmadeProducts();
+  useEffect(() => {
+    let isMounted = true;
+    fetchLiveProducts({ limit: 100 })
+      .then((data) => {
+        if (isMounted && data?.products?.length > 0) {
+          setAllProducts(data.products);
+        }
+      })
+      .catch((err) => console.warn('Live products fetch notice:', err));
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  const bestSellers = React.useMemo(() => {
+    const list = allProducts.filter((p) => p.is_best_seller || p.isBestSeller);
+    return list.length > 0 ? list : allProducts.slice(0, 4);
+  }, [allProducts]);
+
+  const newArrivals = React.useMemo(() => {
+    const list = allProducts.filter((p) => p.is_new || p.isNew);
+    return list.length > 0 ? list : allProducts.slice(4, 8);
+  }, [allProducts]);
+
+  const trending = React.useMemo(() => {
+    const list = allProducts.filter((p) => p.is_trending || p.isTrending);
+    return list.length > 0 ? list : allProducts.slice(8, 12);
+  }, [allProducts]);
 
   return (
     <div className="space-y-4">
@@ -73,14 +98,14 @@ export default function HomeClient() {
                 href="/category/patches"
                 className="btn-gold py-2.5 px-6 text-xs uppercase tracking-wider font-bold inline-flex items-center gap-2"
               >
-                <span>Shop Bridal Collection</span>
+                <span>Discover Bridal Accents</span>
                 <ArrowRight className="w-4 h-4" />
               </Link>
             </div>
           </div>
 
-          {/* Festival Banner */}
-          <div className="relative rounded-3xl overflow-hidden border-2 border-gold-500/40 p-8 sm:p-10 flex flex-col justify-between min-h-[280px] bg-gradient-to-br from-[#2D1204] via-[#1E0C03] to-[#120601] text-white shadow-xl group">
+          {/* Festive Banner */}
+          <div className="relative rounded-3xl overflow-hidden border-2 border-gold-500/40 p-8 sm:p-10 flex flex-col justify-between min-h-[280px] bg-gradient-to-br from-[#1C2818] via-[#121A0F] to-[#0A1008] text-white shadow-xl group">
             <div className="absolute right-0 bottom-0 w-1/2 h-full opacity-30 group-hover:opacity-40 transition-opacity">
               <img src="/products/pooja-thali-brass-diya-1.jpg" alt="Festival" className="w-full h-full object-cover" />
             </div>

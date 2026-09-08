@@ -1,10 +1,11 @@
 'use client';
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import Breadcrumb from '../../components/common/Breadcrumb';
 import EmptyState from '../../components/common/EmptyState';
-import { getBlogBySlug, blogs } from '../../data/blogs';
+import { getBlogBySlug, blogs as fallbackBlogs } from '../../data/blogs';
+import { fetchLiveBlogs } from '../../lib/api/store';
 import { Clock, Tag, Share2, ArrowLeft, ArrowRight, Sparkles, BookOpen } from 'lucide-react';
 import { useToast } from '../../context/ToastContext';
 
@@ -13,9 +14,26 @@ export default function BlogDetailClient({ initialSlug, initialBlog }) {
   const slug = initialSlug || params?.slug;
   const { addToast } = useToast();
 
-  const blog = initialBlog || getBlogBySlug(slug);
+  const [blog, setBlog] = useState(() => initialBlog || getBlogBySlug(slug));
+  const [allBlogs, setAllBlogs] = useState(fallbackBlogs);
 
-  const relatedBlogs = blogs.filter(b => b.slug !== slug).slice(0, 2);
+  useEffect(() => {
+    let isMounted = true;
+    fetchLiveBlogs()
+      .then((data) => {
+        if (isMounted && Array.isArray(data) && data.length > 0) {
+          setAllBlogs(data);
+          const found = data.find((b) => b.slug === slug || String(b.id) === String(slug));
+          if (found) setBlog(found);
+        }
+      })
+      .catch(() => {});
+    return () => {
+      isMounted = false;
+    };
+  }, [slug]);
+
+  const relatedBlogs = allBlogs.filter(b => b.slug !== slug).slice(0, 2);
 
   if (!blog) {
     return (

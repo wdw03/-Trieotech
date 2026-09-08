@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Filter, X, RotateCcw, Star, Check } from 'lucide-react';
-import { categories } from '../../data/categories';
+import { categories as fallbackCategories } from '../../data/categories';
+import { fetchLiveCategories } from '../../lib/api/store';
 
 export const FilterSidebar = ({
   filters,
@@ -10,6 +11,21 @@ export const FilterSidebar = ({
   onClose = null,
   isMobile = false
 }) => {
+  const [categoriesList, setCategoriesList] = useState(fallbackCategories);
+
+  useEffect(() => {
+    let isMounted = true;
+    fetchLiveCategories()
+      .then((cats) => {
+        if (isMounted && Array.isArray(cats) && cats.length > 0) {
+          setCategoriesList(cats);
+        }
+      })
+      .catch(() => {});
+    return () => {
+      isMounted = false;
+    };
+  }, []);
   const materials = [
     "Zardosi & Velvet",
     "100% Pure Copper",
@@ -123,7 +139,7 @@ export const FilterSidebar = ({
           Categories
         </span>
         <div className="space-y-1.5 max-h-48 overflow-y-auto pr-1">
-          {categories.map((cat) => {
+          {categoriesList.map((cat) => {
             const isChecked = filters.categories?.includes(cat.name);
             return (
               <label

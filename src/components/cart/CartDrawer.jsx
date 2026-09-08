@@ -1,10 +1,11 @@
 'use client';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { X, Trash2, Plus, Minus, ShoppingBag, ArrowRight, Tag, Sparkles, ShieldCheck, Check } from 'lucide-react';
 import { useCart } from '../../context/CartContext';
-import { products } from '../../data/products';
+import { products as fallbackProducts } from '../../data/products';
+import { fetchLiveProducts, normalizeProduct } from '../../lib/api/store';
 
 export const CartDrawer = () => {
   const router = useRouter();
@@ -28,6 +29,21 @@ export const CartDrawer = () => {
   } = useCart();
 
   const [couponInput, setCouponInput] = useState('');
+  const [allProducts, setAllProducts] = useState(() => fallbackProducts.map(normalizeProduct));
+
+  useEffect(() => {
+    let isMounted = true;
+    fetchLiveProducts({ limit: 12 })
+      .then((data) => {
+        if (isMounted && data?.products?.length) {
+          setAllProducts(data.products);
+        }
+      })
+      .catch(() => {});
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   if (!isCartOpen) return null;
 
@@ -44,8 +60,8 @@ export const CartDrawer = () => {
     router.push('/checkout');
   };
 
-  // Upsell items (random 2 popular items not in cart)
-  const upsellItems = products
+  // Upsell items (2 popular items not in cart)
+  const upsellItems = allProducts
     .filter(p => !cartItems.some(ci => ci.productId === p.id))
     .slice(0, 2);
 

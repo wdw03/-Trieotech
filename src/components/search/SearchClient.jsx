@@ -7,7 +7,8 @@ import FilterSidebar from '../../components/product/FilterSidebar';
 import ProductCard from '../../components/common/ProductCard';
 import QuickViewModal from '../../components/common/QuickViewModal';
 import EmptyState from '../../components/common/EmptyState';
-import { products, searchProducts } from '../../data/products';
+import { products as fallbackProducts, searchProducts } from '../../data/products';
+import { fetchLiveProducts, normalizeProduct } from '../../lib/api/store';
 import { Search as SearchIcon, Filter, Sparkles, X, Clock, Flame, ArrowRight, Package } from 'lucide-react';
 import useDebounce from '../../hooks/useDebounce';
 
@@ -31,8 +32,37 @@ export default function SearchClient() {
   const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
   const [quickViewProduct, setQuickViewProduct] = useState(null);
   const [sortBy, setSortBy] = useState('relevance');
+  const [allProducts, setAllProducts] = useState(() => fallbackProducts.map(normalizeProduct));
+  const [liveSearchResults, setLiveSearchResults] = useState(null);
 
   const debouncedQuery = useDebounce(inputQuery, 300);
+
+  // Fetch live products when query changes
+  useEffect(() => {
+    let isMounted = true;
+    const q = queryFromUrl.trim();
+    if (q) {
+      fetchLiveProducts({ search: q, limit: 100 })
+        .then((data) => {
+          if (isMounted && data?.products) {
+            setLiveSearchResults(data.products);
+          }
+        })
+        .catch(() => {});
+    } else {
+      setLiveSearchResults(null);
+      fetchLiveProducts({ limit: 100 })
+        .then((data) => {
+          if (isMounted && data?.products) {
+            setAllProducts(data.products);
+          }
+        })
+        .catch(() => {});
+    }
+    return () => {
+      isMounted = false;
+    };
+  }, [queryFromUrl]);
 
   // Recent searches in localStorage
   const [recentSearches, setRecentSearches] = useState(() => {
@@ -95,9 +125,13 @@ export default function SearchClient() {
 
   // Search Results
   const rawResults = useMemo(() => {
-    if (!queryFromUrl.trim()) return products;
-    return searchProducts(queryFromUrl);
-  }, [queryFromUrl]);
+    if (!queryFromUrl.trim()) return allProducts;
+    if (liveSearchResults && liveSearchResults.length > 0) return liveSearchResults;
+    return allProducts.filter(p =>
+      p.name?.toLowerCase().includes(queryFromUrl.toLowerCase()) ||
+      p.category?.toLowerCase().includes(queryFromUrl.toLowerCase())
+    );
+  }, [queryFromUrl, allProducts, liveSearchResults]);
 
   // Filter and Sort Pipeline
   const filteredResults = useMemo(() => {

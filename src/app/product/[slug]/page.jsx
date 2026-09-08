@@ -1,6 +1,17 @@
-import { products, getProductBySlug } from '../../../data/products';
+import { products, getProductBySlug as getFallbackProductBySlug } from '../../../data/products';
+import { getProductBySlug as getLiveProductBySlug } from '../../../lib/api/products';
 import ProductClient from '../../../components/product/ProductClient';
 import { notFound } from 'next/navigation';
+
+export const dynamicParams = true;
+
+async function findProduct(slug) {
+  try {
+    const live = await getLiveProductBySlug(slug);
+    if (live) return live;
+  } catch (_) {}
+  return getFallbackProductBySlug(slug) || products.find((p) => p.id === Number(slug)) || null;
+}
 
 export async function generateStaticParams() {
   return products.map((p) => ({
@@ -10,7 +21,7 @@ export async function generateStaticParams() {
 
 export async function generateMetadata({ params }) {
   const { slug } = await params;
-  const product = getProductBySlug(slug) || products.find(p => p.id === Number(slug));
+  const product = await findProduct(slug);
 
   if (!product) {
     return {
@@ -54,7 +65,7 @@ export async function generateMetadata({ params }) {
 
 export default async function ProductPage({ params }) {
   const { slug } = await params;
-  const product = getProductBySlug(slug) || products.find(p => p.id === Number(slug));
+  const product = await findProduct(slug);
 
   if (!product) {
     notFound();

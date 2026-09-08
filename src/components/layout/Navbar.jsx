@@ -23,7 +23,8 @@ import { useWishlist } from '../../context/WishlistContext';
 import { useTheme } from '../../context/ThemeContext';
 import { useAuth } from '../../context/AuthContext';
 import { searchProducts } from '../../data/products';
-import { categories } from '../../data/categories';
+import { categories as fallbackCategories } from '../../data/categories';
+import { fetchLiveProducts, fetchLiveCategories } from '../../lib/api/store';
 import TrioLogo from '../common/TrioLogo';
 import useDebounce from '../../hooks/useDebounce';
 
@@ -35,12 +36,27 @@ export const Navbar = () => {
   const { isDark, toggleTheme } = useTheme();
   const { user, isAuthenticated, logout } = useAuth();
 
+  const [categoriesList, setCategoriesList] = useState(fallbackCategories);
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState([]);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isUserDropdownOpen, setIsUserDropdownOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
+
+  useEffect(() => {
+    let isMounted = true;
+    fetchLiveCategories()
+      .then((cats) => {
+        if (isMounted && Array.isArray(cats) && cats.length > 0) {
+          setCategoriesList(cats);
+        }
+      })
+      .catch(() => {});
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   const debouncedSearch = useDebounce(searchQuery, 250);
   const searchContainerRef = useRef(null);
@@ -69,14 +85,30 @@ export const Navbar = () => {
 
   // Perform debounced search for instant dropdown
   useEffect(() => {
+    let isCurrent = true;
     if (debouncedSearch.trim().length > 1) {
-      const results = searchProducts(debouncedSearch).slice(0, 6);
-      setSearchResults(results);
-      setIsSearchOpen(true);
+      const q = debouncedSearch.trim();
+      fetchLiveProducts({ search: q, limit: 6 })
+        .then((data) => {
+          if (isCurrent && data?.products) {
+            setSearchResults(data.products.slice(0, 6));
+            setIsSearchOpen(true);
+          }
+        })
+        .catch(() => {
+          if (isCurrent) {
+            const results = searchProducts(q).slice(0, 6);
+            setSearchResults(results);
+            setIsSearchOpen(true);
+          }
+        });
     } else {
       setSearchResults([]);
       setIsSearchOpen(false);
     }
+    return () => {
+      isCurrent = false;
+    };
   }, [debouncedSearch]);
 
   // Close search dropdown on click outside or Escape
@@ -424,7 +456,7 @@ export const Navbar = () => {
 
               {/* Mega Dropdown Menu */}
               <div className="absolute top-full left-0 mt-2 w-72 bg-white dark:bg-[#1A110B] rounded-2xl border border-gold-500/30 shadow-2xl py-3 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50 divide-y divide-stone-100 dark:divide-stone-800">
-                {categories.map((cat) => (
+                {categoriesList.map((cat) => (
                   <Link
                     key={cat.id}
                     href={`/category/${cat.slug}`}
@@ -508,7 +540,7 @@ export const Navbar = () => {
                     Categories
                   </span>
                   <div className="pl-3 mt-2 space-y-2 text-xs text-stone-600 dark:text-stone-300 border-l border-gold-500/30">
-                    {categories.map(c => (
+                    {categoriesList.map(c => (
                       <Link key={c.id} href={`/category/${c.slug}`} className="block py-1 hover:text-maroon-700 dark:hover:text-gold-400 transition-colors">
                         {c.name}
                       </Link>

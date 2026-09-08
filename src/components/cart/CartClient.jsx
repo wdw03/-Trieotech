@@ -6,7 +6,8 @@ import Breadcrumb from '../../components/common/Breadcrumb';
 import EmptyState from '../../components/common/EmptyState';
 import ProductCard from '../../components/common/ProductCard';
 import { useCart } from '../../context/CartContext';
-import { products } from '../../data/products';
+import { products as fallbackProducts } from '../../data/products';
+import { fetchLiveProducts, normalizeProduct } from '../../lib/api/store';
 import {
   Trash2,
   Plus,
@@ -43,6 +44,21 @@ export default function CartClient() {
   } = useCart();
 
   const [couponCodeInput, setCouponCodeInput] = useState('');
+  const [allProducts, setAllProducts] = useState(() => fallbackProducts.map(normalizeProduct));
+
+  React.useEffect(() => {
+    let isMounted = true;
+    fetchLiveProducts({ limit: 20 })
+      .then((data) => {
+        if (isMounted && data?.products?.length) {
+          setAllProducts(data.products);
+        }
+      })
+      .catch(() => {});
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   const handleApplyCoupon = (e) => {
     e.preventDefault();
@@ -57,7 +73,7 @@ export default function CartClient() {
   };
 
   // Upsell crafts
-  const upsellProducts = products
+  const upsellProducts = allProducts
     .filter(p => !cartItems.some(ci => ci.productId === p.id))
     .slice(0, 4);
 

@@ -1,7 +1,18 @@
-import { categories, getCategoryBySlug } from '../../../data/categories';
+import { categories, getCategoryBySlug as getFallbackCategoryBySlug } from '../../../data/categories';
+import { getCategoryBySlug as getLiveCategoryBySlug } from '../../../lib/api/products';
 import { products } from '../../../data/products';
 import CategoryClient from '../../../components/category/CategoryClient';
 import { notFound } from 'next/navigation';
+
+export const dynamicParams = true;
+
+async function findCategory(slug) {
+  try {
+    const live = await getLiveCategoryBySlug(slug);
+    if (live) return live;
+  } catch (_) {}
+  return getFallbackCategoryBySlug(slug) || categories.find(c => c.slug === slug) || null;
+}
 
 export async function generateStaticParams() {
   return categories.map((c) => ({
@@ -11,7 +22,7 @@ export async function generateStaticParams() {
 
 export async function generateMetadata({ params }) {
   const { slug } = await params;
-  const category = getCategoryBySlug(slug) || categories.find(c => c.slug === slug);
+  const category = await findCategory(slug);
 
   if (!category) {
     const matchingProduct = products.find(
@@ -57,7 +68,7 @@ export async function generateMetadata({ params }) {
 
 export default async function CategoryPage({ params }) {
   const { slug } = await params;
-  const category = getCategoryBySlug(slug) || categories.find(c => c.slug === slug);
+  const category = await findCategory(slug);
   const matchingProduct = !category ? products.find(
     p => p.category.toLowerCase().replace(/ \/ /g, '-').replace(/ /g, '-') === slug?.toLowerCase()
   ) : null;

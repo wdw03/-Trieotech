@@ -1,9 +1,39 @@
-import React from 'react';
-import { reviews } from '../../data/reviews';
-import { Sparkles, Quote, CheckCircle2 } from 'lucide-react';
+'use client';
+import React, { useState, useEffect } from 'react';
+import { reviews as fallbackReviews } from '../../data/reviews';
+import { Sparkles, CheckCircle2 } from 'lucide-react';
 import RatingStars from '../common/RatingStars';
+import { getApiBase } from '../../lib/api/store';
 
 export const TestimonialsCarousel = () => {
+  const [reviewsList, setReviewsList] = useState(fallbackReviews);
+
+  useEffect(() => {
+    let isMounted = true;
+    const apiBase = getApiBase();
+    fetch(`${apiBase}/reviews`)
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (isMounted && Array.isArray(data?.reviews) && data.reviews.length > 0) {
+          const mapped = data.reviews.map((r) => ({
+            id: r.id,
+            user: r.user_name || r.user || 'Verified Patron',
+            avatar: r.avatar || 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=100&auto=format&fit=crop&q=80',
+            location: r.location || 'India',
+            rating: Number(r.rating) || 5,
+            title: r.title || 'Exceptional Craftsmanship',
+            comment: r.comment || '',
+            date: r.created_at ? new Date(r.created_at).toLocaleDateString() : 'Recent',
+          }));
+          setReviewsList(mapped);
+        }
+      })
+      .catch((err) => console.warn('Reviews live fetch notice:', err));
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
   return (
     <section className="py-12 sm:py-16 bg-ivory-100 dark:bg-ethnic-dark">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 space-y-8 sm:space-y-10">
@@ -23,7 +53,7 @@ export const TestimonialsCarousel = () => {
 
         {/* Testimonial Cards Grid */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {reviews.slice(0, 3).map((rev) => (
+          {reviewsList.slice(0, 3).map((rev) => (
             <div
               key={rev.id}
               className="ethnic-card p-6 rounded-3xl border border-gold-500/30 flex flex-col justify-between space-y-4 hover:border-gold-500/60 shadow-lg relative group"

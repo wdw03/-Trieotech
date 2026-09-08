@@ -18,6 +18,9 @@ export async function GET(request) {
       featured: searchParams.get('featured') === 'true',
       bestSeller: searchParams.get('bestSeller') === 'true',
       trending: searchParams.get('trending') === 'true',
+      weddingSpecial: searchParams.get('weddingSpecial') === 'true',
+      festivalSpecial: searchParams.get('festivalSpecial') === 'true',
+      handmade: searchParams.get('handmade') === 'true',
       minPrice: searchParams.get('minPrice') ? parseFloat(searchParams.get('minPrice')) : undefined,
       maxPrice: searchParams.get('maxPrice') ? parseFloat(searchParams.get('maxPrice')) : undefined,
     });

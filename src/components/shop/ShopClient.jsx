@@ -7,7 +7,8 @@ import FilterSidebar from '../product/FilterSidebar';
 import ProductCard from '../common/ProductCard';
 import QuickViewModal from '../common/QuickViewModal';
 import EmptyState from '../common/EmptyState';
-import { products } from '../../data/products';
+import { products as fallbackProducts } from '../../data/products';
+import { fetchLiveProducts, normalizeProduct } from '../../lib/api/store';
 import { Filter, LayoutGrid, List, Sparkles, X } from 'lucide-react';
 
 export default function ShopClient() {
@@ -30,18 +31,20 @@ export default function ShopClient() {
   });
 
   const [sortBy, setSortBy] = useState(searchParams.get('sort') || 'featured');
-  const [allProducts, setAllProducts] = useState(products);
+  const [allProducts, setAllProducts] = useState(() => fallbackProducts.map(normalizeProduct));
 
   React.useEffect(() => {
-    const apiBase = process.env.NEXT_PUBLIC_API_URL || '/api';
-    fetch(`${apiBase}/products?limit=100`)
-      .then((res) => res.json())
+    let isMounted = true;
+    fetchLiveProducts({ limit: 100 })
       .then((data) => {
-        if (data?.products?.length) {
+        if (isMounted && data?.products?.length) {
           setAllProducts(data.products);
         }
       })
       .catch((err) => console.warn('Live products fetch notice:', err));
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   const resetFilters = () => {

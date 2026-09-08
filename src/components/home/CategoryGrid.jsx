@@ -1,9 +1,27 @@
-import React from 'react';
+'use client';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { categories } from '../../data/categories';
+import { categories as fallbackCategories } from '../../data/categories';
+import { fetchLiveCategories } from '../../lib/api/store';
 import { ArrowRight, Sparkles } from 'lucide-react';
 
 export const CategoryGrid = () => {
+  const [categoriesList, setCategoriesList] = useState(fallbackCategories);
+
+  useEffect(() => {
+    let isMounted = true;
+    fetchLiveCategories()
+      .then((cats) => {
+        if (isMounted && Array.isArray(cats) && cats.length > 0) {
+          setCategoriesList(cats);
+        }
+      })
+      .catch((err) => console.warn('Categories live fetch notice:', err));
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
   return (
     <section className="py-12 sm:py-16 bg-ivory-100 dark:bg-ethnic-dark">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 space-y-8 sm:space-y-10">
@@ -29,15 +47,15 @@ export const CategoryGrid = () => {
 
         {/* Category Cards Grid */}
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 gap-4 sm:gap-6">
-          {categories.map((category) => (
+          {categoriesList.map((category) => (
             <Link
-              key={category.id}
+              key={category.id || category.slug}
               href={`/category/${category.slug}`}
               className="group relative rounded-3xl overflow-hidden ethnic-card border border-gold-500/20 hover:border-gold-500/50 shadow-ethnic hover:shadow-ethnic-hover flex flex-col justify-end aspect-[4/3.8] transition-all duration-300 transform hover:-translate-y-1"
             >
               {/* Image Background */}
               <img
-                src={category.image}
+                src={category.image || '/products/pearl-zardosi-patch-1.jpg'}
                 alt={category.name}
                 className="absolute inset-0 w-full h-full object-cover object-center group-hover:scale-110 transition-transform duration-700 ease-out"
                 loading="lazy"
@@ -50,7 +68,7 @@ export const CategoryGrid = () => {
               <div className="relative z-10 p-4 sm:p-5 flex flex-col justify-end">
                 <div className="flex items-center justify-between gap-2 mb-1">
                   <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-gold-400 bg-black/40 backdrop-blur-md px-2.5 py-0.5 rounded-full border border-gold-500/30">
-                    {category.productCount} Items
+                    {category.productCount || 0} Items
                   </span>
                   <div className="w-7 h-7 rounded-full bg-gold-500/20 text-gold-300 flex items-center justify-center group-hover:bg-gold-500 group-hover:text-maroon-950 transition-colors">
                     <ArrowRight className="w-3.5 h-3.5" />
@@ -61,9 +79,11 @@ export const CategoryGrid = () => {
                   {category.name}
                 </h3>
                 
-                <p className="text-[11px] text-stone-300 line-clamp-1 mt-0.5 font-normal">
-                  {category.description}
-                </p>
+                {category.description && (
+                  <p className="text-[11px] text-stone-300 line-clamp-1 mt-0.5 font-normal">
+                    {category.description}
+                  </p>
+                )}
               </div>
             </Link>
           ))}

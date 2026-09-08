@@ -10,8 +10,9 @@ import { useCart } from '../../context/CartContext';
 import { useWishlist } from '../../context/WishlistContext';
 import { useToast } from '../../context/ToastContext';
 import { useRecentlyViewed } from '../../hooks/useRecentlyViewed';
-import { getProductBySlug, getRelatedProducts, products } from '../../data/products';
+import { getProductBySlug, getRelatedProducts, products as fallbackProducts } from '../../data/products';
 import { getReviewsByProductId } from '../../data/reviews';
+import { fetchLiveProductBySlug, normalizeProduct, getApiBase } from '../../lib/api/store';
 import {
   Heart,
   ShoppingBag,
@@ -40,8 +41,27 @@ export default function ProductClient({ initialSlug }) {
   const { addToast } = useToast();
   const { recentlyViewed, addRecentlyViewed } = useRecentlyViewed();
 
+  const [liveProduct, setLiveProduct] = useState(null);
+
   const product = useMemo(() => {
-    return getProductBySlug(slug) || products.find(p => p.id === Number(slug));
+    if (liveProduct) return liveProduct;
+    const fallback = getProductBySlug(slug) || fallbackProducts.find(p => p.id === Number(slug));
+    return fallback ? normalizeProduct(fallback) : null;
+  }, [slug, liveProduct]);
+
+  // Fetch live product from API
+  useEffect(() => {
+    let isMounted = true;
+    fetchLiveProductBySlug(slug)
+      .then((data) => {
+        if (isMounted && data) {
+          setLiveProduct(data);
+        }
+      })
+      .catch(() => {});
+    return () => {
+      isMounted = false;
+    };
   }, [slug]);
 
   // States
@@ -70,22 +90,43 @@ export default function ProductClient({ initialSlug }) {
       setDeliveryEstimate(null);
       addRecentlyViewed(product);
 
-      // Load initial mock reviews
+      // Load initial reviews from fallback
       const initialReviews = getReviewsByProductId(product.id);
       setReviewsList(initialReviews.length > 0 ? initialReviews : [
         {
           id: 1,
           user: "Ananya Sharma",
           rating: 5,
-          date: "12 August 2026",
+          date: "Recent",
           title: "Stunning Indian Craftsmanship",
           comment: "The details and finishing are far superior than what pictures show. Truly royal!",
           helpful: 8,
           verified: true
         }
       ]);
+
+      // Fetch live reviews from API
+      const apiBase = getApiBase();
+      fetch(`${apiBase}/reviews?productId=${product.id}`)
+        .then((res) => (res.ok ? res.json() : null))
+        .then((data) => {
+          if (Array.isArray(data?.reviews) && data.reviews.length > 0) {
+            const mapped = data.reviews.map((r) => ({
+              id: r.id,
+              user: r.user_name || 'Verified Patron',
+              rating: Number(r.rating) || 5,
+              date: r.created_at ? new Date(r.created_at).toLocaleDateString() : 'Recent',
+              title: r.title || 'Verified Patron Experience',
+              comment: r.comment || '',
+              helpful: 0,
+              verified: true,
+            }));
+            setReviewsList(mapped);
+          }
+        })
+        .catch(() => {});
     }
-  }, [product, addRecentlyViewed]);
+  }, [product?.id, addRecentlyViewed]);
 
   if (!product) {
     return (
@@ -187,8 +228,24 @@ export default function ProductClient({ initialSlug }) {
       verified: true
     };
     setReviewsList([newRev, ...reviewsList]);
+    const submittedData = {
+      product_id: product.id,
+      user_name: userReview.name,
+      rating: userReview.rating,
+      title: userReview.title || 'Verified Patron Experience',
+      comment: userReview.comment,
+    };
     setUserReview({ rating: 5, title: '', comment: '', name: '' });
     addToast('Thank you for submitting your artisan review!', 'success');
+
+    try {
+      const apiBase = getApiBase();
+      fetch(`${apiBase}/reviews`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(submittedData),
+      }).catch(() => {});
+    } catch (_) {}
   };
 
   return (
