@@ -23,7 +23,7 @@ export default function RegisterClient() {
   const searchParams = useSearchParams();
   const redirectTo = searchParams.get('redirect') || searchParams.get('next') || '/profile';
 
-  const { register, verifySignupOtp, resendSignupOtp } = useAuth();
+  const { sendSignupOtp, verifySignupOtp, resendSignupOtp } = useAuth();
 
   const [formData, setFormData] = useState({
     name: '',
@@ -37,6 +37,7 @@ export default function RegisterClient() {
   // OTP Verification States
   const [showVerification, setShowVerification] = useState(false);
   const [otp, setOtp] = useState('');
+  const [tokenData, setTokenData] = useState({ verificationToken: '', expiresAt: 0 });
   const [isVerifying, setIsVerifying] = useState(false);
   const [resendTimer, setResendTimer] = useState(60);
   const [isResending, setIsResending] = useState(false);
@@ -66,16 +67,17 @@ export default function RegisterClient() {
     setIsLoading(true);
 
     try {
-      const result = await register(formData);
+      const result = await sendSignupOtp(formData.email, formData.name);
       if (result.success) {
-        if (result.needsVerification) {
-          setShowVerification(true);
-          setResendTimer(60);
-        } else {
-          router.push(redirectTo);
-        }
+        setTokenData({
+          verificationToken: result.verificationToken,
+          expiresAt: result.expiresAt,
+        });
+        setShowVerification(true);
+        setResendTimer(60);
+        setOtp('');
       } else {
-        setError(result.error || 'Registration failed');
+        setError(result.error || 'Failed to send verification code');
       }
     } catch (err) {
       setError('Something went wrong. Please try again.');
@@ -97,7 +99,16 @@ export default function RegisterClient() {
     setIsVerifying(true);
 
     try {
-      const result = await verifySignupOtp(formData.email, cleanOtp, formData.password);
+      const result = await verifySignupOtp({
+        email: formData.email,
+        otp: cleanOtp,
+        verificationToken: tokenData.verificationToken,
+        expiresAt: tokenData.expiresAt,
+        name: formData.name,
+        phone: formData.phone,
+        password: formData.password,
+      });
+
       if (result.success) {
         // Auto-logged in! Redirect directly
         router.push(redirectTo);
@@ -105,7 +116,7 @@ export default function RegisterClient() {
         setError(result.error || 'Invalid or expired OTP code. Please check and retry.');
       }
     } catch (err) {
-      setError('Failed to verify OTP. Please try again or click the link in your email.');
+      setError('Failed to verify OTP. Please try again.');
     } finally {
       setIsVerifying(false);
     }
@@ -117,8 +128,12 @@ export default function RegisterClient() {
     setError('');
 
     try {
-      const result = await resendSignupOtp(formData.email);
+      const result = await resendSignupOtp(formData.email, formData.name);
       if (result.success) {
+        setTokenData({
+          verificationToken: result.verificationToken,
+          expiresAt: result.expiresAt,
+        });
         setResendTimer(60);
       } else {
         setError(result.error || 'Failed to resend OTP');

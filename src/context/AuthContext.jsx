@@ -143,151 +143,84 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // ── Register ──
-  const register = async (formData) => {
+  // ── Send Signup OTP (Direct to Email) ──
+  const sendSignupOtp = async (email, name) => {
     try {
-      const { data, error } = await supabase.auth.signUp({
-        email: formData.email,
-        password: formData.password,
-        options: {
-          data: {
-            full_name: formData.name || '',
-            phone: formData.phone || '',
-          },
-        },
+      const res = await fetch('/api/auth/send-signup-otp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, name }),
       });
-
-      if (error) {
-        addToast(error.message || 'Registration failed', 'error');
-        return { success: false, error: error.message };
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        addToast(data.error || 'Failed to send OTP email', 'error');
+        return { success: false, error: data.error };
       }
-
-      // Update profile with phone
-      if (data.user) {
-        await supabase
-          .from('profiles')
-          .update({
-            full_name: formData.name || '',
-            phone: formData.phone || '',
-          })
-          .eq('id', data.user.id);
-      }
-
-      if (data.session) {
-        addToast('Welcome to Trio Ecart artisan family!', 'success');
-        return { success: true, needsVerification: false };
-      }
-
-      addToast('Verification code sent to your email!', 'info');
-      return { success: true, needsVerification: true, email: formData.email };
+      addToast('Verification code sent to ' + email, 'info');
+      return {
+        success: true,
+        verificationToken: data.verificationToken,
+        expiresAt: data.expiresAt,
+      };
     } catch (err) {
-      addToast('Something went wrong', 'error');
+      addToast('Failed to send verification code', 'error');
       return { success: false, error: err.message };
     }
   };
 
   // ── Verify Signup OTP & Auto-Login ──
-  const verifySignupOtp = async (email, token, password) => {
+  const verifySignupOtp = async ({ email, otp, verificationToken, expiresAt, name, phone, password }) => {
     try {
-      const cleanToken = token ? token.trim() : '';
-      if (!cleanToken) {
-        addToast('Please enter the verification OTP', 'error');
-        return { success: false, error: 'OTP is required' };
-      }
-
-      // 1. Try Supabase verifyOtp with type 'signup'
-      let { data, error } = await supabase.auth.verifyOtp({
-        email,
-        token: cleanToken,
-        type: 'signup',
-      });
-
-      // 2. If 'signup' fails, try 'email' type
-      if (error) {
-        const emailRetry = await supabase.auth.verifyOtp({
+      const res = await fetch('/api/auth/verify-signup-otp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
           email,
-          token: cleanToken,
-          type: 'email',
-        });
-        if (!emailRetry.error && (emailRetry.data?.session || emailRetry.data?.user)) {
-          data = emailRetry.data;
-          error = null;
-        }
+          otp,
+          verificationToken,
+          expiresAt,
+          name,
+          phone,
+          password,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        addToast(data.error || 'Invalid OTP code', 'error');
+        return { success: false, error: data.error };
       }
 
-      // 3. If client attempts failed, try server API fallback
-      if (error) {
-        try {
-          const apiRes = await fetch('/api/auth/verify-otp', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email, otp: cleanToken })
-          });
-          const apiData = await apiRes.json();
-          if (apiRes.ok && apiData.success) {
-            error = null;
-            data = apiData;
-          }
-        } catch (apiErr) {
-          // ignore server fallback error
-        }
-      }
-
-      // 4. If session successfully established
-      if (data?.session && data?.user) {
-        setUser(data.user);
-        await fetchProfile(data.user.id);
-        await fetchOrders(data.user.id);
-        addToast('Account verified! Welcome to Trio Ecart.', 'success');
-        return { success: true, user: data.user, session: data.session };
-      }
-
-      // 4. If password was saved and user is now confirmed, sign in with password
+      // Automatically sign in with the newly verified credentials
       if (password) {
-        const loginRes = await supabase.auth.signInWithPassword({
+        const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
           email,
           password,
         });
-        if (!loginRes.error && loginRes.data?.user) {
-          setUser(loginRes.data.user);
-          await fetchProfile(loginRes.data.user.id);
-          await fetchOrders(loginRes.data.user.id);
-          addToast('Account verified and logged in successfully!', 'success');
-          return { success: true, user: loginRes.data.user };
+        if (signInError) {
+          console.warn('Auto sign-in notice:', signInError);
+        } else if (signInData?.user) {
+          setUser(signInData.user);
+          await fetchProfile(signInData.user.id);
+          await fetchOrders(signInData.user.id);
         }
       }
 
-      if (error) {
-        addToast(error.message || 'Invalid or expired OTP code', 'error');
-        return { success: false, error: error.message };
-      }
-
+      addToast('Account verified! Welcome to Trio Enterprises.', 'success');
       return { success: true };
     } catch (err) {
-      addToast(err.message || 'OTP verification failed', 'error');
+      addToast(err.message || 'Verification failed', 'error');
       return { success: false, error: err.message };
     }
   };
 
+  // Legacy register wrapper for backward compatibility
+  const register = async (formData) => {
+    return await sendSignupOtp(formData.email, formData.name);
+  };
+
   // ── Resend Signup OTP ──
-  const resendSignupOtp = async (email) => {
-    try {
-      const { error } = await supabase.auth.resend({
-        type: 'signup',
-        email,
-      });
-
-      if (error) {
-        addToast(error.message || 'Failed to resend OTP', 'error');
-        return { success: false, error: error.message };
-      }
-
-      addToast('A new OTP code has been sent to your email!', 'success');
-      return { success: true };
-    } catch (err) {
-      addToast('Failed to resend OTP', 'error');
-      return { success: false, error: err.message };
-    }
+  const resendSignupOtp = async (email, name) => {
+    return await sendSignupOtp(email, name);
   };
 
   // ── Logout ──
@@ -454,6 +387,7 @@ export const AuthProvider = ({ children }) => {
         userOrders,
         login,
         register,
+        sendSignupOtp,
         verifySignupOtp,
         resendSignupOtp,
         logout,
