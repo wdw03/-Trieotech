@@ -61,6 +61,7 @@ export const Navbar = () => {
   const debouncedSearch = useDebounce(searchQuery, 250);
   const searchContainerRef = useRef(null);
   const mobileSearchContainerRef = useRef(null);
+  const userDropdownRef = useRef(null);
 
   // Detect scroll for subtle header shadow elevation without layout shifts
   useEffect(() => {
@@ -111,7 +112,7 @@ export const Navbar = () => {
     };
   }, [debouncedSearch]);
 
-  // Close search dropdown on click outside or Escape
+  // Close search and user dropdown on click outside or Escape
   useEffect(() => {
     const handleClickOutside = (e) => {
       const insideDesktop = searchContainerRef.current && searchContainerRef.current.contains(e.target);
@@ -119,7 +120,11 @@ export const Navbar = () => {
       if (!insideDesktop && !insideMobile) {
         setIsSearchOpen(false);
       }
-      setIsUserDropdownOpen(false);
+
+      const insideUserDropdown = userDropdownRef.current && userDropdownRef.current.contains(e.target);
+      if (!insideUserDropdown) {
+        setIsUserDropdownOpen(false);
+      }
     };
 
     const handleKeyDown = (e) => {
@@ -137,10 +142,11 @@ export const Navbar = () => {
     };
   }, []);
 
-  // Close mobile menu and search dropdown on route change
+  // Close mobile menu and dropdowns on route change
   useEffect(() => {
     setIsMobileMenuOpen(false);
     setIsSearchOpen(false);
+    setIsUserDropdownOpen(false);
   }, [pathname]);
 
   const handleSearchSubmit = (e) => {
@@ -310,13 +316,13 @@ export const Navbar = () => {
             </button>
 
             {/* User Profile Dropdown */}
-            <div className="relative hidden sm:block">
+            <div ref={userDropdownRef} className="relative">
               <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setIsUserDropdownOpen(!isUserDropdownOpen);
+                type="button"
+                onClick={() => {
+                  setIsUserDropdownOpen((prev) => !prev);
                 }}
-                className="flex items-center gap-1.5 p-1.5 rounded-xl border border-stone-200 dark:border-stone-800 hover:border-gold-500 text-stone-700 dark:text-stone-300 transition-colors"
+                className="flex items-center gap-1.5 p-1.5 rounded-xl border border-stone-200 dark:border-stone-800 hover:border-gold-500 text-stone-700 dark:text-stone-300 transition-colors cursor-pointer"
                 aria-label="User menu"
               >
                 {user?.avatar ? (
@@ -338,29 +344,53 @@ export const Navbar = () => {
                         <p className="font-bold text-stone-900 dark:text-ivory-100 truncate">{user.name}</p>
                         <p className="text-[11px] text-stone-400 truncate">{user.email}</p>
                       </div>
-                      <Link href="/profile" className="block px-4 py-2 hover:bg-gold-50 dark:hover:bg-stone-800 text-stone-700 dark:text-stone-300 font-medium">
+                      <Link
+                        href="/profile"
+                        onClick={() => setIsUserDropdownOpen(false)}
+                        className="block px-4 py-2 hover:bg-gold-50 dark:hover:bg-stone-800 text-stone-700 dark:text-stone-300 font-medium transition-colors"
+                      >
                         My Account &amp; Addresses
                       </Link>
-                      <Link href="/profile/orders" className="block px-4 py-2 hover:bg-gold-50 dark:hover:bg-stone-800 text-stone-700 dark:text-stone-300 font-medium">
+                      <Link
+                        href="/profile/orders"
+                        onClick={() => setIsUserDropdownOpen(false)}
+                        className="block px-4 py-2 hover:bg-gold-50 dark:hover:bg-stone-800 text-stone-700 dark:text-stone-300 font-medium transition-colors"
+                      >
                         My Orders &amp; Invoices
                       </Link>
-                      <Link href="/wishlist" className="block px-4 py-2 hover:bg-gold-50 dark:hover:bg-stone-800 text-stone-700 dark:text-stone-300 font-medium">
+                      <Link
+                        href="/wishlist"
+                        onClick={() => setIsUserDropdownOpen(false)}
+                        className="block px-4 py-2 hover:bg-gold-50 dark:hover:bg-stone-800 text-stone-700 dark:text-stone-300 font-medium transition-colors"
+                      >
                         Saved Wishlist ({wishlistCount})
                       </Link>
                       <button
-                        onClick={logout}
-                        className="w-full text-left px-4 py-2 text-maroon-600 dark:text-maroon-400 hover:bg-maroon-50 dark:hover:bg-maroon-950/40 font-bold border-t border-stone-100 dark:border-stone-800 mt-1"
+                        type="button"
+                        onClick={async () => {
+                          setIsUserDropdownOpen(false);
+                          await logout();
+                        }}
+                        className="w-full text-left px-4 py-2 text-maroon-600 dark:text-maroon-400 hover:bg-maroon-50 dark:hover:bg-maroon-950/40 font-bold border-t border-stone-100 dark:border-stone-800 mt-1 cursor-pointer transition-colors"
                       >
                         Sign Out
                       </button>
                     </>
                   ) : (
                     <>
-                      <div className="px-4 py-2 text-stone-500">Welcome to Trio Ecart</div>
-                      <Link href="/login" className="block px-4 py-2 hover:bg-gold-50 dark:hover:bg-stone-800 text-maroon-700 dark:text-gold-400 font-bold">
+                      <div className="px-4 py-2 text-stone-500 font-medium">Welcome to Trio Ecart</div>
+                      <Link
+                        href="/login"
+                        onClick={() => setIsUserDropdownOpen(false)}
+                        className="block px-4 py-2 hover:bg-gold-50 dark:hover:bg-stone-800 text-maroon-700 dark:text-gold-400 font-bold transition-colors"
+                      >
                         Login / Sign In
                       </Link>
-                      <Link href="/register" className="block px-4 py-2 hover:bg-gold-50 dark:hover:bg-stone-800 text-stone-700 dark:text-stone-300 font-medium">
+                      <Link
+                        href="/register"
+                        onClick={() => setIsUserDropdownOpen(false)}
+                        className="block px-4 py-2 hover:bg-gold-50 dark:hover:bg-stone-800 text-stone-700 dark:text-stone-300 font-medium transition-colors"
+                      >
                         Create New Account
                       </Link>
                     </>
@@ -575,12 +605,20 @@ export const Navbar = () => {
                     </div>
                   </div>
                   <div className="grid grid-cols-2 gap-2">
-                    <Link href="/profile" className="block w-full py-2 text-center btn-primary text-xs font-bold">
+                    <Link
+                      href="/profile"
+                      onClick={() => setIsMobileMenuOpen(false)}
+                      className="block w-full py-2 text-center btn-primary text-xs font-bold"
+                    >
                       My Account
                     </Link>
                     <button
-                      onClick={logout}
-                      className="block w-full py-2 text-center btn-outline-maroon text-xs font-bold"
+                      type="button"
+                      onClick={async () => {
+                        setIsMobileMenuOpen(false);
+                        await logout();
+                      }}
+                      className="block w-full py-2 text-center btn-outline-maroon text-xs font-bold cursor-pointer"
                     >
                       Sign Out
                     </button>
@@ -588,10 +626,18 @@ export const Navbar = () => {
                 </div>
               ) : (
                 <div className="grid grid-cols-2 gap-2">
-                  <Link href="/login" className="py-2 text-center btn-primary text-xs font-bold">
+                  <Link
+                    href="/login"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="py-2 text-center btn-primary text-xs font-bold"
+                  >
                     Sign In
                   </Link>
-                  <Link href="/register" className="py-2 text-center btn-outline-maroon text-xs font-bold">
+                  <Link
+                    href="/register"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="py-2 text-center btn-outline-maroon text-xs font-bold"
+                  >
                     Register
                   </Link>
                 </div>
