@@ -1,8 +1,25 @@
+'use client';
 import React from 'react';
-import { NavLink } from 'react-router-dom';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { Home, Compass, Search, Heart, ShoppingBag, User } from 'lucide-react';
 import { useCart } from '../../context/CartContext';
 import { useWishlist } from '../../context/WishlistContext';
+
+const MobileNavLink = ({ href, children, exact = false }) => {
+  const pathname = usePathname();
+  const isActive = exact ? pathname === href : pathname.startsWith(href);
+  return (
+    <Link
+      href={href}
+      className={`flex flex-col items-center gap-1 text-[10px] font-bold ${
+        isActive ? 'text-maroon-700 dark:text-gold-400' : 'text-stone-500 dark:text-stone-400'
+      }`}
+    >
+      {children}
+    </Link>
+  );
+};
 
 export const MobileNav = () => {
   const { itemCount, openCart } = useCart();
@@ -13,53 +30,25 @@ export const MobileNav = () => {
       <div className="flex items-center justify-around">
         
         {/* Home */}
-        <NavLink
-          to="/"
-          className={({ isActive }) =>
-            `flex flex-col items-center gap-1 text-[10px] font-bold ${
-              isActive ? 'text-maroon-700 dark:text-gold-400' : 'text-stone-500 dark:text-stone-400'
-            }`
-          }
-        >
+        <MobileNavLink href="/" exact>
           <Home className="w-5 h-5" />
           <span>Home</span>
-        </NavLink>
+        </MobileNavLink>
 
         {/* Shop / Explore */}
-        <NavLink
-          to="/shop"
-          className={({ isActive }) =>
-            `flex flex-col items-center gap-1 text-[10px] font-bold ${
-              isActive ? 'text-maroon-700 dark:text-gold-400' : 'text-stone-500 dark:text-stone-400'
-            }`
-          }
-        >
+        <MobileNavLink href="/shop">
           <Compass className="w-5 h-5" />
           <span>Explore</span>
-        </NavLink>
+        </MobileNavLink>
 
         {/* Search */}
-        <NavLink
-          to="/search"
-          className={({ isActive }) =>
-            `flex flex-col items-center gap-1 text-[10px] font-bold ${
-              isActive ? 'text-maroon-700 dark:text-gold-400' : 'text-stone-500 dark:text-stone-400'
-            }`
-          }
-        >
+        <MobileNavLink href="/search">
           <Search className="w-5 h-5" />
           <span>Search</span>
-        </NavLink>
+        </MobileNavLink>
 
         {/* Wishlist */}
-        <NavLink
-          to="/wishlist"
-          className={({ isActive }) =>
-            `relative flex flex-col items-center gap-1 text-[10px] font-bold ${
-              isActive ? 'text-maroon-700 dark:text-gold-400' : 'text-stone-500 dark:text-stone-400'
-            }`
-          }
-        >
+        <MobileNavLink href="/wishlist">
           <div className="relative">
             <Heart className="w-5 h-5" />
             {wishlistCount > 0 && (
@@ -69,7 +58,7 @@ export const MobileNav = () => {
             )}
           </div>
           <span>Wishlist</span>
-        </NavLink>
+        </MobileNavLink>
 
         {/* Cart Trigger */}
         <button
@@ -89,17 +78,10 @@ export const MobileNav = () => {
         </button>
 
         {/* Profile */}
-        <NavLink
-          to="/profile"
-          className={({ isActive }) =>
-            `flex flex-col items-center gap-1 text-[10px] font-bold ${
-              isActive ? 'text-maroon-700 dark:text-gold-400' : 'text-stone-500 dark:text-stone-400'
-            }`
-          }
-        >
+        <MobileNavLink href="/profile">
           <User className="w-5 h-5" />
           <span>Account</span>
-        </NavLink>
+        </MobileNavLink>
 
       </div>
     </nav>

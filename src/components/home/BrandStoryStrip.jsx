@@ -1,5 +1,5 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import Link from 'next/link';
 import { Award, Heart, Sparkles, ShieldCheck, ArrowRight } from 'lucide-react';
 
 export const BrandStoryStrip = () => {
@@ -90,7 +90,7 @@ export const BrandStoryStrip = () => {
             {/* Action CTA */}
             <div className="pt-2">
               <Link
-                to="/about"
+                href="/about"
                 className="btn-gold text-xs font-bold uppercase tracking-wider px-6 py-3 inline-flex items-center gap-2"
               >
                 <span>Read Our Artisan Guild Story</span>

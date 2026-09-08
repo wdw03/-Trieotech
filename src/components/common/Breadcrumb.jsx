@@ -1,5 +1,5 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import Link from 'next/link';
 import { ChevronRight, Home } from 'lucide-react';
 
 export const Breadcrumb = ({ items = [] }) => {
@@ -8,7 +8,7 @@ export const Breadcrumb = ({ items = [] }) => {
       <ol className="inline-flex items-center space-x-1.5 sm:space-x-2">
         <li className="inline-flex items-center">
           <Link
-            to="/"
+            href="/"
             className="inline-flex items-center gap-1 hover:text-maroon-700 dark:hover:text-gold-400 transition-colors"
           >
             <Home className="w-3.5 h-3.5" />
@@ -26,7 +26,7 @@ export const Breadcrumb = ({ items = [] }) => {
                 </span>
               ) : (
                 <Link
-                  to={item.url}
+                  href={item.url}
                   className="hover:text-maroon-700 dark:hover:text-gold-400 transition-colors truncate max-w-[150px] sm:max-w-none"
                 >
                   {item.name}

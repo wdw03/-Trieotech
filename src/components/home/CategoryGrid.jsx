@@ -1,5 +1,5 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import Link from 'next/link';
 import { categories } from '../../data/categories';
 import { ArrowRight, Sparkles } from 'lucide-react';
 
@@ -19,7 +19,7 @@ export const CategoryGrid = () => {
             </h2>
           </div>
           <Link
-            to="/shop"
+            href="/shop"
             className="inline-flex items-center gap-1.5 text-xs font-bold text-maroon-700 dark:text-gold-400 hover:text-maroon-800 dark:hover:text-gold-300 uppercase tracking-wider group"
           >
             <span>Explore All 43+ Crafts</span>
@@ -32,7 +32,7 @@ export const CategoryGrid = () => {
           {categories.map((category) => (
             <Link
               key={category.id}
-              to={`/category/${category.slug}`}
+              href={`/category/${category.slug}`}
               className="group relative rounded-3xl overflow-hidden ethnic-card border border-gold-500/20 hover:border-gold-500/50 shadow-ethnic hover:shadow-ethnic-hover flex flex-col justify-end aspect-[4/3.8] transition-all duration-300 transform hover:-translate-y-1"
             >
               {/* Image Background */}

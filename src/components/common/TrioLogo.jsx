@@ -1,9 +1,9 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import Link from 'next/link';
 
 export const TrioLogo = ({ className = "h-auto", showTagline = true, isCompact = false }) => {
   return (
-    <Link to="/" className={`inline-flex items-center gap-1.5 sm:gap-3 group select-none shrink-0 min-w-0 ${className}`}>
+    <Link href="/" className={`inline-flex items-center gap-1.5 sm:gap-3 group select-none shrink-0 min-w-0 ${className}`}>
       {/* Brand Logo Emblem */}
       <div className={`relative ${isCompact ? 'sm:w-9 sm:h-9' : 'sm:w-11 sm:h-11'} w-8 h-8 xs:w-9 xs:h-9 rounded-xl sm:rounded-2xl overflow-hidden p-0.5 bg-gradient-to-br from-gold-500/50 via-maroon-700/40 to-gold-500/50 shadow-xs sm:shadow-md group-hover:shadow-gold-md transition-all duration-300 shrink-0`}>
         <div className="w-full h-full rounded-[10px] sm:rounded-[14px] bg-white dark:bg-[#1A110B] flex items-center justify-center overflow-hidden border border-gold-500/40">

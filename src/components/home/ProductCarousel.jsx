@@ -1,5 +1,5 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import Link from 'next/link';
 import { ArrowRight, Sparkles } from 'lucide-react';
 import ProductCard from '../common/ProductCard';
 
@@ -41,7 +41,7 @@ export const ProductCarousel = ({
 
           {viewAllLink && (
             <Link
-              to={viewAllLink}
+              href={viewAllLink}
               className="inline-flex items-center gap-1.5 text-xs font-bold text-maroon-700 dark:text-gold-400 hover:text-maroon-800 dark:hover:text-gold-300 uppercase tracking-wider group"
             >
               <span>View All</span>

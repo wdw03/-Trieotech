@@ -1,5 +1,6 @@
+'use client';
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import Link from 'next/link';
 import {
   Sparkles,
   ShieldCheck,
@@ -135,14 +136,14 @@ export const Footer = () => {
               Craft Categories
             </h4>
             <ul className="space-y-2 text-xs text-stone-400">
-              <li><Link to="/category/patches" className="hover:text-gold-300 transition-colors">Embroidery Patches</Link></li>
-              <li><Link to="/category/bottle" className="hover:text-gold-300 transition-colors">Pure Copper Bottles</Link></li>
-              <li><Link to="/category/aasan" className="hover:text-gold-300 transition-colors">Pooja Aasans &amp; Thali</Link></li>
-              <li><Link to="/category/towel-gamcha" className="hover:text-gold-300 transition-colors">Pure Cotton Gamcha</Link></li>
-              <li><Link to="/category/flower-bunch" className="hover:text-gold-300 transition-colors">Artificial Flower Bunches</Link></li>
-              <li><Link to="/category/cup-chain" className="hover:text-gold-300 transition-colors">Stone &amp; Cup Chains</Link></li>
-              <li><Link to="/category/paranda" className="hover:text-gold-300 transition-colors">Bridal Paranda Latkans</Link></li>
-              <li><Link to="/category/chudi-ring" className="hover:text-gold-300 transition-colors">Gota Chudi Rings</Link></li>
+              <li><Link href="/category/patches" className="hover:text-gold-300 transition-colors">Embroidery Patches</Link></li>
+              <li><Link href="/category/bottle" className="hover:text-gold-300 transition-colors">Pure Copper Bottles</Link></li>
+              <li><Link href="/category/aasan" className="hover:text-gold-300 transition-colors">Pooja Aasans &amp; Thali</Link></li>
+              <li><Link href="/category/towel-gamcha" className="hover:text-gold-300 transition-colors">Pure Cotton Gamcha</Link></li>
+              <li><Link href="/category/flower-bunch" className="hover:text-gold-300 transition-colors">Artificial Flower Bunches</Link></li>
+              <li><Link href="/category/cup-chain" className="hover:text-gold-300 transition-colors">Stone &amp; Cup Chains</Link></li>
+              <li><Link href="/category/paranda" className="hover:text-gold-300 transition-colors">Bridal Paranda Latkans</Link></li>
+              <li><Link href="/category/chudi-ring" className="hover:text-gold-300 transition-colors">Gota Chudi Rings</Link></li>
             </ul>
           </div>
 
@@ -152,12 +153,12 @@ export const Footer = () => {
               Patron Care
             </h4>
             <ul className="space-y-2 text-xs text-stone-400">
-              <li><Link to="/track-order" className="hover:text-gold-300 transition-colors">Track Your Order</Link></li>
-              <li><Link to="/profile/orders" className="hover:text-gold-300 transition-colors">Order History &amp; Invoice</Link></li>
-              <li><Link to="/shipping" className="hover:text-gold-300 transition-colors">Shipping &amp; Delivery</Link></li>
-              <li><Link to="/returns" className="hover:text-gold-300 transition-colors">Return &amp; Exchange Policy</Link></li>
-              <li><Link to="/faq" className="hover:text-gold-300 transition-colors">Frequently Asked Questions</Link></li>
-              <li><Link to="/contact" className="hover:text-gold-300 transition-colors">Contact Artisan Guild</Link></li>
+              <li><Link href="/track-order" className="hover:text-gold-300 transition-colors">Track Your Order</Link></li>
+              <li><Link href="/profile/orders" className="hover:text-gold-300 transition-colors">Order History &amp; Invoice</Link></li>
+              <li><Link href="/shipping" className="hover:text-gold-300 transition-colors">Shipping &amp; Delivery</Link></li>
+              <li><Link href="/returns" className="hover:text-gold-300 transition-colors">Return &amp; Exchange Policy</Link></li>
+              <li><Link href="/faq" className="hover:text-gold-300 transition-colors">Frequently Asked Questions</Link></li>
+              <li><Link href="/contact" className="hover:text-gold-300 transition-colors">Contact Artisan Guild</Link></li>
             </ul>
           </div>
 
@@ -167,10 +168,10 @@ export const Footer = () => {
               Artisan Guild
             </h4>
             <ul className="space-y-2 text-xs text-stone-400">
-              <li><Link to="/about" className="hover:text-gold-300 transition-colors">Our Karigar Story</Link></li>
-              <li><Link to="/blog" className="hover:text-gold-300 transition-colors">Craft Journal &amp; Guides</Link></li>
-              <li><Link to="/privacy" className="hover:text-gold-300 transition-colors">Privacy Policy</Link></li>
-              <li><Link to="/terms" className="hover:text-gold-300 transition-colors">Terms of Service</Link></li>
+              <li><Link href="/about" className="hover:text-gold-300 transition-colors">Our Karigar Story</Link></li>
+              <li><Link href="/blog" className="hover:text-gold-300 transition-colors">Craft Journal &amp; Guides</Link></li>
+              <li><Link href="/privacy" className="hover:text-gold-300 transition-colors">Privacy Policy</Link></li>
+              <li><Link href="/terms" className="hover:text-gold-300 transition-colors">Terms of Service</Link></li>
             </ul>
 
             {/* Social Icons */}

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import Link from 'next/link';
 import { blogs } from '../../data/blogs';
 import { Sparkles, ArrowRight, Clock, User } from 'lucide-react';
 
@@ -23,7 +23,7 @@ export const BlogPreview = () => {
           </div>
 
           <Link
-            to="/blog"
+            href="/blog"
             className="inline-flex items-center gap-1.5 text-xs font-bold text-maroon-700 dark:text-gold-400 hover:text-maroon-800 dark:hover:text-gold-300 uppercase tracking-wider group"
           >
             <span>Read All Articles</span>
@@ -36,7 +36,7 @@ export const BlogPreview = () => {
           {blogs.slice(0, 3).map((blog) => (
             <Link
               key={blog.id}
-              to={`/blog/${blog.slug}`}
+              href={`/blog/${blog.slug}`}
               className="ethnic-card rounded-3xl overflow-hidden group flex flex-col justify-between hover:border-gold-500/50 transition-all duration-300 transform hover:-translate-y-1.5"
             >
               {/* Blog Image */}

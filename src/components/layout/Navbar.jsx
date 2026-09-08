@@ -1,5 +1,7 @@
+'use client';
 import React, { useState, useEffect, useRef } from 'react';
-import { Link, useNavigate, useLocation } from 'react-router-dom';
+import Link from 'next/link';
+import { useRouter, usePathname } from 'next/navigation';
 import {
   Search,
   ShoppingBag,
@@ -26,8 +28,8 @@ import TrioLogo from '../common/TrioLogo';
 import useDebounce from '../../hooks/useDebounce';
 
 export const Navbar = () => {
-  const navigate = useNavigate();
-  const location = useLocation();
+  const router = useRouter();
+  const pathname = usePathname();
   const { itemCount, subtotal, openCart } = useCart();
   const { wishlistCount } = useWishlist();
   const { isDark, toggleTheme } = useTheme();
@@ -102,13 +104,13 @@ export const Navbar = () => {
   useEffect(() => {
     setIsMobileMenuOpen(false);
     setIsSearchOpen(false);
-  }, [location.pathname, location.search]);
+  }, [pathname]);
 
   const handleSearchSubmit = (e) => {
     e.preventDefault();
     if (searchQuery.trim()) {
       setIsSearchOpen(false);
-      navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
+      router.push(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
     }
   };
 
@@ -133,7 +135,7 @@ export const Navbar = () => {
           </div>
 
           <div className="hidden md:flex items-center gap-4 text-[11px] text-gold-300/80 shrink-0">
-            <Link to="/track-order" className="hover:text-white flex items-center gap-1 transition-colors">
+            <Link href="/track-order" className="hover:text-white flex items-center gap-1 transition-colors">
               <Package className="w-3.5 h-3.5" /> Track Order
             </Link>
             <span className="text-gold-500/40">|</span>
@@ -195,7 +197,7 @@ export const Navbar = () => {
                     Product Matches ({searchResults.length})
                   </span>
                   <Link
-                    to={`/search?q=${encodeURIComponent(searchQuery)}`}
+                    href={`/search?q=${encodeURIComponent(searchQuery)}`}
                     onClick={() => setIsSearchOpen(false)}
                     className="text-maroon-700 dark:text-gold-400 font-bold hover:underline inline-flex items-center gap-1 text-xs"
                   >
@@ -206,7 +208,7 @@ export const Navbar = () => {
                 {searchResults.map((p) => (
                   <Link
                     key={p.id}
-                    to={`/product/${p.slug}`}
+                    href={`/product/${p.slug}`}
                     onClick={() => setIsSearchOpen(false)}
                     className="flex items-center gap-3.5 p-3 hover:bg-gold-50/60 dark:hover:bg-stone-800/70 transition-colors group"
                   >
@@ -247,7 +249,7 @@ export const Navbar = () => {
 
             {/* Wishlist Icon */}
             <Link
-              to="/wishlist"
+              href="/wishlist"
               className="relative p-1.5 sm:p-2 rounded-xl text-stone-700 dark:text-stone-300 hover:text-maroon-700 dark:hover:text-gold-400 hover:bg-stone-100 dark:hover:bg-stone-800 transition-colors active:scale-90"
               aria-label="Wishlist"
               title="My Wishlist"
@@ -309,13 +311,13 @@ export const Navbar = () => {
                         <p className="font-bold text-stone-900 dark:text-ivory-100 truncate">{user.name}</p>
                         <p className="text-[11px] text-stone-400 truncate">{user.email}</p>
                       </div>
-                      <Link to="/profile" className="block px-4 py-2 hover:bg-gold-50 dark:hover:bg-stone-800 text-stone-700 dark:text-stone-300 font-medium">
+                      <Link href="/profile" className="block px-4 py-2 hover:bg-gold-50 dark:hover:bg-stone-800 text-stone-700 dark:text-stone-300 font-medium">
                         My Account &amp; Addresses
                       </Link>
-                      <Link to="/profile/orders" className="block px-4 py-2 hover:bg-gold-50 dark:hover:bg-stone-800 text-stone-700 dark:text-stone-300 font-medium">
+                      <Link href="/profile/orders" className="block px-4 py-2 hover:bg-gold-50 dark:hover:bg-stone-800 text-stone-700 dark:text-stone-300 font-medium">
                         My Orders &amp; Invoices
                       </Link>
-                      <Link to="/wishlist" className="block px-4 py-2 hover:bg-gold-50 dark:hover:bg-stone-800 text-stone-700 dark:text-stone-300 font-medium">
+                      <Link href="/wishlist" className="block px-4 py-2 hover:bg-gold-50 dark:hover:bg-stone-800 text-stone-700 dark:text-stone-300 font-medium">
                         Saved Wishlist ({wishlistCount})
                       </Link>
                       <button
@@ -328,10 +330,10 @@ export const Navbar = () => {
                   ) : (
                     <>
                       <div className="px-4 py-2 text-stone-500">Welcome to Trio Ecart</div>
-                      <Link to="/login" className="block px-4 py-2 hover:bg-gold-50 dark:hover:bg-stone-800 text-maroon-700 dark:text-gold-400 font-bold">
+                      <Link href="/login" className="block px-4 py-2 hover:bg-gold-50 dark:hover:bg-stone-800 text-maroon-700 dark:text-gold-400 font-bold">
                         Login / Sign In
                       </Link>
-                      <Link to="/register" className="block px-4 py-2 hover:bg-gold-50 dark:hover:bg-stone-800 text-stone-700 dark:text-stone-300 font-medium">
+                      <Link href="/register" className="block px-4 py-2 hover:bg-gold-50 dark:hover:bg-stone-800 text-stone-700 dark:text-stone-300 font-medium">
                         Create New Account
                       </Link>
                     </>
@@ -371,7 +373,7 @@ export const Navbar = () => {
                   Matches ({searchResults.length})
                 </span>
                 <Link
-                  to={`/search?q=${encodeURIComponent(searchQuery)}`}
+                  href={`/search?q=${encodeURIComponent(searchQuery)}`}
                   onClick={() => setIsSearchOpen(false)}
                   className="text-maroon-700 dark:text-gold-400 font-bold hover:underline inline-flex items-center gap-1"
                 >
@@ -382,7 +384,7 @@ export const Navbar = () => {
               {searchResults.map((p) => (
                 <Link
                   key={p.id}
-                  to={`/product/${p.slug}`}
+                  href={`/product/${p.slug}`}
                   onClick={() => setIsSearchOpen(false)}
                   className="flex items-center gap-3 p-2.5 hover:bg-gold-50/60 dark:hover:bg-stone-800/70 transition-colors"
                 >
@@ -434,7 +436,7 @@ export const Navbar = () => {
                 {categories.map((cat) => (
                   <Link
                     key={cat.id}
-                    to={`/category/${cat.slug}`}
+                    href={`/category/${cat.slug}`}
                     className="flex items-center gap-3 px-4 py-2.5 hover:bg-gold-50/70 dark:hover:bg-stone-800 transition-colors"
                   >
                     <img src={cat.image} alt={cat.name} className="w-8 h-8 rounded-lg object-cover border border-gold-500/30" />
@@ -447,25 +449,25 @@ export const Navbar = () => {
               </div>
             </div>
 
-            <Link to="/shop" className="text-stone-700 dark:text-stone-300 hover:text-maroon-700 dark:hover:text-gold-400 transition-colors">
+            <Link href="/shop" className="text-stone-700 dark:text-stone-300 hover:text-maroon-700 dark:hover:text-gold-400 transition-colors">
               Explore All Crafts
             </Link>
-            <Link to="/category/patches" className="text-stone-700 dark:text-stone-300 hover:text-maroon-700 dark:hover:text-gold-400 transition-colors">
+            <Link href="/category/patches" className="text-stone-700 dark:text-stone-300 hover:text-maroon-700 dark:hover:text-gold-400 transition-colors">
               Embroidery Patches
             </Link>
-            <Link to="/category/bottle" className="text-stone-700 dark:text-stone-300 hover:text-maroon-700 dark:hover:text-gold-400 transition-colors">
+            <Link href="/category/bottle" className="text-stone-700 dark:text-stone-300 hover:text-maroon-700 dark:hover:text-gold-400 transition-colors">
               Pure Copper Bottles
             </Link>
-            <Link to="/category/aasan" className="text-stone-700 dark:text-stone-300 hover:text-maroon-700 dark:hover:text-gold-400 transition-colors">
+            <Link href="/category/aasan" className="text-stone-700 dark:text-stone-300 hover:text-maroon-700 dark:hover:text-gold-400 transition-colors">
               Pooja Aasans &amp; Thali
             </Link>
-            <Link to="/category/towel-gamcha" className="text-stone-700 dark:text-stone-300 hover:text-maroon-700 dark:hover:text-gold-400 transition-colors">
+            <Link href="/category/towel-gamcha" className="text-stone-700 dark:text-stone-300 hover:text-maroon-700 dark:hover:text-gold-400 transition-colors">
               Cotton Gamcha
             </Link>
-            <Link to="/category/cup-chain" className="text-stone-700 dark:text-stone-300 hover:text-maroon-700 dark:hover:text-gold-400 transition-colors">
+            <Link href="/category/cup-chain" className="text-stone-700 dark:text-stone-300 hover:text-maroon-700 dark:hover:text-gold-400 transition-colors">
               Cup Chains &amp; Lace
             </Link>
-            <Link to="/blog" className="text-stone-700 dark:text-stone-300 hover:text-maroon-700 dark:hover:text-gold-400 transition-colors">
+            <Link href="/blog" className="text-stone-700 dark:text-stone-300 hover:text-maroon-700 dark:hover:text-gold-400 transition-colors">
               Craft Journal
             </Link>
           </div>
@@ -502,10 +504,10 @@ export const Navbar = () => {
 
               {/* Navigation Links */}
               <div className="space-y-2 text-sm font-semibold">
-                <Link to="/" className="block py-2 text-stone-900 dark:text-ivory-100 hover:text-maroon-700 dark:hover:text-gold-400 transition-colors">
+                <Link href="/" className="block py-2 text-stone-900 dark:text-ivory-100 hover:text-maroon-700 dark:hover:text-gold-400 transition-colors">
                   Home
                 </Link>
-                <Link to="/shop" className="block py-2 text-stone-900 dark:text-ivory-100 hover:text-maroon-700 dark:hover:text-gold-400 transition-colors">
+                <Link href="/shop" className="block py-2 text-stone-900 dark:text-ivory-100 hover:text-maroon-700 dark:hover:text-gold-400 transition-colors">
                   All Products
                 </Link>
                 
@@ -516,23 +518,23 @@ export const Navbar = () => {
                   </span>
                   <div className="pl-3 mt-2 space-y-2 text-xs text-stone-600 dark:text-stone-300 border-l border-gold-500/30">
                     {categories.map(c => (
-                      <Link key={c.id} to={`/category/${c.slug}`} className="block py-1 hover:text-maroon-700 dark:hover:text-gold-400 transition-colors">
+                      <Link key={c.id} href={`/category/${c.slug}`} className="block py-1 hover:text-maroon-700 dark:hover:text-gold-400 transition-colors">
                         {c.name}
                       </Link>
                     ))}
                   </div>
                 </div>
 
-                <Link to="/blog" className="block py-2 text-stone-900 dark:text-ivory-100 hover:text-maroon-700 dark:hover:text-gold-400 transition-colors">
+                <Link href="/blog" className="block py-2 text-stone-900 dark:text-ivory-100 hover:text-maroon-700 dark:hover:text-gold-400 transition-colors">
                   Craft Journal &amp; Guides
                 </Link>
-                <Link to="/track-order" className="block py-2 text-stone-900 dark:text-ivory-100 hover:text-maroon-700 dark:hover:text-gold-400 transition-colors">
+                <Link href="/track-order" className="block py-2 text-stone-900 dark:text-ivory-100 hover:text-maroon-700 dark:hover:text-gold-400 transition-colors">
                   Track Order
                 </Link>
-                <Link to="/about" className="block py-2 text-stone-900 dark:text-ivory-100 hover:text-maroon-700 dark:hover:text-gold-400 transition-colors">
+                <Link href="/about" className="block py-2 text-stone-900 dark:text-ivory-100 hover:text-maroon-700 dark:hover:text-gold-400 transition-colors">
                   About Our Artisan Guild
                 </Link>
-                <Link to="/contact" className="block py-2 text-stone-900 dark:text-ivory-100 hover:text-maroon-700 dark:hover:text-gold-400 transition-colors">
+                <Link href="/contact" className="block py-2 text-stone-900 dark:text-ivory-100 hover:text-maroon-700 dark:hover:text-gold-400 transition-colors">
                   Contact Us
                 </Link>
               </div>
@@ -550,7 +552,7 @@ export const Navbar = () => {
                     </div>
                   </div>
                   <div className="grid grid-cols-2 gap-2">
-                    <Link to="/profile" className="block w-full py-2 text-center btn-primary text-xs font-bold">
+                    <Link href="/profile" className="block w-full py-2 text-center btn-primary text-xs font-bold">
                       My Account
                     </Link>
                     <button
@@ -563,10 +565,10 @@ export const Navbar = () => {
                 </div>
               ) : (
                 <div className="grid grid-cols-2 gap-2">
-                  <Link to="/login" className="py-2 text-center btn-primary text-xs font-bold">
+                  <Link href="/login" className="py-2 text-center btn-primary text-xs font-bold">
                     Sign In
                   </Link>
-                  <Link to="/register" className="py-2 text-center btn-outline-maroon text-xs font-bold">
+                  <Link href="/register" className="py-2 text-center btn-outline-maroon text-xs font-bold">
                     Register
                   </Link>
                 </div>

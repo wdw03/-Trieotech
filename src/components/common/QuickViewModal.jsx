@@ -1,5 +1,6 @@
+'use client';
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import Link from 'next/link';
 import { X, Heart, ShoppingBag, ArrowRight, Check, ShieldCheck, Truck } from 'lucide-react';
 import { useCart } from '../../context/CartContext';
 import { useWishlist } from '../../context/WishlistContext';
@@ -241,7 +242,7 @@ export const QuickViewModal = ({ product, isOpen, onClose }) => {
 
             <div className="text-center">
               <Link
-                to={`/product/${product.slug}`}
+                href={`/product/${product.slug}`}
                 onClick={onClose}
                 className="text-xs font-bold text-maroon-700 dark:text-gold-400 hover:underline inline-flex items-center gap-1"
               >

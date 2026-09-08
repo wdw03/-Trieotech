@@ -1,5 +1,5 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import Link from 'next/link';
 import { ShoppingBag, ArrowRight } from 'lucide-react';
 
 export const EmptyState = ({
@@ -33,7 +33,7 @@ export const EmptyState = ({
         </button>
       ) : actionUrl ? (
         <Link
-          to={actionUrl}
+          href={actionUrl}
           className="btn-primary text-xs sm:text-sm font-bold uppercase tracking-wider"
         >
           <span>{actionText}</span>

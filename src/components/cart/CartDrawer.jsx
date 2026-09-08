@@ -1,11 +1,13 @@
+'use client';
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { X, Trash2, Plus, Minus, ShoppingBag, ArrowRight, Tag, Sparkles, ShieldCheck, Check } from 'lucide-react';
 import { useCart } from '../../context/CartContext';
 import { products } from '../../data/products';
 
 export const CartDrawer = () => {
-  const navigate = useNavigate();
+  const router = useRouter();
   const {
     cartItems,
     itemCount,
@@ -39,7 +41,7 @@ export const CartDrawer = () => {
 
   const handleProceedToCheckout = () => {
     closeCart();
-    navigate('/checkout');
+    router.push('/checkout');
   };
 
   // Upsell items (random 2 popular items not in cart)
@@ -113,7 +115,7 @@ export const CartDrawer = () => {
                 <p className="text-xs text-stone-500">Discover authentic handcrafted ethnic items made by generational Indian karigars.</p>
               </div>
               <Link
-                to="/shop"
+                href="/shop"
                 onClick={closeCart}
                 className="btn-primary text-xs uppercase tracking-wider font-bold py-2.5 px-6 inline-flex"
               >
@@ -141,7 +143,7 @@ export const CartDrawer = () => {
                     <div>
                       <div className="flex justify-between items-start gap-1">
                         <Link
-                          to={`/product/${item.slug}`}
+                          href={`/product/${item.slug}`}
                           onClick={closeCart}
                           className="font-serif font-bold text-xs text-stone-900 dark:text-ivory-100 hover:text-maroon-700 dark:hover:text-gold-400 line-clamp-1"
                         >
@@ -222,7 +224,7 @@ export const CartDrawer = () => {
                         <div className="flex items-center justify-between mt-1">
                           <span className="text-xs font-bold text-maroon-800 dark:text-gold-400">₹{up.price}</span>
                           <Link
-                            to={`/product/${up.slug}`}
+                            href={`/product/${up.slug}`}
                             onClick={closeCart}
                             className="text-[10px] text-gold-700 font-bold hover:underline"
                           >
@@ -311,7 +313,7 @@ export const CartDrawer = () => {
                 <ArrowRight className="w-4 h-4" />
               </button>
               <Link
-                to="/cart"
+                href="/cart"
                 onClick={closeCart}
                 className="block text-center py-2 text-xs font-bold text-stone-600 dark:text-stone-300 hover:text-maroon-700 dark:hover:text-gold-400 hover:underline"
               >

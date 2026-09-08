@@ -1,5 +1,6 @@
+'use client';
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import Link from 'next/link';
 import { Sparkles, ArrowRight, ChevronLeft, ChevronRight, Award, ShieldCheck } from 'lucide-react';
 
 const SLIDES = [
@@ -105,7 +106,7 @@ export const HeroCarousel = () => {
             {/* CTAs */}
             <div className="flex items-center justify-center lg:justify-start gap-2.5 pt-1 sm:pt-2">
               <Link
-                to={slide.ctaLink}
+                href={slide.ctaLink}
                 className="btn-gold py-2 px-5 sm:py-3.5 sm:px-8 text-xs sm:text-sm font-bold uppercase tracking-wider flex items-center justify-center gap-1.5 shadow-gold-sm sm:shadow-gold-md shrink-0"
               >
                 <span className="block sm:hidden">{slide.ctaText}</span>
@@ -114,7 +115,7 @@ export const HeroCarousel = () => {
               </Link>
               
               <Link
-                to={slide.secondaryCtaLink}
+                href={slide.secondaryCtaLink}
                 className="hidden sm:inline-flex px-6 py-3.5 rounded-xl border-2 border-gold-500/40 text-gold-200 hover:bg-gold-500/10 hover:text-white transition-all text-xs sm:text-sm font-bold uppercase tracking-wider items-center justify-center"
               >
                 {slide.secondaryCtaText}

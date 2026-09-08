@@ -1,5 +1,6 @@
+'use client';
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import Link from 'next/link';
 import { Heart, ShoppingBag, Eye, Check } from 'lucide-react';
 import { useCart } from '../../context/CartContext';
 import { useWishlist } from '../../context/WishlistContext';
@@ -73,7 +74,7 @@ export const ProductCard = ({ product, onQuickView = null }) => {
     >
       {/* Product Image Container */}
       <div className="relative aspect-square w-full overflow-hidden bg-ivory-200 dark:bg-stone-900">
-        <Link to={`/product/${product.slug}`} className="block w-full h-full">
+        <Link href={`/product/${product.slug}`} className="block w-full h-full">
           <img
             src={isHovered && secondaryImage !== activeImage ? secondaryImage : activeImage}
             alt={product.name}
@@ -143,7 +144,7 @@ export const ProductCard = ({ product, onQuickView = null }) => {
           </div>
 
           {/* Product Title */}
-          <Link to={`/product/${product.slug}`} className="block mt-1">
+          <Link href={`/product/${product.slug}`} className="block mt-1">
             <h3 className="font-serif font-bold text-xs sm:text-sm text-stone-900 dark:text-ivory-100 line-clamp-2 leading-snug group-hover:text-maroon-700 dark:group-hover:text-gold-400 transition-colors">
               {product.name}
             </h3>
