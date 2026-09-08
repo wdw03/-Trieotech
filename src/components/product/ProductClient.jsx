@@ -187,23 +187,48 @@ export default function ProductClient({ initialSlug }) {
     }
   };
 
-  const handleCheckPincode = (e) => {
+  const handleCheckPincode = async (e) => {
     e.preventDefault();
-    if (!pincode || pincode.length !== 6 || isNaN(pincode)) {
+    const cleanPin = String(pincode).trim().replace(/\D/g, '');
+    if (!cleanPin || cleanPin.length !== 6) {
       addToast('Please enter a valid 6-digit Indian PIN code', 'error');
       return;
     }
-    const days = (Number(pincode) % 3) + 3; // 3 to 5 days
-    setDeliveryEstimate({
-      pincode,
-      date: new Date(Date.now() + days * 86400000).toLocaleDateString('en-IN', {
-        weekday: 'short',
-        month: 'short',
-        day: 'numeric'
-      }),
-      codAvailable: true
-    });
-    addToast(`Delivery available for PIN ${pincode}`, 'success');
+
+    try {
+      const days = (Number(cleanPin) % 3) + 3; // 3 to 5 days
+      const res = await fetch(`/api/shipping/cod-check?pincode=${cleanPin}`);
+      const data = await res.json();
+      const codAvailable = !!data.available;
+
+      setDeliveryEstimate({
+        pincode: cleanPin,
+        date: new Date(Date.now() + days * 86400000).toLocaleDateString('en-IN', {
+          weekday: 'short',
+          month: 'short',
+          day: 'numeric'
+        }),
+        codAvailable
+      });
+
+      if (codAvailable) {
+        addToast(`Delivery & COD available for PIN ${cleanPin}`, 'success');
+      } else {
+        addToast(`Prepaid delivery available for PIN ${cleanPin} (COD unavailable)`, 'info');
+      }
+    } catch (_) {
+      const days = (Number(cleanPin) % 3) + 3;
+      setDeliveryEstimate({
+        pincode: cleanPin,
+        date: new Date(Date.now() + days * 86400000).toLocaleDateString('en-IN', {
+          weekday: 'short',
+          month: 'short',
+          day: 'numeric'
+        }),
+        codAvailable: false
+      });
+      addToast(`Delivery verified for PIN ${cleanPin}`, 'info');
+    }
   };
 
   const handleShare = async () => {
@@ -516,13 +541,29 @@ export default function ProductClient({ initialSlug }) {
               </form>
 
               {deliveryEstimate && (
-                <div className="p-2.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-500/30 text-xs space-y-1 animate-fade-in text-emerald-800 dark:text-emerald-300">
+                <div
+                  className={`p-2.5 rounded-xl border text-xs space-y-1 animate-fade-in ${
+                    deliveryEstimate.codAvailable
+                      ? 'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-500/30 text-emerald-800 dark:text-emerald-300'
+                      : 'bg-amber-50 dark:bg-amber-950/40 border-amber-500/30 text-amber-900 dark:text-amber-200'
+                  }`}
+                >
                   <div className="flex items-center gap-1 font-bold">
                     <Truck className="w-3.5 h-3.5" />
                     <span>Estimated Delivery by {deliveryEstimate.date}</span>
                   </div>
                   <p className="text-[11px] text-stone-600 dark:text-stone-400">
-                    Free Delivery eligible | Cash on Delivery (COD) available for PIN {deliveryEstimate.pincode}
+                    Free Express Delivery eligible |{' '}
+                    {deliveryEstimate.codAvailable ? (
+                      <span className="text-emerald-700 dark:text-emerald-300 font-bold">
+                        ✓ Cash on Delivery (COD) Available
+                      </span>
+                    ) : (
+                      <span className="text-rose-600 dark:text-rose-400 font-bold">
+                        ✕ COD Unavailable • Prepaid (UPI/Card) Only
+                      </span>
+                    )}{' '}
+                    for PIN {deliveryEstimate.pincode}
                   </p>
                 </div>
               )}

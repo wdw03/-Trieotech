@@ -4,6 +4,7 @@ import { createClient } from '../../../../lib/supabase/server';
 import { supabaseAdmin } from '../../../../lib/supabase/admin';
 import { createRazorpayOrder } from '../../../../lib/razorpay';
 import { sendOrderConfirmation } from '../../../../lib/resend';
+import { isCodAvailableForPincode } from '../../../../lib/codPincodes';
 
 export async function POST(request) {
   try {
@@ -164,6 +165,18 @@ export async function POST(request) {
 
     // 9. Handle COD orders differently
     if (paymentMethod === 'cod') {
+      const deliveryPin = shippingAddress?.pincode;
+      const codAllowed = await isCodAvailableForPincode(deliveryPin);
+
+      if (!codAllowed) {
+        return NextResponse.json(
+          {
+            error: `Cash on Delivery (COD) is not available for PIN ${deliveryPin || 'this address'}. Please choose an online payment method (UPI, Card, or NetBanking).`,
+          },
+          { status: 400 }
+        );
+      }
+
       // Create order directly with confirmed status for COD
       const { data: order, error: orderError } = await supabaseAdmin
         .from('orders')

@@ -62,6 +62,11 @@ export default function CheckoutClient() {
     cvv: '•••'
   });
 
+  // COD Availability State (Unavailable by default)
+  const [isCodAvailable, setIsCodAvailable] = useState(false);
+  const [isCheckingCod, setIsCheckingCod] = useState(false);
+  const [codStatusMessage, setCodStatusMessage] = useState('');
+
   // If cart is empty, redirect
   useEffect(() => {
     if (cartItems.length === 0) {
@@ -72,6 +77,55 @@ export default function CheckoutClient() {
   const activeShippingAddress = selectedAddressId !== 'new' && user?.addresses
     ? user.addresses.find(a => a.id === selectedAddressId)
     : newAddressForm;
+
+  const activePincode = activeShippingAddress?.zip || activeShippingAddress?.pincode || '';
+
+  // Check COD availability whenever the shipping pincode changes
+  useEffect(() => {
+    let isCancelled = false;
+    const cleanPin = String(activePincode).trim().replace(/\D/g, '');
+
+    if (!cleanPin || cleanPin.length !== 6) {
+      setIsCodAvailable(false);
+      setCodStatusMessage('Please enter a valid 6-digit delivery pincode');
+      if (paymentMethod === 'cod') {
+        setPaymentMethod('upi');
+      }
+      return;
+    }
+
+    setIsCheckingCod(true);
+    fetch(`/api/shipping/cod-check?pincode=${cleanPin}`)
+      .then((res) => res.json())
+      .then((data) => {
+        if (!isCancelled) {
+          const available = !!data.available;
+          setIsCodAvailable(available);
+          setCodStatusMessage(data.message || (available ? 'COD is available' : 'COD is unavailable'));
+          if (!available && paymentMethod === 'cod') {
+            setPaymentMethod('upi');
+          }
+        }
+      })
+      .catch(() => {
+        if (!isCancelled) {
+          setIsCodAvailable(false);
+          setCodStatusMessage('COD is unavailable at this pincode');
+          if (paymentMethod === 'cod') {
+            setPaymentMethod('upi');
+          }
+        }
+      })
+      .finally(() => {
+        if (!isCancelled) {
+          setIsCheckingCod(false);
+        }
+      });
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [activePincode]);
 
   // Step Navigators
   const handleNextToDelivery = (e) => {
@@ -94,11 +148,21 @@ export default function CheckoutClient() {
   };
 
   const handleNextToReview = () => {
+    if (paymentMethod === 'cod' && !isCodAvailable) {
+      addToast(`Cash on Delivery is unavailable for PIN ${activePincode || 'this address'}. Please select UPI or Card.`, 'error');
+      return;
+    }
     setCurrentStep(4);
   };
 
   const handlePlaceOrder = async () => {
     if (isPlacingOrder) return;
+
+    if (paymentMethod === 'cod' && !isCodAvailable) {
+      addToast(`Cash on Delivery is not available for PIN ${activePincode || 'this address'}. Please choose UPI or Card.`, 'error');
+      return;
+    }
+
     setIsPlacingOrder(true);
 
     try {
@@ -644,28 +708,62 @@ export default function CheckoutClient() {
 
                 {/* Cash on Delivery */}
                 <label
-                  className={`p-4 rounded-2xl border-2 cursor-pointer transition-all flex items-center justify-between ${
-                    paymentMethod === 'cod'
-                      ? 'border-maroon-700 bg-maroon-50/50 dark:bg-maroon-950/30'
-                      : 'border-gold-500/20'
+                  className={`p-4 rounded-2xl border-2 transition-all flex flex-col gap-2.5 ${
+                    !isCodAvailable
+                      ? 'opacity-65 bg-stone-100/70 dark:bg-stone-900/40 border-stone-200 dark:border-stone-800 cursor-not-allowed'
+                      : paymentMethod === 'cod'
+                      ? 'border-maroon-700 bg-maroon-50/50 dark:bg-maroon-950/30 cursor-pointer shadow-xs'
+                      : 'border-gold-500/20 cursor-pointer hover:border-gold-500/40'
                   }`}
                 >
-                  <div className="flex items-center gap-3">
-                    <input
-                      type="radio"
-                      name="paymentMethod"
-                      checked={paymentMethod === 'cod'}
-                      onChange={() => setPaymentMethod('cod')}
-                      className="accent-maroon-700"
-                    />
-                    <div>
-                      <span className="font-bold text-xs sm:text-sm text-stone-900 dark:text-ivory-100">
-                        Cash on Delivery (COD)
-                      </span>
-                      <p className="text-[11px] text-stone-500">Pay in cash or UPI QR directly to the delivery executive.</p>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <input
+                        type="radio"
+                        name="paymentMethod"
+                        disabled={!isCodAvailable}
+                        checked={paymentMethod === 'cod'}
+                        onChange={() => {
+                          if (isCodAvailable) {
+                            setPaymentMethod('cod');
+                          }
+                        }}
+                        className="accent-maroon-700 disabled:opacity-40 cursor-pointer disabled:cursor-not-allowed w-4 h-4"
+                      />
+                      <div>
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="font-bold text-xs sm:text-sm text-stone-900 dark:text-ivory-100">
+                            Cash on Delivery (COD)
+                          </span>
+                          {isCheckingCod ? (
+                            <span className="text-[10px] bg-stone-200 dark:bg-stone-800 text-stone-600 dark:text-stone-300 px-2 py-0.5 rounded-full font-bold flex items-center gap-1">
+                              <Loader2 className="w-2.5 h-2.5 animate-spin" /> Checking PIN...
+                            </span>
+                          ) : isCodAvailable ? (
+                            <span className="text-[10px] bg-emerald-100 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30 px-2 py-0.5 rounded-full font-bold">
+                              ✓ Available for PIN {activePincode}
+                            </span>
+                          ) : (
+                            <span className="text-[10px] bg-rose-100 dark:bg-rose-950/80 text-rose-700 dark:text-rose-300 border border-rose-500/30 px-2 py-0.5 rounded-full font-bold">
+                              ✕ Unavailable for PIN {activePincode || 'this address'}
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-[11px] text-stone-500 mt-0.5">
+                          {isCodAvailable
+                            ? 'Pay in cash or UPI QR directly to the delivery executive upon arrival.'
+                            : 'COD is currently disabled/unavailable for this pincode. Please pay online via UPI or Cards to place order.'}
+                        </p>
+                      </div>
                     </div>
+                    <Wallet className={`w-5 h-5 shrink-0 ${isCodAvailable ? 'text-gold-600' : 'text-stone-400'}`} />
                   </div>
-                  <Wallet className="w-5 h-5 text-gold-600" />
+
+                  {!isCodAvailable && (
+                    <div className="pt-2 pl-7 border-t border-stone-200 dark:border-stone-800 text-[11px] text-rose-600 dark:text-rose-400 font-medium flex items-center gap-1.5">
+                      <span>⚠️ Only prepaid orders (UPI / Card) are serviceable at PIN <strong>{activePincode || 'your location'}</strong>.</span>
+                    </div>
+                  )}
                 </label>
               </div>
 
