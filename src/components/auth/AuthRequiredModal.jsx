@@ -38,7 +38,7 @@ export default function AuthRequiredModal() {
   // Register form state
   const [regName, setRegName] = useState('');
   const [regEmail, setRegEmail] = useState('');
-  const [regPhone, setRegPhone] = useState('');
+  const [regPhone, setRegPhone] = useState('+91 ');
   const [regPassword, setRegPassword] = useState('');
 
   if (!isAuthModalOpen) return null;
@@ -327,6 +327,11 @@ export default function AuthRequiredModal() {
                   <input
                     type="tel"
                     value={regPhone}
+                    onFocus={() => {
+                      if (!regPhone || regPhone.trim() === '') {
+                        setRegPhone('+91 ');
+                      }
+                    }}
                     onChange={(e) => setRegPhone(e.target.value)}
                     placeholder="+91 98765 43210"
                     className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-950 text-stone-900 dark:text-stone-100 placeholder-stone-400 text-xs focus:outline-none focus:border-gold-500 focus:ring-2 focus:ring-gold-500/20"

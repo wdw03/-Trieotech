@@ -34,7 +34,7 @@ export default function RegisterClient() {
   const [formData, setFormData] = useState({
     name: '',
     email: '',
-    phone: '',
+    phone: '+91 ',
     password: ''
   });
   const [showPassword, setShowPassword] = useState(false);
@@ -377,6 +377,11 @@ export default function RegisterClient() {
                 type="tel"
                 placeholder="+91 98234 56789"
                 value={formData.phone}
+                onFocus={() => {
+                  if (!formData.phone || formData.phone.trim() === '') {
+                    setFormData(prev => ({ ...prev, phone: '+91 ' }));
+                  }
+                }}
                 onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                 disabled={isLoading}
                 className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-ivory-100 dark:bg-stone-900 border border-gold-500/30 text-xs outline-none focus:border-maroon-700 disabled:opacity-50"

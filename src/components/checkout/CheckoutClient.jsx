@@ -40,7 +40,7 @@ export default function CheckoutClient() {
   const [isAddingNewAddress, setIsAddingNewAddress] = useState(user?.addresses?.length === 0);
   const [newAddressForm, setNewAddressForm] = useState({
     name: user?.name || '',
-    phone: user?.phone || '',
+    phone: user?.phone || '+91 ',
     address: '',
     city: 'Jaipur',
     state: 'Rajasthan',
@@ -414,6 +414,11 @@ export default function CheckoutClient() {
                         required
                         placeholder="+91 98234 56789"
                         value={newAddressForm.phone}
+                        onFocus={() => {
+                          if (!newAddressForm.phone || newAddressForm.phone.trim() === '') {
+                            setNewAddressForm(prev => ({ ...prev, phone: '+91 ' }));
+                          }
+                        }}
                         onChange={(e) => setNewAddressForm({ ...newAddressForm, phone: e.target.value })}
                         className="w-full px-3.5 py-2.5 rounded-xl bg-ivory-100 dark:bg-stone-900 border border-gold-500/30 text-xs outline-none"
                       />

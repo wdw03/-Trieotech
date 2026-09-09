@@ -6,12 +6,12 @@ import { useToast } from '../../context/ToastContext';
 
 export default function ContactClient() {
   const { addToast } = useToast();
-  const [form, setForm] = useState({ name: '', email: '', phone: '', subject: '', message: '' });
+  const [form, setForm] = useState({ name: '', email: '', phone: '+91 ', subject: '', message: '' });
 
   const handleSubmit = (e) => {
     e.preventDefault();
     addToast('Thank you for contacting Trio Ecart! An artisan coordinator will reply within 4 hours.', 'success');
-    setForm({ name: '', email: '', phone: '', subject: '', message: '' });
+    setForm({ name: '', email: '', phone: '+91 ', subject: '', message: '' });
   };
 
   return (
@@ -118,6 +118,11 @@ export default function ContactClient() {
                   type="tel"
                   placeholder="+91 98234 56789"
                   value={form.phone}
+                  onFocus={() => {
+                    if (!form.phone || form.phone.trim() === '') {
+                      setForm(prev => ({ ...prev, phone: '+91 ' }));
+                    }
+                  }}
                   onChange={(e) => setForm({ ...form, phone: e.target.value })}
                   className="w-full px-3.5 py-2.5 rounded-xl bg-ivory-100 dark:bg-stone-900 border border-gold-500/30 outline-none"
                 />

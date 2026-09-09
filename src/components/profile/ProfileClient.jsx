@@ -44,7 +44,7 @@ export default function ProfileClient() {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editFormData, setEditFormData] = useState({
     name: user?.name || '',
-    phone: user?.phone || '',
+    phone: user?.phone || '+91 ',
     avatar: user?.avatar || ''
   });
   const [phoneError, setPhoneError] = useState('');
@@ -53,7 +53,7 @@ export default function ProfileClient() {
   const [isAddingAddress, setIsAddingAddress] = useState(false);
   const [newAddress, setNewAddress] = useState({
     name: user?.name || '',
-    phone: user?.phone || '',
+    phone: user?.phone || '+91 ',
     address: '',
     city: 'Jaipur',
     state: 'Rajasthan',
@@ -65,7 +65,7 @@ export default function ProfileClient() {
   const openEditModal = () => {
     setEditFormData({
       name: user?.name || '',
-      phone: user?.phone || '',
+      phone: user?.phone || '+91 ',
       avatar: user?.avatar || ''
     });
     setPhoneError('');
@@ -133,7 +133,7 @@ export default function ProfileClient() {
       setIsAddingAddress(false);
       setNewAddress({
         name: user?.name || '',
-        phone: user?.phone || '',
+        phone: user?.phone || '+91 ',
         address: '',
         city: 'Jaipur',
         state: 'Rajasthan',
@@ -414,6 +414,11 @@ export default function ProfileClient() {
                     required
                     placeholder="+91 98234 56789"
                     value={editFormData.phone}
+                    onFocus={() => {
+                      if (!editFormData.phone || editFormData.phone.trim() === '') {
+                        setEditFormData(prev => ({ ...prev, phone: '+91 ' }));
+                      }
+                    }}
                     onChange={(e) => {
                       setEditFormData({ ...editFormData, phone: e.target.value });
                       if (phoneError) setPhoneError('');
@@ -544,8 +549,13 @@ export default function ProfileClient() {
               <input
                 type="tel"
                 required
-                placeholder="Mobile Number"
+                placeholder="+91 98234 56789"
                 value={newAddress.phone}
+                onFocus={() => {
+                  if (!newAddress.phone || newAddress.phone.trim() === '') {
+                    setNewAddress(prev => ({ ...prev, phone: '+91 ' }));
+                  }
+                }}
                 onChange={(e) => setNewAddress({ ...newAddress, phone: e.target.value })}
                 className="px-3.5 py-2.5 rounded-xl bg-white dark:bg-stone-800 border border-gold-500/30 text-xs"
               />
