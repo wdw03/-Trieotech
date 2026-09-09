@@ -5,6 +5,7 @@ import { supabaseAdmin } from '../../../../lib/supabase/admin';
 import { createRazorpayOrder, RAZORPAY_KEY_ID } from '../../../../lib/razorpay';
 import { sendOrderConfirmation } from '../../../../lib/resend';
 import { isCodAvailableForPincode } from '../../../../lib/codPincodes';
+import { evaluateCouponEligibility } from '../../../../lib/couponHelper';
 
 export async function POST(request) {
   try {
@@ -117,32 +118,22 @@ export async function POST(request) {
     }
 
     // 4. Validate coupon (if applied)
+    // 4. Validate coupon (if provided) with product-level eligibility
     let discount = 0;
     let appliedCouponCode = null;
 
     if (couponCode) {
-      const { data: coupon, error: couponError } = await supabaseAdmin
+      const { data: coupon } = await supabaseAdmin
         .from('coupons')
         .select('*')
         .eq('code', couponCode.toUpperCase())
         .eq('is_active', true)
-        .single();
+        .maybeSingle();
 
       if (coupon) {
-        // Check expiry
-        const notExpired = !coupon.expires_at || new Date(coupon.expires_at) >= new Date();
-        const meetsMinSpend = !coupon.min_spend || subtotal >= coupon.min_spend;
-        const withinMaxUses = !coupon.max_uses || coupon.used_count < coupon.max_uses;
-
-        if (notExpired && meetsMinSpend && withinMaxUses) {
-          if (coupon.discount_type === 'percentage') {
-            discount = Math.round((subtotal * coupon.value) / 100);
-            if (coupon.max_discount) {
-              discount = Math.min(discount, coupon.max_discount);
-            }
-          } else {
-            discount = Math.min(subtotal, coupon.value);
-          }
+        const evaluation = evaluateCouponEligibility(coupon, validatedItems, subtotal);
+        if (evaluation.valid) {
+          discount = evaluation.discount;
           appliedCouponCode = coupon.code;
         }
       }

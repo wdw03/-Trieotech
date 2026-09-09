@@ -37,6 +37,25 @@ export const CartProvider = ({ children }) => {
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [pendingProduct, setPendingProduct] = useState(null);
+  const [couponError, setCouponError] = useState(null);
+  const [couponLoading, setCouponLoading] = useState(false);
+  const [availableCoupons, setAvailableCoupons] = useState(Object.values(COUPONS));
+
+  // Fetch live available coupons from database
+  useEffect(() => {
+    let isMounted = true;
+    fetch('/api/coupons/available')
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (isMounted && data && Array.isArray(data.coupons) && data.coupons.length > 0) {
+          setAvailableCoupons(data.coupons);
+        }
+      })
+      .catch(() => {});
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   useEffect(() => {
     try {
@@ -198,29 +217,81 @@ export const CartProvider = ({ children }) => {
     setAppliedCoupon(null);
   };
 
-  const applyCoupon = (couponCode) => {
-    if (!couponCode) return { success: false, message: 'Please enter a coupon code' };
-    const cleanCode = couponCode.trim().toUpperCase();
-    const coupon = COUPONS[cleanCode];
-
-    if (!coupon) {
-      addToast('Invalid coupon code. Try "TRIO10" or "FESTIVE20"', 'error');
-      return { success: false, message: 'Invalid coupon code' };
-    }
-
-    if (coupon.minSpend && subtotal < coupon.minSpend) {
-      const msg = `Minimum spend of ₹${coupon.minSpend} required for ${cleanCode}`;
-      addToast(msg, 'error');
+  const applyCoupon = async (couponCode) => {
+    if (!couponCode || !couponCode.trim()) {
+      const msg = 'Please enter a coupon code';
+      setCouponError(msg);
       return { success: false, message: msg };
     }
+    const cleanCode = couponCode.trim().toUpperCase();
+    setCouponLoading(true);
+    setCouponError(null);
 
-    setAppliedCoupon(coupon);
-    addToast(`Coupon "${coupon.code}" applied successfully!`, 'success');
-    return { success: true, coupon };
+    try {
+      const res = await fetch('/api/coupons/validate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          code: cleanCode,
+          subtotal,
+          items: cartItems.map((item) => ({
+            productId: item.productId || item.id,
+            name: item.name,
+            price: item.price,
+            quantity: item.quantity,
+          })),
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok || !data.valid) {
+        const errorMsg = data.error || 'Invalid coupon code';
+        setCouponError(errorMsg);
+        addToast(errorMsg, 'error');
+        setCouponLoading(false);
+        return {
+          success: false,
+          message: errorMsg,
+          errorType: data.errorType,
+          applicableProductIds: data.applicableProductIds,
+        };
+      }
+
+      setAppliedCoupon(data.coupon);
+      setCouponError(null);
+      addToast(`Coupon "${data.coupon.code}" applied successfully!`, 'success');
+      setCouponLoading(false);
+      return { success: true, coupon: data.coupon };
+    } catch (err) {
+      console.error('Coupon validation error:', err);
+      // Fallback local check if offline
+      const localCoupon = COUPONS[cleanCode];
+      if (localCoupon) {
+        if (localCoupon.minSpend && subtotal < localCoupon.minSpend) {
+          const msg = `Minimum spend of ₹${localCoupon.minSpend} required for ${cleanCode}`;
+          setCouponError(msg);
+          addToast(msg, 'error');
+          setCouponLoading(false);
+          return { success: false, message: msg };
+        }
+        setAppliedCoupon(localCoupon);
+        setCouponError(null);
+        addToast(`Coupon "${localCoupon.code}" applied successfully!`, 'success');
+        setCouponLoading(false);
+        return { success: true, coupon: localCoupon };
+      }
+      const msg = 'Failed to validate coupon. Please try again.';
+      setCouponError(msg);
+      addToast(msg, 'error');
+      setCouponLoading(false);
+      return { success: false, message: msg };
+    }
   };
 
   const removeCoupon = () => {
     setAppliedCoupon(null);
+    setCouponError(null);
     addToast('Coupon removed', 'info');
   };
 
@@ -241,16 +312,53 @@ export const CartProvider = ({ children }) => {
     return Math.max(0, originalSubtotal - subtotal);
   }, [originalSubtotal, subtotal]);
 
+  // Check if applied coupon is valid for current items in cart
+  const isAppliedCouponEligible = useMemo(() => {
+    if (!appliedCoupon) return true;
+    const applicableIds = appliedCoupon.applicableProductIds || [];
+    if (!Array.isArray(applicableIds) || applicableIds.length === 0) return true;
+    return cartItems.some((item) =>
+      applicableIds.map(String).includes(String(item.productId || item.id || ''))
+    );
+  }, [appliedCoupon, cartItems]);
+
+  // Dynamically calculate coupon discount strictly on eligible products
   const couponDiscount = useMemo(() => {
     if (!appliedCoupon) return 0;
+
+    const applicableIds = appliedCoupon.applicableProductIds || [];
+    let eligibleSubtotal = 0;
+
+    if (Array.isArray(applicableIds) && applicableIds.length > 0) {
+      const eligibleItems = cartItems.filter((item) =>
+        applicableIds.map(String).includes(String(item.productId || item.id || ''))
+      );
+
+      // If user removed all eligible products, no discount applies
+      if (eligibleItems.length === 0) return 0;
+
+      eligibleSubtotal = eligibleItems.reduce(
+        (sum, item) => sum + item.price * item.quantity,
+        0
+      );
+    } else {
+      eligibleSubtotal = subtotal;
+    }
+
     if (appliedCoupon.discountType === 'percentage') {
-      return Math.round((subtotal * appliedCoupon.value) / 100);
+      let disc = Math.round((eligibleSubtotal * appliedCoupon.value) / 100);
+      if (appliedCoupon.maxDiscount) {
+        disc = Math.min(disc, appliedCoupon.maxDiscount);
+      }
+      return disc;
     }
+
     if (appliedCoupon.discountType === 'flat') {
-      return Math.min(subtotal, appliedCoupon.value);
+      return Math.min(eligibleSubtotal, appliedCoupon.value);
     }
+
     return 0;
-  }, [appliedCoupon, subtotal]);
+  }, [appliedCoupon, cartItems, subtotal]);
 
   const shipping = useMemo(() => {
     if (subtotal === 0) return 0;
@@ -279,6 +387,10 @@ export const CartProvider = ({ children }) => {
         total,
         freeShippingRemaining,
         appliedCoupon,
+        couponError,
+        setCouponError,
+        couponLoading,
+        isAppliedCouponEligible,
         isCartOpen,
         openCart,
         closeCart,
@@ -293,7 +405,7 @@ export const CartProvider = ({ children }) => {
         clearCart,
         applyCoupon,
         removeCoupon,
-        availableCoupons: Object.values(COUPONS),
+        availableCoupons,
       }}
     >
       {children}

@@ -1,13 +1,14 @@
 export const dynamic = 'force-dynamic';
 import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '../../../../lib/supabase/admin';
+import { evaluateCouponEligibility, parseCouponDescription } from '../../../../lib/couponHelper';
 
-// POST: Validate a coupon code server-side
+// POST: Validate a coupon code server-side with product-level eligibility & expiry checks
 export async function POST(request) {
   try {
-    const { code, subtotal } = await request.json();
+    const { code, subtotal = 0, items = [] } = await request.json();
 
-    if (!code) {
+    if (!code || !code.trim()) {
       return NextResponse.json({ error: 'Coupon code required' }, { status: 400 });
     }
 
@@ -17,52 +18,45 @@ export async function POST(request) {
       .from('coupons')
       .select('*')
       .eq('code', cleanCode)
-      .eq('is_active', true)
-      .single();
+      .maybeSingle();
 
     if (error || !coupon) {
-      return NextResponse.json({ error: 'Invalid coupon code' }, { status: 400 });
+      return NextResponse.json({ error: `Invalid coupon code "${cleanCode}".` }, { status: 400 });
     }
 
-    // Check expiry
-    if (coupon.expires_at && new Date(coupon.expires_at) < new Date()) {
-      return NextResponse.json({ error: 'Coupon has expired' }, { status: 400 });
-    }
+    // Evaluate eligibility using shared helper
+    const evaluation = evaluateCouponEligibility(coupon, items, Number(subtotal) || 0);
 
-    // Check min spend
-    if (coupon.min_spend && subtotal < coupon.min_spend) {
+    if (!evaluation.valid) {
       return NextResponse.json({
-        error: `Minimum spend of ₹${coupon.min_spend} required for ${cleanCode}`,
+        valid: false,
+        error: evaluation.error,
+        errorType: evaluation.errorType,
+        applicableProductIds: evaluation.applicableProductIds || [],
+        applicableProductNames: evaluation.applicableProductNames || []
       }, { status: 400 });
     }
 
-    // Check usage limit
-    if (coupon.max_uses && coupon.used_count >= coupon.max_uses) {
-      return NextResponse.json({ error: 'Coupon usage limit reached' }, { status: 400 });
-    }
-
-    // Calculate discount
-    let discount = 0;
-    if (coupon.discount_type === 'percentage') {
-      discount = Math.round((subtotal * coupon.value) / 100);
-      if (coupon.max_discount) {
-        discount = Math.min(discount, coupon.max_discount);
-      }
-    } else {
-      discount = Math.min(subtotal, coupon.value);
-    }
+    const meta = parseCouponDescription(coupon.description);
 
     return NextResponse.json({
       valid: true,
       coupon: {
+        id: coupon.id,
         code: coupon.code,
-        description: coupon.description,
+        description: meta.text || coupon.description || '',
         discountType: coupon.discount_type,
         value: coupon.value,
-        discount,
+        discount: evaluation.discount,
+        applicableProductIds: evaluation.applicableProductIds,
+        applicableProductNames: evaluation.applicableProductNames,
+        eligibleItemCount: evaluation.eligibleItemCount,
+        eligibleSubtotal: evaluation.eligibleSubtotal,
+        expiresAt: coupon.expires_at,
       },
     });
   } catch (err) {
+    console.error('Coupon validation error:', err);
     return NextResponse.json({ error: err.message }, { status: 500 });
   }
 }

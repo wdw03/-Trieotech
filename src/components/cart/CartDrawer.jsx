@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { X, Trash2, Plus, Minus, ShoppingBag, ArrowRight, Tag, Sparkles, ShieldCheck, Check } from 'lucide-react';
+import { X, Trash2, Plus, Minus, ShoppingBag, ArrowRight, Tag, Sparkles, ShieldCheck, Check, AlertCircle, Loader2 } from 'lucide-react';
 import { useCart } from '../../context/CartContext';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
@@ -24,6 +24,9 @@ export const CartDrawer = () => {
     total,
     freeShippingRemaining,
     appliedCoupon,
+    couponError,
+    couponLoading,
+    isAppliedCouponEligible,
     isCartOpen,
     closeCart,
     updateQuantity,
@@ -51,11 +54,13 @@ export const CartDrawer = () => {
 
   if (!isCartOpen) return null;
 
-  const handleApplyCoupon = (e) => {
+  const handleApplyCoupon = async (e) => {
     e.preventDefault();
     if (couponInput.trim()) {
-      applyCoupon(couponInput);
-      setCouponInput('');
+      const res = await applyCoupon(couponInput);
+      if (res?.success) {
+        setCouponInput('');
+      }
     }
   };
 
@@ -270,34 +275,71 @@ export const CartDrawer = () => {
           <div className="p-4 sm:p-5 bg-ivory-100 dark:bg-stone-900/90 border-t border-gold-500/30 space-y-3.5">
             {/* Coupon Code Section */}
             {appliedCoupon ? (
-              <div className="flex items-center justify-between p-2.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-500/30 text-xs">
-                <div className="flex items-center gap-1.5 text-emerald-700 dark:text-emerald-300 font-bold">
-                  <Tag className="w-3.5 h-3.5" />
-                  <span>Coupon {appliedCoupon.code} applied ({appliedCoupon.discountType === 'percentage' ? `${appliedCoupon.value}% off` : `₹${appliedCoupon.value} off`})</span>
+              !isAppliedCouponEligible ? (
+                <div className="p-2.5 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-500/40 text-xs text-rose-800 dark:text-rose-200 space-y-1 animate-fadeIn">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-1.5 font-bold">
+                      <AlertCircle className="w-4 h-4 text-rose-600 dark:text-rose-400 shrink-0" />
+                      <span>This item is not eligible for this coupon code</span>
+                    </div>
+                    <button
+                      onClick={removeCoupon}
+                      className="text-stone-400 hover:text-rose-600 dark:hover:text-rose-400 text-xs font-semibold ml-2"
+                    >
+                      Remove
+                    </button>
+                  </div>
+                  <p className="text-[10px] text-stone-500 dark:text-stone-400">
+                    Coupon <strong>{appliedCoupon.code}</strong> requires specific item(s) not currently in your cart.
+                  </p>
                 </div>
-                <button
-                  onClick={removeCoupon}
-                  className="text-stone-400 hover:text-maroon-700 text-xs font-semibold"
-                >
-                  Remove
-                </button>
-              </div>
+              ) : (
+                <div className="flex flex-col gap-1 p-2.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-500/30 text-xs">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-1.5 text-emerald-700 dark:text-emerald-300 font-bold">
+                      <Tag className="w-3.5 h-3.5" />
+                      <span>Coupon {appliedCoupon.code} applied ({appliedCoupon.discountType === 'percentage' ? `${appliedCoupon.value}% off` : `₹${appliedCoupon.value} off`})</span>
+                    </div>
+                    <button
+                      onClick={removeCoupon}
+                      className="text-stone-400 hover:text-maroon-700 dark:hover:text-gold-400 text-xs font-semibold"
+                    >
+                      Remove
+                    </button>
+                  </div>
+                  {appliedCoupon.applicableProductNames && appliedCoupon.applicableProductNames.length > 0 && (
+                    <span className="text-[10px] text-emerald-700 dark:text-emerald-400">
+                      Applied to {appliedCoupon.applicableProductNames.length} eligible product(s)
+                    </span>
+                  )}
+                </div>
+              )
             ) : (
-              <form onSubmit={handleApplyCoupon} className="flex gap-2">
-                <input
-                  type="text"
-                  placeholder="Enter Coupon (e.g. FESTIVE20)"
-                  value={couponInput}
-                  onChange={(e) => setCouponInput(e.target.value)}
-                  className="flex-1 px-3 py-2 text-xs rounded-xl bg-white dark:bg-stone-800 border border-gold-500/30 text-stone-900 dark:text-ivory-100 outline-none uppercase"
-                />
-                <button
-                  type="submit"
-                  className="px-4 py-2 rounded-xl bg-stone-900 dark:bg-gold-500 text-white dark:text-maroon-950 text-xs font-bold"
-                >
-                  Apply
-                </button>
-              </form>
+              <div className="space-y-1.5">
+                <form onSubmit={handleApplyCoupon} className="flex gap-2">
+                  <input
+                    type="text"
+                    placeholder="Enter Coupon (e.g. FESTIVE20)"
+                    value={couponInput}
+                    onChange={(e) => setCouponInput(e.target.value)}
+                    className="flex-1 px-3 py-2 text-xs rounded-xl bg-white dark:bg-stone-800 border border-gold-500/30 text-stone-900 dark:text-ivory-100 outline-none uppercase font-mono tracking-wider focus:border-gold-500"
+                  />
+                  <button
+                    type="submit"
+                    disabled={couponLoading}
+                    className="px-4 py-2 rounded-xl bg-stone-900 dark:bg-gold-500 hover:bg-maroon-800 text-white dark:text-maroon-950 text-xs font-bold transition-colors disabled:opacity-50 flex items-center justify-center min-w-[65px]"
+                  >
+                    {couponLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : 'Apply'}
+                  </button>
+                </form>
+
+                {couponError && (
+                  <div className="p-2 rounded-lg bg-rose-50 dark:bg-rose-950/40 border border-rose-500/30 text-[11px] font-semibold text-rose-700 dark:text-rose-300 flex items-center gap-1.5 animate-fadeIn">
+                    <AlertCircle className="w-3.5 h-3.5 text-rose-500 shrink-0" />
+                    <span>{couponError}</span>
+                  </div>
+                )}
+              </div>
             )}
 
             {/* Price Calculations */}

@@ -892,8 +892,20 @@ export default function CheckoutClient() {
               )}
               {couponDiscount > 0 && (
                 <div className="flex justify-between text-emerald-700 dark:text-emerald-400 font-bold">
-                  <span>Coupon ({appliedCoupon?.code})</span>
+                  <div className="flex flex-col">
+                    <span>Coupon ({appliedCoupon?.code})</span>
+                    {appliedCoupon?.applicableProductNames?.length > 0 && (
+                      <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-normal">
+                        Applied to {appliedCoupon.applicableProductNames.length} eligible item(s)
+                      </span>
+                    )}
+                  </div>
                   <span>-₹{couponDiscount?.toLocaleString('en-IN')}</span>
+                </div>
+              )}
+              {appliedCoupon && couponDiscount === 0 && (
+                <div className="p-2 rounded-lg bg-rose-50 dark:bg-rose-950/40 border border-rose-500/30 text-[11px] text-rose-700 dark:text-rose-300 font-medium">
+                  Coupon <strong>{appliedCoupon.code}</strong> is not eligible for the items in this order.
                 </div>
               )}
               <div className="flex justify-between">
