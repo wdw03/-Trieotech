@@ -19,6 +19,9 @@ export async function GET() {
         shipments (*)
       `)
       .eq('user_id', user.id)
+      .neq('status', 'pending_payment')
+      .neq('status', 'payment_failed')
+      .neq('status', 'draft')
       .order('created_at', { ascending: false });
 
     if (error) throw error;

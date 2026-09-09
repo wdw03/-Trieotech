@@ -249,9 +249,9 @@ export default function CheckoutClient() {
         razorpayOrderId: data.razorpayOrderId,
         amount: data.amount,
         currency: data.currency || 'INR',
-        orderId: data.orderId,
         orderNumber: data.orderNumber,
         keyId: data.keyId,
+        orderData: data.orderData,
         userEmail: user?.email || activeShippingAddress?.email || '',
         userName: user?.name || activeShippingAddress?.name || '',
         userPhone: user?.phone || activeShippingAddress?.phone || '',
@@ -938,11 +938,11 @@ export default function CheckoutClient() {
         <RazorpayCheckout
           {...razorpayData}
           onSuccess={(result) => {
-            const orderId = result.orderNumber || razorpayData.orderNumber || razorpayData.orderId;
+            const orderId = result.orderNumber || razorpayData.orderNumber || result.orderId;
             if (user && addOrder) {
               addOrder({
                 id: orderId,
-                dbId: razorpayData.orderId,
+                dbId: result.orderId || razorpayData.orderId,
                 date: new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' }),
                 status: "Confirmed",
                 trackingNumber: `BLUEDART-EXP-${Math.floor(10000000 + Math.random() * 90000000)}`,

@@ -327,57 +327,31 @@ export async function POST(request) {
       user_id: user.id,
     });
 
-    // 11. Create order in DB (status: pending_payment)
-    const { data: order, error: orderError } = await supabaseAdmin
-      .from('orders')
-      .insert({
-        user_id: user.id,
-        order_number: orderNumber,
-        status: 'pending_payment',
-        subtotal,
-        discount,
-        coupon_code: appliedCouponCode,
-        shipping_cost: shippingCost,
-        total,
-        payment_method: 'razorpay',
-        shipping_address: shippingAddress,
-        delivery_method: deliveryMethod || 'standard',
-        estimated_delivery: new Date(Date.now() + 5 * 86400000).toISOString().split('T')[0],
-      })
-      .select()
-      .single();
+    // DO NOT insert order into DB yet!
+    // The order will be saved to Supabase only after successful payment verification.
+    const orderData = {
+      userId: user.id,
+      orderNumber,
+      subtotal,
+      discount,
+      couponCode: appliedCouponCode || null,
+      shippingCost,
+      total,
+      paymentMethod: 'razorpay',
+      shippingAddress,
+      deliveryMethod: deliveryMethod || 'standard',
+      items: validatedItems,
+    };
 
-    if (orderError) {
-      console.error('Order creation error:', orderError);
-      return NextResponse.json({ error: 'Failed to create order' }, { status: 500 });
-    }
-
-    // 12. Insert order items
-    await supabaseAdmin.from('order_items').insert(
-      validatedItems.map((item) => ({
-        order_id: order.id,
-        ...item,
-      }))
-    );
-
-    // 13. Insert payment record (status: created)
-    await supabaseAdmin.from('payments').insert({
-      order_id: order.id,
-      razorpay_order_id: razorpayOrder.id,
-      amount: total,
-      status: 'created',
-      method: paymentMethod || 'razorpay',
-    });
-
-    // 14. Return data needed for Razorpay Checkout
+    // Return data needed for Razorpay Checkout
     return NextResponse.json({
       success: true,
-      orderId: order.id,
       orderNumber,
       razorpayOrderId: razorpayOrder.id,
       amount: total,
       currency: 'INR',
       keyId: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || RAZORPAY_KEY_ID || 'rzp_live_TZUoFoXCMkJNkx',
+      orderData,
     });
   } catch (err) {
     const errorMsg =

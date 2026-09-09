@@ -36,6 +36,12 @@ export async function GET(request) {
       .order('created_at', { ascending: false })
       .limit(limit);
 
+    // Always exclude uncompleted payment attempts and drafts from admin view
+    query = query
+      .neq('status', 'pending_payment')
+      .neq('status', 'payment_failed')
+      .neq('status', 'draft');
+
     if (status && status !== 'all' && status !== 'All') {
       const lower = status.toLowerCase().replace(/\s+/g, '_');
       query = query.or(`status.ilike.%${status}%,status.ilike.%${lower}%`);

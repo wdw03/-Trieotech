@@ -44,6 +44,7 @@ export default function RazorpayCheckout({
   orderId,
   orderNumber,
   keyId,
+  orderData,
   userEmail,
   userName,
   userPhone,
@@ -78,7 +79,7 @@ export default function RazorpayCheckout({
       },
       notes: {
         order_number: orderNumber,
-        order_id: orderId,
+        order_id: orderId || '',
       },
       theme: {
         color: '#4a0404',
@@ -100,6 +101,7 @@ export default function RazorpayCheckout({
               razorpay_payment_id: response.razorpay_payment_id,
               razorpay_signature: response.razorpay_signature,
               orderId,
+              orderData,
             }),
           });
 
@@ -141,6 +143,7 @@ export default function RazorpayCheckout({
     orderId,
     orderNumber,
     keyId,
+    orderData,
     userEmail,
     userName,
     userPhone,

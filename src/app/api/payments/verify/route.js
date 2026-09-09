@@ -16,7 +16,13 @@ export async function POST(request) {
       user = authUser || null;
     } catch (_) {}
 
-    const { razorpay_order_id, razorpay_payment_id, razorpay_signature, orderId } = await request.json();
+    const {
+      razorpay_order_id,
+      razorpay_payment_id,
+      razorpay_signature,
+      orderId,
+      orderData,
+    } = await request.json();
 
     if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
       return NextResponse.json({ error: 'Missing payment details' }, { status: 400 });
@@ -30,7 +36,7 @@ export async function POST(request) {
     });
 
     if (!isValid) {
-      // Update order as payment_failed
+      // If order already existed in DB, mark payment_failed
       if (orderId) {
         await supabaseAdmin
           .from('orders')
@@ -49,56 +55,148 @@ export async function POST(request) {
       return NextResponse.json({ error: 'Payment verification failed' }, { status: 400 });
     }
 
-    // 3. Payment is valid! Update records
+    // 3. Payment is valid! Check if order exists or create now
+    let order = null;
 
-    // Update payment record
-    await supabaseAdmin
-      .from('payments')
-      .update({
-        razorpay_payment_id,
-        razorpay_signature,
-        status: 'captured',
-      })
-      .eq('razorpay_order_id', razorpay_order_id);
-
-    // Update order status
-    await supabaseAdmin
-      .from('orders')
-      .update({ status: 'confirmed' })
-      .eq('id', orderId);
-
-    // 4. Fetch full order details
-    const { data: order } = await supabaseAdmin
-      .from('orders')
-      .select('*, order_items(*)')
-      .eq('id', orderId)
-      .single();
-
-    if (!order) {
-      return NextResponse.json({ error: 'Order not found' }, { status: 404 });
+    if (orderId) {
+      const { data: existingOrder } = await supabaseAdmin
+        .from('orders')
+        .select('*, order_items(*)')
+        .eq('id', orderId)
+        .maybeSingle();
+      order = existingOrder;
     }
 
-    // 5. Decrement stock for each item
-    for (const item of order.order_items) {
-      const { data: prod } = await supabaseAdmin
-        .from('products')
-        .select('stock')
-        .eq('id', item.product_id)
-        .single();
+    if (!order && razorpay_order_id) {
+      const { data: paymentRecord } = await supabaseAdmin
+        .from('payments')
+        .select('order_id')
+        .eq('razorpay_order_id', razorpay_order_id)
+        .maybeSingle();
 
-      if (prod) {
-        const newStock = Math.max(0, prod.stock - item.quantity);
-        await supabaseAdmin
-          .from('products')
-          .update({
-            stock: newStock,
-            in_stock: newStock > 0,
-          })
-          .eq('id', item.product_id);
+      if (paymentRecord?.order_id) {
+        const { data: existingOrder } = await supabaseAdmin
+          .from('orders')
+          .select('*, order_items(*)')
+          .eq('id', paymentRecord.order_id)
+          .maybeSingle();
+        order = existingOrder;
       }
     }
 
-    // 6. Update coupon usage count
+    if (!order && orderData) {
+      // Create confirmed order in DB only now after payment is verified
+      const targetUserId = orderData.userId || user?.id || null;
+
+      const { data: newOrder, error: orderError } = await supabaseAdmin
+        .from('orders')
+        .insert({
+          user_id: targetUserId,
+          order_number: orderData.orderNumber,
+          status: 'confirmed',
+          subtotal: orderData.subtotal,
+          discount: orderData.discount || 0,
+          coupon_code: orderData.couponCode || null,
+          shipping_cost: orderData.shippingCost || 0,
+          total: orderData.total,
+          payment_method: 'razorpay',
+          shipping_address: orderData.shippingAddress,
+          delivery_method: orderData.deliveryMethod || 'standard',
+          estimated_delivery: new Date(Date.now() + 5 * 86400000).toISOString().split('T')[0],
+        })
+        .select()
+        .single();
+
+      if (orderError || !newOrder) {
+        console.error('Order creation error upon payment verification:', orderError);
+        return NextResponse.json({ error: 'Failed to record order' }, { status: 500 });
+      }
+
+      order = newOrder;
+
+      // Insert order items
+      const itemsToInsert = (orderData.items || []).map((item) => ({
+        order_id: order.id,
+        product_id: item.product_id,
+        name: item.name,
+        price: item.price,
+        original_price: item.original_price || item.price,
+        quantity: item.quantity,
+        size: item.size || '',
+        color: item.color || '',
+        image: item.image || '',
+      }));
+
+      if (itemsToInsert.length > 0) {
+        await supabaseAdmin.from('order_items').insert(itemsToInsert);
+      }
+      order.order_items = itemsToInsert;
+
+      // Insert payment record as captured
+      await supabaseAdmin.from('payments').insert({
+        order_id: order.id,
+        razorpay_order_id,
+        razorpay_payment_id,
+        razorpay_signature,
+        amount: order.total,
+        currency: 'INR',
+        status: 'captured',
+        method: 'razorpay',
+      });
+    } else if (order) {
+      // Update payment record
+      await supabaseAdmin
+        .from('payments')
+        .update({
+          razorpay_payment_id,
+          razorpay_signature,
+          status: 'captured',
+        })
+        .eq('razorpay_order_id', razorpay_order_id);
+
+      // Update order status
+      await supabaseAdmin
+        .from('orders')
+        .update({ status: 'confirmed' })
+        .eq('id', order.id);
+
+      if (!order.order_items || order.order_items.length === 0) {
+        const { data: items } = await supabaseAdmin
+          .from('order_items')
+          .select('*')
+          .eq('order_id', order.id);
+        order.order_items = items || [];
+      }
+    }
+
+    if (!order) {
+      return NextResponse.json({ error: 'Order details missing to finalize order' }, { status: 400 });
+    }
+
+    // 4. Decrement stock for each item
+    if (Array.isArray(order.order_items)) {
+      for (const item of order.order_items) {
+        if (!item.product_id) continue;
+        const { data: prod } = await supabaseAdmin
+          .from('products')
+          .select('stock')
+          .eq('id', item.product_id)
+          .single();
+
+        if (prod) {
+          const newStock = Math.max(0, prod.stock - item.quantity);
+          await supabaseAdmin
+            .from('products')
+            .update({
+              stock: newStock,
+              in_stock: newStock > 0,
+            })
+            .eq('id', item.product_id);
+        }
+      }
+    }
+
+    // 5. Update coupon usage count
     if (order.coupon_code) {
       const { data: coupon } = await supabaseAdmin
         .from('coupons')
@@ -109,21 +207,22 @@ export async function POST(request) {
       if (coupon) {
         await supabaseAdmin
           .from('coupons')
-          .update({ used_count: coupon.used_count + 1 })
+          .update({ used_count: (coupon.used_count || 0) + 1 })
           .eq('code', order.coupon_code);
       }
     }
 
-    // 7. Clear user's cart (if authenticated)
-    if (user?.id) {
-      await supabaseAdmin.from('cart_items').delete().eq('user_id', user.id);
+    // 6. Clear user's cart
+    const targetUserId = user?.id || order.user_id;
+    if (targetUserId) {
+      await supabaseAdmin.from('cart_items').delete().eq('user_id', targetUserId);
     }
 
-    // 8. Create Shiprocket order (async, don't block response)
+    // 7. Create Shiprocket order (async, don't block response)
     try {
       const shiprocketResult = await createShiprocketOrder({
         orderNumber: order.order_number,
-        orderDate: new Date(order.created_at).toISOString().split('T')[0],
+        orderDate: new Date(order.created_at || Date.now()).toISOString().split('T')[0],
         billingAddress: order.shipping_address,
         shippingAddress: order.shipping_address,
         items: order.order_items,
@@ -149,15 +248,13 @@ export async function POST(request) {
         await supabaseAdmin
           .from('orders')
           .update({ status: 'processing' })
-          .eq('id', orderId);
+          .eq('id', order.id);
       }
     } catch (shipError) {
       console.error('Shiprocket order creation failed:', shipError);
-      // Don't fail the payment verification — order is confirmed
-      // Shiprocket order can be created manually later
     }
 
-    // 9. Send confirmation email & invoice (async, don't block response)
+    // 8. Send confirmation email & invoice (async, don't block response)
     try {
       let recipientEmail = user?.email || order.shipping_address?.email;
       if (!recipientEmail && order.user_id) {
@@ -170,7 +267,7 @@ export async function POST(request) {
           to: recipientEmail,
           orderNumber: order.order_number,
           orderId: order.id,
-          orderDate: order.created_at,
+          orderDate: order.created_at || new Date().toISOString(),
           paymentMethod: 'razorpay',
           items: order.order_items,
           subtotal: order.subtotal,
@@ -183,10 +280,9 @@ export async function POST(request) {
       }
     } catch (emailError) {
       console.error('Email send failed:', emailError);
-      // Don't fail — email is non-critical
     }
 
-    // 10. Return success
+    // 9. Return success
     return NextResponse.json({
       success: true,
       orderId: order.id,
