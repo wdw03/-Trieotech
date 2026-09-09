@@ -6,7 +6,7 @@ import { createRazorpayOrder, RAZORPAY_KEY_ID } from '../../../../lib/razorpay';
 import { sendOrderConfirmation } from '../../../../lib/resend';
 import { isCodAvailableForPincode } from '../../../../lib/codPincodes';
 import { evaluateCouponEligibility } from '../../../../lib/couponHelper';
-import { calculateDynamicShipping } from '../../../../lib/shiprocket';
+import { calculateDynamicShipping, createOrderAndAssignAWB } from '../../../../lib/shiprocket';
 
 export async function POST(request) {
   try {
@@ -313,6 +313,40 @@ export async function POST(request) {
         method: 'cod',
       });
 
+      // Create Shiprocket order & generate live AWB for COD order
+      let awbNumber = '';
+      let courierName = '';
+      try {
+        const shiprocketResult = await createOrderAndAssignAWB({
+          orderNumber: order.order_number,
+          orderDate: new Date(order.created_at || Date.now()).toISOString().split('T')[0],
+          billingAddress: shippingAddress,
+          shippingAddress: shippingAddress,
+          items: validatedItems,
+          paymentMethod: 'cod',
+          subtotal: order.subtotal,
+          discount: order.discount,
+          shippingCharges: order.shipping_cost,
+        });
+
+        if (shiprocketResult) {
+          awbNumber = shiprocketResult.awb_code || '';
+          courierName = shiprocketResult.courier_name || '';
+
+          await supabaseAdmin.from('shipments').insert({
+            order_id: order.id,
+            shiprocket_order_id: String(shiprocketResult.order_id || ''),
+            shiprocket_shipment_id: String(shiprocketResult.shipment_id || ''),
+            awb_number: awbNumber,
+            courier_name: courierName,
+            courier_id: shiprocketResult.courier_company_id || null,
+            status: 'confirmed',
+          });
+        }
+      } catch (shipErr) {
+        console.warn('Shiprocket COD order/AWB notice:', shipErr);
+      }
+
       // Send Order Confirmation & Invoice Details Email
       try {
         let recipientEmail = user?.email || body.shippingAddress?.email || body.email;
@@ -346,6 +380,8 @@ export async function POST(request) {
         orderId: order.id,
         orderNumber,
         paymentMethod: 'cod',
+        awbNumber: awbNumber || undefined,
+        courierName: courierName || undefined,
       });
     }
 

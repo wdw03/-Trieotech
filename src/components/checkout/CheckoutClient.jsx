@@ -216,7 +216,7 @@ export default function CheckoutClient() {
       // COD Flow
       if (isCod) {
         const orderId = data.orderNumber || data.orderId;
-        const trackingNumber = `BLUEDART-EXP-${Math.floor(10000000 + Math.random() * 90000000)}`;
+        const trackingNumber = data.awbNumber || `BLUEDART-EXP-${Math.floor(10000000 + Math.random() * 90000000)}`;
 
         const newOrder = {
           id: orderId,
@@ -224,7 +224,7 @@ export default function CheckoutClient() {
           date: new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' }),
           status: "Confirmed",
           trackingNumber,
-          carrier: shippingRates?.standardCourier || "Shiprocket Express Courier",
+          carrier: data.courierName || shippingRates?.standardCourier || "Shiprocket Express Courier",
           items: cartItems.map(item => ({
             productId: item.productId || item.id,
             name: item.name,
@@ -981,14 +981,15 @@ export default function CheckoutClient() {
           {...razorpayData}
           onSuccess={(result) => {
             const orderId = result.orderNumber || razorpayData.orderNumber || result.orderId;
+            const trackingNumber = result.awbNumber || `BLUEDART-EXP-${Math.floor(10000000 + Math.random() * 90000000)}`;
             if (user && addOrder) {
               addOrder({
                 id: orderId,
                 dbId: result.orderId || razorpayData.orderId,
                 date: new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' }),
                 status: "Confirmed",
-                trackingNumber: `BLUEDART-EXP-${Math.floor(10000000 + Math.random() * 90000000)}`,
-                carrier: "BlueDart Express Courier",
+                trackingNumber,
+                carrier: result.courierName || "Shiprocket Express Courier",
                 items: cartItems,
                 total: razorpayData.amount,
                 shippingAddress: activeShippingAddress,

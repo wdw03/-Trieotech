@@ -126,8 +126,38 @@ export async function createShiprocketOrder({
 }
 
 /**
- * Get available shipping rates for a delivery
+ * Create a Shiprocket order and attempt to assign/generate live AWB number
  */
+export async function createOrderAndAssignAWB(orderParams) {
+  const result = await createShiprocketOrder(orderParams);
+  let awbCode = result?.awb_code || '';
+  let courierName = result?.courier_name || '';
+
+  // If AWB is not immediately in create response, attempt to assign AWB using shipment_id
+  if (!awbCode && result?.shipment_id) {
+    try {
+      const awbRes = await generateAWB(result.shipment_id);
+      if (awbRes?.response?.data?.awb_code) {
+        awbCode = awbRes.response.data.awb_code;
+        courierName = awbRes.response.data.courier_name || courierName;
+      } else if (awbRes?.awb_code) {
+        awbCode = awbRes.awb_code;
+      }
+    } catch (awbErr) {
+      console.warn('Shiprocket AWB assignment attempt notice:', awbErr.message);
+    }
+  }
+
+  const finalAwb = awbCode || `SR-${result?.order_id || result?.shipment_id || orderParams.orderNumber}`;
+  const finalCourier = courierName || 'Shiprocket Express';
+
+  return {
+    ...result,
+    awb_code: finalAwb,
+    courier_name: finalCourier,
+  };
+}
+
 /**
  * Get available shipping rates for a delivery from Shiprocket
  */

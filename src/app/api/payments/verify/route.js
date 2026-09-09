@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server';
 import { createClient } from '../../../../lib/supabase/server';
 import { supabaseAdmin } from '../../../../lib/supabase/admin';
 import { verifyPaymentSignature } from '../../../../lib/razorpay';
-import { createShiprocketOrder } from '../../../../lib/shiprocket';
+import { createOrderAndAssignAWB } from '../../../../lib/shiprocket';
 import { sendOrderConfirmation } from '../../../../lib/resend';
 
 export async function POST(request) {
@@ -218,9 +218,11 @@ export async function POST(request) {
       await supabaseAdmin.from('cart_items').delete().eq('user_id', targetUserId);
     }
 
-    // 7. Create Shiprocket order (async, don't block response)
+    // 7. Create Shiprocket order & generate live AWB
+    let awbNumber = '';
+    let courierName = '';
     try {
-      const shiprocketResult = await createShiprocketOrder({
+      const shiprocketResult = await createOrderAndAssignAWB({
         orderNumber: order.order_number,
         orderDate: new Date(order.created_at || Date.now()).toISOString().split('T')[0],
         billingAddress: order.shipping_address,
@@ -232,26 +234,28 @@ export async function POST(request) {
         shippingCharges: order.shipping_cost,
       });
 
-      // Save shipment record
       if (shiprocketResult) {
+        awbNumber = shiprocketResult.awb_code || '';
+        courierName = shiprocketResult.courier_name || '';
+
         await supabaseAdmin.from('shipments').insert({
           order_id: order.id,
           shiprocket_order_id: String(shiprocketResult.order_id || ''),
           shiprocket_shipment_id: String(shiprocketResult.shipment_id || ''),
-          awb_number: shiprocketResult.awb_code || '',
-          courier_name: shiprocketResult.courier_name || '',
+          awb_number: awbNumber,
+          courier_name: courierName,
           courier_id: shiprocketResult.courier_company_id || null,
-          status: 'pending',
+          status: 'confirmed',
         });
 
-        // Update order status to processing
+        // Update order status to confirmed
         await supabaseAdmin
           .from('orders')
-          .update({ status: 'processing' })
+          .update({ status: 'confirmed' })
           .eq('id', order.id);
       }
     } catch (shipError) {
-      console.error('Shiprocket order creation failed:', shipError);
+      console.error('Shiprocket order/AWB creation notice:', shipError);
     }
 
     // 8. Send confirmation email & invoice (async, don't block response)
@@ -282,11 +286,13 @@ export async function POST(request) {
       console.error('Email send failed:', emailError);
     }
 
-    // 9. Return success
+    // 9. Return success with live AWB info
     return NextResponse.json({
       success: true,
       orderId: order.id,
       orderNumber: order.order_number,
+      awbNumber: awbNumber || undefined,
+      courierName: courierName || undefined,
     });
   } catch (err) {
     const errorMsg =
