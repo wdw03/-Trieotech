@@ -28,7 +28,7 @@ import RazorpayCheckout from './RazorpayCheckout';
 export default function CheckoutClient() {
   const router = useRouter();
   const { cartItems, subtotal, originalSubtotal, productSavings, couponDiscount, shipping, total, appliedCoupon, clearCart } = useCart();
-  const { user, addAddress, addOrder } = useAuth();
+  const { user, loading, addAddress, addOrder } = useAuth();
   const { addToast } = useToast();
 
   const [currentStep, setCurrentStep] = useState(1); // 1: Address | 2: Delivery | 3: Payment | 4: Review
@@ -66,6 +66,14 @@ export default function CheckoutClient() {
       router.push('/cart');
     }
   }, [cartItems, router]);
+
+  // Auth guard: redirect to login if not authenticated
+  useEffect(() => {
+    if (!loading && !user) {
+      addToast('Please login to your account to complete checkout', 'info');
+      router.push(`/login?redirect=${encodeURIComponent('/checkout')}`);
+    }
+  }, [user, loading, router, addToast]);
 
   const activeShippingAddress = selectedAddressId !== 'new' && user?.addresses
     ? user.addresses.find(a => a.id === selectedAddressId)
@@ -151,6 +159,12 @@ export default function CheckoutClient() {
   const handlePlaceOrder = async () => {
     if (isPlacingOrder) return;
 
+    if (!user) {
+      addToast('Please login to place your order', 'error');
+      router.push(`/login?redirect=${encodeURIComponent('/checkout')}`);
+      return;
+    }
+
     if (paymentMethod === 'cod' && !isCodAvailable) {
       addToast(`Cash on Delivery is not available for PIN ${activePincode || 'this address'}. Please choose UPI or Card.`, 'error');
       return;
@@ -165,6 +179,7 @@ export default function CheckoutClient() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          userId: user.id,
           addressId: selectedAddressId !== 'new' ? selectedAddressId : undefined,
           shippingAddress: {
             ...activeShippingAddress,
@@ -254,6 +269,17 @@ export default function CheckoutClient() {
     { num: 3, label: 'Payment Options', icon: CreditCard },
     { num: 4, label: 'Review & Confirm', icon: CheckCircle2 }
   ];
+
+  if (loading || !user) {
+    return (
+      <div className="min-h-[60vh] flex flex-col items-center justify-center space-y-4 px-4">
+        <Loader2 className="w-10 h-10 animate-spin text-gold-600" />
+        <p className="font-serif text-stone-700 dark:text-ivory-100 text-sm font-semibold">
+          Verifying your account session...
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 space-y-8">

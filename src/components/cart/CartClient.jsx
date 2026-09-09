@@ -6,6 +6,8 @@ import Breadcrumb from '../../components/common/Breadcrumb';
 import EmptyState from '../../components/common/EmptyState';
 import ProductCard from '../../components/common/ProductCard';
 import { useCart } from '../../context/CartContext';
+import { useAuth } from '../../context/AuthContext';
+import { useToast } from '../../context/ToastContext';
 import { products as fallbackProducts } from '../../data/products';
 import { fetchLiveProducts, normalizeProduct } from '../../lib/api/store';
 import {
@@ -24,6 +26,8 @@ import {
 
 export default function CartClient() {
   const router = useRouter();
+  const { user } = useAuth();
+  const { addToast } = useToast();
   const {
     cartItems,
     itemCount,
@@ -69,6 +73,11 @@ export default function CartClient() {
   };
 
   const handleProceedToCheckout = () => {
+    if (!user) {
+      addToast?.('Please login to your account to proceed to checkout', 'info');
+      router.push(`/login?redirect=${encodeURIComponent('/checkout')}`);
+      return;
+    }
     router.push('/checkout');
   };
 

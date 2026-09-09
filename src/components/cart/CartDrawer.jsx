@@ -4,11 +4,15 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { X, Trash2, Plus, Minus, ShoppingBag, ArrowRight, Tag, Sparkles, ShieldCheck, Check } from 'lucide-react';
 import { useCart } from '../../context/CartContext';
+import { useAuth } from '../../context/AuthContext';
+import { useToast } from '../../context/ToastContext';
 import { products as fallbackProducts } from '../../data/products';
 import { fetchLiveProducts, normalizeProduct } from '../../lib/api/store';
 
 export const CartDrawer = () => {
   const router = useRouter();
+  const { user } = useAuth();
+  const { addToast } = useToast();
   const {
     cartItems,
     itemCount,
@@ -57,6 +61,11 @@ export const CartDrawer = () => {
 
   const handleProceedToCheckout = () => {
     closeCart();
+    if (!user) {
+      addToast?.('Please login to your account to proceed to checkout', 'info');
+      router.push(`/login?redirect=${encodeURIComponent('/checkout')}`);
+      return;
+    }
     router.push('/checkout');
   };
 

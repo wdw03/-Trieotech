@@ -8,7 +8,7 @@ import { isCodAvailableForPincode } from '../../../../lib/codPincodes';
 
 export async function POST(request) {
   try {
-    // 1. Authenticate user (optional - supports guest checkout)
+    // 1. Authenticate user (strictly required: guest checkout disabled)
     let user = null;
     try {
       const supabase = await createClient();
@@ -18,8 +18,37 @@ export async function POST(request) {
       user = null;
     }
 
+    // Fallback: check Authorization header
+    if (!user) {
+      const authHeader = request.headers.get('Authorization') || request.headers.get('authorization');
+      if (authHeader?.startsWith('Bearer ')) {
+        const token = authHeader.substring(7);
+        try {
+          const { data: { user: tokenUser } } = await supabaseAdmin.auth.getUser(token);
+          user = tokenUser || null;
+        } catch (_) {}
+      }
+    }
+
     const body = await request.json();
-    const { addressId, deliveryMethod, paymentMethod, couponCode, items: bodyItems } = body;
+    const { addressId, deliveryMethod, paymentMethod, couponCode, items: bodyItems, userId } = body;
+
+    // Fallback: verify userId from client session against Supabase Auth
+    if (!user && userId) {
+      try {
+        const { data: uData, error: uErr } = await supabaseAdmin.auth.admin.getUserById(userId);
+        if (!uErr && uData?.user) {
+          user = uData.user;
+        }
+      } catch (_) {}
+    }
+
+    if (!user) {
+      return NextResponse.json(
+        { error: 'Authentication required. Please sign in to place an order.' },
+        { status: 401 }
+      );
+    }
 
     // 2. Fetch cart items from database or use items from request body
     let rawItems = [];
@@ -184,7 +213,7 @@ export async function POST(request) {
       const { data: order, error: orderError } = await supabaseAdmin
         .from('orders')
         .insert({
-          user_id: user?.id || null,
+          user_id: user.id,
           order_number: orderNumber,
           status: 'confirmed',
           subtotal,
@@ -302,14 +331,14 @@ export async function POST(request) {
     // 10. Create Razorpay Order (for online payment)
     const razorpayOrder = await createRazorpayOrder(total, 'INR', orderNumber, {
       order_number: orderNumber,
-      user_id: user?.id || 'guest',
+      user_id: user.id,
     });
 
     // 11. Create order in DB (status: pending_payment)
     const { data: order, error: orderError } = await supabaseAdmin
       .from('orders')
       .insert({
-        user_id: user?.id || null,
+        user_id: user.id,
         order_number: orderNumber,
         status: 'pending_payment',
         subtotal,

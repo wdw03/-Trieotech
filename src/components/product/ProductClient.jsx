@@ -175,9 +175,9 @@ export default function ProductClient({ initialSlug }) {
       try {
         localStorage.setItem('trio_pending_add_to_cart', JSON.stringify(pendingItem));
       } catch (_) {}
-      addToast('Please sign in or create an account to proceed to checkout', 'info');
+      addToast('Please login to your account to proceed with purchase', 'info');
       if (typeof window !== 'undefined') {
-        window.location.href = `/register?redirect=${encodeURIComponent('/checkout')}&action=buy`;
+        window.location.href = `/login?redirect=${encodeURIComponent('/checkout')}&action=buy`;
       }
       return;
     }

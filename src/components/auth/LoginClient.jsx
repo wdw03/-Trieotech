@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '../../context/AuthContext';
 import TrioLogo from '../../components/common/TrioLogo';
-import { Mail, Lock, ArrowRight, Sparkles, Loader2, Eye, EyeOff } from 'lucide-react';
+import { Mail, Lock, ArrowRight, Sparkles, Loader2, Eye, EyeOff, ShoppingBag } from 'lucide-react';
 
 export default function LoginClient() {
   const router = useRouter();
@@ -18,6 +18,7 @@ export default function LoginClient() {
   const [error, setError] = useState('');
 
   const redirectParam = searchParams.get('redirect') || searchParams.get('next');
+  const action = searchParams.get('action') || '';
   // Redirect directly to main home page '/' on login completion
   const redirectTo = (redirectParam && redirectParam !== '/profile') ? redirectParam : '/';
 
@@ -67,6 +68,15 @@ export default function LoginClient() {
             Sign in to track handcrafted orders, view invoices, and access VIP festive discounts.
           </p>
         </div>
+
+        {(action === 'cart' || action === 'buy' || redirectParam === '/checkout') && !user && (
+          <div className="p-3.5 rounded-2xl bg-gold-500/10 border border-gold-500/30 text-xs text-maroon-800 dark:text-gold-300 flex items-center gap-2.5 shadow-xs">
+            <ShoppingBag className="w-4 h-4 text-gold-600 dark:text-gold-400 shrink-0" />
+            <p className="text-[12px] leading-snug">
+              <strong>Sign in required:</strong> Please sign in to add handcrafted items to your cart and complete your order.
+            </p>
+          </div>
+        )}
 
         {user && (
           <div className="p-3.5 rounded-2xl bg-gold-500/10 border border-gold-500/30 text-xs text-maroon-800 dark:text-gold-300 flex items-center justify-between gap-2 shadow-xs">
