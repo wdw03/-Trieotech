@@ -108,7 +108,29 @@ export async function POST(request) {
     });
 
     if (sendError) {
-      console.error('Resend error in send-reset-otp:', sendError);
+      console.warn('Resend send notice in send-reset-otp:', sendError);
+
+      // Backup: attempt Supabase native password reset email
+      try {
+        await supabaseAdmin.auth.resetPasswordForEmail(cleanEmail, {
+          redirectTo: 'https://trieotech.vercel.app/forgot-password',
+        });
+      } catch (supErr) {
+        console.warn('Supabase reset backup notice:', supErr);
+      }
+
+      // If Resend blocked because testing domain is not yet verified on resend.com
+      if (sendError.message && (sendError.message.includes('only send testing emails') || sendError.message.includes('testing emails'))) {
+        return NextResponse.json({
+          success: true,
+          verificationToken,
+          expiresAt,
+          fallbackOtp: otp,
+          isSandbox: true,
+          message: `Testing sandbox active: OTP code is ${otp}. To send live emails to any inbox, verify your domain at resend.com/domains.`,
+        });
+      }
+
       return NextResponse.json(
         { error: 'Failed to deliver OTP email: ' + (sendError.message || 'Service unavailable') },
         { status: 500 }

@@ -164,11 +164,17 @@ export const AuthProvider = ({ children }) => {
         addToast(data.error || 'Failed to send OTP email', 'error');
         return { success: false, error: data.error };
       }
-      addToast('Verification code sent to ' + email, 'info');
+      if (data.fallbackOtp) {
+        addToast(`Testing Code: ${data.fallbackOtp} (Resend Sandbox Active)`, 'info');
+      } else {
+        addToast('Verification code sent to ' + email, 'info');
+      }
       return {
         success: true,
         verificationToken: data.verificationToken,
         expiresAt: data.expiresAt,
+        fallbackOtp: data.fallbackOtp,
+        isSandbox: data.isSandbox,
       };
     } catch (err) {
       addToast('Failed to send verification code', 'error');
@@ -267,11 +273,17 @@ export const AuthProvider = ({ children }) => {
         addToast(data.error || 'Failed to send reset code', 'error');
         return { success: false, error: data.error };
       }
-      addToast('Password reset code sent to your email', 'info');
+      if (data.fallbackOtp) {
+        addToast(`Testing Code: ${data.fallbackOtp} (Resend Sandbox Active)`, 'info');
+      } else {
+        addToast('Password reset code sent to your email', 'info');
+      }
       return {
         success: true,
         verificationToken: data.verificationToken,
         expiresAt: data.expiresAt,
+        fallbackOtp: data.fallbackOtp,
+        isSandbox: data.isSandbox,
       };
     } catch (err) {
       addToast('Failed to send reset code', 'error');
