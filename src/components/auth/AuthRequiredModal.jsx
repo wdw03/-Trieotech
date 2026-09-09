@@ -56,7 +56,9 @@ export default function AuthRequiredModal() {
 
     try {
       const res = await login(loginEmail, loginPassword);
-      if (!res.success) {
+      if (res.success) {
+        closeAuthModal();
+      } else {
         setError(res.error || 'Invalid email or password. Please try again.');
       }
     } catch (err) {

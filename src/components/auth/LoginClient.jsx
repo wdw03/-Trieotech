@@ -16,7 +16,16 @@ export default function LoginClient() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
 
-  const redirectTo = searchParams.get('redirect') || '/profile';
+  const redirectParam = searchParams.get('redirect') || searchParams.get('next');
+  // Redirect directly to main home page '/' on login completion
+  const redirectTo = (redirectParam && redirectParam !== '/profile') ? redirectParam : '/';
+
+  // If already logged in, redirect to main page
+  useEffect(() => {
+    if (user) {
+      router.push(redirectTo);
+    }
+  }, [user, router, redirectTo]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -26,7 +35,12 @@ export default function LoginClient() {
     try {
       const result = await login(email, password);
       if (result.success) {
-        router.push(redirectTo);
+        // Direct redirect to main page
+        if (typeof window !== 'undefined') {
+          window.location.href = redirectTo;
+        } else {
+          router.push(redirectTo);
+        }
       } else {
         setError(result.error || 'Invalid email or password');
       }
@@ -57,8 +71,8 @@ export default function LoginClient() {
               <span className="font-bold block">Currently signed in as:</span>
               <span className="text-[11px] opacity-90 truncate block">{user.email}</span>
             </div>
-            <Link href="/profile" className="btn-gold py-1.5 px-3 rounded-xl text-[11px] font-bold shrink-0 shadow-xs">
-              Go to Account
+            <Link href="/" className="btn-gold py-1.5 px-3 rounded-xl text-[11px] font-bold shrink-0 shadow-xs">
+              Go to Home Page
             </Link>
           </div>
         )}

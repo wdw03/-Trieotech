@@ -22,7 +22,9 @@ import {
 export default function RegisterClient() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const redirectTo = searchParams.get('redirect') || searchParams.get('next') || '/profile';
+  const redirectParam = searchParams.get('redirect') || searchParams.get('next');
+  // Redirect directly to main home page '/' on registration completion
+  const redirectTo = (redirectParam && redirectParam !== '/profile') ? redirectParam : '/';
   const action = searchParams.get('action');
 
   const { sendSignupOtp, verifySignupOtp, resendSignupOtp, user } = useAuth();
@@ -135,8 +137,12 @@ export default function RegisterClient() {
       });
 
       if (result.success) {
-        // Auto-logged in! Redirect directly
-        router.push(redirectTo);
+        // Auto-logged in! Redirect directly to main page
+        if (typeof window !== 'undefined') {
+          window.location.href = redirectTo;
+        } else {
+          router.push(redirectTo);
+        }
       } else {
         setError(result.error || 'Invalid or expired OTP code. Please check and retry.');
       }
@@ -316,8 +322,8 @@ export default function RegisterClient() {
               <span className="font-bold block">Currently signed in as:</span>
               <span className="text-[11px] opacity-90 truncate block">{user.email}</span>
             </div>
-            <Link href="/profile" className="btn-gold py-1.5 px-3 rounded-xl text-[11px] font-bold shrink-0 shadow-xs">
-              Go to Account
+            <Link href="/" className="btn-gold py-1.5 px-3 rounded-xl text-[11px] font-bold shrink-0 shadow-xs">
+              Go to Home Page
             </Link>
           </div>
         )}

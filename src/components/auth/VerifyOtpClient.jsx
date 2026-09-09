@@ -26,8 +26,9 @@ export default function VerifyOtpClient() {
   const urlEmail = searchParams.get('email') || '';
   const urlOtp = searchParams.get('otp') || '';
   const urlToken = searchParams.get('token') || '';
-  const urlExpires = searchParams.get('expires') || '';
-  const redirectTo = searchParams.get('redirect') || searchParams.get('next') || '/profile';
+  const redirectParam = searchParams.get('redirect') || searchParams.get('next');
+  // Redirect directly to main home page '/' on verification completion
+  const redirectTo = (redirectParam && redirectParam !== '/profile') ? redirectParam : '/';
 
   const { verifySignupOtp, sendSignupOtp } = useAuth();
   const { addToast } = useToast();
@@ -122,8 +123,12 @@ export default function VerifyOtpClient() {
         } catch (_) {}
 
         setTimeout(() => {
-          router.push(redirectTo);
-        }, 600);
+          if (typeof window !== 'undefined') {
+            window.location.href = redirectTo;
+          } else {
+            router.push(redirectTo);
+          }
+        }, 500);
       } else {
         setError(result.error || 'Invalid or expired OTP code. Please check and retry.');
       }
