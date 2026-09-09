@@ -125,14 +125,22 @@ export const AuthProvider = ({ children }) => {
   // ── Login ──
   const login = async (email, password) => {
     try {
+      const cleanEmail = (email || '').trim().toLowerCase();
+      const cleanPassword = (password || '').trim();
       const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
+        email: cleanEmail,
+        password: cleanPassword,
       });
 
       if (error) {
         addToast(error.message || 'Login failed', 'error');
         return { success: false, error: error.message };
+      }
+
+      if (data?.user) {
+        setUser(data.user);
+        await fetchProfile(data.user.id);
+        await fetchOrders(data.user.id);
       }
 
       addToast('Welcome back to Trio Ecart!', 'success');
@@ -192,11 +200,13 @@ export const AuthProvider = ({ children }) => {
 
       // Automatically sign in with the newly verified credentials
       if (password) {
-        for (let attempt = 0; attempt < 2; attempt++) {
+        const cleanEmail = (email || '').trim().toLowerCase();
+        const cleanPassword = (password || '').trim();
+        for (let attempt = 0; attempt < 3; attempt++) {
           try {
             const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
-              email,
-              password,
+              email: cleanEmail,
+              password: cleanPassword,
             });
             if (!signInError && signInData?.user) {
               setUser(signInData.user);
@@ -209,7 +219,7 @@ export const AuthProvider = ({ children }) => {
           } catch (e) {
             console.warn(`Auto sign-in attempt ${attempt + 1} err:`, e);
           }
-          if (attempt === 0) {
+          if (attempt < 2) {
             await new Promise((r) => setTimeout(r, 600));
           }
         }

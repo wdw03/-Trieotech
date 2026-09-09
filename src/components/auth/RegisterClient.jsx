@@ -27,13 +27,13 @@ export default function RegisterClient() {
   const redirectParam = searchParams.get('redirect') || searchParams.get('next');
   // Redirect directly to main home page '/' on registration completion
   const redirectTo = (redirectParam && redirectParam !== '/profile') ? redirectParam : '/';
-  const action = searchParams.get('action');
+  const urlEmail = searchParams.get('email') || '';
 
   const { sendSignupOtp, verifySignupOtp, resendSignupOtp, user } = useAuth();
 
   const [formData, setFormData] = useState({
     name: '',
-    email: '',
+    email: urlEmail,
     phone: '+91 ',
     password: ''
   });

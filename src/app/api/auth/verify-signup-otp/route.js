@@ -44,22 +44,27 @@ export async function POST(request) {
 
     // 3. OTP is valid! Create or update user in Supabase
     let userId = null;
+    const cleanPassword = password ? String(password).trim() : '';
 
     try {
-      const { data: userList } = await supabaseAdmin.auth.admin.listUsers();
-      const existing = userList?.users?.find((u) => u.email?.toLowerCase() === cleanEmail);
+      const { data: userList } = await supabaseAdmin.auth.admin.listUsers({ page: 1, perPage: 1000 });
+      let existing = userList?.users?.find((u) => u.email?.toLowerCase() === cleanEmail);
 
       if (existing) {
         // User already in auth.users - update their password and confirm email
+        const updatePayload = {
+          email_confirm: true,
+          user_metadata: {
+            full_name: name || existing.user_metadata?.full_name || '',
+            phone: phone || existing.user_metadata?.phone || '',
+          },
+        };
+        if (cleanPassword && cleanPassword.length >= 6) {
+          updatePayload.password = cleanPassword;
+        }
+
         const { data: updated, error: updateErr } =
-          await supabaseAdmin.auth.admin.updateUserById(existing.id, {
-            password: password || undefined,
-            email_confirm: true,
-            user_metadata: {
-              full_name: name || existing.user_metadata?.full_name || '',
-              phone: phone || existing.user_metadata?.phone || '',
-            },
-          });
+          await supabaseAdmin.auth.admin.updateUserById(existing.id, updatePayload);
 
         if (updateErr) {
           console.error('Update user error:', updateErr);
@@ -71,7 +76,7 @@ export async function POST(request) {
         const { data: created, error: createErr } =
           await supabaseAdmin.auth.admin.createUser({
             email: cleanEmail,
-            password: password,
+            password: cleanPassword || undefined,
             email_confirm: true,
             user_metadata: {
               full_name: name || '',
@@ -80,10 +85,23 @@ export async function POST(request) {
           });
 
         if (createErr) {
-          console.error('Create user error:', createErr);
-          return NextResponse.json({ error: createErr.message }, { status: 500 });
+          if (createErr.code === 'email_exists' || createErr.message?.toLowerCase().includes('already')) {
+            const { data: retryList } = await supabaseAdmin.auth.admin.listUsers({ page: 1, perPage: 1000 });
+            const retryUser = retryList?.users?.find((u) => u.email?.toLowerCase() === cleanEmail);
+            if (retryUser) {
+              const retryPayload = { email_confirm: true };
+              if (cleanPassword && cleanPassword.length >= 6) retryPayload.password = cleanPassword;
+              await supabaseAdmin.auth.admin.updateUserById(retryUser.id, retryPayload);
+              userId = retryUser.id;
+            }
+          }
+          if (!userId) {
+            console.error('Create user error:', createErr);
+            return NextResponse.json({ error: createErr.message }, { status: 500 });
+          }
+        } else {
+          userId = created?.user?.id;
         }
-        userId = created?.user?.id;
       }
 
       // Upsert profile

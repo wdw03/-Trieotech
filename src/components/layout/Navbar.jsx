@@ -322,15 +322,24 @@ export const Navbar = () => {
                 onClick={() => {
                   setIsUserDropdownOpen((prev) => !prev);
                 }}
-                className="flex items-center gap-1.5 p-1.5 rounded-xl border border-stone-200 dark:border-stone-800 hover:border-gold-500 text-stone-700 dark:text-stone-300 transition-colors cursor-pointer"
+                className={`flex items-center gap-1.5 p-1.5 sm:px-2.5 rounded-xl border transition-colors cursor-pointer ${
+                  isAuthenticated
+                    ? 'border-gold-500/40 bg-gold-500/10 text-maroon-800 dark:text-gold-300'
+                    : 'border-stone-200 dark:border-stone-800 hover:border-gold-500 text-stone-700 dark:text-stone-300'
+                }`}
                 aria-label="User menu"
               >
                 {user?.avatar ? (
-                  <img src={user.avatar} alt={user.name} className="w-6 h-6 sm:w-7 sm:h-7 rounded-lg object-cover" />
+                  <img src={user.avatar} alt={user.name} className="w-6 h-6 sm:w-7 sm:h-7 rounded-lg object-cover ring-1 ring-gold-500/50" />
                 ) : (
-                  <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-lg bg-maroon-700 text-white flex items-center justify-center text-xs font-bold">
+                  <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-lg bg-maroon-700 text-white flex items-center justify-center text-xs font-bold shadow-xs">
                     <User className="w-4 h-4" />
                   </div>
+                )}
+                {isAuthenticated && user?.name && (
+                  <span className="hidden sm:inline text-[11px] font-bold truncate max-w-[80px]">
+                    {user.name.split(' ')[0]}
+                  </span>
                 )}
                 <ChevronDown className="w-3.5 h-3.5 text-stone-400" />
               </button>
@@ -598,10 +607,16 @@ export const Navbar = () => {
               {isAuthenticated ? (
                 <div className="space-y-3">
                   <div className="flex items-center gap-3">
-                    <img src={user.avatar} alt="avatar" className="w-10 h-10 rounded-full object-cover border border-gold-500" />
+                    {user?.avatar ? (
+                      <img src={user.avatar} alt="avatar" className="w-10 h-10 rounded-full object-cover border border-gold-500" />
+                    ) : (
+                      <div className="w-10 h-10 rounded-full bg-maroon-700 text-white flex items-center justify-center font-bold text-sm border border-gold-500 shadow-xs">
+                        <User className="w-5 h-5" />
+                      </div>
+                    )}
                     <div className="min-w-0">
-                      <p className="font-bold text-xs text-stone-900 dark:text-ivory-100 truncate">{user.name}</p>
-                      <p className="text-[10px] text-stone-400 truncate">{user.email}</p>
+                      <p className="font-bold text-xs text-stone-900 dark:text-ivory-100 truncate">{user?.name || 'Artisan Patron'}</p>
+                      <p className="text-[10px] text-stone-400 truncate">{user?.email}</p>
                     </div>
                   </div>
                   <div className="grid grid-cols-2 gap-2">

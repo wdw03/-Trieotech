@@ -34,7 +34,9 @@ export default function LoginClient() {
     setIsLoading(true);
 
     try {
-      const result = await login(email, password);
+      const cleanEmail = email ? email.trim().toLowerCase() : '';
+      const cleanPassword = password ? password.trim() : '';
+      const result = await login(cleanEmail, cleanPassword);
       if (result.success) {
         // Direct redirect to main page
         if (typeof window !== 'undefined') {
@@ -79,8 +81,17 @@ export default function LoginClient() {
         )}
 
         {error && (
-          <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 text-xs rounded-xl px-4 py-3">
-            {error}
+          <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 text-xs rounded-xl px-4 py-3 space-y-1.5">
+            <p className="font-semibold">{error}</p>
+            <p className="text-[11px] opacity-90">
+              Forgot password or need to reset?{' '}
+              <Link
+                href={`/register${email ? `?email=${encodeURIComponent(email.trim().toLowerCase())}` : ''}`}
+                className="font-bold underline text-maroon-800 dark:text-gold-300 hover:opacity-80"
+              >
+                Sign In / Reset with Email OTP &rarr;
+              </Link>
+            </p>
           </div>
         )}
 

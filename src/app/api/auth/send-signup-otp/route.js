@@ -20,24 +20,6 @@ export async function POST(request) {
 
     const cleanEmail = email.trim().toLowerCase();
 
-    // Check if an existing confirmed user already has this email
-    try {
-      const { data: userList, error: listErr } = await supabaseAdmin.auth.admin.listUsers();
-      if (!listErr && userList?.users) {
-        const existing = userList.users.find(
-          (u) => u.email?.toLowerCase() === cleanEmail && u.email_confirmed_at
-        );
-        if (existing) {
-          return NextResponse.json(
-            { error: 'An account with this email already exists. Please sign in instead.' },
-            { status: 400 }
-          );
-        }
-      }
-    } catch (checkErr) {
-      console.warn('User check warning:', checkErr);
-    }
-
     // Generate secure 6-digit OTP
     const otp = String(Math.floor(100000 + Math.random() * 900000));
     const expiresAt = Date.now() + 10 * 60 * 1000; // 10 minutes

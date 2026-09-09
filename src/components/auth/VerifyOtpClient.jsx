@@ -132,7 +132,7 @@ export default function VerifyOtpClient() {
           } else {
             router.push(redirectTo);
           }
-        }, 500);
+        }, 1000);
       } else {
         setError(result.error || 'Invalid or expired OTP code. Please check and retry.');
       }
