@@ -28,6 +28,7 @@ export default function RegisterClient() {
   // Redirect directly to main home page '/' on registration completion
   const redirectTo = (redirectParam && redirectParam !== '/profile') ? redirectParam : '/';
   const urlEmail = searchParams.get('email') || '';
+  const action = searchParams.get('action') || '';
 
   const { sendSignupOtp, verifySignupOtp, resendSignupOtp, user } = useAuth();
 
@@ -61,6 +62,13 @@ export default function RegisterClient() {
       if (interval) clearInterval(interval);
     };
   }, [showVerification, resendTimer]);
+
+  // Sync email from query param if provided
+  useEffect(() => {
+    if (urlEmail) {
+      setFormData((prev) => ({ ...prev, email: urlEmail }));
+    }
+  }, [urlEmail]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
