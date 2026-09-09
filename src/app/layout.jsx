@@ -1,4 +1,5 @@
 import './globals.css';
+import Script from 'next/script';
 import { Providers } from './providers';
 import Navbar from '../components/layout/Navbar';
 import Footer from '../components/layout/Footer';
@@ -78,6 +79,7 @@ export default function RootLayout({ children }) {
             <AuthRequiredModal />
           </div>
         </Providers>
+        <Script src="https://checkout.razorpay.com/v1/checkout.js" strategy="lazyOnload" />
       </body>
     </html>
   );

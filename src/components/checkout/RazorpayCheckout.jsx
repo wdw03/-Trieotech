@@ -2,8 +2,40 @@
 import React, { useEffect, useCallback } from 'react';
 
 /**
+ * Loads Razorpay Checkout SDK script with Promise
+ */
+function loadRazorpayScript() {
+  return new Promise((resolve) => {
+    if (typeof window === 'undefined') return resolve(false);
+    if (window.Razorpay) return resolve(true);
+
+    const existingScript = document.querySelector('script[src="https://checkout.razorpay.com/v1/checkout.js"]');
+    if (existingScript) {
+      if (window.Razorpay) return resolve(true);
+      existingScript.addEventListener('load', () => resolve(true), { once: true });
+      existingScript.addEventListener('error', () => resolve(false), { once: true });
+      // Fallback timeout in case event listener missed
+      setTimeout(() => {
+        resolve(!!window.Razorpay);
+      }, 1500);
+      return;
+    }
+
+    const script = document.createElement('script');
+    script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+    script.async = true;
+    script.onload = () => resolve(true);
+    script.onerror = () => {
+      console.error('Failed to load Razorpay script');
+      resolve(false);
+    };
+    document.body.appendChild(script);
+  });
+}
+
+/**
  * Razorpay Checkout Component
- * Loads the Razorpay script and opens payment modal
+ * Loads the Razorpay script reliably and opens payment modal
  */
 export default function RazorpayCheckout({
   razorpayOrderId,
@@ -11,6 +43,7 @@ export default function RazorpayCheckout({
   currency = 'INR',
   orderId,
   orderNumber,
+  keyId,
   userEmail,
   userName,
   userPhone,
@@ -18,49 +51,38 @@ export default function RazorpayCheckout({
   onFailure,
   onDismiss,
 }) {
-  // Load Razorpay script
-  useEffect(() => {
-    const script = document.createElement('script');
-    script.src = 'https://checkout.razorpay.com/v1/checkout.js';
-    script.async = true;
-    document.body.appendChild(script);
-
-    return () => {
-      // Cleanup
-      const existingScript = document.querySelector('script[src="https://checkout.razorpay.com/v1/checkout.js"]');
-      if (existingScript) {
-        document.body.removeChild(existingScript);
-      }
-    };
-  }, []);
-
   const openPayment = useCallback(() => {
     if (!window.Razorpay) {
       console.error('Razorpay SDK not loaded');
-      onFailure?.({ error: 'Payment SDK not loaded. Please refresh.' });
+      onFailure?.({ error: 'Payment gateway could not be loaded. Please refresh the page.' });
       return;
     }
 
+    // Clean phone number for Razorpay prefill
+    const cleanPhone = (userPhone || '').replace(/\D/g, '').slice(-10);
+
+    const activeKey = keyId || process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || 'rzp_live_TZUoFoXCMkJNkx';
+
     const options = {
-      key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || 'rzp_live_TZUoFoXCMkJNkx',
-      amount: Math.round(amount * 100), // paise
-      currency,
+      key: activeKey,
+      amount: Math.round(Number(amount) * 100), // paise
+      currency: currency || 'INR',
       name: 'Trio Enterprises',
-      description: `Order ${orderNumber}`,
+      description: `Order #${orderNumber}`,
       order_id: razorpayOrderId,
       image: '/logo.png',
       prefill: {
         name: userName || '',
         email: userEmail || '',
-        contact: userPhone || '',
+        contact: cleanPhone || '',
       },
       notes: {
         order_number: orderNumber,
         order_id: orderId,
       },
       theme: {
-        color: '#7f1d1d',
-        backdrop_color: 'rgba(0,0,0,0.6)',
+        color: '#4a0404',
+        backdrop_color: 'rgba(0,0,0,0.7)',
       },
       modal: {
         ondismiss: () => {
@@ -68,10 +90,9 @@ export default function RazorpayCheckout({
         },
       },
       handler: async (response) => {
-        // Payment successful — verify on server
+        // Payment successful — verify on same-origin server
         try {
-          const apiBase = process.env.NEXT_PUBLIC_API_URL || '/api';
-          const verifyRes = await fetch(`${apiBase}/payments/verify`, {
+          const verifyRes = await fetch('/api/payments/verify', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -87,37 +108,71 @@ export default function RazorpayCheckout({
           if (verifyRes.ok && result.success) {
             onSuccess?.(result);
           } else {
-            onFailure?.({ error: result.error || 'Payment verification failed' });
+            onFailure?.({ error: result.error || 'Payment signature verification failed' });
           }
         } catch (err) {
-          onFailure?.({ error: 'Payment verification error' });
+          console.error('Verification network error:', err);
+          onFailure?.({ error: 'Payment verification failed due to network error.' });
         }
       },
     };
 
-    const rzp = new window.Razorpay(options);
+    try {
+      const rzp = new window.Razorpay(options);
 
-    rzp.on('payment.failed', (response) => {
-      onFailure?.({
-        error: response.error?.description || 'Payment failed',
-        code: response.error?.code,
-        reason: response.error?.reason,
+      rzp.on('payment.failed', (response) => {
+        console.error('Razorpay payment failed callback:', response);
+        onFailure?.({
+          error: response.error?.description || response.error?.reason || 'Payment failed',
+          code: response.error?.code,
+          reason: response.error?.reason,
+        });
       });
-    });
 
-    rzp.open();
-  }, [razorpayOrderId, amount, currency, orderId, orderNumber, userEmail, userName, userPhone, onSuccess, onFailure, onDismiss]);
-
-  // Auto-open on mount
-  useEffect(() => {
-    if (razorpayOrderId) {
-      // Small delay to ensure Razorpay script is loaded
-      const timer = setTimeout(() => {
-        openPayment();
-      }, 500);
-      return () => clearTimeout(timer);
+      rzp.open();
+    } catch (err) {
+      console.error('Error opening Razorpay modal:', err);
+      onFailure?.({ error: 'Could not open payment window: ' + (err.message || 'Unknown error') });
     }
-  }, [razorpayOrderId, openPayment]);
+  }, [
+    razorpayOrderId,
+    amount,
+    currency,
+    orderId,
+    orderNumber,
+    keyId,
+    userEmail,
+    userName,
+    userPhone,
+    onSuccess,
+    onFailure,
+    onDismiss,
+  ]);
 
-  return null; // This component renders nothing — it only manages the Razorpay modal
+  // Load script and trigger modal
+  useEffect(() => {
+    let isMounted = true;
+
+    if (razorpayOrderId) {
+      loadRazorpayScript().then((loaded) => {
+        if (!isMounted) return;
+        if (!loaded) {
+          onFailure?.({ error: 'Failed to load Razorpay SDK. Please check your internet connection.' });
+          return;
+        }
+        // Small tick to ensure window.Razorpay is ready
+        setTimeout(() => {
+          if (isMounted) {
+            openPayment();
+          }
+        }, 100);
+      });
+    }
+
+    return () => {
+      isMounted = false;
+    };
+  }, [razorpayOrderId, openPayment, onFailure]);
+
+  return null;
 }

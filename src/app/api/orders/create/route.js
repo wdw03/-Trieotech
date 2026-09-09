@@ -2,7 +2,7 @@ export const dynamic = 'force-dynamic';
 import { NextResponse } from 'next/server';
 import { createClient } from '../../../../lib/supabase/server';
 import { supabaseAdmin } from '../../../../lib/supabase/admin';
-import { createRazorpayOrder } from '../../../../lib/razorpay';
+import { createRazorpayOrder, RAZORPAY_KEY_ID } from '../../../../lib/razorpay';
 import { sendOrderConfirmation } from '../../../../lib/resend';
 import { isCodAvailableForPincode } from '../../../../lib/codPincodes';
 
@@ -72,8 +72,11 @@ export async function POST(request) {
 
       subtotal += itemPrice * itemQty;
 
+      const rawProdId = product?.id || productId;
+      const cleanProdId = Number.isInteger(Number(rawProdId)) ? Number(rawProdId) : null;
+
       validatedItems.push({
-        product_id: product?.id || productId || 1,
+        product_id: cleanProdId,
         name: product?.name || item.name || 'Handcrafted Craft Item',
         image: product?.images?.[0] || item.image || '',
         price: itemPrice,
@@ -352,12 +355,17 @@ export async function POST(request) {
       razorpayOrderId: razorpayOrder.id,
       amount: total,
       currency: 'INR',
-      keyId: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
+      keyId: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || RAZORPAY_KEY_ID || 'rzp_live_TZUoFoXCMkJNkx',
     });
   } catch (err) {
+    const errorMsg =
+      err?.error?.description ||
+      err?.description ||
+      err?.message ||
+      'Internal server error';
     console.error('Order creation error:', err);
     return NextResponse.json(
-      { error: err.message || 'Internal server error' },
+      { error: errorMsg },
       { status: 500 }
     );
   }

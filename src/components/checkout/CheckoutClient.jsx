@@ -168,8 +168,7 @@ export default function CheckoutClient() {
     try {
       const isCod = paymentMethod === 'cod';
 
-      const apiBase = process.env.NEXT_PUBLIC_API_URL || '/api';
-        const response = await fetch(`${apiBase}/orders/create`, {
+      const response = await fetch('/api/orders/create', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -241,6 +240,7 @@ export default function CheckoutClient() {
         currency: data.currency || 'INR',
         orderId: data.orderId,
         orderNumber: data.orderNumber,
+        keyId: data.keyId,
         userEmail: user?.email || activeShippingAddress?.email || '',
         userName: user?.name || activeShippingAddress?.name || '',
         userPhone: user?.phone || activeShippingAddress?.phone || '',

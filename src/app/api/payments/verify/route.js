@@ -193,9 +193,14 @@ export async function POST(request) {
       orderNumber: order.order_number,
     });
   } catch (err) {
+    const errorMsg =
+      err?.error?.description ||
+      err?.description ||
+      err?.message ||
+      'Internal server error';
     console.error('Payment verification error:', err);
     return NextResponse.json(
-      { error: err.message || 'Internal server error' },
+      { error: errorMsg },
       { status: 500 }
     );
   }
