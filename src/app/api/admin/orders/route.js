@@ -45,10 +45,44 @@ export async function GET(request) {
 
     if (error) throw error;
 
+    // Fetch auth users to resolve real user emails, phones, and names
+    const userEmailsMap = {};
+    const userPhonesMap = {};
+    const userNamesMap = {};
+
+    try {
+      const { data: userList } = await supabaseAdmin.auth.admin.listUsers();
+      if (userList?.users) {
+        userList.users.forEach((u) => {
+          if (u.id) {
+            userEmailsMap[u.id] = u.email || u.user_metadata?.email || '';
+            userPhonesMap[u.id] = u.phone || u.user_metadata?.phone || '';
+            userNamesMap[u.id] = u.user_metadata?.full_name || u.user_metadata?.name || '';
+          }
+        });
+      }
+    } catch (err) {
+      console.warn('Failed to list auth users in admin orders route:', err.message);
+    }
+
+    try {
+      const { data: profiles } = await supabaseAdmin.from('profiles').select('id, full_name, email, phone');
+      if (profiles) {
+        profiles.forEach((p) => {
+          if (p.id) {
+            if (p.email && !userEmailsMap[p.id]) userEmailsMap[p.id] = p.email;
+            if (p.phone && !userPhonesMap[p.id]) userPhonesMap[p.id] = p.phone;
+            if (p.full_name && !userNamesMap[p.id]) userNamesMap[p.id] = p.full_name;
+          }
+        });
+      }
+    } catch (_) {}
+
     const normalizedOrders = (orders || []).map((ord) => {
       const addr = ord.shipping_address || {};
       const shipment = ord.shipments?.[0] || {};
       const payment = ord.payments?.[0] || {};
+      const uId = ord.user_id;
 
       const items = (ord.order_items || []).map((item) => ({
         id: item.id,
@@ -71,7 +105,10 @@ export async function GET(request) {
 
       const customerName = addr.firstName
         ? `${addr.firstName} ${addr.lastName || ''}`.trim()
-        : (addr.name || 'Customer');
+        : (addr.name || (uId && userNamesMap[uId]) || 'Customer');
+
+      const realEmail = addr.email || ord.customer_email || (uId && userEmailsMap[uId]) || '';
+      const realPhone = addr.phone || ord.customer_phone || (uId && userPhonesMap[uId]) || '';
 
       return {
         // Dashboard expected keys
@@ -82,13 +119,13 @@ export async function GET(request) {
         customer: {
           id: ord.user_id || 'GUEST',
           name: customerName,
-          email: addr.email || ord.customer_email || 'customer@example.com',
-          phone: addr.phone || ord.customer_phone || '+91 9876543210',
+          email: realEmail || (uId && userEmailsMap[uId]) || 'No email provided',
+          phone: realPhone || '+91 9876543210',
           address: {
-            street: addr.address || addr.street || 'Address on file',
-            city: addr.city || 'Mumbai',
-            state: addr.state || 'Maharashtra',
-            pincode: addr.pinCode || addr.pincode || '400001',
+            street: addr.address_line || addr.address || addr.street || 'Address on file',
+            city: addr.city || 'Faridabad',
+            state: addr.state || 'Haryana',
+            pincode: addr.pincode || addr.pinCode || addr.zip || '121004',
           },
         },
         status: displayStatus,

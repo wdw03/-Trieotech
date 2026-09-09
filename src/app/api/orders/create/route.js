@@ -151,6 +151,7 @@ export async function POST(request) {
     if (body.shippingAddress) {
       shippingAddress = {
         name: body.shippingAddress.name || '',
+        email: user?.email || body.shippingAddress.email || '',
         phone: body.shippingAddress.phone || '',
         address_line: body.shippingAddress.address || body.shippingAddress.address_line || '',
         city: body.shippingAddress.city || '',
@@ -169,7 +170,8 @@ export async function POST(request) {
       if (addr) {
         shippingAddress = {
           name: addr.name,
-          phone: addr.phone,
+          email: user?.email || addr.email || '',
+          phone: addr.phone || '',
           address_line: addr.address_line,
           city: addr.city,
           state: addr.state,
