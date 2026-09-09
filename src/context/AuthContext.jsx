@@ -253,24 +253,90 @@ export const AuthProvider = ({ children }) => {
     addToast('Logged out successfully', 'info');
   };
 
-  // ── Forgot Password ──
-  const resetPassword = async (email) => {
+  // ── Send Password Reset OTP ──
+  const sendResetOtp = async (email) => {
     try {
-      const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/login?reset=true`,
+      const cleanEmail = (email || '').trim().toLowerCase();
+      const res = await fetch('/api/auth/send-reset-otp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: cleanEmail }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        addToast(data.error || 'Failed to send reset code', 'error');
+        return { success: false, error: data.error };
+      }
+      addToast('Password reset code sent to your email', 'info');
+      return {
+        success: true,
+        verificationToken: data.verificationToken,
+        expiresAt: data.expiresAt,
+      };
+    } catch (err) {
+      addToast('Failed to send reset code', 'error');
+      return { success: false, error: err.message };
+    }
+  };
+
+  // ── Verify Reset OTP & Auto-Login with New Password ──
+  const verifyResetOtp = async ({ email, otp, verificationToken, expiresAt, newPassword }) => {
+    try {
+      const cleanEmail = (email || '').trim().toLowerCase();
+      const cleanPassword = (newPassword || '').trim();
+
+      const res = await fetch('/api/auth/verify-reset-otp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: cleanEmail,
+          otp: (otp || '').trim(),
+          verificationToken,
+          expiresAt,
+          newPassword: cleanPassword,
+        }),
       });
 
-      if (error) {
-        addToast(error.message, 'error');
-        return { success: false };
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        addToast(data.error || 'Invalid or expired OTP', 'error');
+        return { success: false, error: data.error };
       }
 
-      addToast('Password reset email sent! Check your inbox.', 'success');
+      // Automatically sign in with the newly set password
+      if (cleanPassword) {
+        for (let attempt = 0; attempt < 3; attempt++) {
+          try {
+            const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+              email: cleanEmail,
+              password: cleanPassword,
+            });
+            if (!signInError && signInData?.user) {
+              setUser(signInData.user);
+              await fetchProfile(signInData.user.id);
+              await fetchOrders(signInData.user.id);
+              break;
+            }
+          } catch (e) {
+            console.warn('Reset auto sign-in notice:', e);
+          }
+          if (attempt < 2) {
+            await new Promise((r) => setTimeout(r, 600));
+          }
+        }
+      }
+
+      addToast('Password reset successfully! Welcome back.', 'success');
       return { success: true };
     } catch (err) {
-      addToast('Something went wrong', 'error');
-      return { success: false };
+      addToast(err.message || 'Verification failed', 'error');
+      return { success: false, error: err.message };
     }
+  };
+
+  // ── Legacy Forgot Password ──
+  const resetPassword = async (email) => {
+    return await sendResetOtp(email);
   };
 
   // ── Add Address ──
@@ -412,6 +478,8 @@ export const AuthProvider = ({ children }) => {
         resendSignupOtp,
         logout,
         resetPassword,
+        sendResetOtp,
+        verifyResetOtp,
         addAddress,
         deleteAddress,
         updateProfile,

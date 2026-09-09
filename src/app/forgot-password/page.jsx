@@ -1,3 +1,4 @@
+import { Suspense } from 'react';
 import ForgotPasswordClient from '../../components/auth/ForgotPasswordClient';
 
 export const metadata = {
@@ -10,5 +11,9 @@ export const metadata = {
 };
 
 export default function ForgotPasswordPage() {
-  return <ForgotPasswordClient />;
+  return (
+    <Suspense fallback={<div className="min-h-[80vh] flex items-center justify-center text-stone-500">Loading reset...</div>}>
+      <ForgotPasswordClient />
+    </Suspense>
+  );
 }
