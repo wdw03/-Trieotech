@@ -483,14 +483,26 @@ export default function CheckoutClient() {
                       />
                     </div>
                     <div className="space-y-1">
-                      <label className="text-[11px] font-bold text-stone-600 dark:text-stone-400">PIN Code *</label>
+                      <div className="flex items-center justify-between">
+                        <label className="text-[11px] font-bold text-stone-600 dark:text-stone-400">PIN Code *</label>
+                        {isCheckingCod && (
+                          <span className="text-[10px] text-maroon-700 dark:text-gold-400 font-medium flex items-center gap-1 animate-pulse">
+                            <Loader2 className="w-2.5 h-2.5 animate-spin" /> Checking PIN...
+                          </span>
+                        )}
+                        {!isCheckingCod && newAddressForm.zip && String(newAddressForm.zip).replace(/\D/g, '').length === 6 && (
+                          <span className={`text-[10px] font-bold ${isCodAvailable ? 'text-emerald-600 dark:text-emerald-400' : 'text-amber-600 dark:text-amber-400'}`}>
+                            {isCodAvailable ? '✓ COD Available' : '✓ Prepaid Delivery'}
+                          </span>
+                        )}
+                      </div>
                       <input
                         type="text"
                         maxLength={6}
                         required
                         placeholder="302001"
                         value={newAddressForm.zip}
-                        onChange={(e) => setNewAddressForm({ ...newAddressForm, zip: e.target.value })}
+                        onChange={(e) => setNewAddressForm({ ...newAddressForm, zip: e.target.value.replace(/\D/g, '').slice(0, 6) })}
                         className="w-full px-3.5 py-2.5 rounded-xl bg-ivory-100 dark:bg-stone-900 border border-gold-500/30 text-xs outline-none"
                       />
                     </div>

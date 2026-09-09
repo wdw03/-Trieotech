@@ -30,7 +30,8 @@ import {
   ChevronRight,
   Send,
   MessageCircle,
-  Copy
+  Copy,
+  Loader2
 } from 'lucide-react';
 
 export default function ProductClient({ initialSlug }) {
@@ -76,6 +77,8 @@ export default function ProductClient({ initialSlug }) {
   // Pincode checker state
   const [pincode, setPincode] = useState('');
   const [deliveryEstimate, setDeliveryEstimate] = useState(null);
+  const [isCheckingPincode, setIsCheckingPincode] = useState(false);
+  const [pincodeError, setPincodeError] = useState('');
 
   // Review submission state
   const [userReview, setUserReview] = useState({ rating: 5, title: '', comment: '', name: '' });
@@ -189,11 +192,15 @@ export default function ProductClient({ initialSlug }) {
 
   const handleCheckPincode = async (e) => {
     e.preventDefault();
+    setPincodeError('');
     const cleanPin = String(pincode).trim().replace(/\D/g, '');
     if (!cleanPin || cleanPin.length !== 6) {
+      setPincodeError('Please enter a valid 6-digit Indian PIN code');
       addToast('Please enter a valid 6-digit Indian PIN code', 'error');
       return;
     }
+
+    setIsCheckingPincode(true);
 
     try {
       const days = (Number(cleanPin) % 3) + 3; // 3 to 5 days
@@ -228,6 +235,8 @@ export default function ProductClient({ initialSlug }) {
         codAvailable: false
       });
       addToast(`Delivery verified for PIN ${cleanPin}`, 'info');
+    } finally {
+      setIsCheckingPincode(false);
     }
   };
 
@@ -518,53 +527,130 @@ export default function ProductClient({ initialSlug }) {
             </div>
 
             {/* Delivery Pincode Checker Box */}
-            <div className="p-4 rounded-2xl bg-ivory-200/50 dark:bg-stone-900/50 border border-gold-500/20 space-y-2 mt-4">
-              <div className="flex items-center gap-1.5 text-xs font-bold text-stone-800 dark:text-ivory-100">
-                <MapPin className="w-4 h-4 text-maroon-700 dark:text-gold-400" />
-                <span>Delivery &amp; Service Availability Check</span>
+            <div className="p-4 rounded-2xl bg-ivory-200/50 dark:bg-stone-900/50 border border-gold-500/20 space-y-3 mt-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-1.5 text-xs font-bold text-stone-800 dark:text-ivory-100">
+                  <MapPin className="w-4 h-4 text-maroon-700 dark:text-gold-400" />
+                  <span>Delivery &amp; Service Availability Check</span>
+                </div>
+                {deliveryEstimate && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setDeliveryEstimate(null);
+                      setPincode('');
+                      setPincodeError('');
+                    }}
+                    className="text-[10px] text-stone-400 hover:text-maroon-700 dark:hover:text-gold-400 underline font-medium"
+                  >
+                    Change PIN
+                  </button>
+                )}
               </div>
+
               <form onSubmit={handleCheckPincode} className="flex gap-2">
-                <input
-                  type="text"
-                  maxLength={6}
-                  placeholder="Enter 6-digit Indian PIN (e.g. 302001)"
-                  value={pincode}
-                  onChange={(e) => setPincode(e.target.value)}
-                  className="flex-1 px-3 py-2 text-xs rounded-xl bg-white dark:bg-stone-800 border border-gold-500/30 text-stone-900 dark:text-ivory-100 outline-none"
-                />
+                <div className="relative flex-1">
+                  <input
+                    type="text"
+                    maxLength={6}
+                    placeholder="Enter 6-digit Indian PIN (e.g. 302001)"
+                    value={pincode}
+                    onChange={(e) => {
+                      setPincode(e.target.value.replace(/\D/g, '').slice(0, 6));
+                      if (pincodeError) setPincodeError('');
+                    }}
+                    disabled={isCheckingPincode}
+                    className={`w-full px-3.5 py-2.5 text-xs rounded-xl bg-white dark:bg-stone-800 border outline-none font-medium transition-all ${
+                      pincodeError
+                        ? 'border-rose-400 focus:ring-1 focus:ring-rose-400'
+                        : 'border-gold-500/30 focus:border-maroon-700 dark:focus:border-gold-500 focus:ring-1 focus:ring-gold-500/20'
+                    } text-stone-900 dark:text-ivory-100 disabled:opacity-60`}
+                  />
+                  {pincode && !isCheckingPincode && (
+                    <button
+                      type="button"
+                      onClick={() => setPincode('')}
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-600 text-xs p-1"
+                      aria-label="Clear PIN"
+                    >
+                      ✕
+                    </button>
+                  )}
+                </div>
+
                 <button
                   type="submit"
-                  className="px-4 py-2 rounded-xl bg-stone-900 dark:bg-gold-500 text-white dark:text-maroon-950 text-xs font-bold"
+                  disabled={isCheckingPincode || pincode.trim().length !== 6}
+                  className="px-5 py-2.5 rounded-xl bg-stone-900 hover:bg-stone-800 dark:bg-gold-500 dark:hover:bg-gold-400 text-white dark:text-maroon-950 text-xs font-bold transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-1.5 shrink-0 shadow-xs"
                 >
-                  Check
+                  {isCheckingPincode ? (
+                    <>
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      <span>Checking...</span>
+                    </>
+                  ) : (
+                    <span>Check</span>
+                  )}
                 </button>
               </form>
 
-              {deliveryEstimate && (
+              {/* Live Checking Progress Feedback */}
+              {isCheckingPincode && (
+                <div className="flex items-center gap-2 text-xs text-stone-600 dark:text-stone-300 py-2 px-3 rounded-xl bg-gold-500/10 border border-gold-500/20 animate-pulse">
+                  <Loader2 className="w-3.5 h-3.5 animate-spin text-maroon-700 dark:text-gold-400 shrink-0" />
+                  <span className="text-[11px] font-medium">Checking courier delivery &amp; COD availability for PIN {pincode}...</span>
+                </div>
+              )}
+
+              {/* Error Message */}
+              {pincodeError && (
+                <p className="text-[11px] text-rose-600 dark:text-rose-400 font-semibold pl-1">
+                  {pincodeError}
+                </p>
+              )}
+
+              {/* Delivery Estimate Card */}
+              {deliveryEstimate && !isCheckingPincode && (
                 <div
-                  className={`p-2.5 rounded-xl border text-xs space-y-1 animate-fade-in ${
+                  className={`p-3.5 rounded-2xl border text-xs space-y-2 animate-fade-in ${
                     deliveryEstimate.codAvailable
-                      ? 'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-500/30 text-emerald-800 dark:text-emerald-300'
-                      : 'bg-amber-50 dark:bg-amber-950/40 border-amber-500/30 text-amber-900 dark:text-amber-200'
+                      ? 'bg-emerald-50/80 dark:bg-emerald-950/40 border-emerald-500/30 text-emerald-900 dark:text-emerald-200'
+                      : 'bg-amber-50/80 dark:bg-amber-950/40 border-amber-500/30 text-amber-900 dark:text-amber-200'
                   }`}
                 >
-                  <div className="flex items-center gap-1 font-bold">
-                    <Truck className="w-3.5 h-3.5" />
-                    <span>Estimated Delivery by {deliveryEstimate.date}</span>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2 font-bold text-stone-900 dark:text-ivory-100">
+                      <Truck className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                      <span>Estimated Delivery by {deliveryEstimate.date}</span>
+                    </div>
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-900/60 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30">
+                      ✓ Serviceable
+                    </span>
                   </div>
-                  <p className="text-[11px] text-stone-600 dark:text-stone-400">
-                    Free Express Delivery eligible |{' '}
-                    {deliveryEstimate.codAvailable ? (
-                      <span className="text-emerald-700 dark:text-emerald-300 font-bold">
-                        ✓ Cash on Delivery (COD) Available
-                      </span>
-                    ) : (
-                      <span className="text-rose-600 dark:text-rose-400 font-bold">
-                        ✕ COD Unavailable • Prepaid (UPI/Card) Only
-                      </span>
-                    )}{' '}
-                    for PIN {deliveryEstimate.pincode}
-                  </p>
+
+                  <div className="pt-1 space-y-1 text-[11px] text-stone-600 dark:text-stone-300">
+                    <p className="flex items-center gap-1.5">
+                      <span className="text-emerald-600 dark:text-emerald-400 font-bold">⚡ Express Courier:</span>
+                      <span>Dispatched via BlueDart / Delhivery / Shiprocket</span>
+                    </p>
+                    <p className="flex items-center gap-1.5">
+                      {deliveryEstimate.codAvailable ? (
+                        <>
+                          <span className="text-emerald-700 dark:text-emerald-300 font-bold flex items-center gap-1">
+                            <Check className="w-3.5 h-3.5" /> Cash on Delivery (COD) Available
+                          </span>
+                          <span>for PIN {deliveryEstimate.pincode}</span>
+                        </>
+                      ) : (
+                        <>
+                          <span className="text-amber-700 dark:text-amber-300 font-bold flex items-center gap-1">
+                            ⚠ Prepaid Only (UPI / Card / NetBanking)
+                          </span>
+                          <span>• COD not available for PIN {deliveryEstimate.pincode}</span>
+                        </>
+                      )}
+                    </p>
+                  </div>
                 </div>
               )}
             </div>
