@@ -100,17 +100,31 @@ export async function POST(request) {
       </html>
     `;
 
-    const { data: resendData, error: sendError } = await resend.emails.send({
-      from: 'Trio Enterprises <onboarding@resend.dev>',
+    const primaryFrom = process.env.RESEND_FROM || 'Trio Enterprises <noreply@trioenterprises.in>';
+    const fallbackFrom = 'Trio Enterprises <onboarding@resend.dev>';
+
+    // Send email via Resend
+    let sendResult = await resend.emails.send({
+      from: primaryFrom,
       to: [cleanEmail],
-      subject: `Your Password Reset OTP: ${otp} - Trio Enterprises`,
+      subject: `Your Password Reset Code: ${otp} — Trio Enterprises`,
       html: emailHtml,
     });
 
-    if (sendError) {
-      console.warn('Resend send notice in send-reset-otp:', sendError);
+    if (sendResult.error) {
+      console.warn('Resend primary send failed, trying fallback sender:', sendResult.error);
+      sendResult = await resend.emails.send({
+        from: fallbackFrom,
+        to: [cleanEmail],
+        subject: `Your Password Reset Code: ${otp} — Trio Enterprises`,
+        html: emailHtml,
+      });
+    }
 
-      // Backup: attempt Supabase native password reset email
+    if (sendResult.error) {
+      console.error('Resend delivery failed:', sendResult.error);
+
+      // Trigger Supabase native recovery email as backup
       try {
         await supabaseAdmin.auth.resetPasswordForEmail(cleanEmail, {
           redirectTo: 'https://trieotech.vercel.app/forgot-password',
@@ -119,20 +133,18 @@ export async function POST(request) {
         console.warn('Supabase reset backup notice:', supErr);
       }
 
-      // If Resend blocked because testing domain is not yet verified on resend.com
-      if (sendError.message && (sendError.message.includes('only send testing emails') || sendError.message.includes('testing emails'))) {
-        return NextResponse.json({
-          success: true,
-          verificationToken,
-          expiresAt,
-          fallbackOtp: otp,
-          isSandbox: true,
-          message: `Testing sandbox active: OTP code is ${otp}. To send live emails to any inbox, verify your domain at resend.com/domains.`,
-        });
+      if (sendResult.error.message && sendResult.error.message.includes('testing emails')) {
+        return NextResponse.json(
+          {
+            error:
+              'Email delivery blocked by Resend sandbox. Please verify your custom domain in Resend (resend.com/domains) or configure SMTP in Supabase.',
+          },
+          { status: 403 }
+        );
       }
 
       return NextResponse.json(
-        { error: 'Failed to deliver OTP email: ' + (sendError.message || 'Service unavailable') },
+        { error: 'Failed to deliver OTP email: ' + (sendResult.error.message || 'Service unavailable') },
         { status: 500 }
       );
     }

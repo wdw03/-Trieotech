@@ -23,7 +23,9 @@ import {
   Upload,
   X,
   Check,
-  AlertCircle
+  AlertCircle,
+  Truck,
+  Clock
 } from 'lucide-react';
 
 const AVATAR_PRESETS = [
@@ -464,52 +466,71 @@ export default function ProfileClient() {
       )}
 
       {/* Navigation Quick Stat Tiles */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <Link
-          href="/profile/orders"
-          className="p-5 rounded-2xl ethnic-card hover:border-gold-500/50 flex items-center justify-between group transition-all"
-        >
-          <div className="space-y-1">
-            <span className="text-[11px] font-bold text-stone-500 uppercase tracking-wider">My Orders</span>
-            <h3 className="font-serif font-black text-2xl text-maroon-800 dark:text-gold-400">
-              {userOrders.length}
-            </h3>
-            <p className="text-[11px] text-stone-400">View live tracking &amp; invoices</p>
-          </div>
-          <div className="w-12 h-12 rounded-xl bg-maroon-700/10 dark:bg-maroon-950 text-maroon-700 dark:text-gold-400 flex items-center justify-center group-hover:scale-110 transition-transform">
-            <Package className="w-6 h-6" />
-          </div>
-        </Link>
+      {(() => {
+        const delivered = userOrders.filter(o => o.rawStatus === 'delivered').length;
+        const inTransit = userOrders.filter(o => ['shipped', 'out_for_delivery'].includes(o.rawStatus)).length;
+        const pending = userOrders.filter(o => ['pending', 'pending_payment', 'confirmed', 'processing', 'packed'].includes(o.rawStatus)).length;
+        const cancelled = userOrders.filter(o => o.rawStatus === 'cancelled').length;
 
-        <Link
-          href="/wishlist"
-          className="p-5 rounded-2xl ethnic-card hover:border-gold-500/50 flex items-center justify-between group transition-all"
-        >
-          <div className="space-y-1">
-            <span className="text-[11px] font-bold text-stone-500 uppercase tracking-wider">Saved Wishlist</span>
-            <h3 className="font-serif font-black text-2xl text-maroon-800 dark:text-gold-400">
-              {wishlistCount}
-            </h3>
-            <p className="text-[11px] text-stone-400">Explore saved crafts</p>
-          </div>
-          <div className="w-12 h-12 rounded-xl bg-gold-500/10 dark:bg-stone-800 text-gold-600 dark:text-gold-400 flex items-center justify-center group-hover:scale-110 transition-transform">
-            <Heart className="w-6 h-6" />
-          </div>
-        </Link>
+        return (
+          <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+            <Link
+              href="/profile/orders"
+              className="p-4 rounded-2xl ethnic-card hover:border-gold-500/50 flex flex-col items-center text-center group transition-all gap-2"
+            >
+              <div className="w-10 h-10 rounded-xl bg-maroon-700/10 dark:bg-maroon-950 text-maroon-700 dark:text-gold-400 flex items-center justify-center group-hover:scale-110 transition-transform">
+                <Package className="w-5 h-5" />
+              </div>
+              <h3 className="font-serif font-black text-2xl text-maroon-800 dark:text-gold-400">{userOrders.length}</h3>
+              <span className="text-[10px] font-bold text-stone-500 uppercase tracking-wider">Total Orders</span>
+            </Link>
 
-        <div className="p-5 rounded-2xl ethnic-card flex items-center justify-between">
-          <div className="space-y-1">
-            <span className="text-[11px] font-bold text-stone-500 uppercase tracking-wider">Patron Status</span>
-            <h3 className="font-serif font-black text-xl text-stone-900 dark:text-ivory-100 flex items-center gap-1.5">
-              <Sparkles className="w-4 h-4 text-gold-500" /> Artisan Guild Tier
-            </h3>
-            <p className="text-[11px] text-stone-400">Enjoy 20% festive codes</p>
+            <Link
+              href="/profile/orders"
+              className="p-4 rounded-2xl ethnic-card hover:border-emerald-500/40 flex flex-col items-center text-center group transition-all gap-2"
+            >
+              <div className="w-10 h-10 rounded-xl bg-emerald-600/10 text-emerald-600 flex items-center justify-center group-hover:scale-110 transition-transform">
+                <CheckCircle2 className="w-5 h-5" />
+              </div>
+              <h3 className="font-serif font-black text-2xl text-emerald-700 dark:text-emerald-400">{delivered}</h3>
+              <span className="text-[10px] font-bold text-stone-500 uppercase tracking-wider">Delivered</span>
+            </Link>
+
+            <Link
+              href="/profile/orders"
+              className="p-4 rounded-2xl ethnic-card hover:border-sky-500/40 flex flex-col items-center text-center group transition-all gap-2"
+            >
+              <div className="w-10 h-10 rounded-xl bg-sky-600/10 text-sky-600 flex items-center justify-center group-hover:scale-110 transition-transform">
+                <Truck className="w-5 h-5" />
+              </div>
+              <h3 className="font-serif font-black text-2xl text-sky-700 dark:text-sky-400">{inTransit}</h3>
+              <span className="text-[10px] font-bold text-stone-500 uppercase tracking-wider">In Transit</span>
+            </Link>
+
+            <Link
+              href="/profile/orders"
+              className="p-4 rounded-2xl ethnic-card hover:border-amber-500/40 flex flex-col items-center text-center group transition-all gap-2"
+            >
+              <div className="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-600 flex items-center justify-center group-hover:scale-110 transition-transform">
+                <Clock className="w-5 h-5" />
+              </div>
+              <h3 className="font-serif font-black text-2xl text-amber-700 dark:text-amber-400">{pending}</h3>
+              <span className="text-[10px] font-bold text-stone-500 uppercase tracking-wider">Pending</span>
+            </Link>
+
+            <Link
+              href="/wishlist"
+              className="p-4 rounded-2xl ethnic-card hover:border-gold-500/50 flex flex-col items-center text-center group transition-all gap-2 col-span-2 sm:col-span-1"
+            >
+              <div className="w-10 h-10 rounded-xl bg-gold-500/10 dark:bg-stone-800 text-gold-600 dark:text-gold-400 flex items-center justify-center group-hover:scale-110 transition-transform">
+                <Heart className="w-5 h-5" />
+              </div>
+              <h3 className="font-serif font-black text-2xl text-maroon-800 dark:text-gold-400">{wishlistCount}</h3>
+              <span className="text-[10px] font-bold text-stone-500 uppercase tracking-wider">Wishlist</span>
+            </Link>
           </div>
-          <div className="w-12 h-12 rounded-xl bg-emerald-600/10 text-emerald-600 flex items-center justify-center">
-            <ShieldCheck className="w-6 h-6" />
-          </div>
-        </div>
-      </div>
+        );
+      })()}
 
       {/* Address Book Section */}
       <div className="ethnic-card p-6 sm:p-8 rounded-3xl space-y-6">

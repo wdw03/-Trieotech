@@ -43,8 +43,6 @@ export default function ForgotPasswordClient() {
   const [resendTimer, setResendTimer] = useState(60);
   const [isResending, setIsResending] = useState(false);
 
-  const [sandboxCode, setSandboxCode] = useState('');
-
   // If already logged in, redirect to main page
   useEffect(() => {
     if (user) {
@@ -87,13 +85,7 @@ export default function ForgotPasswordClient() {
         });
         setStep('otp_and_password');
         setResendTimer(60);
-        if (result.fallbackOtp) {
-          setOtp(result.fallbackOtp);
-          setSandboxCode(result.fallbackOtp);
-        } else {
-          setOtp('');
-          setSandboxCode('');
-        }
+        setOtp('');
       } else {
         setError(result.error || 'Failed to send verification code. Please check email address.');
       }
@@ -118,10 +110,6 @@ export default function ForgotPasswordClient() {
           expiresAt: result.expiresAt,
         });
         setResendTimer(60);
-        if (result.fallbackOtp) {
-          setOtp(result.fallbackOtp);
-          setSandboxCode(result.fallbackOtp);
-        }
       } else {
         setError(result.error || 'Failed to resend code');
       }
@@ -272,18 +260,6 @@ export default function ForgotPasswordClient() {
               </button>
             </div>
 
-            {/* Sandbox helper notice */}
-            {sandboxCode && (
-              <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-300 dark:border-amber-700 text-amber-900 dark:text-amber-200 text-xs rounded-xl p-3 space-y-1 text-left">
-                <div className="font-bold flex items-center gap-1.5 text-amber-800 dark:text-amber-300">
-                  <span>ℹ️ Testing Code:</span>
-                  <span className="font-mono text-sm tracking-wider px-2 py-0.5 rounded bg-amber-200/60 dark:bg-amber-800/40 text-maroon-900 dark:text-amber-100 font-black">{sandboxCode}</span>
-                </div>
-                <p className="text-[11px] text-amber-700 dark:text-amber-300/80 leading-relaxed">
-                  (Resend sandbox auto-filled your OTP. To deliver live emails to any external inbox, add your custom domain at resend.com/domains).
-                </p>
-              </div>
-            )}
 
             {/* 6-Digit OTP Code Input */}
             <div className="space-y-1">

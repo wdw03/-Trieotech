@@ -118,15 +118,14 @@ export async function POST(request) {
       if (sendResult.error) {
         console.warn('Resend fallback notice:', sendResult.error);
 
-        if (sendResult.error.message && (sendResult.error.message.includes('only send testing emails') || sendResult.error.message.includes('testing emails'))) {
-          return NextResponse.json({
-            success: true,
-            message: 'OTP sent successfully (Sandbox testing active: code is ' + otp + ')',
-            verificationToken,
-            expiresAt,
-            fallbackOtp: otp,
-            isSandbox: true,
-          });
+        if (sendResult.error.message && sendResult.error.message.includes('testing emails')) {
+          return NextResponse.json(
+            {
+              error:
+                'Email delivery blocked by Resend sandbox. Please verify your custom domain in Resend (resend.com/domains) or configure SMTP in Supabase.',
+            },
+            { status: 403 }
+          );
         }
 
         return NextResponse.json(

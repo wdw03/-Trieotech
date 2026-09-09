@@ -93,8 +93,15 @@ export async function GET(request) {
         },
         status: displayStatus,
         raw_status: ord.status,
-        paymentMethod: ord.payment_method === 'cod' ? 'COD' : 'UPI',
-        paymentStatus: ord.payment_status === 'paid' ? 'Paid' : (ord.payment_status === 'failed' ? 'Failed' : 'Pending'),
+        paymentMethod: ord.payment_method === 'cod' ? 'COD' : (ord.payment_method === 'razorpay' ? 'Razorpay Online' : (ord.payment_method || 'Online')),
+        paymentStatus: (() => {
+          const ps = (ord.payment_status || 'pending').toLowerCase();
+          if (['paid', 'captured'].includes(ps)) return 'Paid';
+          if (ps === 'failed') return 'Failed';
+          if (['refunded', 'refund_processed'].includes(ps)) return 'Refunded';
+          if (ps === 'refund_failed') return 'Refund Failed';
+          return 'Pending';
+        })(),
         shippingPartner: shipment.courier_name || 'Shiprocket / BlueDart',
         trackingNumber: shipment.awb_number || shipment.tracking_number || '',
         estimatedDelivery: new Date(Date.now() + 4 * 86400000).toISOString().split('T')[0],

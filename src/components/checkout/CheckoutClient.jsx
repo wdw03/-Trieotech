@@ -52,15 +52,8 @@ export default function CheckoutClient() {
   // Delivery Method State
   const [deliveryMethod, setDeliveryMethod] = useState('express'); // 'express' | 'standard'
 
-  // Payment Method State
-  const [paymentMethod, setPaymentMethod] = useState('upi'); // 'upi' | 'card' | 'cod' | 'netbanking'
-  const [upiId, setUpiId] = useState('user@okaxis');
-  const [cardDetails, setCardDetails] = useState({
-    number: '4532 •••• •••• 8921',
-    name: user?.name || 'Radhika Singhania',
-    expiry: '08/29',
-    cvv: '•••'
-  });
+  // Payment Method State — Razorpay handles UPI/Card/NetBanking UI
+  const [paymentMethod, setPaymentMethod] = useState('razorpay'); // 'razorpay' | 'cod'
 
   // COD Availability State (Unavailable by default)
   const [isCodAvailable, setIsCodAvailable] = useState(false);
@@ -89,7 +82,7 @@ export default function CheckoutClient() {
       setIsCodAvailable(false);
       setCodStatusMessage('Please enter a valid 6-digit delivery pincode');
       if (paymentMethod === 'cod') {
-        setPaymentMethod('upi');
+        setPaymentMethod('razorpay');
       }
       return;
     }
@@ -103,7 +96,7 @@ export default function CheckoutClient() {
           setIsCodAvailable(available);
           setCodStatusMessage(data.message || (available ? 'COD is available' : 'COD is unavailable'));
           if (!available && paymentMethod === 'cod') {
-            setPaymentMethod('upi');
+            setPaymentMethod('razorpay');
           }
         }
       })
@@ -112,7 +105,7 @@ export default function CheckoutClient() {
           setIsCodAvailable(false);
           setCodStatusMessage('COD is unavailable at this pincode');
           if (paymentMethod === 'cod') {
-            setPaymentMethod('upi');
+            setPaymentMethod('razorpay');
           }
         }
       })
@@ -173,7 +166,10 @@ export default function CheckoutClient() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           addressId: selectedAddressId !== 'new' ? selectedAddressId : undefined,
-          shippingAddress: activeShippingAddress,
+          shippingAddress: {
+            ...activeShippingAddress,
+            email: user?.email || '',
+          },
           deliveryMethod,
           paymentMethod: isCod ? 'cod' : 'razorpay',
           couponCode: appliedCoupon?.code,
@@ -601,18 +597,18 @@ export default function CheckoutClient() {
                   <h2 className="font-serif font-bold text-lg sm:text-xl text-stone-900 dark:text-ivory-100">
                     Step 3: Select Payment Method
                   </h2>
-                  <p className="text-xs text-stone-500">All transactions are encrypted with 256-bit SSL security.</p>
+                  <p className="text-xs text-stone-500">All transactions are encrypted with 256-bit SSL security via Razorpay.</p>
                 </div>
                 <Lock className="w-5 h-5 text-emerald-600" />
               </div>
 
               <div className="space-y-3">
-                {/* UPI */}
+                {/* Online Payment (Razorpay — handles UPI, Card, NetBanking, Wallet) */}
                 <label
-                  className={`p-4 rounded-2xl border-2 cursor-pointer transition-all flex flex-col gap-3 ${
-                    paymentMethod === 'upi'
-                      ? 'border-maroon-700 bg-maroon-50/50 dark:bg-maroon-950/30'
-                      : 'border-gold-500/20'
+                  className={`p-5 rounded-2xl border-2 cursor-pointer transition-all ${
+                    paymentMethod === 'razorpay'
+                      ? 'border-maroon-700 bg-maroon-50/50 dark:bg-maroon-950/30 shadow-xs'
+                      : 'border-gold-500/20 hover:border-gold-500/40'
                   }`}
                 >
                   <div className="flex items-center justify-between">
@@ -620,100 +616,47 @@ export default function CheckoutClient() {
                       <input
                         type="radio"
                         name="paymentMethod"
-                        checked={paymentMethod === 'upi'}
-                        onChange={() => setPaymentMethod('upi')}
-                        className="accent-maroon-700"
+                        checked={paymentMethod === 'razorpay'}
+                        onChange={() => setPaymentMethod('razorpay')}
+                        className="accent-maroon-700 w-4 h-4"
                       />
                       <div>
-                        <span className="font-bold text-xs sm:text-sm text-stone-900 dark:text-ivory-100">
-                          UPI (Google Pay, PhonePe, Paytm, BHIM)
-                        </span>
-                        <p className="text-[11px] text-stone-500">Instant approval with zero transaction surcharge.</p>
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="font-bold text-xs sm:text-sm text-stone-900 dark:text-ivory-100">
+                            Pay Online (UPI / Card / NetBanking)
+                          </span>
+                          <span className="text-[10px] bg-emerald-100 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30 px-2 py-0.5 rounded-full font-bold">
+                            ✓ Recommended • Instant
+                          </span>
+                        </div>
+                        <p className="text-[11px] text-stone-500 mt-1">Google Pay, PhonePe, Paytm, BHIM UPI, all Debit/Credit Cards, NetBanking & Wallets.</p>
                       </div>
                     </div>
-                    <QrCode className="w-5 h-5 text-gold-600" />
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      <QrCode className="w-4 h-4 text-gold-600" />
+                      <CreditCard className="w-4 h-4 text-gold-600" />
+                    </div>
                   </div>
 
-                  {paymentMethod === 'upi' && (
-                    <div className="pt-2 pl-7 space-y-2">
-                      <input
-                        type="text"
-                        placeholder="Enter UPI VPA (e.g. mobile@upi or name@okaxis)"
-                        value={upiId}
-                        onChange={(e) => setUpiId(e.target.value)}
-                        className="w-full max-w-sm px-3.5 py-2 rounded-xl bg-white dark:bg-stone-900 border border-gold-500/30 text-xs outline-none"
-                      />
-                      <p className="text-[10px] text-emerald-700 dark:text-emerald-400 font-semibold">
-                        ✓ Fast verification enabled
+                  {paymentMethod === 'razorpay' && (
+                    <div className="mt-3 pt-3 pl-7 border-t border-gold-500/15 space-y-2">
+                      <div className="flex items-center flex-wrap gap-2">
+                        {['Google Pay', 'PhonePe', 'Paytm', 'BHIM', 'Visa', 'Mastercard', 'RuPay'].map((name) => (
+                          <span key={name} className="text-[10px] bg-ivory-200 dark:bg-stone-800 text-stone-600 dark:text-stone-300 px-2 py-0.5 rounded-lg font-medium border border-gold-500/15">
+                            {name}
+                          </span>
+                        ))}
+                      </div>
+                      <p className="text-[10px] text-emerald-700 dark:text-emerald-400 font-semibold flex items-center gap-1">
+                        <ShieldCheck className="w-3 h-3" /> Secured by Razorpay • RBI compliant • Zero surcharge
                       </p>
-                    </div>
-                  )}
-                </label>
-
-                {/* Credit / Debit Card */}
-                <label
-                  className={`p-4 rounded-2xl border-2 cursor-pointer transition-all flex flex-col gap-3 ${
-                    paymentMethod === 'card'
-                      ? 'border-maroon-700 bg-maroon-50/50 dark:bg-maroon-950/30'
-                      : 'border-gold-500/20'
-                  }`}
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <input
-                        type="radio"
-                        name="paymentMethod"
-                        checked={paymentMethod === 'card'}
-                        onChange={() => setPaymentMethod('card')}
-                        className="accent-maroon-700"
-                      />
-                      <div>
-                        <span className="font-bold text-xs sm:text-sm text-stone-900 dark:text-ivory-100">
-                          Credit / Debit Card (Visa, RuPay, Mastercard)
-                        </span>
-                        <p className="text-[11px] text-stone-500">Supports all major Indian banks and corporate cards.</p>
-                      </div>
-                    </div>
-                    <CreditCard className="w-5 h-5 text-gold-600" />
-                  </div>
-
-                  {paymentMethod === 'card' && (
-                    <div className="pt-2 pl-7 grid grid-cols-1 sm:grid-cols-2 gap-3 max-w-md">
-                      <input
-                        type="text"
-                        placeholder="Card Number"
-                        value={cardDetails.number}
-                        onChange={(e) => setCardDetails({ ...cardDetails, number: e.target.value })}
-                        className="px-3 py-2 rounded-xl bg-white dark:bg-stone-900 border border-gold-500/30 text-xs"
-                      />
-                      <input
-                        type="text"
-                        placeholder="Name on Card"
-                        value={cardDetails.name}
-                        onChange={(e) => setCardDetails({ ...cardDetails, name: e.target.value })}
-                        className="px-3 py-2 rounded-xl bg-white dark:bg-stone-900 border border-gold-500/30 text-xs"
-                      />
-                      <input
-                        type="text"
-                        placeholder="MM/YY"
-                        value={cardDetails.expiry}
-                        onChange={(e) => setCardDetails({ ...cardDetails, expiry: e.target.value })}
-                        className="px-3 py-2 rounded-xl bg-white dark:bg-stone-900 border border-gold-500/30 text-xs"
-                      />
-                      <input
-                        type="password"
-                        placeholder="CVV"
-                        value={cardDetails.cvv}
-                        onChange={(e) => setCardDetails({ ...cardDetails, cvv: e.target.value })}
-                        className="px-3 py-2 rounded-xl bg-white dark:bg-stone-900 border border-gold-500/30 text-xs"
-                      />
                     </div>
                   )}
                 </label>
 
                 {/* Cash on Delivery */}
                 <label
-                  className={`p-4 rounded-2xl border-2 transition-all flex flex-col gap-2.5 ${
+                  className={`p-5 rounded-2xl border-2 transition-all flex flex-col gap-2.5 ${
                     !isCodAvailable
                       ? 'opacity-65 bg-stone-100/70 dark:bg-stone-900/40 border-stone-200 dark:border-stone-800 cursor-not-allowed'
                       : paymentMethod === 'cod'
@@ -757,7 +700,7 @@ export default function CheckoutClient() {
                         <p className="text-[11px] text-stone-500 mt-0.5">
                           {isCodAvailable
                             ? 'Pay in cash or UPI QR directly to the delivery executive upon arrival.'
-                            : 'COD is currently disabled/unavailable for this pincode. Please pay online via UPI or Cards to place order.'}
+                            : 'COD is currently unavailable for this pincode. Please pay online.'}
                         </p>
                       </div>
                     </div>
@@ -833,7 +776,7 @@ export default function CheckoutClient() {
                   </button>
                 </div>
                 <p className="text-xs font-bold text-stone-800 dark:text-ivory-100 uppercase">
-                  {paymentMethod === 'upi' ? `UPI (${upiId})` : paymentMethod === 'card' ? 'Credit / Debit Card' : 'Cash on Delivery'}
+                  {paymentMethod === 'cod' ? 'Cash on Delivery (COD)' : 'Online Payment — UPI / Card / NetBanking (Razorpay)'}
                 </p>
               </div>
 

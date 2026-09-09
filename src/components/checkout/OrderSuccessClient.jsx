@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import confetti from 'canvas-confetti';
 import { useAuth } from '../../context/AuthContext';
+import { useToast } from '../../context/ToastContext';
 import {
   CheckCircle2,
   Package,
@@ -17,16 +18,24 @@ import {
   Clock,
   Mail,
   FileText,
-  Loader2
+  Loader2,
+  XCircle,
+  AlertTriangle,
+  Ban
 } from 'lucide-react';
 
 export default function OrderSuccessClient({ initialOrderId }) {
   const params = useParams();
   const orderId = initialOrderId || params?.orderId;
-  const { userOrders, refreshOrders } = useAuth();
+  const { userOrders, refreshOrders, cancelOrder } = useAuth();
+  const { addToast } = useToast();
 
   const [dbOrder, setDbOrder] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [showCancelModal, setShowCancelModal] = useState(false);
+  const [cancelReason, setCancelReason] = useState('');
+  const [isCancelling, setIsCancelling] = useState(false);
+  const [isCancelled, setIsCancelled] = useState(false);
 
   // Fetch full order record from backend API
   useEffect(() => {
@@ -62,7 +71,7 @@ export default function OrderSuccessClient({ initialOrderId }) {
         origin: { y: 0.6 },
         colors: ['#C5A028', '#8B1A1A', '#065F46', '#F59E0B'],
       });
-    } catch (e) {}
+    } catch (e) { }
 
     return () => {
       isMounted = false;
@@ -78,18 +87,18 @@ export default function OrderSuccessClient({ initialOrderId }) {
   const rawDate = dbOrder?.created_at || contextOrder?.date;
   const formattedDate = rawDate
     ? new Date(rawDate).toLocaleDateString('en-IN', {
-        day: 'numeric',
-        month: 'long',
-        year: 'numeric',
-      })
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
+    })
     : 'Today';
 
   const formattedTime = rawDate
     ? new Date(rawDate).toLocaleTimeString('en-IN', {
-        hour: '2-digit',
-        minute: '2-digit',
-        hour12: true,
-      })
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: true,
+    })
     : '';
 
   const shippingAddr =
@@ -111,11 +120,38 @@ export default function OrderSuccessClient({ initialOrderId }) {
     dbOrder?.payment_method === 'razorpay' || contextOrder?.paymentMethod === 'razorpay'
       ? 'Online Payment (Razorpay / UPI)'
       : dbOrder?.payment_method === 'cod' || contextOrder?.paymentMethod === 'cod'
-      ? 'Cash on Delivery (COD)'
-      : (dbOrder?.payment_method || contextOrder?.paymentMethod || 'Prepaid');
+        ? 'Cash on Delivery (COD)'
+        : (dbOrder?.payment_method || contextOrder?.paymentMethod || 'Prepaid');
 
   const invoiceDownloadUrl = `/api/orders/${displayDbId || displayOrderNumber}/invoice?download=true`;
   const invoiceViewUrl = `/api/orders/${displayDbId || displayOrderNumber}/invoice`;
+
+  // Check if order is cancellable
+  const rawStatus = (dbOrder?.status || contextOrder?.rawStatus || 'confirmed').toLowerCase();
+  const cancellable = !isCancelled && ['pending_payment', 'pending'].includes(rawStatus);
+
+  const handleCancelOrder = async () => {
+    setIsCancelling(true);
+    try {
+      const result = await cancelOrder(displayDbId, cancelReason || 'Customer requested cancellation');
+      if (result.success) {
+        setIsCancelled(true);
+        setShowCancelModal(false);
+        addToast(
+          result.refundInitiated
+            ? `Order cancelled. Refund of ₹${Number(total)?.toLocaleString('en-IN')} initiated!`
+            : 'Order cancelled successfully.',
+          'success'
+        );
+      } else {
+        addToast(result.error || 'Failed to cancel order', 'error');
+      }
+    } catch (err) {
+      addToast('Something went wrong', 'error');
+    } finally {
+      setIsCancelling(false);
+    }
+  };
 
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 py-10 space-y-8 animate-fade-in">
@@ -195,6 +231,17 @@ export default function OrderSuccessClient({ initialOrderId }) {
             <Package className="w-4 h-4" />
             <span>Track Parcel</span>
           </Link>
+
+          {/* Cancel Button — only for cancellable statuses */}
+          {cancellable && (
+            <button
+              onClick={() => setShowCancelModal(true)}
+              className="px-5 py-3 rounded-xl bg-rose-50 dark:bg-rose-950/40 border-2 border-rose-300 dark:border-rose-700 text-rose-700 dark:text-rose-300 hover:bg-rose-100 dark:hover:bg-rose-900/50 text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 transition-colors"
+            >
+              <XCircle className="w-4 h-4" />
+              <span>Cancel Order</span>
+            </button>
+          )}
         </div>
       </div>
 
@@ -235,10 +282,10 @@ export default function OrderSuccessClient({ initialOrderId }) {
             <p className="font-bold text-emerald-700 dark:text-emerald-400 text-sm">
               {dbOrder?.estimated_delivery
                 ? new Date(dbOrder.estimated_delivery).toLocaleDateString('en-IN', {
-                    day: 'numeric',
-                    month: 'short',
-                    year: 'numeric',
-                  })
+                  day: 'numeric',
+                  month: 'short',
+                  year: 'numeric',
+                })
                 : '3 - 5 Business Days'}
             </p>
             <p className="text-stone-500">Carrier: BlueDart Air Express</p>
@@ -343,6 +390,75 @@ export default function OrderSuccessClient({ initialOrderId }) {
           </Link>
         </div>
       </div>
+
+      {/* Cancelled Banner (if order was just cancelled) */}
+      {isCancelled && (
+        <div className="ethnic-card p-6 rounded-3xl border border-rose-300/40 dark:border-rose-800/40">
+          <div className="flex items-center gap-3 text-xs">
+            <Ban className="w-5 h-5 text-rose-600 shrink-0" />
+            <div>
+              <p className="font-bold text-rose-800 dark:text-rose-300">This order has been cancelled.</p>
+              <p className="text-stone-500 mt-1">If a refund was applicable, it will be credited to your original payment method within 5–7 business days.</p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Cancel Confirmation Modal */}
+      {showCancelModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center px-4 bg-black/60 backdrop-blur-sm animate-fade-in">
+          <div className="bg-white dark:bg-stone-900 rounded-3xl max-w-md w-full p-6 sm:p-8 space-y-5 border border-gold-500/30 shadow-2xl">
+            <div className="text-center space-y-2">
+              <div className="w-14 h-14 rounded-full bg-rose-100 dark:bg-rose-950/50 flex items-center justify-center mx-auto">
+                <AlertTriangle className="w-7 h-7 text-rose-600" />
+              </div>
+              <h3 className="font-serif font-black text-lg text-stone-900 dark:text-ivory-100">
+                Cancel This Order?
+              </h3>
+              <p className="text-xs text-stone-500 leading-relaxed">
+                Are you sure you want to cancel order <strong className="text-maroon-800 dark:text-gold-400">{displayOrderNumber}</strong>?
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-xs font-bold text-stone-700 dark:text-stone-300 block">Reason (Optional)</label>
+              <select
+                value={cancelReason}
+                onChange={(e) => setCancelReason(e.target.value)}
+                className="w-full px-3 py-2.5 bg-ivory-100 dark:bg-stone-800 text-stone-900 dark:text-ivory-100 text-xs rounded-xl border border-gold-500/30 focus:outline-none focus:ring-2 focus:ring-gold-500"
+              >
+                <option value="">Select a reason...</option>
+                <option value="Changed my mind">Changed my mind</option>
+                <option value="Found better price elsewhere">Found better price elsewhere</option>
+                <option value="Ordered by mistake">Ordered by mistake</option>
+                <option value="Delivery too slow">Delivery taking too long</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
+
+            <div className="flex gap-3 pt-2">
+              <button
+                onClick={() => setShowCancelModal(false)}
+                disabled={isCancelling}
+                className="flex-1 py-3 px-4 rounded-xl border border-stone-200 dark:border-stone-700 text-stone-700 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-stone-800 text-xs font-bold transition-colors disabled:opacity-60"
+              >
+                Keep Order
+              </button>
+              <button
+                onClick={handleCancelOrder}
+                disabled={isCancelling}
+                className="flex-1 py-3 px-4 rounded-xl bg-rose-700 text-white hover:bg-rose-800 text-xs font-bold flex items-center justify-center gap-2 transition-colors disabled:opacity-60"
+              >
+                {isCancelling ? (
+                  <><Loader2 className="w-3.5 h-3.5 animate-spin" /> Cancelling...</>
+                ) : (
+                  <><XCircle className="w-3.5 h-3.5" /> Yes, Cancel</>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -1,6 +1,7 @@
 export const dynamic = 'force-dynamic';
 import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '../../../../../lib/supabase/admin';
+import { sendShippingUpdate } from '../../../../../lib/resend';
 
 // Map dashboard status to DB status
 const DB_STATUS_MAP = {
@@ -15,6 +16,16 @@ const DB_STATUS_MAP = {
   'Return Requested': 'return_requested',
   'Returned': 'returned',
   'Refunded': 'refunded',
+};
+
+// Statuses that trigger email notifications
+const NOTIFY_STATUS_MAP = {
+  confirmed: '✅ Order Confirmed',
+  processing: '🔧 Order is Being Processed',
+  packed: '📦 Order Packed & Ready to Ship',
+  shipped: '🚚 Your Order Has Been Shipped!',
+  out_for_delivery: '🏍️ Out for Delivery — Arriving Today!',
+  delivered: '🎉 Order Delivered Successfully!',
 };
 
 // PATCH: Update order status or details
@@ -34,26 +45,27 @@ export async function PATCH(request, { params }) {
     // Find order first by id or order_number
     let findQuery = supabaseAdmin
       .from('orders')
-      .select('id, order_number')
+      .select('id, order_number, customer_email, shipping_address, user_id')
       .or(`id.eq.${id},order_number.eq.${id}`);
 
     const { data: orderMatches } = await findQuery;
-    const targetOrder = orderMatches?.[0];
+    let targetOrder = orderMatches?.[0];
 
     if (!targetOrder) {
       // Try single search by order_number ilike
       const { data: fallbackMatches } = await supabaseAdmin
         .from('orders')
-        .select('id, order_number')
+        .select('id, order_number, customer_email, shipping_address, user_id')
         .ilike('order_number', `%${id}%`)
         .limit(1);
 
       if (!fallbackMatches?.[0]) {
         return NextResponse.json({ error: 'Order not found' }, { status: 404 });
       }
+      targetOrder = fallbackMatches[0];
     }
 
-    const orderDbId = targetOrder ? targetOrder.id : (await supabaseAdmin.from('orders').select('id').ilike('order_number', `%${id}%`).single()).data?.id;
+    const orderDbId = targetOrder.id;
 
     const { data: updatedOrder, error: orderError } = await supabaseAdmin
       .from('orders')
@@ -78,6 +90,7 @@ export async function PATCH(request, { params }) {
           .update({
             awb_number: trackingNumber,
             courier_name: courierName || 'BlueDart Express',
+            status: mappedStatus === 'shipped' ? 'in_transit' : (mappedStatus === 'delivered' ? 'delivered' : 'in_transit'),
           })
           .eq('id', existingShipment.id);
       } else {
@@ -87,6 +100,45 @@ export async function PATCH(request, { params }) {
           courier_name: courierName || 'BlueDart Express',
           status: 'in_transit',
         });
+      }
+    }
+
+    // Send notification email on status change
+    if (mappedStatus && NOTIFY_STATUS_MAP[mappedStatus]) {
+      const addr = targetOrder.shipping_address || {};
+      const customerEmail = targetOrder.customer_email || addr.email;
+      const orderNumber = targetOrder.order_number || id;
+
+      if (customerEmail) {
+        const statusLabel = NOTIFY_STATUS_MAP[mappedStatus];
+        const trackingUrl = `${process.env.NEXT_PUBLIC_SITE_URL || 'https://trioenterprises.in'}/track-order?id=${encodeURIComponent(orderNumber)}`;
+
+        // Get AWB from shipment (could be newly set or existing)
+        let awb = trackingNumber || '';
+        let courier = courierName || '';
+        if (!awb) {
+          const { data: ship } = await supabaseAdmin
+            .from('shipments')
+            .select('awb_number, courier_name')
+            .eq('order_id', orderDbId)
+            .single();
+          awb = ship?.awb_number || '';
+          courier = ship?.courier_name || '';
+        }
+
+        try {
+          await sendShippingUpdate({
+            to: customerEmail,
+            orderNumber,
+            status: statusLabel,
+            trackingNumber: awb,
+            courierName: courier || 'BlueDart Express',
+            trackingUrl,
+          });
+        } catch (emailErr) {
+          console.error('Status update email failed (non-blocking):', emailErr);
+          // Non-blocking — order update still succeeds
+        }
       }
     }
 

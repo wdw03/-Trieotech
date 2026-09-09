@@ -58,11 +58,29 @@ export const AuthProvider = ({ children }) => {
 
       if (error) throw error;
 
+      const STATUS_DISPLAY_MAP = {
+        pending: 'Pending',
+        pending_payment: 'Pending Payment',
+        confirmed: 'Confirmed',
+        processing: 'Processing',
+        packed: 'Packed',
+        shipped: 'Shipped',
+        out_for_delivery: 'Out for Delivery',
+        delivered: 'Delivered',
+        cancelled: 'Cancelled',
+        return_requested: 'Return Requested',
+        returned: 'Returned',
+        refunded: 'Refunded',
+        payment_failed: 'Payment Failed',
+      };
+
       const normalized = (orders || []).map((o) => ({
         ...o,
         id: o.order_number || o.id,
         dbId: o.id,
         date: new Date(o.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' }),
+        status: STATUS_DISPLAY_MAP[(o.status || 'pending').toLowerCase()] || o.status || 'Pending',
+        rawStatus: (o.status || 'pending').toLowerCase(),
         items: (o.order_items || []).map((item) => ({
           productId: item.product_id,
           name: item.name,
@@ -164,17 +182,11 @@ export const AuthProvider = ({ children }) => {
         addToast(data.error || 'Failed to send OTP email', 'error');
         return { success: false, error: data.error };
       }
-      if (data.fallbackOtp) {
-        addToast(`Testing Code: ${data.fallbackOtp} (Resend Sandbox Active)`, 'info');
-      } else {
-        addToast('Verification code sent to ' + email, 'info');
-      }
+      addToast('Verification code sent to ' + email, 'info');
       return {
         success: true,
         verificationToken: data.verificationToken,
         expiresAt: data.expiresAt,
-        fallbackOtp: data.fallbackOtp,
-        isSandbox: data.isSandbox,
       };
     } catch (err) {
       addToast('Failed to send verification code', 'error');
@@ -273,17 +285,11 @@ export const AuthProvider = ({ children }) => {
         addToast(data.error || 'Failed to send reset code', 'error');
         return { success: false, error: data.error };
       }
-      if (data.fallbackOtp) {
-        addToast(`Testing Code: ${data.fallbackOtp} (Resend Sandbox Active)`, 'info');
-      } else {
-        addToast('Password reset code sent to your email', 'info');
-      }
+      addToast('Password reset code sent to your email', 'info');
       return {
         success: true,
         verificationToken: data.verificationToken,
         expiresAt: data.expiresAt,
-        fallbackOtp: data.fallbackOtp,
-        isSandbox: data.isSandbox,
       };
     } catch (err) {
       addToast('Failed to send reset code', 'error');
@@ -450,6 +456,27 @@ export const AuthProvider = ({ children }) => {
     if (user) await fetchOrders(user.id);
   };
 
+  // ── Cancel Order ──
+  const cancelOrder = async (orderId, reason) => {
+    try {
+      const res = await fetch(`/api/orders/${orderId}/cancel`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ reason: reason || 'Customer requested cancellation' }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        return { success: false, error: data.error || 'Failed to cancel order' };
+      }
+      // Refresh orders to reflect updated status
+      if (user) await fetchOrders(user.id);
+      return { success: true, ...data };
+    } catch (err) {
+      console.error('Cancel order error:', err);
+      return { success: false, error: err.message || 'Failed to cancel order' };
+    }
+  };
+
   // ── Computed user object for backward compatibility ──
   const compatUser = user
     ? {
@@ -497,6 +524,7 @@ export const AuthProvider = ({ children }) => {
         updateProfile,
         addOrder,
         refreshOrders,
+        cancelOrder,
       }}
     >
       {children}

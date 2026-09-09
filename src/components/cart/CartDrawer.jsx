@@ -39,7 +39,7 @@ export const CartDrawer = () => {
           setAllProducts(data.products);
         }
       })
-      .catch(() => {});
+      .catch(() => { });
     return () => {
       isMounted = false;
     };

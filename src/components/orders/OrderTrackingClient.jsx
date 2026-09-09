@@ -3,8 +3,7 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Breadcrumb from '../../components/common/Breadcrumb';
-import { getOrderByTrackingOrId } from '../../data/orders';
-import { getApiBase } from '../../lib/api/store';
+import { useAuth } from '../../context/AuthContext';
 import {
   Package,
   Search,
@@ -15,8 +14,37 @@ import {
   Calendar,
   AlertCircle,
   Sparkles,
-  ArrowRight
+  ArrowRight,
+  Ban,
+  Loader2
 } from 'lucide-react';
+
+// Status badge color map
+const STATUS_BADGE_CLASS = {
+  delivered: 'bg-emerald-700 text-white',
+  shipped: 'bg-sky-700 text-white',
+  out_for_delivery: 'bg-orange-600 text-white',
+  packed: 'bg-teal-600 text-white',
+  confirmed: 'bg-amber-600 text-white',
+  processing: 'bg-amber-600 text-white',
+  pending: 'bg-stone-500 text-white',
+  pending_payment: 'bg-stone-500 text-white',
+  cancelled: 'bg-rose-700 text-white',
+  refunded: 'bg-blue-700 text-white',
+};
+
+const STATUS_DISPLAY = {
+  pending: 'Pending',
+  pending_payment: 'Pending Payment',
+  confirmed: 'Confirmed',
+  processing: 'Processing',
+  packed: 'Packed',
+  shipped: 'Shipped',
+  out_for_delivery: 'Out for Delivery',
+  delivered: 'Delivered',
+  cancelled: 'Cancelled',
+  refunded: 'Refunded',
+};
 
 export default function OrderTrackingClient() {
   const router = useRouter();
@@ -29,103 +57,206 @@ export default function OrderTrackingClient() {
   const [hasSearched, setHasSearched] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
+  const buildTimeline = (order) => {
+    const rawStatus = (order.status || 'pending').toLowerCase();
+    const createdAt = order.created_at;
+    const updatedAt = order.updated_at;
+    const shipment = order.shipments?.[0] || {};
+
+    const isCancelled = rawStatus === 'cancelled';
+    const isConfirmed = ['confirmed', 'processing', 'packed', 'shipped', 'out_for_delivery', 'delivered'].includes(rawStatus);
+    const isPacked = ['packed', 'shipped', 'out_for_delivery', 'delivered'].includes(rawStatus);
+    const isShipped = ['shipped', 'out_for_delivery', 'delivered'].includes(rawStatus);
+    const isOutForDelivery = ['out_for_delivery', 'delivered'].includes(rawStatus);
+    const isDelivered = rawStatus === 'delivered';
+
+    const fmtDate = (d) => {
+      if (!d) return '';
+      return new Date(d).toLocaleString('en-IN', {
+        day: 'numeric', month: 'short', year: 'numeric',
+        hour: '2-digit', minute: '2-digit', hour12: true,
+      });
+    };
+
+    const timeline = [
+      {
+        status: 'Order Placed & Confirmed',
+        description: 'Order received and verified by artisan workshop',
+        time: fmtDate(createdAt),
+        location: 'Trio Workshop, Jaipur',
+        completed: true,
+      },
+      {
+        status: 'Quality Checked & Packed',
+        description: 'Inspected for embroidery quality and packed securely',
+        time: isPacked ? fmtDate(updatedAt) : '',
+        location: 'Artisan Hub, Jaipur',
+        completed: isPacked,
+      },
+      {
+        status: 'Handed to Courier',
+        description: shipment.awb_number
+          ? `Dispatched via ${shipment.courier_name || 'Express Courier'} — AWB: ${shipment.awb_number}`
+          : `Dispatched via ${shipment.courier_name || 'Express Courier'}`,
+        time: isShipped ? fmtDate(shipment.created_at || updatedAt) : '',
+        location: 'Sorting Facility',
+        completed: isShipped,
+      },
+      {
+        status: 'Out for Delivery',
+        description: 'Package is with the delivery executive in your area',
+        time: isOutForDelivery ? fmtDate(updatedAt) : '',
+        location: order.shipping_address?.city || 'Your City',
+        completed: isOutForDelivery,
+      },
+      {
+        status: 'Delivered to Patron',
+        description: 'Safely delivered to shipping address',
+        time: isDelivered ? fmtDate(updatedAt) : '',
+        location: order.shipping_address?.city || 'Destination',
+        completed: isDelivered,
+      },
+    ];
+
+    // If cancelled, replace remaining steps with cancellation step
+    if (isCancelled) {
+      return [
+        timeline[0], // Order placed — always completed
+        {
+          status: '❌ Order Cancelled',
+          description: order.cancellation_reason || 'This order was cancelled.',
+          time: fmtDate(order.cancelled_at || updatedAt),
+          location: '',
+          completed: true,
+          isCancelled: true,
+        },
+      ];
+    }
+
+    return timeline;
+  };
+
   const performTracking = async (query) => {
     if (!query || !query.trim()) return;
     const clean = query.trim();
     setIsLoading(true);
     setHasSearched(true);
+    setFoundOrder(null);
 
     // 1. Check in-memory userOrders from AuthContext
     const localMatch = (userOrders || []).find(
       (o) =>
         o.id?.toUpperCase() === clean.toUpperCase() ||
-        o.orderNumber?.toUpperCase() === clean.toUpperCase() ||
+        o.order_number?.toUpperCase() === clean.toUpperCase() ||
         o.trackingNumber?.toUpperCase() === clean.toUpperCase()
     );
 
-    if (localMatch) {
-      setFoundOrder(localMatch);
+    if (localMatch && localMatch.dbId) {
+      // Fetch full details from API for this order
+      try {
+        const res = await fetch(`/api/orders/${localMatch.dbId}`);
+        if (res.ok) {
+          const data = await res.json();
+          if (data?.order) {
+            const ord = data.order;
+            setFoundOrder(formatOrderForDisplay(ord, clean));
+            setIsLoading(false);
+            return;
+          }
+        }
+      } catch (_) {}
+
+      // If API fails, use local data
+      setFoundOrder({
+        ...localMatch,
+        timeline: buildTimeline(localMatch),
+      });
       setIsLoading(false);
       return;
     }
 
-    // 2. Query backend live API
+    // 2. Query backend API directly (same-origin)
     try {
-      const apiBase = getApiBase();
-      const res = await fetch(`${apiBase}/orders/${encodeURIComponent(clean)}`);
+      const res = await fetch(`/api/orders/${encodeURIComponent(clean)}`);
       if (res.ok) {
         const data = await res.json();
         if (data?.order) {
-          const ord = data.order;
-          const shipment = ord.shipments?.[0] || {};
-          const isDelivered = ord.status === 'delivered';
-          const isShipped = ['shipped', 'out_for_delivery', 'delivered'].includes(ord.status);
-          const isProcessing = ord.status !== 'cancelled';
-
-          const formatted = {
-            id: ord.order_number || ord.id,
-            orderNumber: ord.order_number || ord.id,
-            status: ord.status ? ord.status.charAt(0).toUpperCase() + ord.status.slice(1) : 'Processing',
-            carrier: shipment.courier_name || 'Shiprocket / BlueDart',
-            trackingNumber: shipment.awb_number || ord.order_number || clean,
-            estimatedDelivery: '3 - 5 Business Days',
-            deliveredDate: isDelivered ? new Date(ord.updated_at || ord.created_at).toLocaleDateString() : null,
-            items: (ord.order_items || []).map((it) => ({
-              id: it.id,
-              name: it.product_name || 'Handcrafted Ethnic Item',
-              quantity: it.quantity || 1,
-              price: it.price || 0,
-              image: it.product_image || '/products/shreenathji-statement-patch-1.jpg',
-            })),
-            shippingAddress: ord.shipping_address
-              ? `${ord.shipping_address.address_line1 || ''}, ${ord.shipping_address.city || ''} - ${ord.shipping_address.pincode || ''}`
-              : 'Delivery Address on file',
-            total: ord.total_amount || 0,
-            timeline: [
-              {
-                status: 'Order Placed & Confirmed',
-                description: 'Order received and verified by artisan workshop',
-                time: ord.created_at ? new Date(ord.created_at).toLocaleString() : 'Recent',
-                location: 'Trio Workshop Central',
-                completed: true,
-              },
-              {
-                status: 'Handcrafted Quality Check',
-                description: 'Inspected for embroidery perfection and safe packaging',
-                time: '',
-                location: 'Artisan Hub',
-                completed: isProcessing,
-              },
-              {
-                status: 'Handed to Courier',
-                description: `Dispatched via ${shipment.courier_name || 'Express Courier'}`,
-                time: '',
-                location: 'Sorting Facility',
-                completed: isShipped,
-              },
-              {
-                status: 'Delivered to Patron',
-                description: 'Safely delivered to shipping address',
-                time: isDelivered ? new Date(ord.updated_at || ord.created_at).toLocaleString() : '',
-                location: ord.shipping_address?.city || 'Destination',
-                completed: isDelivered,
-              },
-            ],
-          };
-
-          setFoundOrder(formatted);
+          setFoundOrder(formatOrderForDisplay(data.order, clean));
           setIsLoading(false);
           return;
         }
       }
     } catch (err) {
-      console.warn('Live order tracking notice:', err);
+      console.warn('Order tracking API error:', err);
     }
 
-    // 3. Fallback to mock search if exists
-    const fallback = getOrderByTrackingOrId(clean);
-    setFoundOrder(fallback || null);
+    // 3. Try tracking by AWB via shipping API
+    try {
+      const res = await fetch(`/api/shipping/track?awb=${encodeURIComponent(clean)}`);
+      if (res.ok) {
+        const data = await res.json();
+        if (data?.tracking) {
+          setFoundOrder({
+            id: clean,
+            orderNumber: clean,
+            status: data.tracking?.current_status || 'In Transit',
+            carrier: data.tracking?.courier_name || 'Shiprocket',
+            trackingNumber: clean,
+            estimatedDelivery: data.tracking?.etd || '3 - 5 Business Days',
+            items: [],
+            shippingAddress: 'Check email for address details',
+            total: 0,
+            timeline: [
+              {
+                status: 'Shipment Tracked via AWB',
+                description: data.tracking?.current_status || 'Package is in transit',
+                time: new Date().toLocaleString('en-IN'),
+                location: data.tracking?.current_city || '',
+                completed: true,
+              },
+            ],
+          });
+          setIsLoading(false);
+          return;
+        }
+      }
+    } catch (_) {}
+
+    // Not found
+    setFoundOrder(null);
     setIsLoading(false);
+  };
+
+  const formatOrderForDisplay = (ord, searchQuery) => {
+    const rawStatus = (ord.status || 'pending').toLowerCase();
+    const shipment = ord.shipments?.[0] || {};
+    const displayStatus = STATUS_DISPLAY[rawStatus] || ord.status || 'Processing';
+
+    return {
+      id: ord.order_number || ord.id,
+      orderNumber: ord.order_number || ord.id,
+      status: displayStatus,
+      rawStatus,
+      carrier: shipment.courier_name || 'Shiprocket / BlueDart',
+      trackingNumber: shipment.awb_number || ord.order_number || searchQuery,
+      estimatedDelivery: ord.estimated_delivery
+        ? new Date(ord.estimated_delivery).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })
+        : '3 - 5 Business Days',
+      deliveredDate: rawStatus === 'delivered'
+        ? new Date(ord.updated_at || ord.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })
+        : null,
+      items: (ord.order_items || []).map((it) => ({
+        id: it.id,
+        name: it.product_name || it.name || 'Handcrafted Ethnic Item',
+        quantity: it.quantity || 1,
+        price: it.price || 0,
+        image: it.product_image || it.image || '/products/pearl-zardosi-patch-1.jpg',
+      })),
+      shippingAddress: ord.shipping_address || {},
+      total: Number(ord.total || ord.total_amount || 0),
+      paymentMethod: ord.payment_method,
+      timeline: buildTimeline(ord),
+    };
   };
 
   useEffect(() => {
@@ -141,6 +272,19 @@ export default function OrderTrackingClient() {
       router.push(`/track-order?id=${encodeURIComponent(searchInput.trim())}`);
       performTracking(searchInput.trim());
     }
+  };
+
+  const renderAddress = (addr) => {
+    if (!addr) return 'Delivery address on file';
+    if (typeof addr === 'string') return addr;
+    const parts = [
+      addr.name,
+      addr.address || addr.address_line1,
+      addr.city,
+      addr.state,
+      addr.zip || addr.pincode || addr.pinCode,
+    ].filter(Boolean);
+    return parts.join(', ') || 'Delivery address on file';
   };
 
   return (
@@ -177,64 +321,90 @@ export default function OrderTrackingClient() {
           <button
             type="submit"
             disabled={isLoading}
-            className="btn-primary py-3 px-6 text-xs uppercase tracking-wider font-bold shrink-0 disabled:opacity-60"
+            className="btn-primary py-3 px-6 text-xs uppercase tracking-wider font-bold shrink-0 disabled:opacity-60 flex items-center gap-1.5"
           >
-            {isLoading ? 'Searching...' : 'Track'}
+            {isLoading ? (
+              <><Loader2 className="w-3.5 h-3.5 animate-spin" /> Searching...</>
+            ) : (
+              'Track'
+            )}
           </button>
         </form>
       </div>
 
+      {/* Loading State */}
+      {isLoading && (
+        <div className="ethnic-card p-12 rounded-3xl text-center space-y-3 animate-pulse">
+          <Loader2 className="w-8 h-8 text-gold-600 animate-spin mx-auto" />
+          <p className="text-xs text-stone-500 font-medium">Fetching tracking details from our systems...</p>
+        </div>
+      )}
+
       {/* Tracking Results */}
-      {foundOrder ? (
+      {!isLoading && foundOrder ? (
         <div className="space-y-6 animate-fade-in">
           
-          {/* Status Header Pill */}
+          {/* Status Header */}
           <div className="ethnic-card p-6 sm:p-8 rounded-3xl space-y-4">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-gold-500/20">
               <div className="space-y-1">
-                <div className="flex items-center gap-2.5">
+                <div className="flex items-center gap-2.5 flex-wrap">
                   <span className="font-serif font-black text-xl text-stone-900 dark:text-ivory-100">
                     Order {foundOrder.id || foundOrder.orderNumber}
                   </span>
                   <span
                     className={`badge-ribbon ${
-                      foundOrder.status?.toLowerCase() === 'delivered'
-                        ? 'bg-emerald-700 text-white'
-                        : 'bg-amber-600 text-white'
+                      STATUS_BADGE_CLASS[foundOrder.rawStatus] || 'bg-amber-600 text-white'
                     }`}
                   >
                     {foundOrder.status}
                   </span>
                 </div>
                 <p className="text-xs text-stone-500">
-                  Carrier: <strong>{foundOrder.carrier || 'Shiprocket / BlueDart'}</strong> • Tracking ID: <strong className="font-mono text-maroon-800 dark:text-gold-400">{foundOrder.trackingNumber}</strong>
+                  Carrier: <strong>{foundOrder.carrier}</strong> • Tracking ID: <strong className="font-mono text-maroon-800 dark:text-gold-400">{foundOrder.trackingNumber}</strong>
                 </p>
               </div>
 
               <div className="p-3 rounded-2xl bg-ivory-100 dark:bg-stone-900 border border-gold-500/20 text-right">
                 <span className="text-[10px] uppercase font-bold text-stone-500 block">
-                  {foundOrder.status?.toLowerCase() === 'delivered' ? 'Delivered On' : 'Estimated Delivery'}
+                  {foundOrder.rawStatus === 'delivered' ? 'Delivered On' : foundOrder.rawStatus === 'cancelled' ? 'Status' : 'Estimated Delivery'}
                 </span>
-                <span className="font-serif font-bold text-sm text-maroon-800 dark:text-gold-400">
-                  {foundOrder.deliveredDate || foundOrder.estimatedDelivery || '3 - 5 Days'}
+                <span className={`font-serif font-bold text-sm ${
+                  foundOrder.rawStatus === 'cancelled' ? 'text-rose-700' : 'text-maroon-800 dark:text-gold-400'
+                }`}>
+                  {foundOrder.rawStatus === 'cancelled' ? 'Cancelled' : (foundOrder.deliveredDate || foundOrder.estimatedDelivery || '3 - 5 Days')}
                 </span>
               </div>
             </div>
+
+            {/* Cancelled Banner */}
+            {foundOrder.rawStatus === 'cancelled' && (
+              <div className="p-3 rounded-xl bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-800/40 flex items-center gap-2.5 text-xs">
+                <Ban className="w-4 h-4 text-rose-600 shrink-0" />
+                <span className="text-rose-800 dark:text-rose-300 font-medium">
+                  This order has been cancelled. Any applicable refund will be processed within 5-7 business days.
+                </span>
+              </div>
+            )}
 
             {/* Visual Timeline Stepper */}
             <div className="pt-4 space-y-8">
               <div className="relative pl-6 sm:pl-8 space-y-8 before:absolute before:left-2.5 sm:before:left-3.5 before:top-2 before:bottom-2 before:w-0.5 before:bg-gold-500/30">
                 {foundOrder.timeline?.map((step, idx) => (
                   <div key={idx} className="relative flex items-start gap-4">
-                    {/* Step Circle Indicator */}
+                    {/* Step Circle */}
                     <div
                       className={`absolute -left-6 sm:-left-8 w-6 h-6 sm:w-7 sm:h-7 rounded-full flex items-center justify-center border-2 transition-all ${
-                        step.completed
+                        step.isCancelled
+                          ? 'bg-rose-600 border-rose-400 text-white shadow-md'
+                          : step.completed
                           ? 'bg-emerald-600 border-emerald-400 text-white shadow-md'
                           : 'bg-white dark:bg-stone-900 border-stone-300 dark:border-stone-700 text-stone-400'
                       }`}
                     >
-                      {step.completed ? (
+                      {step.isCancelled ? (
+                        <Ban className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+                      ) : step.completed ? (
                         <CheckCircle2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                       ) : (
                         <Clock className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
@@ -246,7 +416,9 @@ export default function OrderTrackingClient() {
                       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
                         <h4
                           className={`font-serif font-bold text-sm ${
-                            step.completed
+                            step.isCancelled
+                              ? 'text-rose-700 dark:text-rose-400'
+                              : step.completed
                               ? 'text-stone-900 dark:text-ivory-100'
                               : 'text-stone-400 dark:text-stone-600'
                           }`}
@@ -279,27 +451,29 @@ export default function OrderTrackingClient() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             
             {/* Items in Consignment */}
-            <div className="ethnic-card p-6 rounded-3xl space-y-4">
-              <h4 className="font-serif font-bold text-sm text-stone-900 dark:text-ivory-100 flex items-center gap-2">
-                <Package className="w-4 h-4 text-gold-600" /> Items in this Consignment
-              </h4>
-              <div className="divide-y divide-gold-500/10 max-h-60 overflow-y-auto">
-                {foundOrder.items?.map((item, idx) => (
-                  <div key={idx} className="py-2.5 flex items-center gap-3">
-                    {item.image && (
-                      <img src={item.image} alt={item.name} className="w-10 h-10 rounded-xl object-cover border border-gold-500/20" />
-                    )}
-                    <div className="flex-1 min-w-0">
-                      <p className="text-xs font-bold text-stone-900 dark:text-ivory-100 truncate">{item.name}</p>
-                      <p className="text-[11px] text-stone-400">Qty: {item.quantity}</p>
+            {foundOrder.items?.length > 0 && (
+              <div className="ethnic-card p-6 rounded-3xl space-y-4">
+                <h4 className="font-serif font-bold text-sm text-stone-900 dark:text-ivory-100 flex items-center gap-2">
+                  <Package className="w-4 h-4 text-gold-600" /> Items in this Consignment
+                </h4>
+                <div className="divide-y divide-gold-500/10 max-h-60 overflow-y-auto">
+                  {foundOrder.items.map((item, idx) => (
+                    <div key={idx} className="py-2.5 flex items-center gap-3">
+                      {item.image && (
+                        <img src={item.image} alt={item.name} className="w-10 h-10 rounded-xl object-cover border border-gold-500/20" />
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs font-bold text-stone-900 dark:text-ivory-100 truncate">{item.name}</p>
+                        <p className="text-[11px] text-stone-400">Qty: {item.quantity}</p>
+                      </div>
+                      <span className="text-xs font-bold font-mono text-maroon-800 dark:text-gold-400">
+                        ₹{Number(item.price || 0).toLocaleString('en-IN')}
+                      </span>
                     </div>
-                    <span className="text-xs font-bold font-mono text-maroon-800 dark:text-gold-400">
-                      ₹{Number(item.price || 0).toLocaleString('en-IN')}
-                    </span>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
-            </div>
+            )}
 
             {/* Delivery Destination */}
             <div className="ethnic-card p-6 rounded-3xl space-y-4">
@@ -307,15 +481,23 @@ export default function OrderTrackingClient() {
                 <MapPin className="w-4 h-4 text-gold-600" /> Delivery Address
               </h4>
               <p className="text-xs text-stone-600 dark:text-stone-300 leading-relaxed">
-                {typeof foundOrder.shippingAddress === 'string'
-                  ? foundOrder.shippingAddress
-                  : `${foundOrder.shippingAddress?.address_line1 || ''}, ${foundOrder.shippingAddress?.city || ''}`}
+                {renderAddress(foundOrder.shippingAddress)}
               </p>
-              <div className="pt-3 border-t border-gold-500/10 flex justify-between items-center text-xs">
-                <span className="text-stone-400">Total Order Value:</span>
-                <span className="font-serif font-bold text-base text-maroon-800 dark:text-gold-400">
-                  ₹{Number(foundOrder.total || 0).toLocaleString('en-IN')}
-                </span>
+              <div className="pt-3 border-t border-gold-500/10 space-y-2">
+                <div className="flex justify-between items-center text-xs">
+                  <span className="text-stone-400">Payment:</span>
+                  <span className="font-bold text-stone-700 dark:text-stone-200 uppercase">
+                    {foundOrder.paymentMethod === 'cod' ? 'Cash on Delivery' : foundOrder.paymentMethod === 'razorpay' ? 'Razorpay Online' : (foundOrder.paymentMethod || 'Prepaid')}
+                  </span>
+                </div>
+                <div className="flex justify-between items-center text-xs">
+                  <span className="text-stone-400">Total Order Value:</span>
+                  <span className={`font-serif font-bold text-base ${
+                    foundOrder.rawStatus === 'cancelled' ? 'text-rose-700 line-through' : 'text-maroon-800 dark:text-gold-400'
+                  }`}>
+                    ₹{Number(foundOrder.total || 0).toLocaleString('en-IN')}
+                  </span>
+                </div>
               </div>
             </div>
 
