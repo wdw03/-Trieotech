@@ -4,13 +4,15 @@ import { blogs as fallbackBlogs } from '../../data/blogs';
 
 /**
  * Returns the active API base URL.
- * Defaults to live backend at https://treobackend.vercel.app/api or local /api.
+ * In browser, always uses same-origin '/api' for zero CORS and seamless Next.js API routing.
  */
 export function getApiBase() {
   if (typeof window !== 'undefined') {
-    return process.env.NEXT_PUBLIC_API_URL || 'https://treobackend.vercel.app/api';
+    return process.env.NEXT_PUBLIC_API_URL || '/api';
   }
-  return process.env.NEXT_PUBLIC_API_URL || 'https://treobackend.vercel.app/api';
+  return process.env.NEXT_PUBLIC_SITE_URL
+    ? `${process.env.NEXT_PUBLIC_SITE_URL}/api`
+    : (process.env.NEXT_PUBLIC_API_URL || '/api');
 }
 
 /**

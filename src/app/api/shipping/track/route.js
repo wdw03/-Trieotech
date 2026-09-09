@@ -11,8 +11,16 @@ export async function GET(request) {
     const orderNumber = searchParams.get('orderNumber');
 
     if (awb) {
-      const tracking = await trackShipment(awb);
-      return NextResponse.json({ tracking });
+      try {
+        const tracking = await trackShipment(awb);
+        return NextResponse.json({ tracking });
+      } catch (shipErr) {
+        // AWB was not found or Shiprocket unavailable
+        return NextResponse.json({
+          tracking: null,
+          message: 'No shipment details found for this AWB number'
+        });
+      }
     }
 
     if (orderNumber) {
@@ -24,7 +32,7 @@ export async function GET(request) {
         .single();
 
       if (!order) {
-        return NextResponse.json({ error: 'Order not found' }, { status: 404 });
+        return NextResponse.json({ tracking: null, error: 'Order not found' }, { status: 404 });
       }
 
       const { data: shipment } = await supabaseAdmin
@@ -39,18 +47,25 @@ export async function GET(request) {
         });
       }
 
-      if (shipment.awb_number) {
-        const tracking = await trackShipment(shipment.awb_number);
-        return NextResponse.json({ tracking, shipment });
-      }
+      try {
+        if (shipment.awb_number) {
+          const tracking = await trackShipment(shipment.awb_number);
+          return NextResponse.json({ tracking, shipment });
+        }
 
-      const tracking = await trackByOrderId(shipment.shiprocket_order_id);
-      return NextResponse.json({ tracking, shipment });
+        const tracking = await trackByOrderId(shipment.shiprocket_order_id);
+        return NextResponse.json({ tracking, shipment });
+      } catch (shipErr) {
+        return NextResponse.json({
+          tracking: { status: 'processing', message: 'Shipment is being prepared by workshop' },
+          shipment,
+        });
+      }
     }
 
-    return NextResponse.json({ error: 'Provide awb or orderNumber' }, { status: 400 });
+    return NextResponse.json({ tracking: null, error: 'Provide awb or orderNumber' }, { status: 400 });
   } catch (err) {
-    console.error('Tracking error:', err);
-    return NextResponse.json({ error: 'Tracking unavailable' }, { status: 500 });
+    console.warn('Tracking query error:', err);
+    return NextResponse.json({ tracking: null, message: 'Tracking service currently unavailable' });
   }
 }
