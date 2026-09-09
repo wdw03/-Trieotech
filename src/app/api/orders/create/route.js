@@ -6,6 +6,7 @@ import { createRazorpayOrder, RAZORPAY_KEY_ID } from '../../../../lib/razorpay';
 import { sendOrderConfirmation } from '../../../../lib/resend';
 import { isCodAvailableForPincode } from '../../../../lib/codPincodes';
 import { evaluateCouponEligibility } from '../../../../lib/couponHelper';
+import { calculateDynamicShipping } from '../../../../lib/shiprocket';
 
 export async function POST(request) {
   try {
@@ -139,13 +140,7 @@ export async function POST(request) {
       }
     }
 
-    // 5. Calculate shipping
-    const shippingCost = subtotal >= 999 ? 0 : 70;
-
-    // 6. Calculate total
-    const total = Math.max(0, subtotal - discount + shippingCost);
-
-    // 7. Get shipping address
+    // 5. Get shipping address
     let shippingAddress = null;
 
     if (body.shippingAddress) {
@@ -184,6 +179,39 @@ export async function POST(request) {
     if (!shippingAddress) {
       return NextResponse.json({ error: 'Valid shipping address required' }, { status: 400 });
     }
+
+    // 6. Calculate dynamic shipping fee via Shiprocket for the delivery pincode
+    const deliveryPin = shippingAddress.pincode?.toString().replace(/\D/g, '').slice(0, 6);
+    let shippingCost = 70;
+
+    if (deliveryPin && deliveryPin.length === 6) {
+      try {
+        const srRates = await calculateDynamicShipping(deliveryPin, {
+          weight: Math.max(0.5, validatedItems.reduce((acc, i) => acc + (i.quantity * 0.2), 0)),
+          cod: paymentMethod === 'cod',
+        });
+
+        if (srRates?.available && typeof srRates?.shippingFee === 'number') {
+          if (deliveryMethod === 'express' && srRates.expressRate) {
+            shippingCost = srRates.expressRate;
+          } else {
+            shippingCost = srRates.standardRate || srRates.shippingFee;
+          }
+        } else if (typeof body.shippingCost === 'number') {
+          shippingCost = Math.max(0, Number(body.shippingCost));
+        }
+      } catch (shipErr) {
+        console.warn('Shiprocket rate lookup fallback in order create:', shipErr?.message);
+        if (typeof body.shippingCost === 'number') {
+          shippingCost = Math.max(0, Number(body.shippingCost));
+        }
+      }
+    } else if (typeof body.shippingCost === 'number') {
+      shippingCost = Math.max(0, Number(body.shippingCost));
+    }
+
+    // 7. Calculate total
+    const total = Math.max(0, subtotal - discount + shippingCost);
 
     // 8. Generate unique order number
     const orderNumber = `TRIO-${Date.now().toString().slice(-5)}${Math.floor(Math.random() * 100)}`;

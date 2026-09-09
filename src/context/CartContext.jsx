@@ -41,6 +41,51 @@ export const CartProvider = ({ children }) => {
   const [couponLoading, setCouponLoading] = useState(false);
   const [availableCoupons, setAvailableCoupons] = useState(Object.values(COUPONS));
 
+  // Dynamic Shiprocket Shipping State
+  const [shippingPincode, setShippingPincode] = useState(() => {
+    try {
+      return localStorage.getItem('trio_pincode') || '';
+    } catch {
+      return '';
+    }
+  });
+  const [shippingDetails, setShippingDetails] = useState(null);
+  const [isCalculatingShipping, setIsCalculatingShipping] = useState(false);
+
+  const fetchShippingRate = async (pincode, options = {}) => {
+    const cleanPin = String(pincode || '').trim().replace(/\D/g, '').slice(0, 6);
+    if (!cleanPin || cleanPin.length !== 6) {
+      return { success: false, message: 'Please enter a valid 6-digit delivery pincode' };
+    }
+
+    setIsCalculatingShipping(true);
+    try {
+      const res = await fetch(`/api/shipping/rates?pincode=${cleanPin}&weight=${options.weight || 0.5}&cod=${options.cod ? '1' : '0'}`);
+      const data = await res.json();
+      if (data && data.available) {
+        setShippingDetails(data);
+        setShippingPincode(cleanPin);
+        try {
+          localStorage.setItem('trio_pincode', cleanPin);
+        } catch (_) {}
+        return { success: true, data };
+      } else {
+        return { success: false, message: data.message || 'Pincode not serviceable' };
+      }
+    } catch (err) {
+      console.warn('Failed to fetch shipping rate:', err);
+      return { success: false, message: 'Failed to calculate shipping rate' };
+    } finally {
+      setIsCalculatingShipping(false);
+    }
+  };
+
+  useEffect(() => {
+    if (shippingPincode && shippingPincode.length === 6 && !shippingDetails) {
+      fetchShippingRate(shippingPincode);
+    }
+  }, [shippingPincode]);
+
   // Fetch live available coupons from database
   useEffect(() => {
     let isMounted = true;
@@ -362,8 +407,11 @@ export const CartProvider = ({ children }) => {
 
   const shipping = useMemo(() => {
     if (subtotal === 0) return 0;
-    return subtotal >= 999 ? 0 : 70;
-  }, [subtotal]);
+    if (shippingDetails && typeof shippingDetails.shippingFee === 'number') {
+      return shippingDetails.shippingFee;
+    }
+    return 70;
+  }, [subtotal, shippingDetails]);
 
   const total = useMemo(() => {
     if (subtotal === 0) return 0;
@@ -386,6 +434,12 @@ export const CartProvider = ({ children }) => {
         shipping,
         total,
         freeShippingRemaining,
+        shippingPincode,
+        setShippingPincode,
+        shippingDetails,
+        setShippingDetails,
+        isCalculatingShipping,
+        fetchShippingRate,
         appliedCoupon,
         couponError,
         setCouponError,

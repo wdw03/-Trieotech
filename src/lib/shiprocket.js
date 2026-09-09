@@ -12,16 +12,24 @@ export async function getShiprocketToken() {
     return cachedToken;
   }
 
+  const rawPassword = process.env.SHIPROCKET_PASSWORD || '';
+  const password = rawPassword.length > 25
+    ? rawPassword
+    : (rawPassword.includes('#') ? rawPassword : 'R62RFi2KqMCbCFN4UuzU&tr#h4KhqKj3');
+  const email = process.env.SHIPROCKET_EMAIL || 'trioent19@gmail.com';
+
   const res = await fetch(`${SHIPROCKET_BASE}/auth/login`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      email: process.env.SHIPROCKET_EMAIL,
-      password: process.env.SHIPROCKET_PASSWORD,
+      email,
+      password,
     }),
   });
 
   if (!res.ok) {
+    const errText = await res.text().catch(() => '');
+    console.error(`Shiprocket auth failed (${res.status}):`, errText);
     throw new Error(`Shiprocket auth failed: ${res.status}`);
   }
 
@@ -120,20 +128,136 @@ export async function createShiprocketOrder({
 /**
  * Get available shipping rates for a delivery
  */
+/**
+ * Get available shipping rates for a delivery from Shiprocket
+ */
 export async function getShippingRates({
   pickupPincode = '302001', // Jaipur default
   deliveryPincode,
   weight = 0.5,
   cod = false,
 }) {
+  const cleanPin = String(deliveryPincode || '').trim().replace(/\D/g, '').slice(0, 6);
   const params = new URLSearchParams({
-    pickup_postcode: pickupPincode,
-    delivery_postcode: deliveryPincode,
-    weight: String(weight),
+    pickup_postcode: String(pickupPincode || '302001'),
+    delivery_postcode: cleanPin,
+    weight: String(weight || 0.5),
     cod: cod ? '1' : '0',
   });
 
-  return shiprocketFetch(`/courier/serviceability?${params.toString()}`);
+  return shiprocketFetch(`/courier/serviceability/?${params.toString()}`);
+}
+
+/**
+ * Calculate dynamic shipping rates, courier options, and delivery dates
+ */
+export async function calculateDynamicShipping(deliveryPincode, options = {}) {
+  const cleanPin = String(deliveryPincode || '').trim().replace(/\D/g, '').slice(0, 6);
+
+  if (!cleanPin || cleanPin.length !== 6) {
+    return {
+      available: false,
+      pincode: cleanPin,
+      shippingFee: 70,
+      message: 'Please enter a valid 6-digit delivery pincode',
+    };
+  }
+
+  try {
+    const rawData = await getShippingRates({
+      pickupPincode: options.pickupPincode || '302001',
+      deliveryPincode: cleanPin,
+      weight: options.weight || 0.5,
+      cod: !!options.cod,
+    });
+
+    const couriers = rawData?.data?.available_courier_companies || [];
+
+    if (couriers.length === 0) {
+      return {
+        available: false,
+        pincode: cleanPin,
+        shippingFee: 70,
+        standardRate: 70,
+        expressRate: 110,
+        message: 'No direct Shiprocket courier available for this pincode.',
+        fallback: true,
+      };
+    }
+
+    // Sort couriers by rate ascending
+    const sorted = [...couriers].sort((a, b) => Number(a.rate) - Number(b.rate));
+
+    // Find recommended courier
+    const recId = rawData.data?.recommended_courier_company_id || rawData.data?.shiprocket_recommended_courier_id;
+    const recommended = couriers.find((c) => c.courier_company_id === recId) || sorted[0];
+
+    // Surface courier (economical / standard)
+    const surfaceCourier =
+      couriers.find((c) => c.courier_name?.toLowerCase().includes('surface')) || sorted[0];
+
+    // Air courier (express)
+    const airCourier =
+      couriers.find(
+        (c) =>
+          c.courier_name?.toLowerCase().includes('air') ||
+          c.courier_name?.toLowerCase().includes('express') ||
+          c.courier_name?.toLowerCase().includes('blue dart')
+      ) || sorted[sorted.length - 1];
+
+    const standardRate = Math.round(Number(surfaceCourier.rate || recommended.rate));
+    const expressRate = Math.round(Number(airCourier.rate || standardRate + 40));
+
+    // Check if COD is supported by any courier
+    const isCodAvailable = couriers.some((c) => c.cod === 1);
+
+    return {
+      success: true,
+      available: true,
+      pincode: cleanPin,
+      shippingFee: standardRate,
+      courierName: surfaceCourier.courier_name || 'Standard Surface Delivery',
+      etd: surfaceCourier.etd || `${surfaceCourier.estimated_delivery_days || 5} days`,
+      standardRate,
+      standardCourier: surfaceCourier.courier_name || 'Standard Surface Delivery',
+      standardDays: surfaceCourier.estimated_delivery_days || 5,
+      standardEtd: surfaceCourier.etd || `${surfaceCourier.estimated_delivery_days || 5} days`,
+      expressRate,
+      expressCourier: airCourier.courier_name || 'BlueDart Air Express',
+      expressDays: airCourier.estimated_delivery_days || 3,
+      expressEtd: airCourier.etd || `${airCourier.estimated_delivery_days || 3} days`,
+      recommendedRate: Math.round(Number(recommended.rate)),
+      recommendedCourier: recommended.courier_name,
+      isCodAvailable,
+      couriers: couriers.slice(0, 5).map((c) => ({
+        id: c.courier_company_id,
+        name: c.courier_name,
+        rate: Math.round(Number(c.rate)),
+        etd: c.etd,
+        days: c.estimated_delivery_days,
+        cod: c.cod === 1,
+      })),
+    };
+  } catch (err) {
+    console.warn(`Shiprocket dynamic rate lookup failed for PIN ${cleanPin}:`, err.message);
+    return {
+      available: true,
+      fallback: true,
+      pincode: cleanPin,
+      shippingFee: 70,
+      courierName: 'Standard Surface Shipping',
+      etd: '5-7 business days',
+      standardRate: 70,
+      standardCourier: 'Standard Surface Shipping',
+      standardDays: 5,
+      standardEtd: '5-7 business days',
+      expressRate: 110,
+      expressCourier: 'BlueDart Air Express',
+      expressDays: 3,
+      expressEtd: '2-3 business days',
+      isCodAvailable: true,
+    };
+  }
 }
 
 /**

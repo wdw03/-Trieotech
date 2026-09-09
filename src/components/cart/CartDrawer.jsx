@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { X, Trash2, Plus, Minus, ShoppingBag, ArrowRight, Tag, Sparkles, ShieldCheck, Check, AlertCircle, Loader2 } from 'lucide-react';
+import { X, Trash2, Plus, Minus, ShoppingBag, ArrowRight, Tag, Sparkles, ShieldCheck, Check, AlertCircle, Loader2, Truck } from 'lucide-react';
 import { useCart } from '../../context/CartContext';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
@@ -23,6 +23,10 @@ export const CartDrawer = () => {
     shipping,
     total,
     freeShippingRemaining,
+    shippingPincode,
+    shippingDetails,
+    isCalculatingShipping,
+    fetchShippingRate,
     appliedCoupon,
     couponError,
     couponLoading,
@@ -36,7 +40,14 @@ export const CartDrawer = () => {
   } = useCart();
 
   const [couponInput, setCouponInput] = useState('');
+  const [pincodeInput, setPincodeInput] = useState(shippingPincode || '');
   const [allProducts, setAllProducts] = useState(() => fallbackProducts.map(normalizeProduct));
+
+  useEffect(() => {
+    if (shippingPincode) {
+      setPincodeInput(shippingPincode);
+    }
+  }, [shippingPincode]);
 
   useEffect(() => {
     let isMounted = true;
@@ -342,6 +353,55 @@ export const CartDrawer = () => {
               </div>
             )}
 
+            {/* Dynamic Shipping Pincode Estimator */}
+            <div className="p-2.5 rounded-xl bg-white dark:bg-stone-800/80 border border-gold-500/20 space-y-2">
+              <div className="flex items-center justify-between text-xs">
+                <div className="flex items-center gap-1.5 font-bold text-stone-800 dark:text-ivory-100">
+                  <Truck className="w-3.5 h-3.5 text-gold-600" />
+                  <span>Delivery Pincode</span>
+                </div>
+                {shippingDetails?.courierName && (
+                  <span className="text-[10px] text-stone-500 dark:text-stone-400 truncate max-w-[150px]">
+                    via {shippingDetails.courierName}
+                  </span>
+                )}
+              </div>
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  placeholder="Enter 6-digit Pincode"
+                  maxLength={6}
+                  value={pincodeInput}
+                  onChange={(e) => {
+                    const val = e.target.value.replace(/\D/g, '').slice(0, 6);
+                    setPincodeInput(val);
+                    if (val.length === 6) {
+                      fetchShippingRate(val);
+                    }
+                  }}
+                  className="flex-1 px-3 py-1.5 text-xs rounded-lg bg-stone-50 dark:bg-stone-900 border border-gold-500/30 text-stone-900 dark:text-ivory-100 outline-none focus:border-gold-500 font-mono"
+                />
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (pincodeInput.length === 6) {
+                      fetchShippingRate(pincodeInput);
+                    }
+                  }}
+                  disabled={pincodeInput.length !== 6 || isCalculatingShipping}
+                  className="px-3 py-1.5 rounded-lg bg-stone-900 dark:bg-gold-500 hover:bg-maroon-800 text-white dark:text-maroon-950 text-xs font-bold transition-colors disabled:opacity-50 flex items-center justify-center min-w-[55px]"
+                >
+                  {isCalculatingShipping ? <Loader2 className="w-3 h-3 animate-spin" /> : 'Check'}
+                </button>
+              </div>
+              {shippingDetails && (
+                <div className="flex items-center justify-between text-[11px] text-emerald-700 dark:text-emerald-400 font-medium">
+                  <span>{shippingDetails.courierName ? `${shippingDetails.courierName} (${shippingDetails.etd || '2-4 days'})` : 'Estimated Delivery'}</span>
+                  <span className="font-bold">{shippingDetails.shippingFee === 0 ? 'FREE' : `₹${shippingDetails.shippingFee}`}</span>
+                </div>
+              )}
+            </div>
+
             {/* Price Calculations */}
             <div className="space-y-1.5 text-xs text-stone-600 dark:text-stone-400">
               <div className="flex justify-between">
@@ -361,7 +421,10 @@ export const CartDrawer = () => {
                 </div>
               )}
               <div className="flex justify-between">
-                <span>Shipping</span>
+                <span className="flex items-center gap-1.5">
+                  Shipping
+                  {isCalculatingShipping && <Loader2 className="w-3 h-3 animate-spin text-gold-600" />}
+                </span>
                 <span>{shipping === 0 ? <strong className="text-emerald-600">FREE</strong> : `₹${shipping}`}</span>
               </div>
               <div className="flex justify-between text-sm font-serif font-extrabold text-stone-900 dark:text-ivory-100 pt-2 border-t border-gold-500/20">

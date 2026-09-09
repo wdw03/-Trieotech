@@ -55,6 +55,10 @@ export default function CheckoutClient() {
   // Payment Method State — Razorpay handles UPI/Card/NetBanking UI
   const [paymentMethod, setPaymentMethod] = useState('razorpay'); // 'razorpay' | 'cod'
 
+  // Shiprocket Dynamic Shipping Rates State
+  const [shippingRates, setShippingRates] = useState(null);
+  const [isLoadingShippingRates, setIsLoadingShippingRates] = useState(false);
+
   // COD Availability State (Unavailable by default)
   const [isCodAvailable, setIsCodAvailable] = useState(false);
   const [isCheckingCod, setIsCheckingCod] = useState(false);
@@ -81,7 +85,7 @@ export default function CheckoutClient() {
 
   const activePincode = activeShippingAddress?.zip || activeShippingAddress?.pincode || '';
 
-  // Check COD availability whenever the shipping pincode changes
+  // Check Shiprocket dynamic rates & COD availability whenever shipping pincode changes
   useEffect(() => {
     let isCancelled = false;
     const cleanPin = String(activePincode).trim().replace(/\D/g, '');
@@ -89,6 +93,7 @@ export default function CheckoutClient() {
     if (!cleanPin || cleanPin.length !== 6) {
       setIsCodAvailable(false);
       setCodStatusMessage('Please enter a valid 6-digit delivery pincode');
+      setShippingRates(null);
       if (paymentMethod === 'cod') {
         setPaymentMethod('razorpay');
       }
@@ -96,37 +101,44 @@ export default function CheckoutClient() {
     }
 
     setIsCheckingCod(true);
-    fetch(`/api/shipping/cod-check?pincode=${cleanPin}`)
+    setIsLoadingShippingRates(true);
+
+    fetch(`/api/shipping/rates?pincode=${cleanPin}&cod=${paymentMethod === 'cod' ? '1' : '0'}`)
       .then((res) => res.json())
       .then((data) => {
         if (!isCancelled) {
-          const available = !!data.available;
-          setIsCodAvailable(available);
-          setCodStatusMessage(data.message || (available ? 'COD is available' : 'COD is unavailable'));
-          if (!available && paymentMethod === 'cod') {
+          setShippingRates(data);
+          const codOk = data.isCodAvailable !== false;
+          setIsCodAvailable(codOk);
+          setCodStatusMessage(
+            codOk
+              ? `Cash on Delivery available via ${data.standardCourier || 'Shiprocket Logistics'}`
+              : `Cash on Delivery is unavailable for PIN ${cleanPin}. Prepaid is fully supported.`
+          );
+          if (!codOk && paymentMethod === 'cod') {
             setPaymentMethod('razorpay');
           }
         }
       })
-      .catch(() => {
-        if (!isCancelled) {
-          setIsCodAvailable(false);
-          setCodStatusMessage('COD is unavailable at this pincode');
-          if (paymentMethod === 'cod') {
-            setPaymentMethod('razorpay');
-          }
-        }
+      .catch((err) => {
+        console.warn('Shipping rate fetch error:', err);
       })
       .finally(() => {
         if (!isCancelled) {
           setIsCheckingCod(false);
+          setIsLoadingShippingRates(false);
         }
       });
 
     return () => {
       isCancelled = true;
     };
-  }, [activePincode]);
+  }, [activePincode, paymentMethod]);
+
+  const standardCost = typeof shippingRates?.standardRate === 'number' ? shippingRates.standardRate : shipping;
+  const expressCost = typeof shippingRates?.expressRate === 'number' ? shippingRates.expressRate : Math.round(standardCost + 40);
+  const effectiveShippingCost = deliveryMethod === 'express' ? expressCost : standardCost;
+  const finalTotal = Math.max(0, subtotal - couponDiscount + effectiveShippingCost);
 
   // Step Navigators
   const handleNextToDelivery = (e) => {
@@ -189,6 +201,7 @@ export default function CheckoutClient() {
           paymentMethod: isCod ? 'cod' : 'razorpay',
           couponCode: appliedCoupon?.code,
           items: cartItems,
+          shippingCost: effectiveShippingCost,
         }),
       });
 
@@ -211,7 +224,7 @@ export default function CheckoutClient() {
           date: new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' }),
           status: "Confirmed",
           trackingNumber,
-          carrier: "BlueDart Express Courier",
+          carrier: shippingRates?.standardCourier || "Shiprocket Express Courier",
           items: cartItems.map(item => ({
             productId: item.productId || item.id,
             name: item.name,
@@ -223,9 +236,9 @@ export default function CheckoutClient() {
           })),
           subtotal,
           discount: couponDiscount,
-          shipping,
+          shipping: effectiveShippingCost,
           tax: 0,
-          total,
+          total: finalTotal,
           shippingAddress: activeShippingAddress,
           paymentMethod: 'Cash on Delivery (COD)',
           estimatedDelivery: new Date(Date.now() + 4 * 86400000).toLocaleDateString('en-IN', {
@@ -547,11 +560,18 @@ export default function CheckoutClient() {
               </div>
 
               <div className="space-y-3">
+                {isLoadingShippingRates && (
+                  <div className="p-3 rounded-xl bg-gold-50/60 dark:bg-gold-950/20 border border-gold-500/30 flex items-center gap-2 text-xs text-gold-800 dark:text-gold-300 font-semibold animate-pulse">
+                    <Loader2 className="w-4 h-4 animate-spin text-gold-600" />
+                    <span>Checking live courier rates from Shiprocket for PIN {activePincode}...</span>
+                  </div>
+                )}
+
                 <label
                   className={`p-4 rounded-2xl border-2 cursor-pointer transition-all flex items-center justify-between ${
                     deliveryMethod === 'express'
-                      ? 'border-maroon-700 bg-maroon-50/50 dark:bg-maroon-950/30'
-                      : 'border-gold-500/20'
+                      ? 'border-maroon-700 bg-maroon-50/50 dark:bg-maroon-950/30 shadow-xs'
+                      : 'border-gold-500/20 hover:border-gold-500/40'
                   }`}
                 >
                   <div className="flex items-center gap-3.5">
@@ -565,25 +585,27 @@ export default function CheckoutClient() {
                     <div>
                       <div className="flex items-center gap-2">
                         <span className="font-bold text-xs sm:text-sm text-stone-900 dark:text-ivory-100">
-                          BlueDart Air Express Insured Courier
+                          {shippingRates?.expressCourier || 'BlueDart Air Express'}
                         </span>
                         <span className="text-[10px] bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded-full">
-                          Recommended
+                          Fastest Air
                         </span>
                       </div>
-                      <p className="text-[11px] text-stone-500">Delivered within 3-4 business days with real-time SMS tracking.</p>
+                      <p className="text-[11px] text-stone-500">
+                        Estimated delivery: {shippingRates?.expressEtd || '2-3 business days'} (Live via Shiprocket)
+                      </p>
                     </div>
                   </div>
-                  <span className="font-bold text-xs text-emerald-700 dark:text-emerald-400">
-                    {shipping === 0 ? 'FREE' : `₹${shipping}`}
+                  <span className="font-bold text-xs sm:text-sm text-maroon-800 dark:text-gold-400">
+                    ₹{expressCost}
                   </span>
                 </label>
 
                 <label
                   className={`p-4 rounded-2xl border-2 cursor-pointer transition-all flex items-center justify-between ${
                     deliveryMethod === 'standard'
-                      ? 'border-maroon-700 bg-maroon-50/50 dark:bg-maroon-950/30'
-                      : 'border-gold-500/20'
+                      ? 'border-maroon-700 bg-maroon-50/50 dark:bg-maroon-950/30 shadow-xs'
+                      : 'border-gold-500/20 hover:border-gold-500/40'
                   }`}
                 >
                   <div className="flex items-center gap-3.5">
@@ -595,14 +617,21 @@ export default function CheckoutClient() {
                       className="accent-maroon-700"
                     />
                     <div>
-                      <span className="font-bold text-xs sm:text-sm text-stone-900 dark:text-ivory-100">
-                        Standard Surface Shipping
-                      </span>
-                      <p className="text-[11px] text-stone-500">Delivered within 5-7 business days.</p>
+                      <div className="flex items-center gap-2">
+                        <span className="font-bold text-xs sm:text-sm text-stone-900 dark:text-ivory-100">
+                          {shippingRates?.standardCourier || 'Standard Surface Delivery'}
+                        </span>
+                        <span className="text-[10px] bg-stone-100 dark:bg-stone-800 text-stone-700 dark:text-stone-300 font-bold px-2 py-0.5 rounded-full">
+                          Economical
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-stone-500">
+                        Estimated delivery: {shippingRates?.standardEtd || '5-7 business days'} (Live via Shiprocket)
+                      </p>
                     </div>
                   </div>
-                  <span className="font-bold text-xs text-stone-500">
-                    {shipping === 0 ? 'FREE' : `₹${shipping}`}
+                  <span className="font-bold text-xs sm:text-sm text-stone-700 dark:text-stone-300">
+                    ₹{standardCost}
                   </span>
                 </label>
               </div>
@@ -861,7 +890,7 @@ export default function CheckoutClient() {
                   ) : (
                     <>
                       <Sparkles className="w-4 h-4" />
-                      <span>{paymentMethod === 'cod' ? 'Confirm COD Order' : 'Proceed to Payment'} (₹{total?.toLocaleString('en-IN')})</span>
+                      <span>{paymentMethod === 'cod' ? 'Confirm COD Order' : 'Proceed to Payment'} (₹{finalTotal?.toLocaleString('en-IN')})</span>
                     </>
                   )}
                 </button>
@@ -908,13 +937,26 @@ export default function CheckoutClient() {
                   Coupon <strong>{appliedCoupon.code}</strong> is not eligible for the items in this order.
                 </div>
               )}
-              <div className="flex justify-between">
-                <span>Shipping</span>
-                <span>{shipping === 0 ? <strong className="text-emerald-600">FREE</strong> : `₹${shipping}`}</span>
+              <div className="flex justify-between items-center">
+                <div className="flex flex-col">
+                  <span>Shipping Fee</span>
+                  <span className="text-[10px] text-stone-400">
+                    {deliveryMethod === 'express'
+                      ? (shippingRates?.expressCourier || 'Air Express')
+                      : (shippingRates?.standardCourier || 'Surface Shipping')}
+                  </span>
+                </div>
+                <span className="font-semibold text-stone-900 dark:text-ivory-100 flex items-center gap-1.5">
+                  {isLoadingShippingRates ? (
+                    <Loader2 className="w-3.5 h-3.5 animate-spin text-gold-600" />
+                  ) : (
+                    `₹${effectiveShippingCost}`
+                  )}
+                </span>
               </div>
               <div className="flex justify-between text-sm font-serif font-black text-stone-900 dark:text-ivory-100 pt-2 border-t border-gold-500/20">
                 <span>Total Due</span>
-                <span className="text-lg text-maroon-800 dark:text-gold-400">₹{total?.toLocaleString('en-IN')}</span>
+                <span className="text-lg text-maroon-800 dark:text-gold-400">₹{finalTotal?.toLocaleString('en-IN')}</span>
               </div>
             </div>
 

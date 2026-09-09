@@ -40,6 +40,10 @@ export default function CartClient() {
     shipping,
     total,
     freeShippingRemaining,
+    shippingPincode,
+    shippingDetails,
+    isCalculatingShipping,
+    fetchShippingRate,
     appliedCoupon,
     couponError,
     couponLoading,
@@ -53,7 +57,14 @@ export default function CartClient() {
   } = useCart();
 
   const [couponCodeInput, setCouponCodeInput] = useState('');
+  const [pincodeInput, setPincodeInput] = useState(shippingPincode || '');
   const [allProducts, setAllProducts] = useState(() => fallbackProducts.map(normalizeProduct));
+
+  React.useEffect(() => {
+    if (shippingPincode) {
+      setPincodeInput(shippingPincode);
+    }
+  }, [shippingPincode]);
 
   React.useEffect(() => {
     let isMounted = true;
@@ -362,6 +373,54 @@ export default function CartClient() {
               </div>
             </div>
 
+            {/* Dynamic Shipping Pincode Estimator */}
+            <div className="pt-3 border-t border-gold-500/20 space-y-2">
+              <div className="flex items-center justify-between text-xs">
+                <span className="font-bold text-stone-700 dark:text-stone-300 flex items-center gap-1.5">
+                  <Truck className="w-3.5 h-3.5 text-gold-600" /> Check Delivery &amp; Shipping
+                </span>
+                {shippingDetails?.courierName && (
+                  <span className="text-[10px] text-emerald-700 dark:text-emerald-400 font-semibold truncate max-w-[160px]">
+                    via {shippingDetails.courierName}
+                  </span>
+                )}
+              </div>
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  placeholder="Enter 6-digit Pincode"
+                  maxLength={6}
+                  value={pincodeInput}
+                  onChange={(e) => {
+                    const val = e.target.value.replace(/\D/g, '').slice(0, 6);
+                    setPincodeInput(val);
+                    if (val.length === 6) {
+                      fetchShippingRate(val);
+                    }
+                  }}
+                  className="flex-1 px-3 py-2 text-xs rounded-xl bg-ivory-100 dark:bg-stone-900 border border-gold-500/30 text-stone-900 dark:text-ivory-100 font-mono tracking-wider outline-none focus:border-gold-500"
+                />
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (pincodeInput.length === 6) {
+                      fetchShippingRate(pincodeInput);
+                    }
+                  }}
+                  disabled={pincodeInput.length !== 6 || isCalculatingShipping}
+                  className="px-4 py-2 rounded-xl bg-stone-900 dark:bg-gold-500 hover:bg-maroon-800 text-white dark:text-maroon-950 text-xs font-bold transition-colors disabled:opacity-50 flex items-center justify-center min-w-[65px]"
+                >
+                  {isCalculatingShipping ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : 'Check'}
+                </button>
+              </div>
+              {shippingDetails && (
+                <div className="flex items-center justify-between text-[11px] text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/30 p-2 rounded-lg border border-emerald-500/20">
+                  <span>{shippingDetails.courierName ? `${shippingDetails.courierName} (${shippingDetails.etd || '2-4 days'})` : 'Live Shiprocket Rate'}</span>
+                  <span className="font-bold">{shippingDetails.shippingFee === 0 ? 'FREE' : `₹${shippingDetails.shippingFee}`}</span>
+                </div>
+              )}
+            </div>
+
             {/* Price Calculations */}
             <div className="space-y-2.5 pt-3 border-t border-gold-500/20 text-xs text-stone-600 dark:text-stone-300">
               <div className="flex justify-between">
@@ -386,7 +445,10 @@ export default function CartClient() {
               )}
 
               <div className="flex justify-between">
-                <span>Shipping Fee</span>
+                <span className="flex items-center gap-1.5">
+                  Shipping Fee
+                  {isCalculatingShipping && <Loader2 className="w-3 h-3 animate-spin text-gold-600" />}
+                </span>
                 <span>
                   {shipping === 0 ? (
                     <strong className="text-emerald-600 dark:text-emerald-400">FREE EXPRESS</strong>
