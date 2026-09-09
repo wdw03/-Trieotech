@@ -391,9 +391,54 @@ export async function POST(request) {
       user_id: user.id,
     });
 
-    // DO NOT insert order into DB yet!
-    // The order will be saved to Supabase only after successful payment verification.
+    // Save pending order record in Supabase with status 'pending_payment'.
+    // NOTE: This remains HIDDEN from Admin Dashboard & Order History until payment is captured.
+    // This guarantees that if the browser crashes, phone dies, or tab closes after payment,
+    // the Razorpay Webhook or Reconciliation will immediately find and confirm this exact order!
+    const { data: pendingOrder, error: orderError } = await supabaseAdmin
+      .from('orders')
+      .insert({
+        user_id: user.id,
+        order_number: orderNumber,
+        status: 'pending_payment',
+        subtotal,
+        discount,
+        coupon_code: appliedCouponCode,
+        shipping_cost: shippingCost,
+        total,
+        payment_method: 'razorpay',
+        shipping_address: shippingAddress,
+        delivery_method: deliveryMethod || 'standard',
+        estimated_delivery: new Date(Date.now() + 5 * 86400000).toISOString().split('T')[0],
+      })
+      .select()
+      .single();
+
+    if (orderError || !pendingOrder) {
+      console.error('Failed to create pending order record:', orderError);
+      return NextResponse.json({ error: 'Failed to initialize order record' }, { status: 500 });
+    }
+
+    // Insert order items linked to pending order
+    await supabaseAdmin.from('order_items').insert(
+      validatedItems.map((item) => ({
+        order_id: pendingOrder.id,
+        ...item,
+      }))
+    );
+
+    // Insert initial payment record linking pendingOrder.id to razorpayOrder.id
+    await supabaseAdmin.from('payments').insert({
+      order_id: pendingOrder.id,
+      razorpay_order_id: razorpayOrder.id,
+      amount: total,
+      currency: 'INR',
+      status: 'created',
+      method: 'razorpay',
+    });
+
     const orderData = {
+      orderId: pendingOrder.id,
       userId: user.id,
       orderNumber,
       subtotal,
@@ -410,6 +455,7 @@ export async function POST(request) {
     // Return data needed for Razorpay Checkout
     return NextResponse.json({
       success: true,
+      orderId: pendingOrder.id,
       orderNumber,
       razorpayOrderId: razorpayOrder.id,
       amount: total,

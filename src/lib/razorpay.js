@@ -70,6 +70,20 @@ export async function fetchPayment(paymentId) {
 }
 
 /**
+ * Fetch order details from Razorpay
+ */
+export async function fetchOrder(orderId) {
+  return await razorpay.orders.fetch(orderId);
+}
+
+/**
+ * Fetch payments for a Razorpay order
+ */
+export async function fetchOrderPayments(orderId) {
+  return await razorpay.orders.fetchPayments(orderId);
+}
+
+/**
  * Initiate refund
  */
 export async function createRefund(paymentId, amount, notes = {}) {

@@ -63,13 +63,63 @@ export default function CheckoutClient() {
   const [isCodAvailable, setIsCodAvailable] = useState(false);
   const [isCheckingCod, setIsCheckingCod] = useState(false);
   const [codStatusMessage, setCodStatusMessage] = useState('');
+  const [isReconciling, setIsReconciling] = useState(false);
 
-  // If cart is empty, redirect
+  // Crash recovery & reconciliation:
+  // If user paid on Razorpay and page crashed/closed, detect pending transaction on mount
   useEffect(() => {
-    if (cartItems.length === 0) {
+    if (typeof window === 'undefined') return;
+    const pendingRaw = localStorage.getItem('trio_pending_checkout');
+    if (!pendingRaw) return;
+
+    try {
+      const pending = JSON.parse(pendingRaw);
+      const isRecent = pending.createdAt && (Date.now() - pending.createdAt) < 2 * 3600 * 1000;
+
+      if (isRecent && (pending.orderId || pending.razorpayOrderId)) {
+        setIsReconciling(true);
+        fetch('/api/payments/reconcile', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            orderId: pending.orderId,
+            razorpayOrderId: pending.razorpayOrderId,
+          }),
+        })
+          .then((res) => res.json())
+          .then((data) => {
+            if (data.success && data.status === 'confirmed') {
+              localStorage.removeItem('trio_pending_checkout');
+              clearCart();
+              addToast('Payment verified! Redirecting to your confirmed order...', 'success');
+              router.push(`/order-success/${data.orderNumber || data.orderId}`);
+            } else if (data.status === 'payment_failed') {
+              localStorage.removeItem('trio_pending_checkout');
+            }
+          })
+          .catch((err) => {
+            console.warn('Reconciliation check notice:', err);
+          })
+          .finally(() => {
+            setIsReconciling(false);
+          });
+      } else {
+        localStorage.removeItem('trio_pending_checkout');
+      }
+    } catch (_) {
+      localStorage.removeItem('trio_pending_checkout');
+    }
+  }, [router, clearCart, addToast]);
+
+  // If cart is empty, redirect (unless currently reconciling or having pending checkout)
+  useEffect(() => {
+    if (typeof window !== 'undefined' && localStorage.getItem('trio_pending_checkout')) {
+      return;
+    }
+    if (cartItems.length === 0 && !isReconciling) {
       router.push('/cart');
     }
-  }, [cartItems, router]);
+  }, [cartItems, router, isReconciling]);
 
   // Auth guard: redirect to login if not authenticated
   useEffect(() => {
@@ -258,7 +308,23 @@ export default function CheckoutClient() {
       }
 
       // Online Razorpay Flow
+      // Store pending checkout in localStorage so that if browser crashes or mobile kills the page after payment,
+      // the app will auto-reconcile and complete the order immediately upon returning!
+      if (typeof window !== 'undefined') {
+        localStorage.setItem(
+          'trio_pending_checkout',
+          JSON.stringify({
+            orderId: data.orderId,
+            orderNumber: data.orderNumber,
+            razorpayOrderId: data.razorpayOrderId,
+            amount: data.amount,
+            createdAt: Date.now(),
+          })
+        );
+      }
+
       setRazorpayData({
+        orderId: data.orderId,
         razorpayOrderId: data.razorpayOrderId,
         amount: data.amount,
         currency: data.currency || 'INR',
@@ -283,12 +349,12 @@ export default function CheckoutClient() {
     { num: 4, label: 'Review & Confirm', icon: CheckCircle2 }
   ];
 
-  if (loading || !user) {
+  if (loading || !user || isReconciling) {
     return (
       <div className="min-h-[60vh] flex flex-col items-center justify-center space-y-4 px-4">
         <Loader2 className="w-10 h-10 animate-spin text-gold-600" />
         <p className="font-serif text-stone-700 dark:text-ivory-100 text-sm font-semibold">
-          Verifying your account session...
+          {isReconciling ? 'Verifying your payment status with gateway...' : 'Verifying your account session...'}
         </p>
       </div>
     );
@@ -980,6 +1046,9 @@ export default function CheckoutClient() {
         <RazorpayCheckout
           {...razorpayData}
           onSuccess={(result) => {
+            if (typeof window !== 'undefined') {
+              localStorage.removeItem('trio_pending_checkout');
+            }
             const orderId = result.orderNumber || razorpayData.orderNumber || result.orderId;
             const trackingNumber = result.awbNumber || `BLUEDART-EXP-${Math.floor(10000000 + Math.random() * 90000000)}`;
             if (user && addOrder) {
@@ -1003,11 +1072,17 @@ export default function CheckoutClient() {
             router.push(`/order-success/${orderId}`);
           }}
           onFailure={(err) => {
+            if (typeof window !== 'undefined') {
+              localStorage.removeItem('trio_pending_checkout');
+            }
             setIsPlacingOrder(false);
             setRazorpayData(null);
             addToast(err?.error || 'Payment failed or cancelled. Please try again.', 'error');
           }}
           onDismiss={() => {
+            if (typeof window !== 'undefined') {
+              localStorage.removeItem('trio_pending_checkout');
+            }
             setIsPlacingOrder(false);
             setRazorpayData(null);
             addToast('Payment window closed.', 'info');
