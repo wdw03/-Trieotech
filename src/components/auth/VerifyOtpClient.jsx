@@ -16,7 +16,9 @@ import {
   Lock,
   User,
   AlertCircle,
-  ShieldCheck
+  ShieldCheck,
+  Eye,
+  EyeOff
 } from 'lucide-react';
 
 export default function VerifyOtpClient() {
@@ -26,6 +28,7 @@ export default function VerifyOtpClient() {
   const urlEmail = searchParams.get('email') || '';
   const urlOtp = searchParams.get('otp') || '';
   const urlToken = searchParams.get('token') || '';
+  const urlExpires = searchParams.get('expires') || '';
   const redirectParam = searchParams.get('redirect') || searchParams.get('next');
   // Redirect directly to main home page '/' on verification completion
   const redirectTo = (redirectParam && redirectParam !== '/profile') ? redirectParam : '/';
@@ -36,6 +39,7 @@ export default function VerifyOtpClient() {
   const [email, setEmail] = useState(urlEmail);
   const [otp, setOtp] = useState(urlOtp);
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
   const [signupData, setSignupData] = useState(null);
@@ -256,16 +260,28 @@ export default function VerifyOtpClient() {
               </label>
               <div className="relative">
                 <input
-                  type="password"
+                  type={showPassword ? 'text' : 'password'}
                   required
                   minLength={6}
                   placeholder="Min 6 characters"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   disabled={isVerifying}
-                  className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-ivory-100 dark:bg-stone-900 border border-gold-500/30 text-xs outline-none focus:border-maroon-700"
+                  className="w-full pl-10 pr-10 py-2.5 rounded-xl bg-ivory-100 dark:bg-stone-900 border border-gold-500/30 text-xs outline-none focus:border-maroon-700"
                 />
                 <Lock className="w-4 h-4 text-gold-600 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-700 dark:hover:text-stone-200 transition-colors p-1 cursor-pointer"
+                  aria-label={showPassword ? 'Hide password' : 'Show password'}
+                >
+                  {showPassword ? (
+                    <EyeOff className="w-4 h-4 text-gold-600" />
+                  ) : (
+                    <Eye className="w-4 h-4 text-gold-600" />
+                  )}
+                </button>
               </div>
             </div>
           )}

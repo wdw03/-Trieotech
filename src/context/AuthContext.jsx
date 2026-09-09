@@ -192,16 +192,26 @@ export const AuthProvider = ({ children }) => {
 
       // Automatically sign in with the newly verified credentials
       if (password) {
-        const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
-          email,
-          password,
-        });
-        if (signInError) {
-          console.warn('Auto sign-in notice:', signInError);
-        } else if (signInData?.user) {
-          setUser(signInData.user);
-          await fetchProfile(signInData.user.id);
-          await fetchOrders(signInData.user.id);
+        for (let attempt = 0; attempt < 2; attempt++) {
+          try {
+            const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+              email,
+              password,
+            });
+            if (!signInError && signInData?.user) {
+              setUser(signInData.user);
+              await fetchProfile(signInData.user.id);
+              await fetchOrders(signInData.user.id);
+              break;
+            } else if (signInError) {
+              console.warn(`Auto sign-in attempt ${attempt + 1}:`, signInError.message);
+            }
+          } catch (e) {
+            console.warn(`Auto sign-in attempt ${attempt + 1} err:`, e);
+          }
+          if (attempt === 0) {
+            await new Promise((r) => setTimeout(r, 600));
+          }
         }
       }
 
