@@ -24,7 +24,8 @@ export default function BlogListClient({ initialBlogs }) {
     };
   }, []);
 
-  const categories = ['All', 'Artisan Heritage', 'Wellness & Tradition', 'Devotion & Rituals'];
+  // Derive categories dynamically from actual blogs so new categories from dashboard always appear
+  const categories = ['All', ...Array.from(new Set(blogList.map(b => b.category).filter(Boolean)))];
 
   const filteredBlogs = selectedCategory === 'All'
     ? blogList

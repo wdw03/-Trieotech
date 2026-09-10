@@ -165,10 +165,10 @@ export async function fetchLiveProducts(filters = {}) {
     });
     if (res.ok) {
       const data = await res.json();
-      if (Array.isArray(data.products) && data.products.length > 0) {
+      if (Array.isArray(data.products)) {
         return {
           products: data.products.map(normalizeProduct),
-          total: data.total || data.products.length,
+          total: data.total !== undefined ? data.total : data.products.length,
         };
       }
     }
@@ -182,10 +182,10 @@ export async function fetchLiveProducts(filters = {}) {
       const res = await fetch(`/api/products?${queryParams.toString()}`);
       if (res.ok) {
         const data = await res.json();
-        if (Array.isArray(data.products) && data.products.length > 0) {
+        if (Array.isArray(data.products)) {
           return {
             products: data.products.map(normalizeProduct),
-            total: data.total || data.products.length,
+            total: data.total !== undefined ? data.total : data.products.length,
           };
         }
       }

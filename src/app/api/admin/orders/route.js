@@ -138,11 +138,17 @@ export async function GET(request) {
         raw_status: ord.status,
         paymentMethod: ord.payment_method === 'cod' ? 'COD' : (ord.payment_method === 'razorpay' ? 'Razorpay Online' : (ord.payment_method || 'Online')),
         paymentStatus: (() => {
-          const ps = (ord.payment_status || 'pending').toLowerCase();
+          const ps = (ord.payment_status || '').toLowerCase();
           if (['paid', 'captured'].includes(ps)) return 'Paid';
+          if (ps === 'cod_pending') return 'COD - Pay on Delivery';
           if (ps === 'failed') return 'Failed';
           if (['refunded', 'refund_processed'].includes(ps)) return 'Refunded';
           if (ps === 'refund_failed') return 'Refund Failed';
+          // For confirmed orders without explicit payment_status, infer from order status
+          const orderStatus = (ord.status || '').toLowerCase();
+          if (['confirmed', 'processing', 'packed', 'shipped', 'delivered'].includes(orderStatus)) {
+            return ord.payment_method === 'cod' ? 'COD - Pay on Delivery' : 'Paid';
+          }
           return 'Pending';
         })(),
         shippingPartner: shipment.courier_name || 'Shiprocket / BlueDart',

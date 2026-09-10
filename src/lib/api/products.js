@@ -16,6 +16,8 @@ export async function getProducts({
   trending,
   weddingSpecial,
   festivalSpecial,
+  handmade,
+  isNew,
   minPrice,
   maxPrice,
 } = {}) {
@@ -32,11 +34,15 @@ export async function getProducts({
   if (weddingSpecial) query = query.eq('is_wedding_special', true);
   if (festivalSpecial) query = query.eq('is_festival_special', true);
   if (handmade) query = query.eq('is_handmade', true);
-  if (minPrice) query = query.gte('price', minPrice);
-  if (maxPrice) query = query.lte('price', maxPrice);
+  if (isNew) query = query.eq('is_new', true);
+  if (minPrice !== undefined && !isNaN(minPrice)) query = query.gte('price', minPrice);
+  if (maxPrice !== undefined && !isNaN(maxPrice)) query = query.lte('price', maxPrice);
 
   if (search) {
-    query = query.or(`name.ilike.%${search}%,description.ilike.%${search}%,category.ilike.%${search}%`);
+    const cleanSearch = String(search).replace(/[,()]/g, ' ').trim();
+    if (cleanSearch) {
+      query = query.or(`name.ilike.%${cleanSearch}%,description.ilike.%${cleanSearch}%,category.ilike.%${cleanSearch}%`);
+    }
   }
 
   // Sorting
@@ -45,7 +51,9 @@ export async function getProducts({
   query = query.order(sortField, { ascending: order === 'asc' });
 
   // Pagination
-  query = query.range(offset, offset + limit - 1);
+  const numLimit = Math.max(1, parseInt(limit) || 50);
+  const numOffset = Math.max(0, parseInt(offset) || 0);
+  query = query.range(numOffset, numOffset + numLimit - 1);
 
   const { data, error, count } = await query;
 

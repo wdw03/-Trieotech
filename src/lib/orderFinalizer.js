@@ -116,23 +116,54 @@ export async function finalizePaidOrder({
       };
     }
 
-    // 1. Update order status to confirmed
-    const { data: updatedOrder, error: updateOrderErr } = await supabaseAdmin
-      .from('orders')
-      .update({
-        status: 'confirmed',
-        updated_at: new Date().toISOString(),
-      })
-      .eq('id', order.id)
-      .select('*, order_items(*)')
-      .single();
+    // 1. Update order status to confirmed + mark payment as paid
+    let updatePayload = {
+      status: 'confirmed',
+      updated_at: new Date().toISOString(),
+    };
 
-    if (updateOrderErr) {
-      console.error('Error confirming order:', updateOrderErr);
-      return { success: false, error: updateOrderErr.message };
+    // Try to also set payment_status (gracefully handle if column doesn't exist)
+    try {
+      const { data: testUpdate, error: testErr } = await supabaseAdmin
+        .from('orders')
+        .update({ ...updatePayload, payment_status: 'paid' })
+        .eq('id', order.id)
+        .select('*, order_items(*)')
+        .single();
+
+      if (!testErr) {
+        order = testUpdate;
+      } else if (testErr.code === '42703') {
+        // payment_status column doesn't exist, update without it
+        const { data: fallbackUpdate, error: fallbackErr } = await supabaseAdmin
+          .from('orders')
+          .update(updatePayload)
+          .eq('id', order.id)
+          .select('*, order_items(*)')
+          .single();
+        if (fallbackErr) {
+          console.error('Error confirming order:', fallbackErr);
+          return { success: false, error: fallbackErr.message };
+        }
+        order = fallbackUpdate;
+      } else {
+        console.error('Error confirming order:', testErr);
+        return { success: false, error: testErr.message };
+      }
+    } catch (updateErr) {
+      // Fallback: update without payment_status
+      const { data: updatedOrder, error: updateOrderErr } = await supabaseAdmin
+        .from('orders')
+        .update(updatePayload)
+        .eq('id', order.id)
+        .select('*, order_items(*)')
+        .single();
+      if (updateOrderErr) {
+        console.error('Error confirming order:', updateOrderErr);
+        return { success: false, error: updateOrderErr.message };
+      }
+      order = updatedOrder;
     }
-
-    order = updatedOrder;
 
     // 2. Update payment record to captured
     if (razorpayOrderId) {

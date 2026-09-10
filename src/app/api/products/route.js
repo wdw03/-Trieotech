@@ -21,12 +21,14 @@ export async function GET(request) {
       weddingSpecial: searchParams.get('weddingSpecial') === 'true',
       festivalSpecial: searchParams.get('festivalSpecial') === 'true',
       handmade: searchParams.get('handmade') === 'true',
+      isNew: searchParams.get('isNew') === 'true' || searchParams.get('new') === 'true',
       minPrice: searchParams.get('minPrice') ? parseFloat(searchParams.get('minPrice')) : undefined,
       maxPrice: searchParams.get('maxPrice') ? parseFloat(searchParams.get('maxPrice')) : undefined,
     });
 
-    return NextResponse.json({ products, total });
+    return NextResponse.json({ products: products || [], total: total || 0 });
   } catch (err) {
-    return NextResponse.json({ error: err.message }, { status: 500 });
+    console.error('API /api/products error:', err);
+    return NextResponse.json({ products: [], total: 0, error: err.message }, { status: 500 });
   }
 }

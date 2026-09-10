@@ -64,15 +64,17 @@ export default function SearchClient() {
     };
   }, [queryFromUrl]);
 
-  // Recent searches in localStorage
-  const [recentSearches, setRecentSearches] = useState(() => {
+  // Recent searches in localStorage (hydrated in effect to prevent SSR mismatch)
+  const [recentSearches, setRecentSearches] = useState([]);
+
+  useEffect(() => {
     try {
       const saved = localStorage.getItem('trio_recent_searches');
-      return saved ? JSON.parse(saved) : [];
-    } catch {
-      return [];
-    }
-  });
+      if (saved) {
+        setRecentSearches(JSON.parse(saved));
+      }
+    } catch {}
+  }, []);
 
   // Sync with URL params
   useEffect(() => {
@@ -81,12 +83,15 @@ export default function SearchClient() {
 
   // Update URL on debounced query change
   useEffect(() => {
-    if (debouncedQuery.trim()) {
-      router.replace(debouncedQuery.trim() ? `/search?q=${encodeURIComponent(debouncedQuery.trim())}` : '/search');
-      // Add to recent searches
+    const trimmed = debouncedQuery.trim();
+    const currentParam = searchParams.get('q') || '';
+    if (trimmed !== currentParam) {
+      router.replace(trimmed ? `/search?q=${encodeURIComponent(trimmed)}` : '/search', { scroll: false });
+    }
+    if (trimmed) {
       setRecentSearches(prev => {
-        const filtered = prev.filter(s => s.toLowerCase() !== debouncedQuery.trim().toLowerCase());
-        const updated = [debouncedQuery.trim(), ...filtered].slice(0, 6);
+        const filtered = prev.filter(s => s.toLowerCase() !== trimmed.toLowerCase());
+        const updated = [trimmed, ...filtered].slice(0, 6);
         try {
           localStorage.setItem('trio_recent_searches', JSON.stringify(updated));
         } catch {}
@@ -126,10 +131,11 @@ export default function SearchClient() {
   // Search Results
   const rawResults = useMemo(() => {
     if (!queryFromUrl.trim()) return allProducts;
-    if (liveSearchResults && liveSearchResults.length > 0) return liveSearchResults;
+    if (liveSearchResults !== null) return liveSearchResults;
     return allProducts.filter(p =>
       p.name?.toLowerCase().includes(queryFromUrl.toLowerCase()) ||
-      p.category?.toLowerCase().includes(queryFromUrl.toLowerCase())
+      p.category?.toLowerCase().includes(queryFromUrl.toLowerCase()) ||
+      p.subcategory?.toLowerCase().includes(queryFromUrl.toLowerCase())
     );
   }, [queryFromUrl, allProducts, liveSearchResults]);
 
@@ -192,18 +198,18 @@ export default function SearchClient() {
     const matchedCategories = [...new Set(rawResults.map(p => p.category))];
 
     // First preference: crafts in the same categories but not in current result list
-    let pool = products.filter(p => !matchedIds.has(p.id) && matchedCategories.includes(p.category));
+    let pool = (allProducts || []).filter(p => !matchedIds.has(p.id) && matchedCategories.includes(p.category));
 
     // Fallback/supplement: trending or best seller crafts
     if (pool.length < 4) {
-      const extra = products.filter(
+      const extra = (allProducts || []).filter(
         p => !matchedIds.has(p.id) && !pool.some(c => c.id === p.id) && (p.isTrending || p.isBestSeller)
       );
       pool = [...pool, ...extra];
     }
 
     return pool.slice(0, 4);
-  }, [rawResults, filteredResults]);
+  }, [rawResults, filteredResults, allProducts]);
 
   const handleSelectSearchTerm = (term) => {
     setInputQuery(term);
