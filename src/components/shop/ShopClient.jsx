@@ -68,48 +68,53 @@ export default function ShopClient() {
 
     // Category Filter
     if (filters.categories && filters.categories.length > 0) {
-      result = result.filter(p => filters.categories.includes(p.category));
+      result = result.filter(p =>
+        filters.categories.some(c =>
+          c.trim().toLowerCase() === p.category?.trim().toLowerCase() ||
+          c.trim().toLowerCase() === p.subcategory?.trim().toLowerCase()
+        )
+      );
     }
 
     // Max Price
     if (filters.maxPrice) {
-      result = result.filter(p => p.price <= filters.maxPrice);
+      result = result.filter(p => Number(p.price) <= filters.maxPrice);
     }
 
     // In Stock Only
     if (filters.inStockOnly) {
-      result = result.filter(p => p.inStock);
+      result = result.filter(p => Boolean(p.inStock ?? p.in_stock ?? true));
     }
 
     // Min Rating
     if (filters.minRating > 0) {
-      result = result.filter(p => (p.rating || 5) >= filters.minRating);
+      result = result.filter(p => Number(p.rating || 5) >= filters.minRating);
     }
 
     // Badges
-    if (filters.isBestSeller) result = result.filter(p => p.isBestSeller);
-    if (filters.isFestivalSpecial) result = result.filter(p => p.isFestivalSpecial);
-    if (filters.isWeddingSpecial) result = result.filter(p => p.isWeddingSpecial);
-    if (filters.isHandmade) result = result.filter(p => p.isHandmade);
-    if (filters.isNew) result = result.filter(p => p.isNew);
-    if (filters.isTrending) result = result.filter(p => p.isTrending);
+    if (filters.isBestSeller) result = result.filter(p => Boolean(p.isBestSeller ?? p.is_best_seller ?? (p.badge === 'Best Seller')));
+    if (filters.isFestivalSpecial) result = result.filter(p => Boolean(p.isFestivalSpecial ?? p.is_festival_special ?? (p.badge === 'Festival Special')));
+    if (filters.isWeddingSpecial) result = result.filter(p => Boolean(p.isWeddingSpecial ?? p.is_wedding_special ?? (p.badge === 'Wedding Special')));
+    if (filters.isHandmade) result = result.filter(p => Boolean(p.isHandmade ?? p.is_handmade ?? (p.badge === 'Handmade')));
+    if (filters.isNew) result = result.filter(p => Boolean(p.isNew ?? p.is_new ?? (p.badge === 'New')));
+    if (filters.isTrending) result = result.filter(p => Boolean(p.isTrending ?? p.is_trending ?? (p.badge === 'Trending')));
 
     // Sorting
     switch (sortBy) {
       case 'price-asc':
-        result.sort((a, b) => a.price - b.price);
+        result.sort((a, b) => Number(a.price) - Number(b.price));
         break;
       case 'price-desc':
-        result.sort((a, b) => b.price - a.price);
+        result.sort((a, b) => Number(b.price) - Number(a.price));
         break;
       case 'rating':
-        result.sort((a, b) => (b.rating || 0) - (a.rating || 0));
+        result.sort((a, b) => Number(b.rating || 0) - Number(a.rating || 0));
         break;
       case 'newest':
-        result.sort((a, b) => (b.isNew ? 1 : 0) - (a.isNew ? 1 : 0));
+        result.sort((a, b) => (b.isNew || b.is_new ? 1 : 0) - (a.isNew || a.is_new ? 1 : 0));
         break;
       case 'bestseller':
-        result.sort((a, b) => (b.isBestSeller ? 1 : 0) - (a.isBestSeller ? 1 : 0));
+        result.sort((a, b) => (b.isBestSeller || b.is_best_seller ? 1 : 0) - (a.isBestSeller || a.is_best_seller ? 1 : 0));
         break;
       default:
         // featured
@@ -117,7 +122,7 @@ export default function ShopClient() {
     }
 
     return result;
-  }, [filters, sortBy]);
+  }, [allProducts, filters, sortBy]);
 
   const activeFilterCount = useMemo(() => {
     let count = 0;

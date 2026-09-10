@@ -91,12 +91,18 @@ export const FilterSidebar = ({
       </div>
 
       {/* In Stock Only Switch */}
-      <div className="flex items-center justify-between p-3 rounded-xl bg-ivory-200/60 dark:bg-stone-900/60 border border-gold-500/20">
+      <div
+        onClick={() => setFilters(prev => ({ ...prev, inStockOnly: !prev.inStockOnly }))}
+        className="flex items-center justify-between p-3 rounded-xl bg-ivory-200/60 dark:bg-stone-900/60 border border-gold-500/20 cursor-pointer select-none hover:bg-gold-500/5 transition-colors"
+      >
         <span className="font-bold text-stone-800 dark:text-ivory-100">In Stock Only</span>
         <button
           type="button"
-          onClick={() => setFilters(prev => ({ ...prev, inStockOnly: !prev.inStockOnly }))}
-          className={`w-10 h-6 rounded-full transition-colors relative p-0.5 ${
+          onClick={(e) => {
+            e.stopPropagation();
+            setFilters(prev => ({ ...prev, inStockOnly: !prev.inStockOnly }));
+          }}
+          className={`w-10 h-6 rounded-full transition-colors relative p-0.5 cursor-pointer ${
             filters.inStockOnly ? 'bg-maroon-700' : 'bg-stone-300 dark:bg-stone-700'
           }`}
           aria-label="Toggle in stock filter"
@@ -142,9 +148,11 @@ export const FilterSidebar = ({
           {categoriesList.map((cat) => {
             const isChecked = filters.categories?.includes(cat.name);
             return (
-              <label
+              <button
                 key={cat.id}
-                className="flex items-center justify-between p-1.5 rounded-lg hover:bg-gold-500/10 cursor-pointer transition-colors"
+                type="button"
+                onClick={() => handleCategoryToggle(cat.name)}
+                className="w-full flex items-center justify-between p-1.5 rounded-lg hover:bg-gold-500/10 cursor-pointer transition-colors text-left"
               >
                 <div className="flex items-center gap-2">
                   <div
@@ -160,8 +168,8 @@ export const FilterSidebar = ({
                     {cat.name}
                   </span>
                 </div>
-                <span className="text-[10px] text-stone-400">({cat.productCount})</span>
-              </label>
+                <span className="text-[10px] text-stone-400">({cat.productCount || cat.product_count || ''})</span>
+              </button>
             );
           })}
         </div>
@@ -176,9 +184,11 @@ export const FilterSidebar = ({
           {badges.map((b) => {
             const isChecked = !!filters[b.key];
             return (
-              <label
+              <button
                 key={b.key}
-                className="flex items-center gap-2 p-1.5 rounded-lg hover:bg-gold-500/10 cursor-pointer transition-colors"
+                type="button"
+                onClick={() => handleBadgeToggle(b.key)}
+                className="w-full flex items-center gap-2 p-1.5 rounded-lg hover:bg-gold-500/10 cursor-pointer transition-colors text-left"
               >
                 <div
                   className={`w-4 h-4 rounded border flex items-center justify-center transition-colors ${
@@ -192,7 +202,7 @@ export const FilterSidebar = ({
                 <span className={isChecked ? 'font-bold text-maroon-800 dark:text-gold-400' : ''}>
                   {b.label}
                 </span>
-              </label>
+              </button>
             );
           })}
         </div>
@@ -205,10 +215,11 @@ export const FilterSidebar = ({
         </span>
         <div className="space-y-1.5">
           {[4, 3, 2].map((stars) => (
-            <label
+            <button
               key={stars}
+              type="button"
               onClick={() => setFilters(prev => ({ ...prev, minRating: prev.minRating === stars ? 0 : stars }))}
-              className={`flex items-center gap-2 p-1.5 rounded-lg cursor-pointer transition-colors ${
+              className={`w-full flex items-center gap-2 p-1.5 rounded-lg cursor-pointer transition-colors text-left ${
                 filters.minRating === stars ? 'bg-gold-500/20 font-bold' : 'hover:bg-gold-500/10'
               }`}
             >
@@ -223,7 +234,7 @@ export const FilterSidebar = ({
                 ))}
               </div>
               <span className="text-stone-700 dark:text-stone-300">&amp; above</span>
-            </label>
+            </button>
           ))}
         </div>
       </div>
