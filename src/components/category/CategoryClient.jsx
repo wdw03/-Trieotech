@@ -19,6 +19,7 @@ export default function CategoryClient({ initialSlug }) {
   const [quickViewProduct, setQuickViewProduct] = useState(null);
   const [selectedSubcategory, setSelectedSubcategory] = useState(null);
   const [sortBy, setSortBy] = useState('featured');
+  const [viewMode, setViewMode] = useState('grid');
   const [categoriesList, setCategoriesList] = useState(fallbackCategories);
   const [allProducts, setAllProducts] = useState(() => fallbackProducts.map(normalizeProduct));
 
@@ -280,26 +281,48 @@ export default function CategoryClient({ initialSlug }) {
               </span>
             </div>
 
-            {/* Sort Controls */}
-            <div className="flex items-center gap-2 text-xs">
-              <span className="text-stone-500 hidden sm:inline">Sort By:</span>
-              <select
-                value={sortBy}
-                onChange={(e) => setSortBy(e.target.value)}
-                className="px-3 py-1.5 rounded-xl bg-ivory-100 dark:bg-stone-900 border border-gold-500/30 text-stone-900 dark:text-ivory-100 text-xs font-semibold outline-none"
-              >
-                <option value="featured">Featured</option>
-                <option value="bestseller">Best Sellers</option>
-                <option value="newest">Newest</option>
-                <option value="price-asc">Price: Low to High</option>
-                <option value="price-desc">Price: High to Low</option>
-                <option value="rating">Highest Rated</option>
-              </select>
+            {/* Sort Controls & View Toggle */}
+            <div className="flex items-center gap-3 text-xs">
+              <div className="flex items-center gap-2">
+                <span className="text-stone-500 hidden sm:inline">Sort By:</span>
+                <select
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value)}
+                  className="px-3 py-1.5 rounded-xl bg-ivory-100 dark:bg-stone-900 border border-gold-500/30 text-stone-900 dark:text-ivory-100 text-xs font-semibold outline-none"
+                >
+                  <option value="featured">Featured</option>
+                  <option value="bestseller">Best Sellers</option>
+                  <option value="newest">Newest</option>
+                  <option value="price-asc">Price: Low to High</option>
+                  <option value="price-desc">Price: High to Low</option>
+                  <option value="rating">Highest Rated</option>
+                </select>
+              </div>
+
+              {/* Grid / List toggle */}
+              <div className="hidden sm:flex items-center border border-gold-500/20 rounded-xl overflow-hidden bg-ivory-100 dark:bg-stone-900">
+                <button
+                  type="button"
+                  onClick={() => setViewMode('grid')}
+                  className={`p-1.5 transition-colors cursor-pointer ${viewMode === 'grid' ? 'bg-maroon-700 text-white' : 'text-stone-500 hover:text-stone-900'}`}
+                  aria-label="Grid view"
+                >
+                  <LayoutGrid className="w-4 h-4" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setViewMode('list')}
+                  className={`p-1.5 transition-colors cursor-pointer ${viewMode === 'list' ? 'bg-maroon-700 text-white' : 'text-stone-500 hover:text-stone-900'}`}
+                  aria-label="List view"
+                >
+                  <List className="w-4 h-4" />
+                </button>
+              </div>
             </div>
 
           </div>
 
-          {/* Products Grid */}
+          {/* Products Grid / List */}
           {filteredProducts.length === 0 ? (
             <EmptyState
               title="No crafts match your filter selection"
@@ -307,12 +330,24 @@ export default function CategoryClient({ initialSlug }) {
               actionText="Reset Filters"
               onAction={resetFilters}
             />
+          ) : viewMode === 'list' ? (
+            <div className="flex flex-col gap-4">
+              {filteredProducts.map((product) => (
+                <ProductCard
+                  key={product.id}
+                  product={product}
+                  viewMode="list"
+                  onQuickView={setQuickViewProduct}
+                />
+              ))}
+            </div>
           ) : (
             <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6">
               {filteredProducts.map((product) => (
                 <ProductCard
                   key={product.id}
                   product={product}
+                  viewMode="grid"
                   onQuickView={setQuickViewProduct}
                 />
               ))}

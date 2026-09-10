@@ -269,7 +269,7 @@ export default function ShopClient() {
             </div>
           )}
 
-          {/* Products Grid */}
+          {/* Products Grid / List */}
           {filteredProducts.length === 0 ? (
             <EmptyState
               title="No crafts match your filter criteria"
@@ -277,12 +277,24 @@ export default function ShopClient() {
               actionText="Reset All Filters"
               onAction={resetFilters}
             />
+          ) : viewMode === 'list' ? (
+            <div className="flex flex-col gap-4">
+              {filteredProducts.map((product) => (
+                <ProductCard
+                  key={product.id}
+                  product={product}
+                  viewMode="list"
+                  onQuickView={setQuickViewProduct}
+                />
+              ))}
+            </div>
           ) : (
             <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6">
               {filteredProducts.map((product) => (
                 <ProductCard
                   key={product.id}
                   product={product}
+                  viewMode="grid"
                   onQuickView={setQuickViewProduct}
                 />
               ))}

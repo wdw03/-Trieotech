@@ -9,7 +9,7 @@ import QuickViewModal from '../../components/common/QuickViewModal';
 import EmptyState from '../../components/common/EmptyState';
 import { products as fallbackProducts, searchProducts } from '../../data/products';
 import { fetchLiveProducts, normalizeProduct } from '../../lib/api/store';
-import { Search as SearchIcon, Filter, Sparkles, X, Clock, Flame, ArrowRight, Package } from 'lucide-react';
+import { Search as SearchIcon, Filter, Sparkles, X, Clock, Flame, ArrowRight, Package, LayoutGrid, List } from 'lucide-react';
 import useDebounce from '../../hooks/useDebounce';
 
 const TRENDING_SEARCHES = [
@@ -32,6 +32,7 @@ export default function SearchClient() {
   const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
   const [quickViewProduct, setQuickViewProduct] = useState(null);
   const [sortBy, setSortBy] = useState('relevance');
+  const [viewMode, setViewMode] = useState('grid');
   const [allProducts, setAllProducts] = useState(() => fallbackProducts.map(normalizeProduct));
   const [liveSearchResults, setLiveSearchResults] = useState(null);
 
@@ -334,25 +335,47 @@ export default function SearchClient() {
               </span>
             </div>
 
-            {/* Sort Controls */}
-            <div className="flex items-center gap-2 text-xs">
-              <span className="text-stone-500 hidden sm:inline">Sort By:</span>
-              <select
-                value={sortBy}
-                onChange={(e) => setSortBy(e.target.value)}
-                className="px-3 py-1.5 rounded-xl bg-ivory-100 dark:bg-stone-900 border border-gold-500/30 text-stone-900 dark:text-ivory-100 text-xs font-semibold outline-none focus:ring-1 focus:ring-gold-500"
-              >
-                <option value="relevance">Relevance</option>
-                <option value="price-asc">Price: Low to High</option>
-                <option value="price-desc">Price: High to Low</option>
-                <option value="rating">Highest Rated</option>
-                <option value="newest">New Arrivals</option>
-              </select>
+            {/* Sort Controls & View Toggle */}
+            <div className="flex items-center gap-3 text-xs">
+              <div className="flex items-center gap-2">
+                <span className="text-stone-500 hidden sm:inline">Sort By:</span>
+                <select
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value)}
+                  className="px-3 py-1.5 rounded-xl bg-ivory-100 dark:bg-stone-900 border border-gold-500/30 text-stone-900 dark:text-ivory-100 text-xs font-semibold outline-none focus:ring-1 focus:ring-gold-500"
+                >
+                  <option value="relevance">Relevance</option>
+                  <option value="price-asc">Price: Low to High</option>
+                  <option value="price-desc">Price: High to Low</option>
+                  <option value="rating">Highest Rated</option>
+                  <option value="newest">New Arrivals</option>
+                </select>
+              </div>
+
+              {/* Grid / List toggle */}
+              <div className="hidden sm:flex items-center border border-gold-500/20 rounded-xl overflow-hidden bg-ivory-100 dark:bg-stone-900">
+                <button
+                  type="button"
+                  onClick={() => setViewMode('grid')}
+                  className={`p-1.5 transition-colors cursor-pointer ${viewMode === 'grid' ? 'bg-maroon-700 text-white' : 'text-stone-500 hover:text-stone-900'}`}
+                  aria-label="Grid view"
+                >
+                  <LayoutGrid className="w-4 h-4" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setViewMode('list')}
+                  className={`p-1.5 transition-colors cursor-pointer ${viewMode === 'list' ? 'bg-maroon-700 text-white' : 'text-stone-500 hover:text-stone-900'}`}
+                  aria-label="List view"
+                >
+                  <List className="w-4 h-4" />
+                </button>
+              </div>
             </div>
 
           </div>
 
-          {/* Results Grid */}
+          {/* Results Grid / List */}
           {filteredResults.length === 0 ? (
             <div className="space-y-8">
               <EmptyState
@@ -388,16 +411,30 @@ export default function SearchClient() {
             </div>
           ) : (
             <div className="space-y-10">
-              {/* Main Product Cards Grid */}
-              <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6">
-                {filteredResults.map((product) => (
-                  <ProductCard
-                    key={product.id}
-                    product={product}
-                    onQuickView={setQuickViewProduct}
-                  />
-                ))}
-              </div>
+              {/* Main Product Cards Grid / List */}
+              {viewMode === 'list' ? (
+                <div className="flex flex-col gap-4">
+                  {filteredResults.map((product) => (
+                    <ProductCard
+                      key={product.id}
+                      product={product}
+                      viewMode="list"
+                      onQuickView={setQuickViewProduct}
+                    />
+                  ))}
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6">
+                  {filteredResults.map((product) => (
+                    <ProductCard
+                      key={product.id}
+                      product={product}
+                      viewMode="grid"
+                      onQuickView={setQuickViewProduct}
+                    />
+                  ))}
+                </div>
+              )}
 
               {/* Similar & Related Products Section */}
               {similarProducts.length > 0 && (
