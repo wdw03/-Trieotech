@@ -176,9 +176,9 @@ export const Navbar = () => {
               <Package className="w-3.5 h-3.5" /> Track Order
             </Link>
             <span className="text-gold-500/40">|</span>
-            <span className="flex items-center gap-1">
-              <PhoneCall className="w-3 h-3 text-gold-400" /> +91 98765 43210
-            </span>
+            <Link href="/contact" className="hover:text-white flex items-center gap-1 transition-colors">
+              <PhoneCall className="w-3 h-3 text-gold-400" /> Contact Support
+            </Link>
           </div>
         </div>
       </div>
@@ -531,6 +531,9 @@ export const Navbar = () => {
             </Link>
             <Link href="/blog" className="text-stone-700 dark:text-stone-300 hover:text-maroon-700 dark:hover:text-gold-400 transition-colors">
               Craft Journal
+            </Link>
+            <Link href="/contact" className="text-stone-700 dark:text-stone-300 hover:text-maroon-700 dark:hover:text-gold-400 transition-colors">
+              Contact Us
             </Link>
           </div>
 
