@@ -240,38 +240,6 @@ export async function fetchLiveCategories() {
 }
 
 /**
- * Fetch blogs from live backend API.
- */
-export async function fetchLiveBlogs() {
-  const apiBase = getApiBase();
-  try {
-    const res = await fetch(`${apiBase}/blogs`, {
-      next: { revalidate: 60 },
-    });
-    if (res.ok) {
-      const data = await res.json();
-      if (Array.isArray(data.blogs) && data.blogs.length > 0) {
-        return data.blogs;
-      }
-    }
-  } catch (err) {
-    console.warn('Blogs API fetch failed:', err);
-  }
-
-  try {
-    const res = await fetch('/api/blogs');
-    if (res.ok) {
-      const data = await res.json();
-      if (Array.isArray(data.blogs) && data.blogs.length > 0) {
-        return data.blogs;
-      }
-    }
-  } catch (_) {}
-
-  return fallbackBlogs;
-}
-
-/**
  * Fetch a single product by slug or id from API.
  */
 export async function fetchLiveProductBySlug(slug) {
@@ -348,4 +316,95 @@ export async function trackOrderLive(query) {
   } catch (_) {}
 
   return null;
+}
+
+/**
+ * Normalizes blog object so camelCase and snake_case properties are both available.
+ */
+export function normalizeBlog(b) {
+  if (!b) return null;
+
+  let tagsArray = [];
+  if (Array.isArray(b.tags)) {
+    tagsArray = b.tags;
+  } else if (typeof b.tags === 'string') {
+    try {
+      tagsArray = JSON.parse(b.tags);
+    } catch {
+      tagsArray = b.tags.split(',').map((t) => t.trim()).filter(Boolean);
+    }
+  }
+
+  const role = b.author_role || b.authorRole || 'Artisan Specialist';
+  const authorImg = b.author_image || b.authorImage || 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=120&auto=format&fit=crop&q=80';
+  const read = b.read_time || b.readTime || '5 min read';
+  const seoT = b.seo_title || b.seoTitle || b.title || '';
+  const seoD = b.seo_description || b.seoDescription || b.excerpt || '';
+
+  return {
+    ...b,
+    id: b.id,
+    title: b.title || '',
+    slug: b.slug || '',
+    author: b.author || 'Trio Enterprises Editorial',
+    authorRole: role,
+    author_role: role,
+    authorImage: authorImg,
+    author_image: authorImg,
+    date: b.date || (b.created_at ? new Date(b.created_at).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : ''),
+    category: b.category || 'Artisan Heritage',
+    image: b.image || '/products/peacock-real-feathers-pair-1.jpg',
+    excerpt: b.excerpt || '',
+    tags: tagsArray.length > 0 ? tagsArray : ['Handcrafted'],
+    readTime: read,
+    read_time: read,
+    content: b.content || '',
+    status: b.status || 'Published',
+    seoTitle: seoT,
+    seo_title: seoT,
+    seoDescription: seoD,
+    seo_description: seoD,
+    created_at: b.created_at,
+    updated_at: b.updated_at,
+  };
+}
+
+/**
+ * Fetches all live published blogs from API.
+ */
+export async function fetchLiveBlogs() {
+  const apiBase = getApiBase();
+  try {
+    const res = await fetch(`${apiBase}/blogs`, { cache: 'no-store' });
+    if (res.ok) {
+      const data = await res.json();
+      if (Array.isArray(data.blogs) && data.blogs.length > 0) {
+        return data.blogs.map(normalizeBlog);
+      }
+    }
+  } catch (err) {
+    console.warn('Error fetching live blogs:', err.message);
+  }
+  return fallbackBlogs.map(normalizeBlog);
+}
+
+/**
+ * Fetches single live blog by slug or ID from API.
+ */
+export async function fetchLiveBlogBySlug(slug) {
+  if (!slug) return null;
+  const apiBase = getApiBase();
+  try {
+    const res = await fetch(`${apiBase}/blogs/${encodeURIComponent(slug)}`, { cache: 'no-store' });
+    if (res.ok) {
+      const data = await res.json();
+      if (data.blog) {
+        return normalizeBlog(data.blog);
+      }
+    }
+  } catch (err) {
+    console.warn('Error fetching live blog by slug:', err.message);
+  }
+  const fallback = fallbackBlogs.find((b) => b.slug === slug || String(b.id) === String(slug));
+  return fallback ? normalizeBlog(fallback) : null;
 }

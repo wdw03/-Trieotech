@@ -3,11 +3,16 @@ import { NextResponse } from 'next/server';
 import { getAllBlogs, createBlog } from '../../../lib/blogs';
 
 // GET: List all blogs
-export async function GET() {
+export async function GET(request) {
   try {
-    const blogs = getAllBlogs();
+    const { searchParams } = new URL(request.url);
+    const all = searchParams.get('all') === 'true' || searchParams.get('status') === 'all' || searchParams.get('status') === 'All';
+    const status = searchParams.get('status');
+
+    const blogs = await getAllBlogs({ all, status });
     return NextResponse.json({ blogs });
   } catch (err) {
+    console.error('GET /api/blogs error:', err);
     return NextResponse.json({ error: err.message }, { status: 500 });
   }
 }
@@ -21,9 +26,10 @@ export async function POST(request) {
       return NextResponse.json({ error: 'Blog title is required' }, { status: 400 });
     }
 
-    const newBlog = createBlog(body);
+    const newBlog = await createBlog(body);
     return NextResponse.json({ success: true, blog: newBlog }, { status: 201 });
   } catch (err) {
+    console.error('POST /api/blogs error:', err);
     return NextResponse.json({ error: err.message }, { status: 500 });
   }
 }

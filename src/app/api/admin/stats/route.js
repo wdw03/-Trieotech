@@ -27,7 +27,7 @@ export async function GET() {
       .select('*', { count: 'exact', head: true });
 
     // 4. Blogs count
-    const blogs = getAllBlogs();
+    const blogs = await getAllBlogs({ all: true });
 
     // 5. Calculations
     const allOrders = orders || [];

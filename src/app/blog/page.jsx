@@ -1,3 +1,6 @@
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 import { getAllBlogs } from '../../lib/blogs';
 import BlogListClient from '../../components/blog/BlogListClient';
 
@@ -14,7 +17,7 @@ export const metadata = {
   },
 };
 
-export default function BlogPage() {
-  const blogs = getAllBlogs();
+export default async function BlogPage() {
+  const blogs = await getAllBlogs();
   return <BlogListClient initialBlogs={blogs} />;
 }

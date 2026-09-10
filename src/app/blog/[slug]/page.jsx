@@ -1,12 +1,14 @@
+export const dynamic = 'force-dynamic';
+export const dynamicParams = true;
+export const revalidate = 0;
+
 import { getAllBlogs, getBlogBySlug } from '../../../lib/blogs';
 import { blogs as fallbackBlogs } from '../../../data/blogs';
 import BlogDetailClient from '../../../components/blog/BlogDetailClient';
 import { notFound } from 'next/navigation';
 
-export const dynamicParams = true;
-
 export async function generateStaticParams() {
-  const blogs = getAllBlogs();
+  const blogs = await getAllBlogs();
   return blogs.map((b) => ({
     slug: b.slug,
   }));
@@ -14,7 +16,7 @@ export async function generateStaticParams() {
 
 export async function generateMetadata({ params }) {
   const { slug } = await params;
-  const blog = getBlogBySlug(slug) || fallbackBlogs.find(b => b.slug === slug);
+  const blog = (await getBlogBySlug(slug)) || fallbackBlogs.find((b) => b.slug === slug);
 
   if (!blog) {
     return {
@@ -52,7 +54,7 @@ export async function generateMetadata({ params }) {
 
 export default async function BlogPostPage({ params }) {
   const { slug } = await params;
-  const blog = getBlogBySlug(slug) || fallbackBlogs.find(b => b.slug === slug);
+  const blog = (await getBlogBySlug(slug)) || fallbackBlogs.find((b) => b.slug === slug);
 
   if (!blog) {
     notFound();

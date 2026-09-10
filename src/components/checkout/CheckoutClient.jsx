@@ -362,7 +362,7 @@ export default function CheckoutClient() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 space-y-8">
-      
+
       <Breadcrumb items={[{ name: 'Cart', url: '/cart' }, { name: 'Checkout', url: '/checkout' }]} />
 
       {/* Checkout Progress Stepper */}
@@ -377,33 +377,30 @@ export default function CheckoutClient() {
               <React.Fragment key={step.num}>
                 <div className="flex flex-col items-center gap-1 text-center min-w-0 shrink-0">
                   <div
-                    className={`w-8 h-8 sm:w-10 sm:h-10 rounded-2xl flex items-center justify-center transition-all ${
-                      isCompleted
+                    className={`w-8 h-8 sm:w-10 sm:h-10 rounded-2xl flex items-center justify-center transition-all ${isCompleted
                         ? 'bg-emerald-700 text-white shadow-emerald-950/30'
                         : isCurrent
-                        ? 'bg-maroon-700 text-white shadow-maroon-md ring-2 sm:ring-4 ring-gold-500/30'
-                        : 'bg-stone-200 dark:bg-stone-800 text-stone-500'
-                    }`}
+                          ? 'bg-maroon-700 text-white shadow-maroon-md ring-2 sm:ring-4 ring-gold-500/30'
+                          : 'bg-stone-200 dark:bg-stone-800 text-stone-500'
+                      }`}
                   >
                     {isCompleted ? <CheckCircle2 className="w-4 h-4 sm:w-5 sm:h-5" /> : <Icon className="w-4 h-4 sm:w-5 sm:h-5" />}
                   </div>
                   <span
-                    className={`text-[9px] sm:text-xs font-bold max-w-[65px] sm:max-w-none truncate ${
-                      isCurrent
+                    className={`text-[9px] sm:text-xs font-bold max-w-[65px] sm:max-w-none truncate ${isCurrent
                         ? 'text-maroon-800 dark:text-gold-400'
                         : isCompleted
-                        ? 'text-emerald-700 dark:text-emerald-400'
-                        : 'text-stone-400'
-                    }`}
+                          ? 'text-emerald-700 dark:text-emerald-400'
+                          : 'text-stone-400'
+                      }`}
                   >
                     {step.label}
                   </span>
                 </div>
                 {idx < steps.length - 1 && (
                   <div
-                    className={`flex-1 h-0.5 mx-1 sm:mx-4 min-w-[12px] transition-colors ${
-                      currentStep > idx + 1 ? 'bg-emerald-600' : 'bg-stone-200 dark:bg-stone-800'
-                    }`}
+                    className={`flex-1 h-0.5 mx-1 sm:mx-4 min-w-[12px] transition-colors ${currentStep > idx + 1 ? 'bg-emerald-600' : 'bg-stone-200 dark:bg-stone-800'
+                      }`}
                   />
                 )}
               </React.Fragment>
@@ -414,10 +411,10 @@ export default function CheckoutClient() {
 
       {/* Main Checkout Layout */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-        
+
         {/* Left Column: Multi-Step Interactive Form (8 Cols) */}
         <div className="lg:col-span-8 space-y-6">
-          
+
           {/* STEP 1: Shipping Address */}
           {currentStep === 1 && (
             <div className="ethnic-card p-6 sm:p-8 rounded-3xl space-y-6 animate-fade-in">
@@ -441,11 +438,10 @@ export default function CheckoutClient() {
                     {user.addresses.map((addr) => (
                       <label
                         key={addr.id}
-                        className={`p-4 rounded-2xl border-2 cursor-pointer transition-all flex flex-col justify-between ${
-                          selectedAddressId === addr.id
+                        className={`p-4 rounded-2xl border-2 cursor-pointer transition-all flex flex-col justify-between ${selectedAddressId === addr.id
                             ? 'border-maroon-700 bg-maroon-50/50 dark:bg-maroon-950/30 shadow-xs'
                             : 'border-gold-500/20 hover:border-gold-500/50'
-                        }`}
+                          }`}
                       >
                         <div className="space-y-1">
                           <div className="flex items-center justify-between">
@@ -478,9 +474,8 @@ export default function CheckoutClient() {
                         setSelectedAddressId('new');
                         setIsAddingNewAddress(true);
                       }}
-                      className={`p-4 rounded-2xl border-2 border-dashed border-gold-500/40 flex items-center justify-center gap-2 text-xs font-bold text-maroon-700 dark:text-gold-400 hover:bg-gold-500/10 transition-colors ${
-                        selectedAddressId === 'new' ? 'bg-gold-500/10 border-gold-500' : ''
-                      }`}
+                      className={`p-4 rounded-2xl border-2 border-dashed border-gold-500/40 flex items-center justify-center gap-2 text-xs font-bold text-maroon-700 dark:text-gold-400 hover:bg-gold-500/10 transition-colors ${selectedAddressId === 'new' ? 'bg-gold-500/10 border-gold-500' : ''
+                        }`}
                     >
                       <Plus className="w-4 h-4" />
                       <span>Add New Delivery Address</span>
@@ -495,7 +490,7 @@ export default function CheckoutClient() {
                   <span className="text-xs font-bold text-stone-700 dark:text-stone-300 block">
                     Enter New Shipping Details:
                   </span>
-                  
+
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="space-y-1">
                       <label className="text-[11px] font-bold text-stone-600 dark:text-stone-400">Full Name *</label>
@@ -634,11 +629,10 @@ export default function CheckoutClient() {
                 )}
 
                 <label
-                  className={`p-4 rounded-2xl border-2 cursor-pointer transition-all flex items-center justify-between ${
-                    deliveryMethod === 'express'
+                  className={`p-4 rounded-2xl border-2 cursor-pointer transition-all flex items-center justify-between ${deliveryMethod === 'express'
                       ? 'border-maroon-700 bg-maroon-50/50 dark:bg-maroon-950/30 shadow-xs'
                       : 'border-gold-500/20 hover:border-gold-500/40'
-                  }`}
+                    }`}
                 >
                   <div className="flex items-center gap-3.5">
                     <input
@@ -668,11 +662,10 @@ export default function CheckoutClient() {
                 </label>
 
                 <label
-                  className={`p-4 rounded-2xl border-2 cursor-pointer transition-all flex items-center justify-between ${
-                    deliveryMethod === 'standard'
+                  className={`p-4 rounded-2xl border-2 cursor-pointer transition-all flex items-center justify-between ${deliveryMethod === 'standard'
                       ? 'border-maroon-700 bg-maroon-50/50 dark:bg-maroon-950/30 shadow-xs'
                       : 'border-gold-500/20 hover:border-gold-500/40'
-                  }`}
+                    }`}
                 >
                   <div className="flex items-center gap-3.5">
                     <input
@@ -738,11 +731,10 @@ export default function CheckoutClient() {
               <div className="space-y-3">
                 {/* Online Payment (Razorpay — handles UPI, Card, NetBanking, Wallet) */}
                 <label
-                  className={`p-5 rounded-2xl border-2 cursor-pointer transition-all ${
-                    paymentMethod === 'razorpay'
+                  className={`p-5 rounded-2xl border-2 cursor-pointer transition-all ${paymentMethod === 'razorpay'
                       ? 'border-maroon-700 bg-maroon-50/50 dark:bg-maroon-950/30 shadow-xs'
                       : 'border-gold-500/20 hover:border-gold-500/40'
-                  }`}
+                    }`}
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
@@ -789,13 +781,12 @@ export default function CheckoutClient() {
 
                 {/* Cash on Delivery */}
                 <label
-                  className={`p-5 rounded-2xl border-2 transition-all flex flex-col gap-2.5 ${
-                    !isCodAvailable
+                  className={`p-5 rounded-2xl border-2 transition-all flex flex-col gap-2.5 ${!isCodAvailable
                       ? 'opacity-65 bg-stone-100/70 dark:bg-stone-900/40 border-stone-200 dark:border-stone-800 cursor-not-allowed'
                       : paymentMethod === 'cod'
-                      ? 'border-maroon-700 bg-maroon-50/50 dark:bg-maroon-950/30 cursor-pointer shadow-xs'
-                      : 'border-gold-500/20 cursor-pointer hover:border-gold-500/40'
-                  }`}
+                        ? 'border-maroon-700 bg-maroon-50/50 dark:bg-maroon-950/30 cursor-pointer shadow-xs'
+                        : 'border-gold-500/20 cursor-pointer hover:border-gold-500/40'
+                    }`}
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">

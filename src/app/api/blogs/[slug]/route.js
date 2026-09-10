@@ -6,7 +6,7 @@ import { getBlogBySlug, updateBlog, deleteBlog } from '../../../../lib/blogs';
 export async function GET(request, { params }) {
   try {
     const { slug } = await params;
-    const blog = getBlogBySlug(slug);
+    const blog = await getBlogBySlug(slug);
 
     if (!blog) {
       return NextResponse.json({ error: 'Article not found' }, { status: 404 });
@@ -14,6 +14,7 @@ export async function GET(request, { params }) {
 
     return NextResponse.json({ blog });
   } catch (err) {
+    console.error('GET /api/blogs/[slug] error:', err);
     return NextResponse.json({ error: err.message }, { status: 500 });
   }
 }
@@ -24,7 +25,7 @@ export async function PUT(request, { params }) {
     const { slug } = await params;
     const body = await request.json();
 
-    const updated = updateBlog(slug, body);
+    const updated = await updateBlog(slug, body);
 
     if (!updated) {
       return NextResponse.json({ error: 'Article not found to update' }, { status: 404 });
@@ -32,6 +33,7 @@ export async function PUT(request, { params }) {
 
     return NextResponse.json({ success: true, blog: updated });
   } catch (err) {
+    console.error('PUT /api/blogs/[slug] error:', err);
     return NextResponse.json({ error: err.message }, { status: 500 });
   }
 }
@@ -40,14 +42,11 @@ export async function PUT(request, { params }) {
 export async function DELETE(request, { params }) {
   try {
     const { slug } = await params;
-    const deleted = deleteBlog(slug);
-
-    if (!deleted) {
-      return NextResponse.json({ error: 'Article not found to delete' }, { status: 404 });
-    }
+    await deleteBlog(slug);
 
     return NextResponse.json({ success: true, message: 'Article deleted successfully' });
   } catch (err) {
+    console.error('DELETE /api/blogs/[slug] error:', err);
     return NextResponse.json({ error: err.message }, { status: 500 });
   }
 }
