@@ -6,21 +6,30 @@ import { products as fallbackProducts } from '../../../../data/products';
 // GET: Fetch single product by slug or id
 export async function GET(request, { params }) {
   try {
-    const { slug } = await params;
+    const rawParam = (await params)?.slug;
+    if (!rawParam) {
+      return NextResponse.json({ error: 'Slug parameter is required' }, { status: 400 });
+    }
 
+    const decoded = decodeURIComponent(rawParam).trim();
     let product = null;
-    const isNumeric = /^\d+$/.test(slug);
 
-    if (isNumeric) {
-      product = await getProductById(Number(slug));
-    } else {
-      product = await getProductBySlug(slug);
+    if (/^\d+$/.test(decoded)) {
+      product = await getProductById(Number(decoded));
     }
 
     if (!product) {
-      // Fallback
+      product = await getProductBySlug(decoded.toLowerCase());
+    }
+
+    if (!product && decoded !== decoded.toLowerCase()) {
+      product = await getProductBySlug(decoded);
+    }
+
+    if (!product) {
+      // Check fallback products
       product = fallbackProducts.find(
-        (p) => p.slug === slug || String(p.id) === String(slug)
+        (p) => p.slug?.toLowerCase() === decoded.toLowerCase() || String(p.id) === decoded
       );
     }
 

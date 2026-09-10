@@ -4,14 +4,18 @@ import { products } from '../../../data/products';
 import CategoryClient from '../../../components/category/CategoryClient';
 import { notFound } from 'next/navigation';
 
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 export const dynamicParams = true;
 
-async function findCategory(slug) {
+async function findCategory(rawSlug) {
+  if (!rawSlug) return null;
+  const slug = decodeURIComponent(rawSlug).trim();
   try {
-    const live = await getLiveCategoryBySlug(slug);
+    const live = await getLiveCategoryBySlug(slug.toLowerCase());
     if (live) return live;
   } catch (_) {}
-  return getFallbackCategoryBySlug(slug) || categories.find(c => c.slug === slug) || null;
+  return getFallbackCategoryBySlug(slug) || categories.find(c => c.slug?.toLowerCase() === slug.toLowerCase()) || null;
 }
 
 export async function generateStaticParams() {

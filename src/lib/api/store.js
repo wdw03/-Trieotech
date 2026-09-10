@@ -161,7 +161,7 @@ export async function fetchLiveProducts(filters = {}) {
 
   try {
     const res = await fetch(`${apiBase}/products?${queryParams.toString()}`, {
-      next: { revalidate: 30 },
+      cache: 'no-store',
     });
     if (res.ok) {
       const data = await res.json();
@@ -179,7 +179,9 @@ export async function fetchLiveProducts(filters = {}) {
   // Fallback to internal route if external failed
   if (apiBase.startsWith('http')) {
     try {
-      const res = await fetch(`/api/products?${queryParams.toString()}`);
+      const res = await fetch(`/api/products?${queryParams.toString()}`, {
+        cache: 'no-store',
+      });
       if (res.ok) {
         const data = await res.json();
         if (Array.isArray(data.products)) {
@@ -214,7 +216,7 @@ export async function fetchLiveCategories() {
   const apiBase = getApiBase();
   try {
     const res = await fetch(`${apiBase}/admin/categories`, {
-      next: { revalidate: 60 },
+      cache: 'no-store',
     });
     if (res.ok) {
       const data = await res.json();
@@ -227,7 +229,9 @@ export async function fetchLiveCategories() {
   }
 
   try {
-    const res = await fetch('/api/admin/categories');
+    const res = await fetch('/api/admin/categories', {
+      cache: 'no-store',
+    });
     if (res.ok) {
       const data = await res.json();
       if (Array.isArray(data.categories) && data.categories.length > 0) {
@@ -244,26 +248,58 @@ export async function fetchLiveCategories() {
  */
 export async function fetchLiveProductBySlug(slug) {
   if (!slug) return null;
+  const cleanSlug = String(slug).trim();
   const apiBase = getApiBase();
 
+  // 1. Try dedicated product endpoint from apiBase
   try {
-    const res = await fetch(`${apiBase}/products?search=${encodeURIComponent(slug)}&limit=10`);
+    const res = await fetch(`${apiBase}/products/${encodeURIComponent(cleanSlug)}`, {
+      cache: 'no-store',
+    });
     if (res.ok) {
       const data = await res.json();
-      if (Array.isArray(data.products)) {
-        const found = data.products.find(
-          (p) => p.slug === slug || String(p.id) === String(slug)
-        );
-        if (found) return normalizeProduct(found);
+      if (data?.product) {
+        return normalizeProduct(data.product);
       }
     }
   } catch (err) {
     console.warn('Product by slug API fetch failed:', err);
   }
 
-  // Fallback
+  // 2. Try local Next.js route if apiBase was external
+  if (apiBase.startsWith('http')) {
+    try {
+      const res = await fetch(`/api/products/${encodeURIComponent(cleanSlug)}`, {
+        cache: 'no-store',
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data?.product) {
+          return normalizeProduct(data.product);
+        }
+      }
+    } catch (_) {}
+  }
+
+  // 3. Fallback: try fetching from products list
+  try {
+    const res = await fetch(`${apiBase}/products?limit=100`, {
+      cache: 'no-store',
+    });
+    if (res.ok) {
+      const data = await res.json();
+      if (Array.isArray(data.products)) {
+        const found = data.products.find(
+          (p) => p.slug?.toLowerCase() === cleanSlug.toLowerCase() || String(p.id) === cleanSlug
+        );
+        if (found) return normalizeProduct(found);
+      }
+    }
+  } catch (_) {}
+
+  // 4. Fallback to static fallbackProducts
   const fallback = fallbackProducts.find(
-    (p) => p.slug === slug || String(p.id) === String(slug)
+    (p) => p.slug?.toLowerCase() === cleanSlug.toLowerCase() || String(p.id) === cleanSlug
   );
   return fallback ? normalizeProduct(fallback) : null;
 }

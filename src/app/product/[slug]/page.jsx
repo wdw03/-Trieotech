@@ -3,14 +3,28 @@ import { getProductBySlug as getLiveProductBySlug } from '../../../lib/api/produ
 import ProductClient from '../../../components/product/ProductClient';
 import { notFound } from 'next/navigation';
 
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 export const dynamicParams = true;
 
-async function findProduct(slug) {
+async function findProduct(rawSlug) {
+  if (!rawSlug) return null;
+  const slug = decodeURIComponent(rawSlug).trim();
   try {
-    const live = await getLiveProductBySlug(slug);
+    const isNumeric = /^\d+$/.test(slug);
+    let live = null;
+    if (isNumeric) {
+      const { getProductById } = await import('../../../lib/api/products');
+      live = await getProductById(Number(slug));
+    } else {
+      live = await getLiveProductBySlug(slug.toLowerCase());
+      if (!live && slug !== slug.toLowerCase()) {
+        live = await getLiveProductBySlug(slug);
+      }
+    }
     if (live) return live;
   } catch (_) {}
-  return getFallbackProductBySlug(slug) || products.find((p) => p.id === Number(slug)) || null;
+  return getFallbackProductBySlug(slug) || products.find((p) => p.slug?.toLowerCase() === slug.toLowerCase() || p.id === Number(slug)) || null;
 }
 
 export async function generateStaticParams() {
