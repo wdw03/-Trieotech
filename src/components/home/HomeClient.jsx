@@ -8,6 +8,7 @@ import ProductCarousel from './ProductCarousel';
 import BrandStoryStrip from './BrandStoryStrip';
 import TestimonialsCarousel from './TestimonialsCarousel';
 import BlogPreview from './BlogPreview';
+import HomeContactSection from './HomeContactSection';
 import QuickViewModal from '../common/QuickViewModal';
 import {
   getBestSellers,
@@ -164,6 +165,9 @@ export default function HomeClient() {
 
       {/* 9. Blog Preview Section */}
       <BlogPreview />
+
+      {/* 10. Artisan Support & Contact Section */}
+      <HomeContactSection />
 
       {/* Quick View Modal */}
       <QuickViewModal
