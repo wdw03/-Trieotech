@@ -153,12 +153,7 @@ export const HeroCarousel = () => {
                   {slide.tag}
                 </div>
 
-                {/* Bottom Overlay Gradient */}
-                <div className="absolute inset-x-0 bottom-0 h-16 sm:h-28 bg-gradient-to-t from-black/80 via-black/40 to-transparent flex items-end p-2.5 sm:p-4">
-                  <span className="text-[10px] sm:text-xs font-serif font-bold text-gold-200 truncate">
-                    Artisan Collective Jaipur &amp; Surat
-                  </span>
-                </div>
+
               </div>
 
               {/* Floating Secondary Mini Card (Desktop/Tablet Only) */}
