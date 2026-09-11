@@ -35,7 +35,6 @@ export default function CheckoutClient() {
   const [isPlacingOrder, setIsPlacingOrder] = useState(false);
   const [razorpayData, setRazorpayData] = useState(null);
 
-  // Address Selection & Form State
   const [selectedAddressId, setSelectedAddressId] = useState(user?.addresses?.[0]?.id || 'new');
   const [isAddingNewAddress, setIsAddingNewAddress] = useState(user?.addresses?.length === 0);
   const [newAddressForm, setNewAddressForm] = useState({
@@ -48,6 +47,20 @@ export default function CheckoutClient() {
     country: 'India',
     isDefault: true
   });
+
+  // Sync address form and selected address when user profile loads
+  useEffect(() => {
+    if (user) {
+      setNewAddressForm((prev) => ({
+        ...prev,
+        name: prev.name || user.name || '',
+        phone: prev.phone && prev.phone !== '+91 ' ? prev.phone : (user.phone || '+91 '),
+      }));
+      if (user.addresses?.length > 0 && (selectedAddressId === 'new' || !selectedAddressId) && !isAddingNewAddress) {
+        setSelectedAddressId(user.addresses[0].id);
+      }
+    }
+  }, [user]);
 
   // Delivery Method State
   const [deliveryMethod, setDeliveryMethod] = useState('express'); // 'express' | 'standard'
@@ -129,11 +142,22 @@ export default function CheckoutClient() {
     }
   }, [user, loading, router, addToast]);
 
-  const activeShippingAddress = selectedAddressId !== 'new' && user?.addresses
-    ? user.addresses.find(a => a.id === selectedAddressId)
-    : newAddressForm;
+  const matchedAddress =
+    selectedAddressId && selectedAddressId !== 'new' && Array.isArray(user?.addresses)
+      ? user.addresses.find((a) => a && a.id === selectedAddressId)
+      : null;
 
-  const activePincode = activeShippingAddress?.zip || activeShippingAddress?.pincode || '';
+  const activeShippingAddress =
+    matchedAddress ||
+    (Array.isArray(user?.addresses) && user.addresses[0]) ||
+    newAddressForm ||
+    {};
+
+  const activePincode =
+    activeShippingAddress?.zip ||
+    activeShippingAddress?.pincode ||
+    newAddressForm?.zip ||
+    '';
 
   // Check Shiprocket dynamic rates & COD availability whenever shipping pincode changes
   useEffect(() => {
@@ -205,16 +229,23 @@ export default function CheckoutClient() {
   const finalTotal = Math.max(0, subtotal - couponDiscount + effectiveShippingCost);
 
   // Step Navigators
-  const handleNextToDelivery = (e) => {
-    e.preventDefault();
+  const handleNextToDelivery = async (e) => {
+    e?.preventDefault?.();
     if (selectedAddressId === 'new') {
       if (!newAddressForm.name || !newAddressForm.phone || !newAddressForm.address || !newAddressForm.zip) {
         addToast('Please fill all required address fields', 'error');
         return;
       }
-      if (user) {
-        const added = addAddress(newAddressForm);
-        setSelectedAddressId(added.id);
+      if (user && addAddress) {
+        try {
+          const added = await addAddress(newAddressForm);
+          if (added && added.id) {
+            setSelectedAddressId(added.id);
+            setIsAddingNewAddress(false);
+          }
+        } catch (err) {
+          console.error('Failed to save address:', err);
+        }
       }
     }
     setCurrentStep(2);
@@ -259,6 +290,12 @@ export default function CheckoutClient() {
           addressId: selectedAddressId !== 'new' ? selectedAddressId : undefined,
           shippingAddress: {
             ...activeShippingAddress,
+            name: activeShippingAddress?.name || newAddressForm?.name || user?.name || 'Valued Customer',
+            phone: activeShippingAddress?.phone || newAddressForm?.phone || user?.phone || '',
+            address: activeShippingAddress?.address || activeShippingAddress?.address_line || newAddressForm?.address || '',
+            city: activeShippingAddress?.city || newAddressForm?.city || '',
+            state: activeShippingAddress?.state || newAddressForm?.state || '',
+            zip: activeShippingAddress?.zip || activeShippingAddress?.pincode || newAddressForm?.zip || '',
             email: user?.email || '',
           },
           deliveryMethod,
@@ -346,8 +383,8 @@ export default function CheckoutClient() {
         keyId: data.keyId,
         orderData: data.orderData,
         userEmail: user?.email || activeShippingAddress?.email || '',
-        userName: user?.name || activeShippingAddress?.name || '',
-        userPhone: user?.phone || activeShippingAddress?.phone || '',
+        userName: user?.name || activeShippingAddress?.name || newAddressForm?.name || 'Valued Customer',
+        userPhone: user?.phone || activeShippingAddress?.phone || newAddressForm?.phone || '',
       });
     } catch (err) {
       console.error('Order placement error:', err);
@@ -910,11 +947,24 @@ export default function CheckoutClient() {
                     Change
                   </button>
                 </div>
-                <p className="text-xs font-bold text-stone-800 dark:text-ivory-100">{activeShippingAddress.name}</p>
-                <p className="text-xs text-stone-600 dark:text-stone-300">
-                  {activeShippingAddress.address}, {activeShippingAddress.city}, {activeShippingAddress.state} - {activeShippingAddress.zip}
+                <p className="text-xs font-bold text-stone-800 dark:text-ivory-100">
+                  {activeShippingAddress?.name || newAddressForm?.name || user?.name || 'Valued Customer'}
                 </p>
-                <p className="text-[11px] text-stone-500">Contact: {activeShippingAddress.phone}</p>
+                <p className="text-xs text-stone-600 dark:text-stone-300">
+                  {[
+                    activeShippingAddress?.address || activeShippingAddress?.address_line || newAddressForm?.address,
+                    activeShippingAddress?.city || newAddressForm?.city,
+                    activeShippingAddress?.state || newAddressForm?.state,
+                  ]
+                    .filter(Boolean)
+                    .join(', ')}
+                  {activeShippingAddress?.zip || activeShippingAddress?.pincode || newAddressForm?.zip
+                    ? ` - ${activeShippingAddress?.zip || activeShippingAddress?.pincode || newAddressForm?.zip}`
+                    : ''}
+                </p>
+                <p className="text-[11px] text-stone-500">
+                  Contact: {activeShippingAddress?.phone || newAddressForm?.phone || user?.phone || 'N/A'}
+                </p>
               </div>
 
               {/* Payment Review */}
@@ -962,8 +1012,8 @@ export default function CheckoutClient() {
                   {cartItems.map(item => (
                     <div key={item.cartItemId} className="flex items-center justify-between text-xs p-2 rounded-xl bg-ivory-50 dark:bg-stone-900/30">
                       <div className="flex items-center gap-2.5 min-w-0">
-                        <img src={item.image} alt={item.name} className="w-10 h-10 rounded-lg object-cover shrink-0" />
-                        <span className="font-semibold text-stone-900 dark:text-ivory-100 truncate">{item.name} (x{item.quantity})</span>
+                        <img src={item?.image || '/placeholder.png'} alt={item?.name || 'Product'} className="w-10 h-10 rounded-lg object-cover shrink-0" />
+                        <span className="font-semibold text-stone-900 dark:text-ivory-100 truncate">{item?.name || 'Artisan Product'} (x{item?.quantity || 1})</span>
                       </div>
                       <span className="font-serif font-bold text-maroon-800 dark:text-gold-400 shrink-0">
                         ₹{(item.price * item.quantity)?.toLocaleString('en-IN')}

@@ -70,11 +70,11 @@ export default function RazorpayCheckout({
       amount: Math.round(Number(amount) * 100), // paise
       currency: currency || 'INR',
       name: 'Trio Enterprises',
-      description: `Order #${orderNumber}`,
+      description: `Order #${orderNumber || ''}`,
       order_id: razorpayOrderId,
       image: '/logo.png',
       prefill: {
-        name: userName || '',
+        name: userName || 'Valued Customer',
         email: userEmail || '',
         contact: cleanPhone || '',
       },
