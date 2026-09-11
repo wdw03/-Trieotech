@@ -442,7 +442,8 @@ export async function POST(request) {
       razorpayOrderId: razorpayOrder.id,
       amount: total,
       currency: 'INR',
-      keyId: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || RAZORPAY_KEY_ID || 'rzp_live_TZUoFoXCMkJNkx',
+      // Live fallback: 'rzp_live_TZUoFoXCMkJNkx'
+      keyId: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || RAZORPAY_KEY_ID || 'rzp_test_Tai3sx6h51NmJP',
       orderData,
     });
   } catch (err) {

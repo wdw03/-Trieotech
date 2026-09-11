@@ -4,11 +4,13 @@ import crypto from 'crypto';
 export const RAZORPAY_KEY_ID =
   process.env.RAZORPAY_KEY_ID ||
   process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID ||
-  'rzp_live_TZUoFoXCMkJNkx';
+  // 'rzp_live_TZUoFoXCMkJNkx'; // Live mode
+  'rzp_test_Tai3sx6h51NmJP'; // Test mode
 
 export const RAZORPAY_KEY_SECRET =
   process.env.RAZORPAY_KEY_SECRET ||
-  'g5BmMZv0ain1nbICVUemJiWj';
+  // 'g5BmMZv0ain1nbICVUemJiWj'; // Live mode
+  'Nk05dSzLWbzKzVikmjEp6bXQ'; // Test mode
 
 export const razorpay = new Razorpay({
   key_id: RAZORPAY_KEY_ID,

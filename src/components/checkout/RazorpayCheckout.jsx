@@ -62,7 +62,8 @@ export default function RazorpayCheckout({
     // Clean phone number for Razorpay prefill
     const cleanPhone = (userPhone || '').replace(/\D/g, '').slice(-10);
 
-    const activeKey = keyId || process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || 'rzp_live_TZUoFoXCMkJNkx';
+    // Live fallback: 'rzp_live_TZUoFoXCMkJNkx'
+    const activeKey = keyId || process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || 'rzp_test_Tai3sx6h51NmJP';
 
     const options = {
       key: activeKey,
