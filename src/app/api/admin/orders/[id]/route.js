@@ -2,6 +2,7 @@ export const dynamic = 'force-dynamic';
 import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '../../../../../lib/supabase/admin';
 import { sendShippingUpdate } from '../../../../../lib/resend';
+import { createOrderAndAssignAWB, requestPickup as shiprocketRequestPickup } from '../../../../../lib/shiprocket';
 
 // Map dashboard status to DB status
 const DB_STATUS_MAP = {
@@ -71,7 +72,7 @@ export async function PATCH(request, { params }) {
       .from('orders')
       .update(updates)
       .eq('id', orderDbId)
-      .select()
+      .select('*, order_items(*)')
       .single();
 
     if (orderError) throw orderError;
@@ -100,6 +101,95 @@ export async function PATCH(request, { params }) {
           courier_name: courierName || 'BlueDart Express',
           status: 'in_transit',
         });
+      }
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    // AUTO-SHIPROCKET ACTIONS ON STATUS CHANGE
+    // ═══════════════════════════════════════════════════════════
+
+    // When admin marks as "Packed" → auto-create Shiprocket shipment + AWB if not already done
+    if (mappedStatus === 'packed') {
+      try {
+        const { data: existingShipment } = await supabaseAdmin
+          .from('shipments')
+          .select('*')
+          .eq('order_id', orderDbId)
+          .maybeSingle();
+
+        if (!existingShipment?.shiprocket_order_id) {
+          // No shipment yet — create one
+          const shiprocketResult = await createOrderAndAssignAWB({
+            orderNumber: updatedOrder.order_number,
+            orderDate: new Date(updatedOrder.created_at || Date.now()).toISOString().split('T')[0],
+            billingAddress: updatedOrder.shipping_address,
+            shippingAddress: updatedOrder.shipping_address,
+            items: updatedOrder.order_items || [],
+            paymentMethod: updatedOrder.payment_method === 'cod' ? 'cod' : 'prepaid',
+            subtotal: updatedOrder.subtotal,
+            discount: updatedOrder.discount,
+            shippingCharges: updatedOrder.shipping_cost,
+          });
+
+          const shipmentData = {
+            order_id: orderDbId,
+            shiprocket_order_id: String(shiprocketResult.order_id || ''),
+            shiprocket_shipment_id: String(shiprocketResult.shipment_id || ''),
+            awb_number: shiprocketResult.awb_code || '',
+            courier_name: shiprocketResult.courier_name || '',
+            courier_id: shiprocketResult.courier_company_id || null,
+            status: 'packed',
+            updated_at: new Date().toISOString(),
+          };
+
+          if (existingShipment) {
+            await supabaseAdmin.from('shipments').update(shipmentData).eq('id', existingShipment.id);
+          } else {
+            await supabaseAdmin.from('shipments').insert(shipmentData);
+          }
+        } else {
+          // Shipment exists — just update status to packed
+          await supabaseAdmin
+            .from('shipments')
+            .update({ status: 'packed', updated_at: new Date().toISOString() })
+            .eq('id', existingShipment.id);
+        }
+      } catch (packErr) {
+        console.warn('Auto Shiprocket on Packed notice:', packErr.message);
+        // Non-blocking — order status still updates
+      }
+    }
+
+    // When admin marks as "Shipped" → auto-request pickup if shipment has AWB
+    if (mappedStatus === 'shipped') {
+      try {
+        const { data: existingShipment } = await supabaseAdmin
+          .from('shipments')
+          .select('*')
+          .eq('order_id', orderDbId)
+          .maybeSingle();
+
+        if (existingShipment?.shiprocket_shipment_id && existingShipment.pickup_status !== 'scheduled') {
+          const pickupResult = await shiprocketRequestPickup(existingShipment.shiprocket_shipment_id);
+          const pickupToken = pickupResult?.pickup_token_number || pickupResult?.response?.pickup_token_number || '';
+
+          await supabaseAdmin
+            .from('shipments')
+            .update({
+              status: 'shipped',
+              pickup_status: 'scheduled',
+              pickup_token: String(pickupToken || ''),
+              updated_at: new Date().toISOString(),
+            })
+            .eq('id', existingShipment.id);
+        } else if (existingShipment) {
+          await supabaseAdmin
+            .from('shipments')
+            .update({ status: 'shipped', updated_at: new Date().toISOString() })
+            .eq('id', existingShipment.id);
+        }
+      } catch (shipErr) {
+        console.warn('Auto pickup on Shipped notice:', shipErr.message);
       }
     }
 

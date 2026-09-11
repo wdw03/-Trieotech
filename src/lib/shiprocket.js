@@ -338,3 +338,22 @@ export async function requestPickup(shipmentId) {
     }),
   });
 }
+
+/**
+ * Generate official Shiprocket shipping label PDF
+ */
+export async function generateLabel(shipmentIds) {
+  return shiprocketFetch('/courier/generate/label', {
+    method: 'POST',
+    body: JSON.stringify({
+      shipment_id: Array.isArray(shipmentIds) ? shipmentIds : [shipmentIds],
+    }),
+  });
+}
+
+/**
+ * Get Shiprocket order details
+ */
+export async function getShiprocketOrderDetails(shiprocketOrderId) {
+  return shiprocketFetch(`/orders/show/${shiprocketOrderId}`);
+}

@@ -151,14 +151,22 @@ export async function GET(request) {
           }
           return 'Pending';
         })(),
-        shippingPartner: shipment.courier_name || 'Shiprocket / BlueDart',
+        shippingPartner: shipment.courier_name || 'Awaiting Shipment',
         trackingNumber: shipment.awb_number || shipment.tracking_number || '',
-        estimatedDelivery: new Date(Date.now() + 4 * 86400000).toISOString().split('T')[0],
-        shippingCharge: Number(ord.shipping_amount || 0),
+        estimatedDelivery: shipment.estimated_delivery || ord.estimated_delivery || new Date(Date.now() + 4 * 86400000).toISOString().split('T')[0],
+        shippingCharge: Number(ord.shipping_cost || ord.shipping_amount || 0),
         taxAmount: Number(ord.tax_amount || 0),
-        discountAmount: Number(ord.discount_amount || 0),
+        discountAmount: Number(ord.discount || ord.discount_amount || 0),
         totalAmount: Number(ord.total || ord.total_amount || 0),
         items,
+        // Shiprocket shipment details for admin actions
+        shipmentStatus: shipment.status || (shipment.shiprocket_order_id ? 'confirmed' : 'none'),
+        shiprocketOrderId: shipment.shiprocket_order_id || '',
+        shiprocketShipmentId: shipment.shiprocket_shipment_id || '',
+        labelUrl: shipment.label_url || '',
+        pickupStatus: shipment.pickup_status || 'pending',
+        hasShipment: !!(shipment.shiprocket_order_id),
+        hasAwb: !!(shipment.awb_number && !shipment.awb_number.startsWith('SR-') && shipment.awb_number.length > 5),
         // Raw DB fields for compatibility
         created_at: ord.created_at,
         shipping_address: ord.shipping_address,
