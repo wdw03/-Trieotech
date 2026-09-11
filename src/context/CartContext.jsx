@@ -41,7 +41,7 @@ export const CartProvider = ({ children }) => {
   const [couponLoading, setCouponLoading] = useState(false);
   const [availableCoupons, setAvailableCoupons] = useState(Object.values(COUPONS));
 
-  // Dynamic Shiprocket Shipping State
+  // Dynamic Shiprocket & Quantity-Scaled Shipping State
   const [shippingPincode, setShippingPincode] = useState(() => {
     try {
       return localStorage.getItem('trio_pincode') || '';
@@ -50,7 +50,60 @@ export const CartProvider = ({ children }) => {
     }
   });
   const [shippingDetails, setShippingDetails] = useState(null);
+  const [shippingBreakdown, setShippingBreakdown] = useState(null);
+  const [serverShippingFee, setServerShippingFee] = useState(0);
   const [isCalculatingShipping, setIsCalculatingShipping] = useState(false);
+
+  // Recalculates shipping via backend engine scaled strictly by item quantities
+  const recalculateServerShipping = async (currentItems = cartItems, currentPin = shippingPincode, options = {}) => {
+    if (!currentItems || currentItems.length === 0) {
+      setServerShippingFee(0);
+      setShippingBreakdown(null);
+      setShippingDetails(null);
+      return { success: true, shippingFee: 0 };
+    }
+
+    setIsCalculatingShipping(true);
+    try {
+      const payload = {
+        items: currentItems.map((item) => ({
+          productId: item.productId || item.id,
+          name: item.name,
+          quantity: item.quantity,
+          price: item.price,
+        })),
+        pincode: currentPin || undefined,
+        deliveryMethod: options.deliveryMethod || 'standard',
+        cod: !!options.cod,
+      };
+
+      const res = await fetch('/api/shipping/calculate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        if (typeof data.shippingFee === 'number') {
+          setServerShippingFee(data.shippingFee);
+          setShippingBreakdown(data);
+          setShippingDetails(data);
+          return { success: true, data };
+        }
+      }
+    } catch (err) {
+      console.warn('Server shipping calculation error, using fallback:', err);
+    } finally {
+      setIsCalculatingShipping(false);
+    }
+
+    // Offline / fallback calculation scaling by quantity (70 per unit)
+    const totalQty = currentItems.reduce((sum, it) => sum + (it.quantity || 1), 0);
+    const fallbackFee = totalQty * 70;
+    setServerShippingFee(fallbackFee);
+    return { success: true, shippingFee: fallbackFee };
+  };
 
   const fetchShippingRate = async (pincode, options = {}) => {
     const cleanPin = String(pincode || '').trim().replace(/\D/g, '').slice(0, 6);
@@ -58,33 +111,29 @@ export const CartProvider = ({ children }) => {
       return { success: false, message: 'Please enter a valid 6-digit delivery pincode' };
     }
 
-    setIsCalculatingShipping(true);
+    setShippingPincode(cleanPin);
     try {
-      const res = await fetch(`/api/shipping/rates?pincode=${cleanPin}&weight=${options.weight || 0.5}&cod=${options.cod ? '1' : '0'}`);
-      const data = await res.json();
-      if (data && data.available) {
-        setShippingDetails(data);
-        setShippingPincode(cleanPin);
-        try {
-          localStorage.setItem('trio_pincode', cleanPin);
-        } catch (_) {}
-        return { success: true, data };
-      } else {
-        return { success: false, message: data.message || 'Pincode not serviceable' };
-      }
-    } catch (err) {
-      console.warn('Failed to fetch shipping rate:', err);
-      return { success: false, message: 'Failed to calculate shipping rate' };
-    } finally {
-      setIsCalculatingShipping(false);
-    }
+      localStorage.setItem('trio_pincode', cleanPin);
+    } catch (_) {}
+
+    return recalculateServerShipping(cartItems, cleanPin, options);
   };
 
+  // Automatically recalculate server shipping whenever cart items, quantities, or pincode change
   useEffect(() => {
-    if (shippingPincode && shippingPincode.length === 6 && !shippingDetails) {
-      fetchShippingRate(shippingPincode);
+    if (cartItems.length === 0) {
+      setServerShippingFee(0);
+      setShippingBreakdown(null);
+      setShippingDetails(null);
+      return;
     }
-  }, [shippingPincode]);
+
+    const timer = setTimeout(() => {
+      recalculateServerShipping(cartItems, shippingPincode);
+    }, 150);
+
+    return () => clearTimeout(timer);
+  }, [cartItems, shippingPincode]);
 
   // Fetch live available coupons from database
   useEffect(() => {
@@ -406,12 +455,15 @@ export const CartProvider = ({ children }) => {
   }, [appliedCoupon, cartItems, subtotal]);
 
   const shipping = useMemo(() => {
-    if (subtotal === 0) return 0;
+    if (subtotal === 0 || cartItems.length === 0) return 0;
+    if (typeof serverShippingFee === 'number' && serverShippingFee > 0) {
+      return serverShippingFee;
+    }
     if (shippingDetails && typeof shippingDetails.shippingFee === 'number') {
       return shippingDetails.shippingFee;
     }
-    return 70;
-  }, [subtotal, shippingDetails]);
+    return itemCount * 70;
+  }, [subtotal, cartItems.length, serverShippingFee, shippingDetails, itemCount]);
 
   const total = useMemo(() => {
     if (subtotal === 0) return 0;
@@ -438,7 +490,10 @@ export const CartProvider = ({ children }) => {
         setShippingPincode,
         shippingDetails,
         setShippingDetails,
+        shippingBreakdown,
+        serverShippingFee,
         isCalculatingShipping,
+        recalculateServerShipping,
         fetchShippingRate,
         appliedCoupon,
         couponError,

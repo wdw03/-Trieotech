@@ -444,18 +444,25 @@ export default function CartClient() {
                 </div>
               )}
 
-              <div className="flex justify-between">
+              <div className="flex justify-between items-center">
                 <span className="flex items-center gap-1.5">
-                  Shipping Fee
+                  <span>Shipping Fee ({itemCount} {itemCount === 1 ? 'item' : 'items'})</span>
                   {isCalculatingShipping && <Loader2 className="w-3 h-3 animate-spin text-gold-600" />}
                 </span>
-                <span>
-                  {shipping === 0 ? (
-                    <strong className="text-emerald-600 dark:text-emerald-400">FREE EXPRESS</strong>
-                  ) : (
-                    `₹${shipping}`
+                <div className="text-right">
+                  <span className="font-semibold text-stone-900 dark:text-ivory-100">
+                    {shipping === 0 ? (
+                      <strong className="text-emerald-600 dark:text-emerald-400">FREE EXPRESS</strong>
+                    ) : (
+                      `₹${shipping?.toLocaleString('en-IN')}`
+                    )}
+                  </span>
+                  {itemCount > 1 && shipping > 0 && (
+                    <span className="block text-[10px] text-stone-400">
+                      (₹{Math.round(shipping / itemCount)} × {itemCount} units)
+                    </span>
                   )}
-                </span>
+                </div>
               </div>
 
               <div className="flex justify-between text-sm font-serif font-black text-stone-900 dark:text-ivory-100 pt-3 border-t border-gold-500/20">

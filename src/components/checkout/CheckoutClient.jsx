@@ -27,7 +27,7 @@ import RazorpayCheckout from './RazorpayCheckout';
 
 export default function CheckoutClient() {
   const router = useRouter();
-  const { cartItems, subtotal, originalSubtotal, productSavings, couponDiscount, shipping, total, appliedCoupon, clearCart } = useCart();
+  const { cartItems, subtotal, originalSubtotal, productSavings, couponDiscount, shipping, total, appliedCoupon, clearCart, itemCount = 0 } = useCart();
   const { user, loading, addAddress, addOrder } = useAuth();
   const { addToast } = useToast();
 
@@ -153,7 +153,21 @@ export default function CheckoutClient() {
     setIsCheckingCod(true);
     setIsLoadingShippingRates(true);
 
-    fetch(`/api/shipping/rates?pincode=${cleanPin}&cod=${paymentMethod === 'cod' ? '1' : '0'}`)
+    fetch('/api/shipping/calculate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        items: cartItems.map((item) => ({
+          productId: item.productId || item.id,
+          name: item.name,
+          quantity: item.quantity,
+          price: item.price,
+        })),
+        pincode: cleanPin,
+        deliveryMethod,
+        cod: paymentMethod === 'cod',
+      }),
+    })
       .then((res) => res.json())
       .then((data) => {
         if (!isCancelled) {
@@ -162,7 +176,7 @@ export default function CheckoutClient() {
           setIsCodAvailable(codOk);
           setCodStatusMessage(
             codOk
-              ? `Cash on Delivery available via ${data.standardCourier || 'Shiprocket Logistics'}`
+              ? `Cash on Delivery available via ${data.courierName || data.standardCourier || 'Shiprocket Logistics'}`
               : `Cash on Delivery is unavailable for PIN ${cleanPin}. Prepaid is fully supported.`
           );
           if (!codOk && paymentMethod === 'cod') {
@@ -183,10 +197,10 @@ export default function CheckoutClient() {
     return () => {
       isCancelled = true;
     };
-  }, [activePincode, paymentMethod]);
+  }, [activePincode, paymentMethod, cartItems, deliveryMethod]);
 
   const standardCost = typeof shippingRates?.standardRate === 'number' ? shippingRates.standardRate : shipping;
-  const expressCost = typeof shippingRates?.expressRate === 'number' ? shippingRates.expressRate : Math.round(standardCost + 40);
+  const expressCost = typeof shippingRates?.expressRate === 'number' ? shippingRates.expressRate : Math.round(standardCost + (itemCount * 40));
   const effectiveShippingCost = deliveryMethod === 'express' ? expressCost : standardCost;
   const finalTotal = Math.max(0, subtotal - couponDiscount + effectiveShippingCost);
 
@@ -656,9 +670,16 @@ export default function CheckoutClient() {
                       </p>
                     </div>
                   </div>
-                  <span className="font-bold text-xs sm:text-sm text-maroon-800 dark:text-gold-400">
-                    ₹{expressCost}
-                  </span>
+                  <div className="text-right">
+                    <span className="font-bold text-xs sm:text-sm text-maroon-800 dark:text-gold-400">
+                      ₹{expressCost}
+                    </span>
+                    {itemCount > 1 && (
+                      <span className="block text-[10px] text-stone-400 font-normal">
+                        ({itemCount} units)
+                      </span>
+                    )}
+                  </div>
                 </label>
 
                 <label
@@ -689,9 +710,16 @@ export default function CheckoutClient() {
                       </p>
                     </div>
                   </div>
-                  <span className="font-bold text-xs sm:text-sm text-stone-700 dark:text-stone-300">
-                    ₹{standardCost}
-                  </span>
+                  <div className="text-right">
+                    <span className="font-bold text-xs sm:text-sm text-stone-700 dark:text-stone-300">
+                      ₹{standardCost}
+                    </span>
+                    {itemCount > 1 && (
+                      <span className="block text-[10px] text-stone-400 font-normal">
+                        ({itemCount} units)
+                      </span>
+                    )}
+                  </div>
                 </label>
               </div>
 
@@ -904,6 +932,27 @@ export default function CheckoutClient() {
                 </p>
               </div>
 
+              {/* Shipping Option Review */}
+              <div className="p-4 rounded-2xl bg-ivory-100 dark:bg-stone-900/60 border border-gold-500/20 space-y-1">
+                <div className="flex justify-between items-center text-xs font-bold text-stone-900 dark:text-ivory-100">
+                  <span className="flex items-center gap-1.5 text-maroon-700 dark:text-gold-400">
+                    <Truck className="w-3.5 h-3.5" /> Shipping Option:
+                  </span>
+                  <button onClick={() => setCurrentStep(2)} className="text-gold-700 underline text-[11px]">
+                    Change
+                  </button>
+                </div>
+                <div className="flex justify-between items-center text-xs">
+                  <p className="font-bold text-stone-800 dark:text-ivory-100">
+                    {deliveryMethod === 'express' ? 'Air Express Delivery (2-3 days)' : 'Standard Surface Delivery (4-7 days)'}
+                    <span className="font-normal text-stone-500 text-[11px] ml-1.5">
+                      ({itemCount} {itemCount === 1 ? 'item' : 'items'} × {deliveryMethod === 'express' ? '₹110' : '₹70'})
+                    </span>
+                  </p>
+                  <span className="font-bold text-maroon-800 dark:text-gold-400">₹{effectiveShippingCost}</span>
+                </div>
+              </div>
+
               {/* Items List Snapshot */}
               <div className="space-y-2 pt-2">
                 <span className="text-xs font-bold text-stone-700 dark:text-stone-300">
@@ -996,11 +1045,16 @@ export default function CheckoutClient() {
               )}
               <div className="flex justify-between items-center">
                 <div className="flex flex-col">
-                  <span>Shipping Fee</span>
+                  <span>Shipping Fee {itemCount > 0 ? `(${itemCount} ${itemCount === 1 ? 'item' : 'items'})` : ''}</span>
                   <span className="text-[10px] text-stone-400">
                     {deliveryMethod === 'express'
                       ? (shippingRates?.expressCourier || 'Air Express')
                       : (shippingRates?.standardCourier || 'Surface Shipping')}
+                    {itemCount > 1 && (
+                      <span className="text-gold-700 dark:text-gold-400 font-medium">
+                        {' '}• ₹{deliveryMethod === 'express' ? 110 : 70} × {itemCount} units
+                      </span>
+                    )}
                   </span>
                 </div>
                 <span className="font-semibold text-stone-900 dark:text-ivory-100 flex items-center gap-1.5">
