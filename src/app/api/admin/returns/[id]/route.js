@@ -100,7 +100,8 @@ export async function PATCH(request, { params }) {
         timestamp: nowIso,
         note: claim.adminNotes,
       });
-      newOrderStatus = 'return_approved';
+      // Keep delivered status in DB so orders_status_check constraint is satisfied
+      newOrderStatus = order.status || 'delivered';
     } else if (targetAction === 'reject' || targetAction === 'rejected') {
       claim.status = 'rejected';
       claim.adminNotes = adminNotes || 'Return claim was reviewed and rejected. Does not meet replacement policy.';
@@ -151,7 +152,7 @@ export async function PATCH(request, { params }) {
         timestamp: nowIso,
         note: adminNotes || 'Courier assigned for doorstep return',
       });
-      newOrderStatus = 'returned';
+      newOrderStatus = order.status || 'delivered';
     }
 
     notesObj.returnClaim = claim;
@@ -163,8 +164,8 @@ export async function PATCH(request, { params }) {
       updated_at: nowIso,
     };
 
-    if (newPaymentStatus) {
-      updatePayload.payment_status = newPaymentStatus;
+    if (newOrderStatus === 'delivered' && !order.delivered_at) {
+      updatePayload.delivered_at = nowIso;
     }
 
     const { data: updatedOrder, error: updateErr } = await supabaseAdmin
@@ -173,6 +174,13 @@ export async function PATCH(request, { params }) {
       .eq('id', order.id)
       .select()
       .single();
+
+    if (newPaymentStatus) {
+      await supabaseAdmin
+        .from('payments')
+        .update({ status: newPaymentStatus, updated_at: nowIso })
+        .eq('order_id', order.id);
+    }
 
     if (updateErr) {
       console.error('Failed to update order return status:', updateErr);

@@ -91,6 +91,7 @@ export const AuthProvider = ({ children }) => {
           date: new Date(o.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' }),
           status: STATUS_DISPLAY_MAP[(o.status || 'pending').toLowerCase()] || o.status || 'Pending',
           rawStatus: (o.status || 'pending').toLowerCase(),
+          payment_status: o.payments?.[0]?.status || 'pending',
           returnClaim,
           items: (o.order_items || []).map((item) => ({
             productId: item.product_id,

@@ -117,11 +117,10 @@ export async function POST(request, { params }) {
       returnClaim,
     });
 
-    // 8. Update order in Supabase
+    // 8. Update order in Supabase (keep order.status to satisfy orders_status_check DB constraint)
     const { error: updateErr } = await supabaseAdmin
       .from('orders')
       .update({
-        status: 'return_requested',
         notes: updatedNotes,
         updated_at: requestedAt,
       })

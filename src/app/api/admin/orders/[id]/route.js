@@ -39,9 +39,15 @@ export async function PATCH(request, { params }) {
     // Convert dashboard status to db status if needed
     const mappedStatus = DB_STATUS_MAP[status] || (status ? status.toLowerCase().replace(/\s+/g, '_') : undefined);
 
-    const updates = {};
-    if (mappedStatus) updates.status = mappedStatus;
-    if (paymentStatus) updates.payment_status = paymentStatus.toLowerCase();
+    const updates = {
+      updated_at: new Date().toISOString(),
+    };
+    if (mappedStatus) {
+      updates.status = mappedStatus;
+      if (mappedStatus === 'delivered') {
+        updates.delivered_at = new Date().toISOString();
+      }
+    }
 
     // Find order first by id or order_number
     let findQuery = supabaseAdmin
@@ -76,6 +82,13 @@ export async function PATCH(request, { params }) {
       .single();
 
     if (orderError) throw orderError;
+
+    if (paymentStatus) {
+      await supabaseAdmin
+        .from('payments')
+        .update({ status: paymentStatus.toLowerCase(), updated_at: new Date().toISOString() })
+        .eq('order_id', orderDbId);
+    }
 
     // If tracking number provided, update or create shipment
     if (trackingNumber) {
