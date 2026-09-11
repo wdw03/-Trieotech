@@ -10,7 +10,7 @@ export async function PATCH(request, { params }) {
   try {
     const { id } = await params;
     const body = await request.json();
-    const { action, status: requestedStatus, adminNotes = '', refundAmount } = body;
+    const { action, status: requestedStatus, adminNotes = '', refundAmount, refundReason = '', reverseAwb = '', pickupCourier = '' } = body;
 
     const targetAction = action || (requestedStatus ? requestedStatus.toLowerCase() : 'approve');
 
@@ -94,11 +94,13 @@ export async function PATCH(request, { params }) {
     if (targetAction === 'approve' || targetAction === 'approved') {
       claim.status = 'approved';
       claim.adminNotes = adminNotes || 'Return request verified and approved by admin. Reverse pickup authorized.';
+      if (reverseAwb) claim.reverseAwb = reverseAwb;
+      if (pickupCourier) claim.pickupCourier = pickupCourier;
       claim.history = claim.history || [];
       claim.history.push({
         step: 'Claim Approved by Admin',
         timestamp: nowIso,
-        note: claim.adminNotes,
+        note: `${claim.adminNotes}${claim.reverseAwb ? ` • Reverse AWB: ${claim.reverseAwb}` : ''}`,
       });
       // Keep delivered status in DB so orders_status_check constraint is satisfied
       newOrderStatus = order.status || 'delivered';
@@ -115,12 +117,15 @@ export async function PATCH(request, { params }) {
       newOrderStatus = 'delivered';
     } else if (targetAction === 'refund' || targetAction === 'refunded') {
       claim.status = 'refunded';
-      claim.adminNotes = adminNotes || 'Refund successfully issued to customer.';
+      if (refundReason) claim.refundReason = refundReason;
+      if (reverseAwb) claim.reverseAwb = reverseAwb;
+      if (pickupCourier) claim.pickupCourier = pickupCourier;
+      claim.adminNotes = adminNotes || `Refund issued: ${claim.refundReason || 'Approved by admin'}`;
       claim.history = claim.history || [];
       claim.history.push({
         step: 'Refund Completed',
         timestamp: nowIso,
-        note: claim.adminNotes,
+        note: `Reason: ${claim.refundReason || 'Customer satisfaction'}. ${claim.adminNotes}`,
       });
       newOrderStatus = 'refunded';
       newPaymentStatus = 'refunded';
@@ -137,20 +142,23 @@ export async function PATCH(request, { params }) {
         try {
           refundResult = await createRefund(paymentId, amountToRefund, {
             order_id: order.id,
-            reason: claim.reason || 'Customer return',
+            reason: claim.refundReason || claim.reason || 'Customer return',
           });
           console.log(`Razorpay refund issued for payment ${paymentId}:`, refundResult?.id);
         } catch (rfErr) {
           console.warn('Razorpay automated refund skipped/failed:', rfErr.message);
         }
       }
-    } else if (targetAction === 'pickup_scheduled') {
-      claim.status = 'pickup_scheduled';
+    } else if (targetAction === 'pickup_scheduled' || targetAction === 'update_awb') {
+      if (targetAction === 'pickup_scheduled') claim.status = 'pickup_scheduled';
+      if (reverseAwb) claim.reverseAwb = reverseAwb;
+      if (pickupCourier) claim.pickupCourier = pickupCourier;
+      claim.adminNotes = adminNotes || claim.adminNotes;
       claim.history = claim.history || [];
       claim.history.push({
-        step: 'Reverse Courier Pickup Scheduled',
+        step: targetAction === 'pickup_scheduled' ? 'Reverse Courier Pickup Scheduled' : 'Reverse AWB Updated',
         timestamp: nowIso,
-        note: adminNotes || 'Courier assigned for doorstep return',
+        note: `${adminNotes || 'Reverse AWB assigned'}${claim.reverseAwb ? ` • AWB: ${claim.reverseAwb}` : ''}`,
       });
       newOrderStatus = order.status || 'delivered';
     }

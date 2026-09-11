@@ -106,15 +106,18 @@ export async function GET() {
         images: Array.isArray(claim?.images) ? claim.images : [],
         amount: Number(claim?.refundAmount || order.total || 0),
         resolution: claim?.resolution || 'refund',
-        pickupCourier: shipment.courier_name || 'BlueDart / Delhivery Surface',
-        trackingNumber: shipment.awb_number || 'Awaiting Reverse AWB',
+        reverseAwb: claim?.reverseAwb || claim?.trackingNumber || (['approved', 'pickup_scheduled', 'returned', 'refunded'].includes(claimStatusKey) ? `RET-${order.order_number || order.id.slice(0, 8)}` : 'Pending Reverse AWB'),
+        pickupCourier: claim?.pickupCourier || shipment.courier_name || 'Delhivery Surface / BlueDart Reverse',
+        trackingNumber: claim?.reverseAwb || shipment.awb_number || 'Awaiting Reverse AWB',
         status: displayStatus,
         rawStatus: claimStatusKey,
         adminNotes: claim?.adminNotes || '',
+        refundReason: claim?.refundReason || claim?.reason || '',
         date: claim?.requestedAt ? claim.requestedAt.split('T')[0] : order.created_at ? order.created_at.split('T')[0] : '2026-09-08',
         timeline: claimTimeline,
         items: order.order_items || [],
         paymentMethod: order.payment_method || 'Prepaid',
+        shippingAddress: order.shipping_address || {},
       });
     });
 

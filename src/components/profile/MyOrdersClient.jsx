@@ -9,7 +9,7 @@ import { useToast } from '../../context/ToastContext';
 import {
   Package, Truck, ArrowRight, CheckCircle2, Clock, RotateCcw, FileText, Download,
   XCircle, AlertTriangle, Loader2, Ban, RefreshCw, Camera, UploadCloud, Eye, Trash2,
-  ShieldCheck, ShieldAlert, Check, Info, X, ExternalLink, Image as ImageIcon
+  ShieldCheck, ShieldAlert, Check, Info, X, ExternalLink, Image as ImageIcon, MessageCircle
 } from 'lucide-react';
 
 // Statuses that allow cancellation (only while pending — before confirmed)
@@ -405,38 +405,118 @@ export default function MyOrdersClient() {
                 </div>
               )}
 
-              {/* Return Support Ticket Banner (if return claim active) */}
+              {/* Return & Refund Support Ticket Banner (if return claim active) */}
               {isReturned && (
-                <div className="p-3.5 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
-                  <div className="flex items-start gap-2.5">
-                    <ShieldAlert className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
-                    <div>
-                      <p className="font-bold text-amber-900 dark:text-amber-200">
-                        Support Ticket Active: {order.returnClaim?.ticketId || `Claim for ${order.id}`}
-                      </p>
-                      <p className="text-[11px] text-amber-700 dark:text-amber-300 mt-0.5">
-                        Status:{' '}
-                        <strong className="capitalize font-bold text-maroon-800 dark:text-gold-400">
-                          {claimStatus === 'pending_review'
-                            ? 'Pending Admin Verification'
-                            : claimStatus === 'approved'
-                            ? 'Approved - Pickup Scheduling'
-                            : claimStatus === 'rejected'
-                            ? 'Claim Rejected'
-                            : claimStatus === 'refunded'
-                            ? 'Refund Completed'
-                            : claimStatus?.replace(/_/g, ' ')}
-                        </strong>
-                        {order.returnClaim?.adminNotes && ` • Remarks: ${order.returnClaim.adminNotes}`}
-                      </p>
+                <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 space-y-3 text-xs">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div className="flex items-start gap-2.5">
+                      <ShieldAlert className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+                      <div>
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <p className="font-bold text-amber-900 dark:text-amber-200 text-sm">
+                            Return / Refund Ticket: {order.returnClaim?.ticketId || `Claim for ${order.id}`}
+                          </p>
+                          <span className={`px-2 py-0.5 rounded-full font-bold text-[10px] capitalize ${
+                            claimStatus === 'approved'
+                              ? 'bg-indigo-600 text-white'
+                              : claimStatus === 'refunded'
+                              ? 'bg-blue-600 text-white'
+                              : claimStatus === 'rejected'
+                              ? 'bg-rose-600 text-white'
+                              : 'bg-amber-600 text-white'
+                          }`}>
+                            {claimStatus === 'pending_review'
+                              ? 'Pending Admin Verification'
+                              : claimStatus === 'approved'
+                              ? 'Approved - Reverse Pickup'
+                              : claimStatus === 'rejected'
+                              ? 'Claim Rejected'
+                              : claimStatus === 'refunded'
+                              ? 'Refund Completed'
+                              : claimStatus?.replace(/_/g, ' ')}
+                          </span>
+                        </div>
+                        <p className="text-[11px] text-amber-800 dark:text-amber-300 mt-1">
+                          <strong>Stated Reason:</strong> {order.returnClaim?.reason || 'Damaged / Defect condition reported'}
+                        </p>
+                        {order.returnClaim?.description && (
+                          <p className="text-[11px] text-stone-600 dark:text-stone-400 italic mt-0.5">
+                            "{order.returnClaim.description}"
+                          </p>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2 self-start sm:self-auto shrink-0 flex-wrap">
+                      {/* WhatsApp Support Button */}
+                      <a
+                        href={`https://wa.me/918789968980?text=${encodeURIComponent(
+                          `Hi Trio Enterprises Support, I need help regarding my Return / Refund Ticket ${order.returnClaim?.ticketId || order.id} for Order #${order.id}. Stated Reason: ${order.returnClaim?.reason || ''}.`
+                        )}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="px-3 py-1.5 text-xs font-bold rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white flex items-center gap-1.5 transition-colors shadow-sm"
+                        title="Chat with support on WhatsApp"
+                      >
+                        <MessageCircle className="w-3.5 h-3.5" />
+                        <span>Chat on WhatsApp</span>
+                      </a>
+
+                      {/* View Ticket & Photos Modal Button */}
+                      <button
+                        onClick={() => openTicketModal(order)}
+                        className="px-3 py-1.5 text-xs font-bold rounded-xl bg-amber-600 text-white hover:bg-amber-700 flex items-center gap-1.5 transition-colors"
+                      >
+                        <Eye className="w-3.5 h-3.5" />
+                        <span>View Ticket &amp; Photos</span>
+                      </button>
                     </div>
                   </div>
-                  <button
-                    onClick={() => openTicketModal(order)}
-                    className="px-3 py-1.5 text-xs font-bold rounded-xl bg-amber-600 text-white hover:bg-amber-700 flex items-center gap-1 shrink-0 self-start sm:self-auto transition-colors"
-                  >
-                    <Eye className="w-3.5 h-3.5" /> View Ticket &amp; Photos
-                  </button>
+
+                  {/* Return Logistics & Reverse AWB Section */}
+                  <div className="pt-2.5 border-t border-amber-500/20 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5 text-[11px] text-amber-900 dark:text-amber-200">
+                    <div>
+                      <span className="text-stone-500 dark:text-stone-400 block text-[10px] uppercase font-bold">Reverse Pickup Courier</span>
+                      <strong className="font-semibold text-stone-800 dark:text-stone-200">
+                        {order.returnClaim?.pickupCourier || 'Delhivery Surface / BlueDart Reverse'}
+                      </strong>
+                    </div>
+
+                    <div>
+                      <span className="text-stone-500 dark:text-stone-400 block text-[10px] uppercase font-bold">Reverse Return AWB</span>
+                      <strong className="font-mono bg-amber-500/20 text-amber-900 dark:text-amber-200 px-2 py-0.5 rounded text-xs">
+                        {order.returnClaim?.reverseAwb || (['approved', 'pickup_scheduled', 'returned', 'refunded'].includes(claimStatus) ? `RET-${order.order_number || order.id.slice(-8)}` : 'Generated once pickup is scheduled')}
+                      </strong>
+                    </div>
+
+                    <div>
+                      <span className="text-stone-500 dark:text-stone-400 block text-[10px] uppercase font-bold">
+                        {claimStatus === 'refunded' ? 'Refund Status' : 'Resolution Requested'}
+                      </span>
+                      <strong className="text-emerald-700 dark:text-emerald-400 font-bold">
+                        {claimStatus === 'refunded'
+                          ? `₹${order.returnClaim?.refundAmount || order.total} Refunded to Original Method`
+                          : order.returnClaim?.resolution === 'replacement'
+                          ? 'Free Handcrafted Replacement'
+                          : `100% Refund (₹${order.total})`}
+                      </strong>
+                    </div>
+
+                    {(order.returnClaim?.refundReason || order.returnClaim?.adminNotes) && (
+                      <div className="sm:col-span-2 md:col-span-3 pt-1 text-[11px] bg-amber-500/10 p-2 rounded-lg border border-amber-500/20">
+                        {order.returnClaim?.refundReason && (
+                          <p className="text-amber-900 dark:text-amber-200">
+                            <strong>Reason for Refund / Acceptance:</strong> {order.returnClaim.refundReason}
+                          </p>
+                        )}
+                        {order.returnClaim?.adminNotes && (
+                          <p className="text-stone-700 dark:text-stone-300 mt-0.5">
+                            <strong>Admin Remarks:</strong> {order.returnClaim.adminNotes}
+                          </p>
+                        )}
+                      </div>
+                    )}
+                  </div>
                 </div>
               )}
 
@@ -776,17 +856,44 @@ export default function MyOrdersClient() {
             </div>
 
             {/* Claim Info Box */}
-            <div className="p-3.5 rounded-2xl bg-ivory-100 dark:bg-stone-800 space-y-2 text-xs">
-              <div className="flex justify-between items-center text-stone-500 text-[11px]">
+            <div className="p-4 rounded-2xl bg-ivory-100 dark:bg-stone-800 space-y-2.5 text-xs">
+              <div className="flex justify-between items-center text-stone-500 text-[11px] pb-1.5 border-b border-gold-500/10">
                 <span>Order #{viewTicketModal.order?.id}</span>
-                <span>Claim Amount: ₹{viewTicketModal.claim?.refundAmount || viewTicketModal.order?.total}</span>
+                <span className="font-bold text-maroon-800 dark:text-gold-400">
+                  Claim Value: ₹{viewTicketModal.claim?.refundAmount || viewTicketModal.order?.total}
+                </span>
               </div>
               <p className="text-stone-700 dark:text-stone-300">
-                Reason: <strong className="text-maroon-800 dark:text-gold-400">{viewTicketModal.claim?.reason}</strong>
+                <strong>Stated Reason:</strong> <span className="text-maroon-800 dark:text-gold-400 font-semibold">{viewTicketModal.claim?.reason}</span>
               </p>
-              <p className="text-stone-600 dark:text-stone-400 italic">
-                "{viewTicketModal.claim?.description}"
-              </p>
+              {viewTicketModal.claim?.description && (
+                <p className="text-stone-600 dark:text-stone-400 italic">
+                  "{viewTicketModal.claim?.description}"
+                </p>
+              )}
+
+              {/* Reverse AWB & Logistics Details */}
+              <div className="grid grid-cols-2 gap-2 pt-2 border-t border-gold-500/10 text-[11px]">
+                <div>
+                  <span className="text-stone-500 dark:text-stone-400 block text-[10px] uppercase font-bold">Reverse Return AWB</span>
+                  <span className="font-mono font-bold text-maroon-800 dark:text-gold-400 bg-gold-500/15 px-1.5 py-0.5 rounded">
+                    {viewTicketModal.claim?.reverseAwb || (['approved', 'pickup_scheduled', 'returned', 'refunded'].includes(viewTicketModal.claim?.status) ? `RET-${viewTicketModal.order?.id?.slice(-8)}` : 'Awaiting Reverse Dispatch')}
+                  </span>
+                </div>
+                <div>
+                  <span className="text-stone-500 dark:text-stone-400 block text-[10px] uppercase font-bold">Pickup Partner</span>
+                  <span className="font-semibold text-stone-800 dark:text-stone-200">
+                    {viewTicketModal.claim?.pickupCourier || 'Delhivery Surface / BlueDart Reverse'}
+                  </span>
+                </div>
+              </div>
+
+              {viewTicketModal.claim?.refundReason && (
+                <div className="p-2.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-300 dark:border-emerald-800/40 text-[11px] text-emerald-900 dark:text-emerald-300">
+                  <strong>Reason for Refund / Acceptance:</strong> {viewTicketModal.claim.refundReason}
+                </div>
+              )}
+
               {viewTicketModal.claim?.adminNotes && (
                 <div className="p-2.5 rounded-xl bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-200 dark:border-indigo-800/40 text-[11px] text-indigo-900 dark:text-indigo-200">
                   <strong>Admin Remarks:</strong> {viewTicketModal.claim.adminNotes}
@@ -891,12 +998,23 @@ export default function MyOrdersClient() {
               </div>
             </div>
 
-            <div className="pt-2">
+            <div className="pt-2 flex flex-col sm:flex-row gap-2">
+              <a
+                href={`https://wa.me/918789968980?text=${encodeURIComponent(
+                  `Hi Trio Enterprises Support, I am checking the status of my Return / Refund Ticket ${viewTicketModal.claim?.ticketId} for Order #${viewTicketModal.order?.id}. Reason: ${viewTicketModal.claim?.reason || ''}.`
+                )}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex-1 py-2.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold flex items-center justify-center gap-2 transition-colors text-xs shadow-sm"
+              >
+                <MessageCircle className="w-4 h-4" />
+                <span>Chat with Support on WhatsApp</span>
+              </a>
               <button
                 onClick={closeTicketModal}
-                className="w-full py-2.5 rounded-xl bg-stone-100 dark:bg-stone-800 text-stone-800 dark:text-stone-200 font-bold hover:bg-stone-200 transition-colors text-xs"
+                className="py-2.5 px-4 rounded-xl bg-stone-100 dark:bg-stone-800 text-stone-800 dark:text-stone-200 font-bold hover:bg-stone-200 transition-colors text-xs"
               >
-                Close Ticket View
+                Close View
               </button>
             </div>
           </div>
