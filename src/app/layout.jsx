@@ -8,7 +8,7 @@ import CartDrawer from '../components/cart/CartDrawer';
 import AuthRequiredModal from '../components/auth/AuthRequiredModal';
 
 export const metadata = {
-  metadataBase: new URL('https://trioenterprises.com'),
+  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || 'https://trioenterprises.in'),
   title: {
     default: 'Trio Enterprises | Handcrafted Indian Ethnic Elegance & Devotional Crafts',
     template: '%s | Trio Enterprises',
@@ -38,7 +38,7 @@ export const metadata = {
   openGraph: {
     type: 'website',
     locale: 'en_IN',
-    url: 'https://trioenterprises.com/',
+    url: 'https://trioenterprises.in/',
     siteName: 'Trio Enterprises',
     title: 'Trio Enterprises | Authentic Indian Handicrafts & Festivity',
     description: 'Shop artisan-crafted zardosi patches, pure copper drinkware, and sacred pooja essentials handcrafted with love in India.',

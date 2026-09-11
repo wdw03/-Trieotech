@@ -11,7 +11,7 @@ export const metadata = {
   openGraph: {
     title: 'Trio Enterprises | Handcrafted Indian Ethnic Elegance',
     description: 'Shop artisan-crafted zardosi patches, pure copper drinkware, and sacred pooja essentials handcrafted with love in India.',
-    url: 'https://trioenterprises.com/',
+    url: 'https://trioenterprises.in/',
   },
 };
 
@@ -19,8 +19,8 @@ const jsonLd = {
   '@context': 'https://schema.org',
   '@type': 'Organization',
   name: 'Trio Enterprises',
-  url: 'https://trioenterprises.com',
-  logo: 'https://trioenterprises.com/logo.png',
+  url: 'https://trioenterprises.in',
+  logo: 'https://trioenterprises.in/logo.png',
   description: 'Handcrafted Indian Ethnic Elegance & Devotional Crafts',
   address: {
     '@type': 'PostalAddress',

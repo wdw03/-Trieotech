@@ -2,7 +2,7 @@ import { products } from '../data/products';
 import { categories } from '../data/categories';
 import { blogs } from '../data/blogs';
 
-const BASE_URL = 'https://trioenterprises.com';
+const BASE_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://trioenterprises.in';
 
 export default async function sitemap() {
   const currentDate = new Date().toISOString();

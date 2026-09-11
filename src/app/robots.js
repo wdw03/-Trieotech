@@ -14,6 +14,6 @@ export default function robots() {
         ],
       },
     ],
-    sitemap: 'https://trioenterprises.com/sitemap.xml',
+    sitemap: `${process.env.NEXT_PUBLIC_APP_URL || 'https://trioenterprises.in'}/sitemap.xml`,
   };
 }
