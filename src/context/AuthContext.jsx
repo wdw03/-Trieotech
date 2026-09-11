@@ -69,31 +69,43 @@ export const AuthProvider = ({ children }) => {
         delivered: 'Delivered',
         cancelled: 'Cancelled',
         return_requested: 'Return Requested',
+        return_approved: 'Return Approved',
         returned: 'Returned',
         refunded: 'Refunded',
         payment_failed: 'Payment Failed',
       };
 
-      const normalized = (orders || []).map((o) => ({
-        ...o,
-        id: o.order_number || o.id,
-        dbId: o.id,
-        date: new Date(o.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' }),
-        status: STATUS_DISPLAY_MAP[(o.status || 'pending').toLowerCase()] || o.status || 'Pending',
-        rawStatus: (o.status || 'pending').toLowerCase(),
-        items: (o.order_items || []).map((item) => ({
-          productId: item.product_id,
-          name: item.name,
-          image: item.image,
-          price: Number(item.price),
-          quantity: item.quantity,
-          color: item.color,
-          size: item.size,
-        })),
-        trackingNumber: o.shipments?.[0]?.awb_number || `BLUEDART-${(o.order_number || o.id).slice(-6)}`,
-        carrier: o.shipments?.[0]?.courier_name || 'BlueDart Express',
-        total: Number(o.total),
-      }));
+      const normalized = (orders || []).map((o) => {
+        let returnClaim = null;
+        if (o.notes) {
+          try {
+            const p = JSON.parse(o.notes);
+            returnClaim = p.returnClaim || null;
+          } catch (_) {}
+        }
+
+        return {
+          ...o,
+          id: o.order_number || o.id,
+          dbId: o.id,
+          date: new Date(o.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' }),
+          status: STATUS_DISPLAY_MAP[(o.status || 'pending').toLowerCase()] || o.status || 'Pending',
+          rawStatus: (o.status || 'pending').toLowerCase(),
+          returnClaim,
+          items: (o.order_items || []).map((item) => ({
+            productId: item.product_id,
+            name: item.name,
+            image: item.image,
+            price: Number(item.price),
+            quantity: item.quantity,
+            color: item.color,
+            size: item.size,
+          })),
+          trackingNumber: o.shipments?.[0]?.awb_number || `BLUEDART-${(o.order_number || o.id).slice(-6)}`,
+          carrier: o.shipments?.[0]?.courier_name || 'BlueDart Express',
+          total: Number(o.total),
+        };
+      });
 
       setUserOrders(normalized);
     } catch (err) {
@@ -477,6 +489,26 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  // ── Raise Return & Refund Support Ticket ──
+  const raiseReturnTicket = async (orderId, claimData) => {
+    try {
+      const res = await fetch(`/api/orders/${orderId}/return`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(claimData),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        return { success: false, error: data.error || 'Failed to submit return ticket' };
+      }
+      if (user) await fetchOrders(user.id);
+      return { success: true, ...data };
+    } catch (err) {
+      console.error('Raise return ticket error:', err);
+      return { success: false, error: err.message || 'Failed to submit return ticket' };
+    }
+  };
+
   // ── Computed user object for backward compatibility ──
   const compatUser = user
     ? {
@@ -525,6 +557,7 @@ export const AuthProvider = ({ children }) => {
         addOrder,
         refreshOrders,
         cancelOrder,
+        raiseReturnTicket,
       }}
     >
       {children}
