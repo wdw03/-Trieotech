@@ -2,7 +2,7 @@ export const dynamic = 'force-dynamic';
 import { NextResponse } from 'next/server';
 import { createClient } from '../../../../lib/supabase/server';
 import { supabaseAdmin } from '../../../../lib/supabase/admin';
-import { createRazorpayOrder, RAZORPAY_KEY_ID } from '../../../../lib/razorpay';
+import { createRazorpayOrder, RAZORPAY_KEY_ID, cleanRazorpayKey } from '../../../../lib/razorpay';
 import { sendOrderConfirmation } from '../../../../lib/resend';
 import { isCodAvailableForPincode } from '../../../../lib/codPincodes';
 import { evaluateCouponEligibility } from '../../../../lib/couponHelper';
@@ -442,8 +442,8 @@ export async function POST(request) {
       razorpayOrderId: razorpayOrder.id,
       amount: total,
       currency: 'INR',
-      // Live fallback: 'rzp_live_TZUoFoXCMkJNkx'
-      keyId: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || RAZORPAY_KEY_ID || 'rzp_test_Tai3sx6h51NmJP',
+      // Sanitized keyId (Live fallback: 'rzp_live_TZUoFoXCMkJNkx')
+      keyId: RAZORPAY_KEY_ID || cleanRazorpayKey(process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID) || 'rzp_test_Tai3sx6h51NmJP',
       orderData,
     });
   } catch (err) {

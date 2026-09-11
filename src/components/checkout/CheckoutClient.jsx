@@ -31,9 +31,14 @@ export default function CheckoutClient() {
   const { user, loading, addAddress, addOrder } = useAuth();
   const { addToast } = useToast();
 
+  const [isMounted, setIsMounted] = useState(false);
   const [currentStep, setCurrentStep] = useState(1); // 1: Address | 2: Delivery | 3: Payment | 4: Review
   const [isPlacingOrder, setIsPlacingOrder] = useState(false);
   const [razorpayData, setRazorpayData] = useState(null);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   const [selectedAddressId, setSelectedAddressId] = useState(user?.addresses?.[0]?.id || 'new');
   const [isAddingNewAddress, setIsAddingNewAddress] = useState(user?.addresses?.length === 0);
@@ -400,7 +405,7 @@ export default function CheckoutClient() {
     { num: 4, label: 'Review & Confirm', icon: CheckCircle2 }
   ];
 
-  if (loading || !user || isReconciling) {
+  if (!isMounted || loading || !user || isReconciling) {
     return (
       <div className="min-h-[60vh] flex flex-col items-center justify-center space-y-4 px-4">
         <Loader2 className="w-10 h-10 animate-spin text-gold-600" />

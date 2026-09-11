@@ -33,6 +33,13 @@ function loadRazorpayScript() {
   });
 }
 
+function cleanRazorpayKey(key) {
+  if (!key || typeof key !== 'string') return 'rzp_test_Tai3sx6h51NmJP';
+  const trimmed = key.trim();
+  const match = trimmed.match(/rzp_(?:test|live)_[a-zA-Z0-9]{14}/);
+  return match ? match[0] : trimmed;
+}
+
 /**
  * Razorpay Checkout Component
  * Loads the Razorpay script reliably and opens payment modal
@@ -62,8 +69,9 @@ export default function RazorpayCheckout({
     // Clean phone number for Razorpay prefill
     const cleanPhone = (userPhone || '').replace(/\D/g, '').slice(-10);
 
-    // Live fallback: 'rzp_live_TZUoFoXCMkJNkx'
-    const activeKey = keyId || process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || 'rzp_test_Tai3sx6h51NmJP';
+    // Live fallback: 'rzp_live_TZUoFoXCMkJNkx' (Sanitize against accidental duplicate paste)
+    const rawKey = keyId || process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || 'rzp_test_Tai3sx6h51NmJP';
+    const activeKey = cleanRazorpayKey(rawKey);
 
     const options = {
       key: activeKey,

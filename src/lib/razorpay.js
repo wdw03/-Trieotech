@@ -1,16 +1,35 @@
 import Razorpay from 'razorpay';
 import crypto from 'crypto';
 
-export const RAZORPAY_KEY_ID =
+export function cleanRazorpayKey(key) {
+  if (!key || typeof key !== 'string') return 'rzp_test_Tai3sx6h51NmJP';
+  const trimmed = key.trim();
+  const match = trimmed.match(/rzp_(?:test|live)_[a-zA-Z0-9]{14}/);
+  return match ? match[0] : trimmed;
+}
+
+export function cleanRazorpaySecret(secret) {
+  if (!secret || typeof secret !== 'string') return 'Nk05dSzLWbzKzVikmjEp6bXQ';
+  const trimmed = secret.trim();
+  if (trimmed.length === 48 && trimmed.slice(0, 24) === trimmed.slice(24)) {
+    return trimmed.slice(0, 24);
+  }
+  return trimmed;
+}
+
+const rawKeyId =
   process.env.RAZORPAY_KEY_ID ||
   process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID ||
   // 'rzp_live_TZUoFoXCMkJNkx'; // Live mode
   'rzp_test_Tai3sx6h51NmJP'; // Test mode
 
-export const RAZORPAY_KEY_SECRET =
+const rawKeySecret =
   process.env.RAZORPAY_KEY_SECRET ||
   // 'g5BmMZv0ain1nbICVUemJiWj'; // Live mode
   'Nk05dSzLWbzKzVikmjEp6bXQ'; // Test mode
+
+export const RAZORPAY_KEY_ID = cleanRazorpayKey(rawKeyId);
+export const RAZORPAY_KEY_SECRET = cleanRazorpaySecret(rawKeySecret);
 
 export const razorpay = new Razorpay({
   key_id: RAZORPAY_KEY_ID,
@@ -42,7 +61,7 @@ export async function createRazorpayOrder(amount, currency = 'INR', receipt = ''
  */
 export function verifyPaymentSignature({ razorpay_order_id, razorpay_payment_id, razorpay_signature }) {
   const body = `${razorpay_order_id}|${razorpay_payment_id}`;
-  const secret = process.env.RAZORPAY_KEY_SECRET || RAZORPAY_KEY_SECRET;
+  const secret = RAZORPAY_KEY_SECRET || cleanRazorpaySecret(process.env.RAZORPAY_KEY_SECRET);
   const expectedSignature = crypto
     .createHmac('sha256', secret)
     .update(body)
@@ -55,9 +74,10 @@ export function verifyPaymentSignature({ razorpay_order_id, razorpay_payment_id,
  * Verify Razorpay webhook signature
  */
 export function verifyWebhookSignature(body, signature, secret) {
-  const webhookSecret = secret || process.env.RAZORPAY_WEBHOOK_SECRET || process.env.RAZORPAY_KEY_SECRET || RAZORPAY_KEY_SECRET;
+  const webhookSecret = secret || process.env.RAZORPAY_WEBHOOK_SECRET || RAZORPAY_KEY_SECRET;
+  const cleanedWebhookSecret = cleanRazorpaySecret(webhookSecret);
   const expectedSignature = crypto
-    .createHmac('sha256', webhookSecret)
+    .createHmac('sha256', cleanedWebhookSecret)
     .update(body)
     .digest('hex');
 
