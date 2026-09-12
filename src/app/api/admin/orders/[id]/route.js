@@ -379,6 +379,59 @@ export async function PATCH(request, { params }) {
       }
     }
 
+    // 7b. Keep shipments table in sync with order status across all transitions
+    const ORDER_TO_SHIPMENT_STATUS = {
+      pending: 'pending',
+      confirmed: 'pending',
+      processing: 'pending',
+      packed: 'packed',
+      pickup_scheduled: 'pickup_scheduled',
+      picked_up: 'picked_up',
+      shipped: 'shipped',
+      in_transit: 'in_transit',
+      out_for_delivery: 'out_for_delivery',
+      delivered: 'delivered',
+      cancelled: 'cancelled',
+      failed_delivery: 'failed_delivery',
+      rto_initiated: 'rto_initiated',
+      rto_delivered: 'rto_delivered',
+    };
+
+    if (mappedStatus && ORDER_TO_SHIPMENT_STATUS[mappedStatus]) {
+      const targetShipmentStatus = ORDER_TO_SHIPMENT_STATUS[mappedStatus];
+      const shipmentUpdates = {
+        status: targetShipmentStatus,
+        updated_at: nowIso,
+      };
+      if (targetShipmentStatus === 'delivered') {
+        shipmentUpdates.delivered_at = nowIso;
+      }
+      if (targetShipmentStatus === 'cancelled') {
+        shipmentUpdates.cancel_reason = cancelReason || 'Order cancelled by admin';
+      }
+
+      await supabaseAdmin
+        .from('shipments')
+        .update(shipmentUpdates)
+        .eq('order_id', orderDbId);
+
+      const { data: currentShipment } = await supabaseAdmin
+        .from('shipments')
+        .select('id')
+        .eq('order_id', orderDbId)
+        .maybeSingle();
+
+      if (currentShipment?.id) {
+        await supabaseAdmin.from('shipment_events').insert({
+          shipment_id: currentShipment.id,
+          status: targetShipmentStatus,
+          status_code: targetShipmentStatus.toUpperCase(),
+          activity: `Status updated to ${mappedStatus.replace(/_/g, ' ')} via admin panel`,
+          location: targetShipmentStatus === 'delivered' ? 'Doorstep Handover' : targetShipmentStatus === 'out_for_delivery' ? 'Local Hub' : 'Logistics Desk',
+        }).catch(() => {});
+      }
+    }
+
     // 8. Auto-Shiprocket actions on status change
     // Packed → create shipment + AWB
     if (mappedStatus === 'packed') {
@@ -414,7 +467,7 @@ export async function PATCH(request, { params }) {
             courier_id: shiprocketResult.courier_company_id || null,
             routing_code: shiprocketResult.routing_code || '',
             cod_collectable: codCollectable,
-            status: 'pending',
+            status: 'packed',
             updated_at: nowIso,
           };
 
@@ -429,7 +482,7 @@ export async function PATCH(request, { params }) {
           if (savedId) {
             await supabaseAdmin.from('shipment_events').insert({
               shipment_id: savedId,
-              status: 'pending',
+              status: 'packed',
               status_code: 'PACKED',
               activity: `Order packed & shipment initialized (AWB: ${shiprocketResult.awb_code || 'Pending'})`,
               location: 'Packing Station',

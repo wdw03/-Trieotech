@@ -107,6 +107,44 @@ export async function GET(request, { params }) {
           }
         } catch (_) {}
       }
+
+      // Auto-sync status progression into DB
+      const rawSrStatus = String(currentActivity || liveScans?.[0]?.current_status || '').toLowerCase().trim();
+      if (rawSrStatus) {
+        let mappedStatus = null;
+        if (rawSrStatus.includes('cancel')) mappedStatus = 'cancelled';
+        else if (rawSrStatus.includes('deliver') && !rawSrStatus.includes('undeliver') && !rawSrStatus.includes('out')) mappedStatus = 'delivered';
+        else if (rawSrStatus.includes('out for delivery')) mappedStatus = 'out_for_delivery';
+        else if (rawSrStatus.includes('transit') || rawSrStatus.includes('shipped')) mappedStatus = 'in_transit';
+        else if (rawSrStatus.includes('pick')) mappedStatus = 'picked_up';
+
+        if (mappedStatus) {
+          const WEIGHTS = {
+            pending_payment: 5, pending: 10, confirmed: 20, processing: 30, packed: 35,
+            pickup_scheduled: 40, picked_up: 45, shipped: 50, in_transit: 55,
+            out_for_delivery: 60, failed_delivery: 65, delivered: 70, cancelled: 80
+          };
+          const curW = WEIGHTS[(order.status || 'pending').toLowerCase()] || 0;
+          const newW = WEIGHTS[mappedStatus] || 0;
+
+          if (newW > curW) {
+            const nowIso = new Date().toISOString();
+            const ordUpdates = { status: mappedStatus, updated_at: nowIso };
+            if (mappedStatus === 'delivered') {
+              ordUpdates.delivered_at = nowIso;
+              if (order.payment_method === 'cod') ordUpdates.payment_status = 'paid';
+            }
+            await supabaseAdmin.from('orders').update(ordUpdates).eq('id', order.id);
+            if (shipment?.id) {
+              const shipUpdates = { status: mappedStatus, updated_at: nowIso };
+              if (mappedStatus === 'delivered') shipUpdates.delivered_at = nowIso;
+              await supabaseAdmin.from('shipments').update(shipUpdates).eq('id', shipment.id);
+            }
+            order.status = mappedStatus;
+            if (shipment) shipment.status = mappedStatus;
+          }
+        }
+      }
     }
 
     const tracking = {

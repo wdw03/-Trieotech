@@ -99,39 +99,95 @@ export async function GET(request) {
       currentActivity = events[0].activity || currentActivity;
     }
 
-    // Auto-sync cancellation from Shiprocket live tracking if cancelled at carrier level
-    const srStatus = String(
+    // Auto-sync status progression from live Shiprocket scans into DB
+    const rawSrStatus = String(
       liveTracking?.tracking_data?.shipment_track?.[0]?.current_status ||
       liveTracking?.tracking_data?.shipment_status ||
       currentActivity ||
       ''
-    ).toLowerCase();
+    ).toLowerCase().trim();
 
-    if (srStatus.includes('cancel') && order && order.status !== 'cancelled') {
-      const nowIso = new Date().toISOString();
-      await supabaseAdmin
-        .from('orders')
-        .update({
-          status: 'cancelled',
-          cancelled_at: nowIso,
-          cancellation_reason: 'Cancelled via Shiprocket carrier scan',
-          updated_at: nowIso,
-          ...(order.payment_method === 'cod' ? { payment_status: 'cancelled' } : {}),
-        })
-        .eq('id', order.id);
-
-      if (shipment?.id) {
-        await supabaseAdmin
-          .from('shipments')
-          .update({
-            status: 'cancelled',
-            cancel_reason: 'Cancelled via Shiprocket carrier scan',
-            updated_at: nowIso,
-          })
-          .eq('id', shipment.id);
+    if (rawSrStatus && order) {
+      let mappedStatus = null;
+      if (rawSrStatus.includes('cancel')) {
+        mappedStatus = 'cancelled';
+      } else if (rawSrStatus.includes('deliver') && !rawSrStatus.includes('undeliver') && !rawSrStatus.includes('out')) {
+        mappedStatus = 'delivered';
+      } else if (rawSrStatus.includes('out for delivery')) {
+        mappedStatus = 'out_for_delivery';
+      } else if (rawSrStatus.includes('transit') || rawSrStatus.includes('shipped')) {
+        mappedStatus = 'in_transit';
+      } else if (rawSrStatus.includes('pick')) {
+        mappedStatus = 'picked_up';
+      } else if (rawSrStatus.includes('rto')) {
+        mappedStatus = 'rto_initiated';
       }
-      order.status = 'cancelled';
-      if (shipment) shipment.status = 'cancelled';
+
+      if (mappedStatus) {
+        const STATUS_WEIGHTS = {
+          pending_payment: 5,
+          pending: 10,
+          confirmed: 20,
+          processing: 30,
+          packed: 35,
+          pickup_scheduled: 40,
+          picked_up: 45,
+          shipped: 50,
+          in_transit: 55,
+          out_for_delivery: 60,
+          failed_delivery: 65,
+          delivered: 70,
+          cancelled: 80,
+        };
+        const currentWeight = STATUS_WEIGHTS[(order.status || 'pending').toLowerCase()] || 0;
+        const newWeight = STATUS_WEIGHTS[mappedStatus] || 0;
+
+        if (newWeight > currentWeight || (mappedStatus === 'cancelled' && order.status !== 'cancelled')) {
+          const nowIso = new Date().toISOString();
+          const orderUpdates = {
+            status: mappedStatus,
+            updated_at: nowIso,
+          };
+          if (mappedStatus === 'delivered') {
+            orderUpdates.delivered_at = nowIso;
+            if (order.payment_method === 'cod') orderUpdates.payment_status = 'paid';
+          }
+          if (mappedStatus === 'cancelled') {
+            orderUpdates.cancelled_at = nowIso;
+            orderUpdates.cancellation_reason = 'Cancelled via Shiprocket scan';
+            if (order.payment_method === 'cod') orderUpdates.payment_status = 'cancelled';
+          }
+
+          await supabaseAdmin.from('orders').update(orderUpdates).eq('id', order.id);
+
+          if (shipment?.id) {
+            const shipUpdates = {
+              status: mappedStatus,
+              updated_at: nowIso,
+            };
+            if (mappedStatus === 'delivered') shipUpdates.delivered_at = nowIso;
+            if (mappedStatus === 'cancelled') shipUpdates.cancel_reason = 'Cancelled via Shiprocket scan';
+            await supabaseAdmin.from('shipments').update(shipUpdates).eq('id', shipment.id);
+          }
+
+          await supabaseAdmin.from('order_status_history').insert({
+            order_id: order.id,
+            from_status: order.status || 'pending',
+            to_status: mappedStatus,
+            source: 'carrier_tracking_sync',
+            changed_by: 'shiprocket',
+            reason: `Live carrier sync: ${mappedStatus.replace(/_/g, ' ')} (${currentLocation})`,
+            metadata: {
+              rawSrStatus,
+              awb: targetAwb,
+              location: currentLocation,
+            },
+          }).catch(() => {});
+
+          order.status = mappedStatus;
+          if (shipment) shipment.status = mappedStatus;
+        }
+      }
     }
 
     const items = (order?.order_items || []).map((it) => ({

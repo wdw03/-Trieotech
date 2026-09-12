@@ -59,6 +59,23 @@ const STATUS_BADGE = {
   'Pending Payment': 'bg-stone-500 text-white',
 };
 
+const LIFECYCLE_STEPS = [
+  { label: 'Confirmed', desc: 'Order verified' },
+  { label: 'Packed', desc: 'Ready for courier' },
+  { label: 'Dispatched', desc: 'In transit' },
+  { label: 'Out for Delivery', desc: 'Doorstep arrival today' },
+  { label: 'Delivered', desc: 'Safely delivered' },
+];
+
+const getLifecycleStage = (rawStatus) => {
+  const s = (rawStatus || '').toLowerCase();
+  if (['delivered', 'return_requested', 'return_approved', 'return_initiated', 'returned', 'refunded'].includes(s)) return 4;
+  if (s.includes('out_for_delivery') || s.includes('out for delivery')) return 3;
+  if (['shipped', 'in_transit', 'in transit', 'picked_up', 'picked up'].includes(s)) return 2;
+  if (['packed', 'pickup_scheduled', 'pickup scheduled'].includes(s)) return 1;
+  return 0; // confirmed, processing, pending
+};
+
 const RETURN_REASONS = [
   'Damaged during courier transit (Cracked/Dented)',
   'Defective zari embroidery / loose threads',
@@ -542,6 +559,75 @@ export default function MyOrdersClient() {
                   </div>
                 ))}
               </div>
+
+              {/* Live Order Lifecycle Progress Stepper */}
+              {order.status !== 'Cancelled' && (
+                <div className="py-3.5 px-3 sm:px-5 rounded-2xl bg-stone-50/80 dark:bg-stone-900/50 border border-gold-500/15">
+                  <div className="flex items-center justify-between text-[11px] mb-3">
+                    <span className="font-semibold text-stone-700 dark:text-stone-300 flex items-center gap-1.5">
+                      <Truck className="w-3.5 h-3.5 text-gold-600" />
+                      <span>Live Delivery Stepper</span>
+                    </span>
+                    <span className="text-[11px] text-stone-500">
+                      Current Stage: <strong className="text-gold-700 dark:text-gold-400 capitalize">{order.status}</strong>
+                    </span>
+                  </div>
+
+                  <div className="relative flex items-center justify-between px-2 pt-1 pb-1">
+                    {/* Track Background */}
+                    <div className="absolute left-4 right-4 top-4 h-1 bg-stone-200 dark:bg-stone-800 rounded-full z-0" />
+                    {/* Active Track Fill */}
+                    <div
+                      className="absolute left-4 top-4 h-1 bg-gradient-to-r from-emerald-500 via-gold-500 to-emerald-600 rounded-full transition-all duration-700 z-0"
+                      style={{
+                        width: `calc(${(getLifecycleStage(order.rawStatus) / (LIFECYCLE_STEPS.length - 1)) * 100}% - 32px)`,
+                      }}
+                    />
+
+                    {/* Step Nodes */}
+                    {LIFECYCLE_STEPS.map((st, idx) => {
+                      const currentStage = getLifecycleStage(order.rawStatus);
+                      const isDone = currentStage > idx;
+                      const isCurrent = currentStage === idx;
+
+                      return (
+                        <div key={st.label} className="relative z-10 flex flex-col items-center text-center">
+                          <div
+                            className={`w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold transition-all shadow-sm ${
+                              isDone
+                                ? 'bg-emerald-600 text-white'
+                                : isCurrent
+                                ? 'bg-gold-500 text-white ring-4 ring-gold-500/20 scale-110 animate-pulse'
+                                : 'bg-stone-200 dark:bg-stone-800 text-stone-400 border border-stone-300 dark:border-stone-700'
+                            }`}
+                          >
+                            {isDone ? (
+                              <Check className="w-3.5 h-3.5 stroke-[3]" />
+                            ) : (
+                              <span>{idx + 1}</span>
+                            )}
+                          </div>
+                          <span
+                            className={`text-[10px] mt-1.5 font-medium hidden sm:block ${
+                              isCurrent
+                                ? 'font-bold text-gold-700 dark:text-gold-400'
+                                : isDone
+                                ? 'text-emerald-700 dark:text-emerald-400 font-medium'
+                                : 'text-stone-400'
+                            }`}
+                          >
+                            {st.label}
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                  {/* Mobile stage text */}
+                  <div className="sm:hidden text-center text-[10px] font-semibold text-gold-700 dark:text-gold-400 mt-2">
+                    {LIFECYCLE_STEPS[getLifecycleStage(order.rawStatus)]?.label} — {LIFECYCLE_STEPS[getLifecycleStage(order.rawStatus)]?.desc}
+                  </div>
+                </div>
+              )}
 
               {/* Cancellation Info Banner (if cancelled) */}
               {order.status === 'Cancelled' && (
