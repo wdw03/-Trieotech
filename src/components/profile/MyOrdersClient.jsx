@@ -9,7 +9,8 @@ import { useToast } from '../../context/ToastContext';
 import {
   Package, Truck, ArrowRight, CheckCircle2, Clock, RotateCcw, FileText, Download,
   XCircle, AlertTriangle, Loader2, Ban, RefreshCw, Camera, UploadCloud, Eye, Trash2,
-  ShieldCheck, ShieldAlert, Check, Info, X, ExternalLink, Image as ImageIcon, MessageCircle
+  ShieldCheck, ShieldAlert, Check, Info, X, ExternalLink, Image as ImageIcon, MessageCircle,
+  MapPin, Copy, CreditCard, Navigation, Activity
 } from 'lucide-react';
 
 // Statuses that allow cancellation (only while pending — before confirmed)
@@ -64,6 +65,84 @@ export default function MyOrdersClient() {
   // View Ticket Details Modal State
   const [viewTicketModal, setViewTicketModal] = useState({ open: false, order: null, claim: null });
   const [lightboxImage, setLightboxImage] = useState(null);
+
+  // Full Order Details & Real-Time Tracking Modal State
+  const [detailsModal, setDetailsModal] = useState({
+    open: false,
+    order: null,
+    liveTracking: null,
+    loadingTracking: false,
+  });
+  const [copiedAwb, setCopiedAwb] = useState(false);
+
+  const openDetailsModal = async (order) => {
+    setDetailsModal({
+      open: true,
+      order,
+      liveTracking: null,
+      loadingTracking: true,
+    });
+    try {
+      const orderIdentifier = order.dbId || order.order_number || order.id;
+      const res = await fetch(`/api/orders/${encodeURIComponent(orderIdentifier)}`);
+      if (res.ok) {
+        const json = await res.json();
+        if (json.success && json.tracking) {
+          setDetailsModal((prev) => ({
+            ...prev,
+            liveTracking: json.tracking,
+            loadingTracking: false,
+          }));
+          return;
+        }
+      }
+      setDetailsModal((prev) => ({ ...prev, loadingTracking: false }));
+    } catch (_) {
+      setDetailsModal((prev) => ({ ...prev, loadingTracking: false }));
+    }
+  };
+
+  const closeDetailsModal = () => {
+    setDetailsModal({
+      open: false,
+      order: null,
+      liveTracking: null,
+      loadingTracking: false,
+    });
+    setCopiedAwb(false);
+  };
+
+  const handleCopyAwb = (awb) => {
+    if (!awb) return;
+    try {
+      navigator.clipboard?.writeText(awb);
+      setCopiedAwb(true);
+      addToast(`Tracking AWB "${awb}" copied to clipboard!`, 'info');
+      setTimeout(() => setCopiedAwb(false), 2500);
+    } catch (_) {}
+  };
+
+  const formatAddress = (addr) => {
+    if (!addr) return 'No delivery address recorded';
+    if (typeof addr === 'string') {
+      try {
+        const parsed = JSON.parse(addr);
+        return formatAddress(parsed);
+      } catch (_) {
+        return addr;
+      }
+    }
+    const parts = [
+      addr.name || addr.full_name,
+      addr.phone ? `Phone: ${addr.phone}` : '',
+      addr.address_line_1 || addr.address || addr.street,
+      addr.address_line_2 || addr.landmark,
+      addr.city,
+      addr.state,
+      addr.postal_code || addr.pincode || addr.zip,
+    ].filter(Boolean);
+    return parts.join(', ');
+  };
 
   const handleReorder = (order) => {
     order.items.forEach(item => {
@@ -331,10 +410,16 @@ export default function MyOrdersClient() {
               {/* Top Bar Info */}
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-gold-500/10 text-xs">
                 <div className="space-y-1">
-                  <div className="flex items-center gap-2.5">
-                    <span className="font-serif font-black text-base text-stone-900 dark:text-ivory-100">
-                      Order {order.id}
-                    </span>
+                  <div className="flex items-center gap-2.5 flex-wrap">
+                    <button
+                      type="button"
+                      onClick={() => openDetailsModal(order)}
+                      className="font-serif font-black text-base text-stone-900 dark:text-ivory-100 hover:text-maroon-800 dark:hover:text-gold-400 hover:underline flex items-center gap-1.5 transition-colors text-left"
+                      title="Click to view full order details"
+                    >
+                      <span>Order {order.id}</span>
+                      <ExternalLink className="w-3.5 h-3.5 text-stone-400" />
+                    </button>
                     <span className={`badge-ribbon ${STATUS_BADGE[order.status] || 'bg-amber-600 text-white'}`}>
                       {order.status}
                     </span>
@@ -361,35 +446,61 @@ export default function MyOrdersClient() {
               {/* Items Row */}
               <div className="space-y-3">
                 {order.items?.map((item, idx) => (
-                  <div key={idx} className="flex items-center justify-between gap-4 text-xs">
+                  <div key={idx} className="flex items-center justify-between gap-4 text-xs group">
                     <div className="flex items-center gap-3 min-w-0">
-                      <img
-                        src={item.image}
-                        alt={item.name}
-                        className="w-14 h-14 rounded-xl object-cover shrink-0 border border-gold-500/20"
-                      />
+                      <Link
+                        href={`/product/${item.slug || item.productId || ''}`}
+                        className="shrink-0 block"
+                        title="View product details"
+                      >
+                        <img
+                          src={item.image}
+                          alt={item.name}
+                          className="w-14 h-14 rounded-xl object-cover border border-gold-500/20 group-hover:border-gold-500/60 transition-all hover:scale-105"
+                        />
+                      </Link>
                       <div className="min-w-0">
-                        <h4
-                          className={`font-serif font-bold truncate ${
+                        <Link
+                          href={`/product/${item.slug || item.productId || ''}`}
+                          className={`font-serif font-bold truncate block hover:text-maroon-800 dark:hover:text-gold-400 transition-colors ${
                             order.status === 'Cancelled'
                               ? 'text-stone-500 dark:text-stone-500 line-through'
                               : 'text-stone-900 dark:text-ivory-100'
                           }`}
+                          title="View product page"
                         >
                           {item.name}
-                        </h4>
-                        <p className="text-[11px] text-stone-500">
-                          Qty: {item.quantity} {item.color ? `• Shade: ${item.color}` : ''} {item.size ? `• ${item.size}` : ''}
-                        </p>
+                        </Link>
+                        <div className="flex items-center gap-2 flex-wrap text-[11px] text-stone-500 mt-0.5">
+                          <span>Qty: {item.quantity}</span>
+                          {item.color && <span>• Shade: {item.color}</span>}
+                          {item.size && <span>• {item.size}</span>}
+                          <button
+                            type="button"
+                            onClick={() => openDetailsModal(order)}
+                            className="text-gold-600 dark:text-gold-400 hover:underline font-medium inline-flex items-center gap-0.5"
+                          >
+                            <span>(Order Details)</span>
+                          </button>
+                        </div>
                       </div>
                     </div>
-                    <span
-                      className={`font-serif font-bold shrink-0 ${
-                        order.status === 'Cancelled' ? 'text-stone-400 line-through' : 'text-stone-800 dark:text-stone-200'
-                      }`}
-                    >
-                      ₹{(item.price * item.quantity)?.toLocaleString('en-IN')}
-                    </span>
+                    <div className="text-right shrink-0">
+                      <span
+                        className={`font-serif font-bold block ${
+                          order.status === 'Cancelled' ? 'text-stone-400 line-through' : 'text-stone-800 dark:text-stone-200'
+                        }`}
+                      >
+                        ₹{(item.price * item.quantity)?.toLocaleString('en-IN')}
+                      </span>
+                      <Link
+                        href={`/product/${item.slug || item.productId || ''}`}
+                        className="text-[10px] text-gold-700 dark:text-gold-400 hover:underline inline-flex items-center gap-0.5 mt-0.5"
+                      >
+                        <span>View Product</span>
+                        <ExternalLink className="w-2.5 h-2.5" />
+                      </Link>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -567,6 +678,17 @@ export default function MyOrdersClient() {
                       <span>Support Ticket</span>
                     </button>
                   )}
+
+                  {/* Full Order & Products Details Button */}
+                  <button
+                    type="button"
+                    onClick={() => openDetailsModal(order)}
+                    className="px-3.5 py-2 rounded-xl bg-gold-500/15 border border-gold-500/40 text-maroon-900 dark:text-gold-300 hover:bg-gold-500/25 text-xs font-bold flex items-center gap-1.5 transition-colors"
+                    title="View complete order breakdown, products & real tracking"
+                  >
+                    <Eye className="w-3.5 h-3.5 text-gold-600" />
+                    <span>Order Details</span>
+                  </button>
 
                   {order.status !== 'Cancelled' && (
                     <>
@@ -1110,6 +1232,292 @@ export default function MyOrdersClient() {
                   </>
                 )}
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ═══════════════════════════════════════════════════════════════ */}
+      {/* FULL ORDER & PRODUCT DETAILS MODAL (WITH REAL TRACKING) */}
+      {/* ═══════════════════════════════════════════════════════════════ */}
+      {detailsModal.open && detailsModal.order && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-5 bg-black/80 backdrop-blur-sm overflow-y-auto animate-fade-in">
+          <div className="bg-white dark:bg-stone-900 rounded-3xl max-w-2xl w-full max-h-[92vh] flex flex-col border border-gold-500/30 shadow-2xl my-auto overflow-hidden">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between p-5 sm:p-6 border-b border-gold-500/20 bg-stone-50/70 dark:bg-stone-950/60 shrink-0">
+              <div className="space-y-1">
+                <div className="flex items-center gap-2.5 flex-wrap">
+                  <span className="font-serif font-black text-lg sm:text-xl text-stone-900 dark:text-ivory-100">
+                    Order #{detailsModal.order.id}
+                  </span>
+                  <span className={`badge-ribbon ${STATUS_BADGE[detailsModal.order.status] || 'bg-amber-600 text-white'}`}>
+                    {detailsModal.order.status}
+                  </span>
+                  <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase ${
+                    detailsModal.order.payment_status === 'captured' || detailsModal.order.payment_status === 'paid'
+                      ? 'bg-emerald-100 dark:bg-emerald-950/50 text-emerald-800 dark:text-emerald-300 border border-emerald-500/30'
+                      : detailsModal.order.payment_status === 'refunded'
+                      ? 'bg-blue-100 dark:bg-blue-950/50 text-blue-800 dark:text-blue-300 border border-blue-500/30'
+                      : 'bg-amber-100 dark:bg-amber-950/50 text-amber-800 dark:text-amber-300 border border-amber-500/30'
+                  }`}>
+                    Payment: {detailsModal.order.payment_status || 'Pending'}
+                  </span>
+                </div>
+                <p className="text-xs text-stone-500">
+                  Placed on {detailsModal.order.date} • {detailsModal.order.items?.length || 0} {detailsModal.order.items?.length === 1 ? 'item' : 'items'}
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={closeDetailsModal}
+                className="w-8 h-8 rounded-full bg-stone-100 dark:bg-stone-800 hover:bg-stone-200 dark:hover:bg-stone-700 flex items-center justify-center text-stone-500 transition-colors shrink-0"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Modal Body (Scrollable) */}
+            <div className="p-5 sm:p-6 space-y-6 overflow-y-auto flex-1">
+              {/* Real-time Tracking & Dispatch Status Banner */}
+              <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-amber-500/10 via-gold-500/10 to-amber-500/5 border border-gold-500/30 space-y-3">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div className="flex items-start gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-gold-500/20 text-maroon-800 dark:text-gold-400 flex items-center justify-center shrink-0 mt-0.5">
+                      <Truck className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <div className="text-[10px] uppercase font-bold text-stone-500 tracking-wider">
+                        Delivery Logistics &amp; Courier
+                      </div>
+                      <div className="font-serif font-bold text-sm text-stone-900 dark:text-ivory-100">
+                        {detailsModal.liveTracking?.carrier || detailsModal.order.carrier || 'Shiprocket Express'}
+                      </div>
+                      {(detailsModal.liveTracking?.awb || detailsModal.order.trackingNumber) ? (
+                        <div className="flex items-center gap-2 mt-1">
+                          <span className="text-xs text-stone-500">AWB:</span>
+                          <span className="font-mono text-xs font-bold bg-white dark:bg-stone-800 px-2 py-0.5 rounded border border-gold-500/30 text-maroon-900 dark:text-gold-300">
+                            {detailsModal.liveTracking?.awb || detailsModal.order.trackingNumber}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => handleCopyAwb(detailsModal.liveTracking?.awb || detailsModal.order.trackingNumber)}
+                            className="text-[11px] text-gold-700 hover:underline inline-flex items-center gap-1 font-semibold"
+                            title="Copy AWB"
+                          >
+                            <Copy className="w-3 h-3" />
+                            <span>{copiedAwb ? 'Copied!' : 'Copy'}</span>
+                          </button>
+                        </div>
+                      ) : (
+                        <p className="text-xs text-stone-500 mt-0.5">
+                          AWB generation in progress at dispatch warehouse.
+                        </p>
+                      )}
+                    </div>
+                  </div>
+
+                  {detailsModal.order.status !== 'Cancelled' && (
+                    <Link
+                      href={`/track-order?id=${detailsModal.order.id}`}
+                      className="btn-primary py-2 px-4 text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-1.5 shadow-maroon-sm self-start sm:self-auto shrink-0"
+                    >
+                      <Navigation className="w-3.5 h-3.5" />
+                      <span>Live Tracking</span>
+                    </Link>
+                  )}
+                </div>
+
+                {/* Live Current Location & Status */}
+                <div className="pt-2.5 border-t border-gold-500/20 space-y-1">
+                  <div className="flex items-center gap-2 text-xs">
+                    <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-ping shrink-0" />
+                    <span className="font-bold text-stone-800 dark:text-stone-200">
+                      Current Location:
+                    </span>
+                    <span className="text-stone-700 dark:text-stone-300 font-medium">
+                      {detailsModal.liveTracking?.currentLocation || detailsModal.order.shipment?.current_location || 'Warehouse Hub, Faridabad'}
+                    </span>
+                    {detailsModal.loadingTracking && (
+                      <span className="inline-flex items-center gap-1 text-[10px] text-gold-600 dark:text-gold-400 font-semibold ml-auto">
+                        <Loader2 className="w-3 h-3 animate-spin" /> Fetching live scans...
+                      </span>
+                    )}
+                  </div>
+                  {(detailsModal.liveTracking?.currentActivity || detailsModal.order.status) && (
+                    <p className="text-xs text-stone-600 dark:text-stone-400 italic pl-4">
+                      Activity: {detailsModal.liveTracking?.currentActivity || (detailsModal.order.status === 'Delivered' ? 'Delivered safely to patron' : detailsModal.order.status === 'Shipped' ? 'In transit to local delivery hub' : 'Order verified and packed')}
+                    </p>
+                  )}
+                </div>
+              </div>
+
+              {/* Products in this Order */}
+              <div className="space-y-3">
+                <h4 className="font-serif font-bold text-sm text-stone-900 dark:text-ivory-100 flex items-center justify-between pb-2 border-b border-gold-500/20">
+                  <span className="flex items-center gap-2">
+                    <Package className="w-4 h-4 text-gold-600" />
+                    <span>Ordered Items ({detailsModal.order.items?.length || 0})</span>
+                  </span>
+                  <span className="text-xs text-stone-500 font-normal">Click any item to view details</span>
+                </h4>
+
+                <div className="space-y-3 divide-y divide-gold-500/10">
+                  {detailsModal.order.items?.map((item, idx) => (
+                    <div key={idx} className="pt-3 first:pt-0 flex items-start justify-between gap-4 text-xs group">
+                      <div className="flex items-start gap-3 min-w-0">
+                        <Link
+                          href={`/product/${item.slug || item.productId || ''}`}
+                          className="shrink-0 block"
+                          title="Open product page"
+                        >
+                          <img
+                            src={item.image}
+                            alt={item.name}
+                            className="w-16 h-16 rounded-xl object-cover border border-gold-500/20 group-hover:border-gold-500/60 transition-all hover:scale-105"
+                          />
+                        </Link>
+                        <div className="min-w-0 space-y-1">
+                          <Link
+                            href={`/product/${item.slug || item.productId || ''}`}
+                            className="font-serif font-bold text-sm text-stone-900 dark:text-ivory-100 hover:text-maroon-800 dark:hover:text-gold-400 transition-colors line-clamp-2 block leading-snug"
+                          >
+                            {item.name}
+                          </Link>
+                          <div className="flex items-center gap-2 flex-wrap text-[11px] text-stone-500">
+                            {item.color && (
+                              <span className="bg-stone-100 dark:bg-stone-800 px-2 py-0.5 rounded border border-stone-200 dark:border-stone-700">
+                                Shade: <strong>{item.color}</strong>
+                              </span>
+                            )}
+                            {item.size && (
+                              <span className="bg-stone-100 dark:bg-stone-800 px-2 py-0.5 rounded border border-stone-200 dark:border-stone-700">
+                                Size: <strong>{item.size}</strong>
+                              </span>
+                            )}
+                            <span>Qty: <strong>{item.quantity}</strong></span>
+                            <span>×</span>
+                            <span>₹{Number(item.price || 0).toLocaleString('en-IN')}</span>
+                          </div>
+                          <div>
+                            <Link
+                              href={`/product/${item.slug || item.productId || ''}`}
+                              className="text-[11px] text-gold-700 dark:text-gold-400 hover:underline inline-flex items-center gap-1 font-semibold mt-1"
+                            >
+                              <span>View Product Details</span>
+                              <ExternalLink className="w-3 h-3" />
+                            </Link>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="text-right shrink-0">
+                        <span className="font-serif font-bold text-sm text-maroon-800 dark:text-gold-400 block">
+                          ₹{(Number(item.price || 0) * Number(item.quantity || 1)).toLocaleString('en-IN')}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Delivery Address & Contact */}
+              <div className="p-4 rounded-2xl bg-stone-50 dark:bg-stone-800/50 border border-gold-500/20 space-y-2">
+                <h4 className="font-serif font-bold text-xs uppercase tracking-wider text-stone-500 flex items-center gap-1.5">
+                  <MapPin className="w-3.5 h-3.5 text-gold-600" />
+                  <span>Shipping Address &amp; Contact</span>
+                </h4>
+                <p className="text-xs text-stone-800 dark:text-stone-200 leading-relaxed font-medium">
+                  {formatAddress(detailsModal.order.shipping_address || detailsModal.order.shippingAddress)}
+                </p>
+              </div>
+
+              {/* Price Breakdown */}
+              <div className="p-4 rounded-2xl bg-stone-50 dark:bg-stone-800/50 border border-gold-500/20 space-y-2.5 text-xs">
+                <h4 className="font-serif font-bold text-xs uppercase tracking-wider text-stone-500 flex items-center gap-1.5">
+                  <CreditCard className="w-3.5 h-3.5 text-gold-600" />
+                  <span>Payment &amp; Cost Breakdown</span>
+                </h4>
+
+                <div className="flex justify-between items-center text-stone-600 dark:text-stone-400">
+                  <span>Subtotal</span>
+                  <span>₹{Number(detailsModal.order.subtotal || detailsModal.order.total || 0).toLocaleString('en-IN')}</span>
+                </div>
+
+                {Boolean(detailsModal.order.shipping_cost) && (
+                  <div className="flex justify-between items-center text-stone-600 dark:text-stone-400">
+                    <span>Shipping Charges</span>
+                    <span>₹{Number(detailsModal.order.shipping_cost).toLocaleString('en-IN')}</span>
+                  </div>
+                )}
+
+                {Boolean(detailsModal.order.discount) && (
+                  <div className="flex justify-between items-center text-emerald-600 font-medium">
+                    <span>Discount / Voucher</span>
+                    <span>- ₹{Number(detailsModal.order.discount).toLocaleString('en-IN')}</span>
+                  </div>
+                )}
+
+                <div className="pt-2 border-t border-gold-500/20 flex justify-between items-center font-bold text-sm">
+                  <span className="text-stone-900 dark:text-ivory-100">Total Order Amount</span>
+                  <span className="text-maroon-800 dark:text-gold-400 font-serif font-black text-base">
+                    ₹{Number(detailsModal.order.total || 0).toLocaleString('en-IN')}
+                  </span>
+                </div>
+
+                <div className="pt-2 border-t border-gold-500/10 flex justify-between items-center text-[11px] text-stone-500">
+                  <span>Payment Method:</span>
+                  <span className="font-bold text-stone-800 dark:text-stone-200 uppercase">
+                    {detailsModal.order.payment_method === 'cod' ? 'Cash on Delivery (COD)' : 'Prepaid Online'}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Modal Footer Actions */}
+            <div className="p-4 sm:p-5 border-t border-gold-500/20 bg-stone-50/70 dark:bg-stone-950/60 flex items-center justify-between gap-3 flex-wrap shrink-0">
+              <button
+                type="button"
+                onClick={closeDetailsModal}
+                className="py-2.5 px-4 rounded-xl border border-stone-200 dark:border-stone-700 text-stone-700 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-stone-800 text-xs font-bold transition-colors"
+              >
+                Close
+              </button>
+
+              <div className="flex items-center gap-2.5 flex-wrap">
+                {detailsModal.order.status !== 'Cancelled' && (
+                  <a
+                    href={`/api/orders/${detailsModal.order.dbId || detailsModal.order.id}/invoice?download=true`}
+                    className="py-2.5 px-3.5 rounded-xl bg-gold-500/15 hover:bg-gold-500/25 border border-gold-500/40 text-maroon-900 dark:text-gold-300 text-xs font-bold flex items-center gap-1.5 transition-colors"
+                  >
+                    <Download className="w-3.5 h-3.5 text-gold-600" />
+                    <span>Download Invoice</span>
+                  </a>
+                )}
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    handleReorder(detailsModal.order);
+                    closeDetailsModal();
+                  }}
+                  className="btn-outline-maroon py-2.5 px-4 text-xs font-bold flex items-center gap-1.5"
+                >
+                  <RotateCcw className="w-3.5 h-3.5" />
+                  <span>Buy Again</span>
+                </button>
+
+                {detailsModal.order.status !== 'Cancelled' && (
+                  <Link
+                    href={`/track-order?id=${detailsModal.order.id}`}
+                    onClick={closeDetailsModal}
+                    className="btn-primary py-2.5 px-4 text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 shadow-maroon-sm"
+                  >
+                    <Truck className="w-3.5 h-3.5" />
+                    <span>Track Parcel</span>
+                  </Link>
+                )}
+              </div>
             </div>
           </div>
         </div>

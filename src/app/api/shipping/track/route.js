@@ -3,81 +3,132 @@ import { NextResponse } from 'next/server';
 import { trackShipment, trackByOrderId } from '../../../../lib/shiprocket';
 import { supabaseAdmin } from '../../../../lib/supabase/admin';
 
-// GET: Track a shipment
+// GET: Track a shipment with product items & real-time milestones
 export async function GET(request) {
   try {
     const { searchParams } = new URL(request.url);
     const awb = searchParams.get('awb');
-    const orderNumber = searchParams.get('orderNumber');
+    const orderNumber = searchParams.get('orderNumber') || searchParams.get('orderId');
 
-    if (awb) {
-      try {
-        const tracking = await trackShipment(awb);
-        return NextResponse.json({ tracking });
-      } catch (shipErr) {
-        // AWB was not found or Shiprocket unavailable
-        return NextResponse.json({
-          tracking: null,
-          message: 'No shipment details found for this AWB number'
-        });
-      }
-    }
+    let shipment = null;
+    let order = null;
+    let targetAwb = awb;
 
-    if (orderNumber) {
-      // Get shiprocket order ID from our DB
-      const { data: order } = await supabaseAdmin
-        .from('orders')
-        .select('id')
-        .eq('order_number', orderNumber)
-        .single();
-
-      if (!order) {
-        return NextResponse.json({ tracking: null, error: 'Order not found' }, { status: 404 });
-      }
-
-      const { data: shipment } = await supabaseAdmin
+    // 1. If AWB passed, find local shipment + order
+    if (targetAwb) {
+      const { data: ship } = await supabaseAdmin
         .from('shipments')
-        .select('*')
-        .eq('order_id', order.id)
-        .single();
+        .select('*, orders(*, order_items(*))')
+        .eq('awb_number', targetAwb)
+        .maybeSingle();
 
-      if (!shipment || !shipment.shiprocket_order_id) {
-        return NextResponse.json({
-          tracking: { status: 'pending', message: 'Shipment not yet created' },
-        });
-      }
-
-      try {
-        let tracking = null;
-        if (shipment.awb_number) {
-          tracking = await trackShipment(shipment.awb_number).catch(() => null);
-        }
-        if (!tracking && shipment.shiprocket_order_id) {
-          tracking = await trackByOrderId(shipment.shiprocket_order_id).catch(() => null);
-        }
-
-        const { data: events } = await supabaseAdmin
-          .from('shipment_events')
-          .select('status, activity, location, event_time')
-          .eq('shipment_id', shipment.id)
-          .order('event_time', { ascending: false });
-
-        return NextResponse.json({
-          tracking: tracking || { status: shipment.status, message: 'Shipment in progress' },
-          shipment,
-          events: events || [],
-        });
-      } catch (shipErr) {
-        return NextResponse.json({
-          tracking: { status: shipment.status || 'processing', message: 'Shipment is being prepared by workshop' },
-          shipment,
-        });
+      if (ship) {
+        shipment = ship;
+        order = ship.orders;
       }
     }
 
-    return NextResponse.json({ tracking: null, error: 'Provide awb or orderNumber' }, { status: 400 });
+    // 2. If orderNumber passed, find order + shipment
+    if (!order && orderNumber) {
+      const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(orderNumber);
+      let query = supabaseAdmin.from('orders').select('*, order_items(*), shipments(*)');
+      if (isUuid) {
+        query = query.eq('id', orderNumber);
+      } else {
+        query = query.eq('order_number', orderNumber);
+      }
+      const { data: ord } = await query.maybeSingle();
+      if (ord) {
+        order = ord;
+        shipment = Array.isArray(ord.shipments) ? ord.shipments[0] : ord.shipments;
+        if (shipment?.awb_number) targetAwb = shipment.awb_number;
+      }
+    }
+
+    if (!order && !targetAwb) {
+      return NextResponse.json({ tracking: null, error: 'Provide a valid awb or orderNumber' }, { status: 400 });
+    }
+
+    // 3. Fetch live scans from Shiprocket
+    let liveTracking = null;
+    if (targetAwb && !targetAwb.startsWith('SR-')) {
+      try {
+        liveTracking = await trackShipment(targetAwb);
+      } catch (err) {
+        console.warn('Live trackShipment notice:', err.message);
+      }
+    }
+
+    if (!liveTracking && shipment?.shiprocket_order_id) {
+      try {
+        liveTracking = await trackByOrderId(shipment.shiprocket_order_id);
+      } catch (_) {}
+    }
+
+    // 4. Fetch local audit events
+    let events = [];
+    if (shipment?.id) {
+      const { data: evts } = await supabaseAdmin
+        .from('shipment_events')
+        .select('status, status_code, activity, location, event_time')
+        .eq('shipment_id', shipment.id)
+        .order('event_time', { ascending: false });
+      events = evts || [];
+    }
+
+    const liveScans =
+      liveTracking?.tracking_data?.shipment_track_activities ||
+      liveTracking?.tracking_data?.shipment_track ||
+      [];
+
+    let currentLocation = 'Trio Enterprises Central Warehouse, Faridabad';
+    let currentActivity = order?.status === 'delivered' ? 'Delivered safely' : 'Package in transit';
+
+    if (liveScans.length > 0) {
+      currentLocation = liveScans[0].location || liveScans[0].city || currentLocation;
+      currentActivity = liveScans[0].activity || liveScans[0]['sr-status-label'] || currentActivity;
+    } else if (events.length > 0) {
+      currentLocation = events[0].location || currentLocation;
+      currentActivity = events[0].activity || currentActivity;
+    }
+
+    const items = (order?.order_items || []).map((it) => ({
+      id: it.id,
+      productId: it.product_id,
+      name: it.name || it.product_name || 'Handcrafted Ethnic Item',
+      quantity: it.quantity || 1,
+      price: Number(it.price || 0),
+      image: it.image || it.product_image || '/products/pearl-zardosi-patch-1.jpg',
+      color: it.color,
+      size: it.size,
+    }));
+
+    return NextResponse.json({
+      success: true,
+      order: order ? {
+        id: order.order_number || order.id,
+        orderNumber: order.order_number,
+        status: order.status,
+        total: Number(order.total || 0),
+        shippingAddress: order.shipping_address,
+        paymentMethod: order.payment_method,
+        createdAt: order.created_at,
+        estimatedDelivery: shipment?.estimated_delivery || order.estimated_delivery,
+        items,
+      } : null,
+      tracking: {
+        awb: targetAwb || shipment?.awb_number || '',
+        carrier: shipment?.courier_name || (liveTracking?.tracking_data?.shipment_track?.[0]?.courier_name) || 'Shiprocket Express',
+        status: shipment?.status || order?.status || 'pending',
+        currentLocation,
+        currentActivity,
+        etd: shipment?.estimated_delivery || order?.estimated_delivery || null,
+        liveScans,
+        auditEvents: events,
+      },
+    });
   } catch (err) {
-    console.warn('Tracking query error:', err);
-    return NextResponse.json({ tracking: null, message: 'Tracking service currently unavailable' });
+    console.error('Tracking query error:', err);
+    return NextResponse.json({ tracking: null, error: err.message }, { status: 500 });
   }
 }

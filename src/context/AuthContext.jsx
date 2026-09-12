@@ -102,8 +102,14 @@ export const AuthProvider = ({ children }) => {
             color: item.color,
             size: item.size,
           })),
-          trackingNumber: o.shipments?.[0]?.awb_number || `BLUEDART-${(o.order_number || o.id).slice(-6)}`,
-          carrier: o.shipments?.[0]?.courier_name || 'BlueDart Express',
+          trackingNumber: o.shipments?.[0]?.awb_number || '',
+          carrier: o.shipments?.[0]?.courier_name || (o.status === 'confirmed' || o.status === 'processing' ? 'Awaiting Dispatch' : 'Shiprocket Express'),
+          shipment: o.shipments?.[0] || null,
+          shipping_address: o.shipping_address,
+          payment_method: o.payment_method,
+          subtotal: Number(o.subtotal || 0),
+          shipping_cost: Number(o.shipping_cost || 0),
+          discount: Number(o.discount || 0),
           total: Number(o.total),
         };
       });
