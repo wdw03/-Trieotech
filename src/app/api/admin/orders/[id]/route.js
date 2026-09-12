@@ -95,7 +95,7 @@ export async function GET(request, { params }) {
       order,
       shipment: shipment ? {
         ...shipment,
-        customLabelUrl: `/api/admin/shipments/label/custom?orderId=${encodeURIComponent(order.order_number)}`,
+        labelUrl: shipment.label_url || `/api/admin/shipments/label?orderId=${encodeURIComponent(order.order_number)}`,
         invoiceUrl: `/api/admin/orders/${order.id}/invoice`,
         events: auditEvents,
       } : null,

@@ -40,8 +40,8 @@ function computeAvailableActions(order, shipment) {
     return actions;
   }
 
-  // Once AWB is available, labels can always be printed
-  actions.push('print_label', 'print_custom_label');
+  // Once AWB is available, official Shiprocket labels can be printed
+  actions.push('print_label', 'print_shiprocket_label');
 
   if (status === 'pending') {
     actions.push('request_pickup', 'view_couriers', 'cancel_shipment');
@@ -189,8 +189,7 @@ export async function GET(request) {
         dimensions: shipment.dimensions || { length: 20, breadth: 15, height: 10 },
         shiprocketOrderId: shipment.shiprocket_order_id || '',
         shiprocketShipmentId: shipment.shiprocket_shipment_id || '',
-        labelUrl: shipment.label_url || '',
-        customLabelUrl,
+        labelUrl: shipment.label_url || `/api/admin/shipments/label?orderId=${encodeURIComponent(ord.order_number)}`,
         manifestUrl: shipment.manifest_url || '',
         invoiceUrl: shipment.invoice_url || `/api/admin/orders/${ord.id}/invoice`,
         pickupStatus: shipment.pickup_status || '',

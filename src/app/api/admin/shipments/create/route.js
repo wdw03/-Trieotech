@@ -41,7 +41,7 @@ export async function POST(request) {
         success: true,
         alreadyExists: true,
         shipment: existingShipment,
-        customLabelUrl: `/api/admin/shipments/label/custom?orderId=${encodeURIComponent(order.order_number)}`,
+        labelUrl: existingShipment.label_url || `/api/admin/shipments/label?orderId=${encodeURIComponent(order.order_number)}`,
         message: 'Shipment already exists for this order',
       });
     }
@@ -113,7 +113,7 @@ export async function POST(request) {
       shipmentId: shiprocketResult.shipment_id,
       awbNumber: shiprocketResult.awb_code || '',
       courierName: shiprocketResult.courier_name || '',
-      customLabelUrl: `/api/admin/shipments/label/custom?orderId=${encodeURIComponent(order.order_number)}`,
+      labelUrl: `/api/admin/shipments/label?orderId=${encodeURIComponent(order.order_number)}`,
     });
   } catch (err) {
     console.error('Create shipment error:', err);
