@@ -162,14 +162,14 @@ export async function createOrderAndAssignAWB(orderParams) {
  * Get available shipping rates for a delivery from Shiprocket
  */
 export async function getShippingRates({
-  pickupPincode = '302001', // Jaipur default
+  pickupPincode = '121005', // Faridabad pickup default
   deliveryPincode,
   weight = 0.5,
   cod = false,
 }) {
   const cleanPin = String(deliveryPincode || '').trim().replace(/\D/g, '').slice(0, 6);
   const params = new URLSearchParams({
-    pickup_postcode: String(pickupPincode || '302001'),
+    pickup_postcode: String(pickupPincode || '121005'),
     delivery_postcode: cleanPin,
     weight: String(weight || 0.5),
     cod: cod ? '1' : '0',
@@ -195,7 +195,7 @@ export async function calculateDynamicShipping(deliveryPincode, options = {}) {
 
   try {
     const rawData = await getShippingRates({
-      pickupPincode: options.pickupPincode || '302001',
+      pickupPincode: options.pickupPincode || '121005',
       deliveryPincode: cleanPin,
       weight: options.weight || 0.5,
       cod: !!options.cod,
