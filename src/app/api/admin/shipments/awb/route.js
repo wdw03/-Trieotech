@@ -15,11 +15,22 @@ export async function POST(request) {
       return NextResponse.json({ error: 'orderId is required' }, { status: 400 });
     }
 
-    // 1. Fetch shipment for this order
+    // 1. Fetch shipment for this order (support both UUID and order_number)
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(orderId);
+    let targetOrderId = orderId;
+    if (!isUuid) {
+      const { data: ord } = await supabaseAdmin
+        .from('orders')
+        .select('id')
+        .eq('order_number', orderId)
+        .maybeSingle();
+      if (ord) targetOrderId = ord.id;
+    }
+
     const { data: shipment, error: shipErr } = await supabaseAdmin
       .from('shipments')
       .select('*')
-      .eq('order_id', orderId)
+      .eq('order_id', targetOrderId)
       .maybeSingle();
 
     if (!shipment) {

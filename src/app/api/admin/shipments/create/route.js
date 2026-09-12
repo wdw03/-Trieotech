@@ -15,12 +15,15 @@ export async function POST(request) {
       return NextResponse.json({ error: 'orderId is required' }, { status: 400 });
     }
 
-    // 1. Fetch order + items from DB
-    const { data: order, error: orderErr } = await supabaseAdmin
-      .from('orders')
-      .select('*, order_items(*)')
-      .eq('id', orderId)
-      .single();
+    // 1. Fetch order + items from DB (support both UUID and order_number)
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(orderId);
+    let orderQuery = supabaseAdmin.from('orders').select('*, order_items(*)');
+    if (isUuid) {
+      orderQuery = orderQuery.eq('id', orderId);
+    } else {
+      orderQuery = orderQuery.eq('order_number', orderId);
+    }
+    const { data: order, error: orderErr } = await orderQuery.maybeSingle();
 
     if (orderErr || !order) {
       return NextResponse.json({ error: 'Order not found' }, { status: 404 });
@@ -30,7 +33,7 @@ export async function POST(request) {
     const { data: existingShipment } = await supabaseAdmin
       .from('shipments')
       .select('*')
-      .eq('order_id', orderId)
+      .eq('order_id', order.id)
       .maybeSingle();
 
     if (existingShipment?.shiprocket_order_id && existingShipment.shiprocket_order_id !== '') {
@@ -57,7 +60,7 @@ export async function POST(request) {
 
     // 4. Save/update shipment record in DB
     const shipmentData = {
-      order_id: orderId,
+      order_id: order.id,
       shiprocket_order_id: String(shiprocketResult.order_id || ''),
       shiprocket_shipment_id: String(shiprocketResult.shipment_id || ''),
       awb_number: shiprocketResult.awb_code || '',
@@ -97,6 +100,10 @@ export async function POST(request) {
     });
   } catch (err) {
     console.error('Create shipment error:', err);
-    return NextResponse.json({ error: err.message || 'Failed to create shipment' }, { status: 500 });
+    let errorMsg = err.message || 'Failed to create shipment';
+    if (errorMsg.toLowerCase().includes('billing/shipping address first') || errorMsg.toLowerCase().includes('pickup')) {
+      errorMsg = 'Shiprocket Notice: Please add a Pickup Address in your Shiprocket account (app.shiprocket.in -> Settings -> Manage Pickup Addresses) to generate live shipments.';
+    }
+    return NextResponse.json({ error: errorMsg }, { status: 400 });
   }
 }
