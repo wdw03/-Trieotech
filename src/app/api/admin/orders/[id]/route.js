@@ -208,24 +208,30 @@ export async function PATCH(request, { params }) {
               reason: cancelReason || 'Order cancelled by admin',
             });
 
-            await supabaseAdmin
-              .from('payments')
-              .update({
-                status: 'refunded',
-                refund_id: refundResult?.id || null,
-                refunded_at: nowIso,
-              })
-              .eq('id', payment.id);
+            try {
+              await supabaseAdmin
+                .from('payments')
+                .update({
+                  status: 'refunded',
+                  refund_id: refundResult?.id || null,
+                  refunded_at: nowIso,
+                })
+                .eq('id', payment.id);
+            } catch (pErr) {
+              console.warn('Admin payment record update notice:', pErr.message);
+            }
 
             updates.payment_status = 'refunded';
             updates.refund_amount = refundAmount;
             updates.refund_id = refundResult?.id || '';
           } catch (refundErr) {
             console.error('Admin order refund error:', refundErr);
-            await supabaseAdmin
-              .from('payments')
-              .update({ status: 'refund_failed', error_description: refundErr.message })
-              .eq('id', payment.id);
+            try {
+              await supabaseAdmin
+                .from('payments')
+                .update({ status: 'refund_failed', error_description: refundErr.message })
+                .eq('id', payment.id);
+            } catch (_) {}
           }
         }
       } else {
@@ -283,7 +289,7 @@ export async function PATCH(request, { params }) {
             activity: `Shipment cancelled by admin: ${cancelReason || 'Order cancelled'}`,
             location: 'Admin Panel',
             raw_data: { adminUser: adminUser || 'admin', cancelReason },
-          });
+          }).catch(() => {});
         }
       } catch (cancelErr) {
         console.warn('Admin cancel: Shiprocket shipment cancel warning:', cancelErr.message);
@@ -291,14 +297,27 @@ export async function PATCH(request, { params }) {
     }
 
     // 4. Update the order record in database
-    const { data: updatedOrder, error: orderError } = await supabaseAdmin
+    let { data: updatedOrder, error: orderError } = await supabaseAdmin
       .from('orders')
       .update(updates)
       .eq('id', orderDbId)
       .select('*, order_items(*)')
       .single();
 
-    if (orderError) throw orderError;
+    if (orderError) {
+      console.warn('Admin order update with full payload failed, trying fallback:', orderError.message);
+      const fallbackUpdates = { status: updates.status, updated_at: nowIso };
+      if (updates.payment_status) fallbackUpdates.payment_status = updates.payment_status;
+      if (updates.notes) fallbackUpdates.notes = updates.notes;
+      const res = await supabaseAdmin
+        .from('orders')
+        .update(fallbackUpdates)
+        .eq('id', orderDbId)
+        .select('*, order_items(*)')
+        .single();
+      if (res.error) throw res.error;
+      updatedOrder = res.data;
+    }
 
     // 5. Update payment status if explicitly passed
     if (paymentStatus && mappedStatus !== 'cancelled') {

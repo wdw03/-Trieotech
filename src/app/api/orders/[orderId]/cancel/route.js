@@ -87,35 +87,41 @@ async function processCancellation(order, user, request) {
 
   // 6. If shipment was already registered in Shiprocket, trigger Shiprocket cancellation
   let shipmentCancelled = false;
-  const shipment = Array.isArray(order.shipments) ? order.shipments[0] : order.shipments;
+  const shipmentsList = Array.isArray(order.shipments)
+    ? order.shipments
+    : order.shipments
+    ? [order.shipments]
+    : [];
 
-  if (shipment?.id) {
-    try {
-      const awb = shipment.awb_number;
-      if (awb && !awb.startsWith('SR-') && awb.length > 5) {
-        await cancelShipment([awb]);
-        shipmentCancelled = true;
-      }
+  for (const sh of shipmentsList) {
+    if (sh?.id) {
+      try {
+        const awb = sh.awb_number;
+        if (awb && !awb.startsWith('SR-') && awb.length > 5) {
+          await cancelShipment([awb]).catch(() => {});
+          shipmentCancelled = true;
+        }
 
-      await supabaseAdmin
-        .from('shipments')
-        .update({
+        await supabaseAdmin
+          .from('shipments')
+          .update({
+            status: 'cancelled',
+            cancel_reason: reason,
+            updated_at: nowIso,
+          })
+          .eq('id', sh.id);
+
+        await supabaseAdmin.from('shipment_events').insert({
+          shipment_id: sh.id,
           status: 'cancelled',
-          cancel_reason: reason,
-          updated_at: nowIso,
-        })
-        .eq('id', shipment.id);
-
-      await supabaseAdmin.from('shipment_events').insert({
-        shipment_id: shipment.id,
-        status: 'cancelled',
-        status_code: 'CANCELLED_BY_CUSTOMER',
-        activity: `Order cancelled by customer. Reason: ${reason}`,
-        location: 'Customer Service',
-        raw_data: { cancelledBy: user?.id || 'customer', reason },
-      });
-    } catch (shipErr) {
-      console.warn('Shiprocket cancellation notice:', shipErr.message);
+          status_code: 'CANCELLED_BY_CUSTOMER',
+          activity: `Order cancelled by customer. Reason: ${reason}`,
+          location: 'Customer Service',
+          raw_data: { cancelledBy: user?.id || 'customer', reason },
+        }).catch(() => {});
+      } catch (shipErr) {
+        console.warn('Shiprocket cancellation notice:', shipErr.message);
+      }
     }
   }
 
@@ -133,14 +139,29 @@ async function processCancellation(order, user, request) {
     orderUpdatePayload.payment_status = 'cancelled';
   }
 
-  const { error: updateError } = await supabaseAdmin
+  let { error: updateError } = await supabaseAdmin
     .from('orders')
     .update(orderUpdatePayload)
     .eq('id', order.id);
 
   if (updateError) {
-    console.error('Failed to update order status:', updateError);
-    return NextResponse.json({ error: 'Failed to cancel order in database' }, { status: 500 });
+    console.error('Failed to update order status with full payload, trying fallback:', updateError);
+    const fallbackPayload = {
+      status: 'cancelled',
+      updated_at: nowIso,
+      notes: reason,
+    };
+    if (isCod) fallbackPayload.payment_status = 'cancelled';
+
+    const { error: fallbackErr } = await supabaseAdmin
+      .from('orders')
+      .update(fallbackPayload)
+      .eq('id', order.id);
+
+    if (fallbackErr) {
+      console.error('Critical order update failure:', fallbackErr);
+      return NextResponse.json({ error: 'Failed to cancel order in database' }, { status: 500 });
+    }
   }
 
   // 8. Process refund if online payment was captured (Prepaid only, skip COD)
@@ -157,31 +178,41 @@ async function processCancellation(order, user, request) {
         reason,
       });
 
-      // Update payment record
-      await supabaseAdmin
-        .from('payments')
-        .update({
-          status: 'refunded',
-          refund_id: refundResult?.id || null,
-          refunded_at: nowIso,
-        })
-        .eq('id', payment.id);
+      // Update payment record safely
+      try {
+        await supabaseAdmin
+          .from('payments')
+          .update({
+            status: 'refunded',
+            refund_id: refundResult?.id || null,
+            refunded_at: nowIso,
+          })
+          .eq('id', payment.id);
+      } catch (payErr) {
+        console.warn('Payment record update notice:', payErr.message);
+      }
 
-      // Update order payment_status & refund fields
-      await supabaseAdmin
-        .from('orders')
-        .update({
-          payment_status: 'refunded',
-          refund_amount: refundAmount,
-          refund_id: refundResult?.id || '',
-        })
-        .eq('id', order.id);
+      // Update order payment_status & refund fields safely
+      try {
+        await supabaseAdmin
+          .from('orders')
+          .update({
+            payment_status: 'refunded',
+            refund_amount: refundAmount,
+            refund_id: refundResult?.id || '',
+          })
+          .eq('id', order.id);
+      } catch (orderRefErr) {
+        console.warn('Order refund update notice:', orderRefErr.message);
+      }
     } catch (refundErr) {
-      console.error('Razorpay refund error:', refundErr);
-      await supabaseAdmin
-        .from('payments')
-        .update({ status: 'refund_failed', error_description: refundErr.message })
-        .eq('id', payment.id);
+      console.error('Razorpay refund notice:', refundErr.message || refundErr);
+      try {
+        await supabaseAdmin
+          .from('payments')
+          .update({ status: 'refund_failed', error_description: refundErr.message || 'Refund error' })
+          .eq('id', payment.id);
+      } catch (_) {}
     }
   }
 
@@ -211,21 +242,25 @@ async function processCancellation(order, user, request) {
   }
 
   // 10. Audit Log in order_status_history
-  await supabaseAdmin.from('order_status_history').insert({
-    order_id: order.id,
-    from_status: currentStatus,
-    to_status: 'cancelled',
-    source: 'customer',
-    changed_by: user?.id || order.user_id || 'customer',
-    reason,
-    metadata: {
-      refundInitiated: !!refundResult,
-      refundId: refundResult?.id || null,
-      refundAmount: refundResult ? Number(order.total) : 0,
-      paymentMethod: order.payment_method,
-      shipmentCancelled,
-    },
-  });
+  try {
+    await supabaseAdmin.from('order_status_history').insert({
+      order_id: order.id,
+      from_status: currentStatus,
+      to_status: 'cancelled',
+      source: 'customer',
+      changed_by: user?.id || order.user_id || 'customer',
+      reason,
+      metadata: {
+        refundInitiated: !!refundResult,
+        refundId: refundResult?.id || null,
+        refundAmount: refundResult ? Number(order.total) : 0,
+        paymentMethod: order.payment_method,
+        shipmentCancelled,
+      },
+    });
+  } catch (auditErr) {
+    console.warn('Audit log insert notice:', auditErr.message);
+  }
 
   // 11. Send customer email notification via Resend
   try {
