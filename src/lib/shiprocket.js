@@ -398,6 +398,74 @@ export async function cancelShipment(awbNumbers) {
 }
 
 /**
+ * Fully cancel an order and/or shipment in Shiprocket
+ * Cancels both the courier AWB (if assigned) and the Shiprocket Order itself.
+ * If shiprocketOrderId is not known, searches by channel_order_id (orderNumber).
+ */
+export async function cancelShiprocketComplete({ orderNumber, shiprocketOrderId, awbNumber } = {}) {
+  const result = {
+    awbCancelled: false,
+    orderCancelled: false,
+    shiprocketOrderIds: [],
+    errors: [],
+  };
+
+  try {
+    // 1. Cancel AWB if assigned
+    if (awbNumber && !awbNumber.startsWith('SR-') && awbNumber.length > 5) {
+      try {
+        const awbRes = await cancelShipment([awbNumber]);
+        result.awbCancelled = true;
+        result.awbResponse = awbRes;
+      } catch (awbErr) {
+        console.warn('Shiprocket AWB cancel notice:', awbErr.message);
+        result.errors.push(`AWB cancel: ${awbErr.message}`);
+      }
+    }
+
+    // 2. Identify all Shiprocket order IDs to cancel
+    const idsToCancel = new Set();
+    if (shiprocketOrderId) {
+      idsToCancel.add(String(shiprocketOrderId));
+    }
+
+    // Also search Shiprocket by channel_order_id if orderNumber is provided
+    if (orderNumber) {
+      try {
+        const searchData = await shiprocketFetch(
+          `/orders?filter_by=channel_order_id&filter_value=${encodeURIComponent(orderNumber)}`
+        );
+        const found = searchData?.data || [];
+        for (const o of found) {
+          if (o?.id) idsToCancel.add(String(o.id));
+        }
+      } catch (searchErr) {
+        console.warn('Shiprocket order search by channel_order_id notice:', searchErr.message);
+      }
+    }
+
+    // 3. Cancel the Shiprocket order(s)
+    if (idsToCancel.size > 0) {
+      const idsArray = Array.from(idsToCancel);
+      result.shiprocketOrderIds = idsArray;
+      try {
+        const cancelRes = await cancelShiprocketOrder(idsArray);
+        result.orderCancelled = true;
+        result.cancelResponse = cancelRes;
+      } catch (cancelErr) {
+        console.warn('Shiprocket order cancel notice:', cancelErr.message);
+        result.errors.push(`Order cancel: ${cancelErr.message}`);
+      }
+    }
+  } catch (err) {
+    console.warn('cancelShiprocketComplete notice:', err.message);
+    result.errors.push(err.message);
+  }
+
+  return result;
+}
+
+/**
  * Get available couriers for a specific Shiprocket order
  */
 export async function getAvailableCouriers(orderId) {

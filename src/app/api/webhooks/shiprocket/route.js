@@ -151,8 +151,19 @@ export async function POST(request) {
       processed_at: new Date().toISOString(),
     });
 
-    // 3. Determine mapped shipment status
-    let mappedShipmentStatus = STATUS_MAP[statusCode] || STATUS_MAP[rawStatusText];
+    // 3. Determine mapped shipment status (Prioritize cancellation)
+    let mappedShipmentStatus = null;
+    if (
+      rawStatusText.includes('cancel') ||
+      (activity && String(activity).toLowerCase().includes('cancel')) ||
+      statusCode === '8' ||
+      statusCode === '16'
+    ) {
+      mappedShipmentStatus = 'cancelled';
+    } else {
+      mappedShipmentStatus = STATUS_MAP[statusCode] || STATUS_MAP[rawStatusText];
+    }
+
     if (!mappedShipmentStatus) {
       if (rawStatusText.includes('deliver') && !rawStatusText.includes('undeliver')) {
         mappedShipmentStatus = 'delivered';
@@ -164,22 +175,40 @@ export async function POST(request) {
         mappedShipmentStatus = 'picked_up';
       } else if (rawStatusText.includes('rto')) {
         mappedShipmentStatus = 'rto_initiated';
-      } else if (rawStatusText.includes('cancel')) {
-        mappedShipmentStatus = 'cancelled';
       } else {
         mappedShipmentStatus = 'in_transit';
       }
     }
 
     // 4. Locate shipment in database
-    let shipmentQuery = supabaseAdmin.from('shipments').select('*');
+    let shipment = null;
     if (awbNumber) {
-      shipmentQuery = shipmentQuery.eq('awb_number', awbNumber);
-    } else {
-      shipmentQuery = shipmentQuery.eq('shiprocket_order_id', String(shiprocketOrderId));
+      const { data: s } = await supabaseAdmin
+        .from('shipments')
+        .select('*')
+        .eq('awb_number', awbNumber)
+        .maybeSingle();
+      shipment = s;
     }
-
-    const { data: shipment } = await shipmentQuery.maybeSingle();
+    if (!shipment && shiprocketOrderId) {
+      const { data: s } = await supabaseAdmin
+        .from('shipments')
+        .select('*')
+        .eq('shiprocket_order_id', String(shiprocketOrderId))
+        .maybeSingle();
+      shipment = s;
+    }
+    // Fallback: If shiprocketOrderId is our custom order_number (e.g. TRIO-...)
+    if (!shipment && shiprocketOrderId) {
+      const { data: ordMatch } = await supabaseAdmin
+        .from('orders')
+        .select('*, shipments(*)')
+        .eq('order_number', String(shiprocketOrderId))
+        .maybeSingle();
+      if (ordMatch?.shipments?.length > 0) {
+        shipment = ordMatch.shipments[0];
+      }
+    }
 
     if (!shipment) {
       console.warn(`Shiprocket Webhook: Shipment not found for AWB ${awbNumber} / SR Order ${shiprocketOrderId}`);
@@ -194,6 +223,9 @@ export async function POST(request) {
       updated_at: nowIso,
     };
 
+    if (mappedShipmentStatus === 'cancelled') {
+      updateShipmentPayload.cancel_reason = activity || ndrReason || 'Cancelled via Shiprocket';
+    }
     if (courierName && !shipment.courier_name) updateShipmentPayload.courier_name = courierName;
     if (awbNumber && !shipment.awb_number) updateShipmentPayload.awb_number = awbNumber;
     if (estimatedDelivery) updateShipmentPayload.estimated_delivery = estimatedDelivery;
@@ -264,6 +296,45 @@ export async function POST(request) {
               }
             }
 
+            // If cancelled via Shiprocket, mark cancellation details and restore stock
+            if (targetOrderStatus === 'cancelled') {
+              orderUpdate.cancelled_at = nowIso;
+              orderUpdate.cancellation_reason = activity || ndrReason || 'Cancelled via Shiprocket';
+              if (order.payment_method === 'cod') {
+                orderUpdate.payment_status = 'cancelled';
+              }
+
+              // Restore inventory to products table
+              try {
+                const { data: orderWithItems } = await supabaseAdmin
+                  .from('orders')
+                  .select('*, order_items(*)')
+                  .eq('id', order.id)
+                  .single();
+
+                for (const item of orderWithItems?.order_items || []) {
+                  if (item.product_id) {
+                    const { data: prod } = await supabaseAdmin
+                      .from('products')
+                      .select('stock')
+                      .eq('id', item.product_id)
+                      .single();
+                    if (prod) {
+                      await supabaseAdmin
+                        .from('products')
+                        .update({
+                          stock: (prod.stock || 0) + (item.quantity || 1),
+                          in_stock: true,
+                        })
+                        .eq('id', item.product_id);
+                    }
+                  }
+                }
+              } catch (stockErr) {
+                console.warn('Webhook inventory restore notice:', stockErr.message);
+              }
+            }
+
             await supabaseAdmin
               .from('orders')
               .update(orderUpdate)
@@ -276,7 +347,7 @@ export async function POST(request) {
               to_status: targetOrderStatus,
               source: 'shiprocket_webhook',
               changed_by: 'shiprocket',
-              reason: activity || `Carrier update: ${mappedShipmentStatus} (${location || 'In Transit'})`,
+              reason: activity || `Shiprocket update: ${mappedShipmentStatus} (${location || 'In Transit'})`,
               metadata: {
                 awb: awbNumber || shipment.awb_number,
                 courier: courierName || shipment.courier_name,

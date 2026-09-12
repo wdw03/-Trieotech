@@ -2,7 +2,7 @@ export const dynamic = 'force-dynamic';
 import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '../../../../../lib/supabase/admin';
 import { sendShippingUpdate, sendOrderCancellation } from '../../../../../lib/resend';
-import { createOrderAndAssignAWB, requestPickup as shiprocketRequestPickup, cancelShipment } from '../../../../../lib/shiprocket';
+import { createOrderAndAssignAWB, requestPickup as shiprocketRequestPickup, cancelShipment, cancelShiprocketComplete } from '../../../../../lib/shiprocket';
 import { createRefund } from '../../../../../lib/razorpay';
 
 // Map dashboard status to DB status
@@ -266,13 +266,14 @@ export async function PATCH(request, { params }) {
       // 3c. Cancel shipment in Shiprocket & DB
       try {
         const existingShipment = Array.isArray(targetOrder.shipments) ? targetOrder.shipments[0] : targetOrder.shipments;
-        if (existingShipment?.id) {
-          const awb = existingShipment.awb_number;
-          if (awb && !awb.startsWith('SR-') && awb.length > 5) {
-            await cancelShipment([awb]).catch(() => {});
-            shipmentCancelled = true;
-          }
+        await cancelShiprocketComplete({
+          orderNumber: targetOrder.order_number,
+          shiprocketOrderId: existingShipment?.shiprocket_order_id,
+          awbNumber: existingShipment?.awb_number,
+        }).catch((err) => console.warn('Admin cancel Shiprocket complete notice:', err.message));
+        shipmentCancelled = true;
 
+        if (existingShipment?.id) {
           await supabaseAdmin
             .from('shipments')
             .update({

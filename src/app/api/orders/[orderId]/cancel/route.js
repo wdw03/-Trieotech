@@ -4,7 +4,7 @@ import { createClient } from '../../../../../lib/supabase/server';
 import { supabaseAdmin } from '../../../../../lib/supabase/admin';
 import { createRefund } from '../../../../../lib/razorpay';
 import { sendOrderCancellation } from '../../../../../lib/resend';
-import { cancelShipment } from '../../../../../lib/shiprocket';
+import { cancelShipment, cancelShiprocketComplete } from '../../../../../lib/shiprocket';
 
 // Statuses that allow customer cancellation — strictly before order is packed
 const CANCELLABLE_STATUSES = ['pending_payment', 'pending', 'confirmed', 'processing'];
@@ -85,7 +85,7 @@ async function processCancellation(order, user, request) {
 
   const nowIso = new Date().toISOString();
 
-  // 6. If shipment was already registered in Shiprocket, trigger Shiprocket cancellation
+  // 6. If shipment was already registered in Shiprocket, trigger full Shiprocket cancellation
   let shipmentCancelled = false;
   const shipmentsList = Array.isArray(order.shipments)
     ? order.shipments
@@ -93,15 +93,24 @@ async function processCancellation(order, user, request) {
     ? [order.shipments]
     : [];
 
+  // Trigger full Shiprocket cancellation (AWB + Shiprocket Order by ID + Order Number lookup)
+  try {
+    const primaryShipment = shipmentsList[0] || null;
+    const srResult = await cancelShiprocketComplete({
+      orderNumber: order.order_number,
+      shiprocketOrderId: primaryShipment?.shiprocket_order_id,
+      awbNumber: primaryShipment?.awb_number,
+    });
+    if (srResult.awbCancelled || srResult.orderCancelled) {
+      shipmentCancelled = true;
+    }
+  } catch (srErr) {
+    console.warn('Shiprocket full cancellation notice:', srErr.message);
+  }
+
   for (const sh of shipmentsList) {
     if (sh?.id) {
       try {
-        const awb = sh.awb_number;
-        if (awb && !awb.startsWith('SR-') && awb.length > 5) {
-          await cancelShipment([awb]).catch(() => {});
-          shipmentCancelled = true;
-        }
-
         await supabaseAdmin
           .from('shipments')
           .update({

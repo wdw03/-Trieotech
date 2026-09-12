@@ -99,6 +99,41 @@ export async function GET(request) {
       currentActivity = events[0].activity || currentActivity;
     }
 
+    // Auto-sync cancellation from Shiprocket live tracking if cancelled at carrier level
+    const srStatus = String(
+      liveTracking?.tracking_data?.shipment_track?.[0]?.current_status ||
+      liveTracking?.tracking_data?.shipment_status ||
+      currentActivity ||
+      ''
+    ).toLowerCase();
+
+    if (srStatus.includes('cancel') && order && order.status !== 'cancelled') {
+      const nowIso = new Date().toISOString();
+      await supabaseAdmin
+        .from('orders')
+        .update({
+          status: 'cancelled',
+          cancelled_at: nowIso,
+          cancellation_reason: 'Cancelled via Shiprocket carrier scan',
+          updated_at: nowIso,
+          ...(order.payment_method === 'cod' ? { payment_status: 'cancelled' } : {}),
+        })
+        .eq('id', order.id);
+
+      if (shipment?.id) {
+        await supabaseAdmin
+          .from('shipments')
+          .update({
+            status: 'cancelled',
+            cancel_reason: 'Cancelled via Shiprocket carrier scan',
+            updated_at: nowIso,
+          })
+          .eq('id', shipment.id);
+      }
+      order.status = 'cancelled';
+      if (shipment) shipment.status = 'cancelled';
+    }
+
     const items = (order?.order_items || []).map((it) => ({
       id: it.id,
       productId: it.product_id,
