@@ -1,5 +1,5 @@
 'use client';
-import React, { useEffect, useCallback } from 'react';
+import React, { useEffect, useRef } from 'react';
 
 /**
  * Loads Razorpay Checkout SDK script with Promise
@@ -42,7 +42,8 @@ function cleanRazorpayKey(key) {
 
 /**
  * Razorpay Checkout Component
- * Loads the Razorpay script reliably and opens payment modal
+ * Reliably loads the Razorpay SDK, opens payment modal once,
+ * and handles payment completion / failure / dismissal gracefully.
  */
 export default function RazorpayCheckout({
   razorpayOrderId,
@@ -59,92 +60,126 @@ export default function RazorpayCheckout({
   onFailure,
   onDismiss,
 }) {
-  const openPayment = useCallback(() => {
-    if (!window.Razorpay) {
-      console.error('Razorpay SDK not loaded');
-      onFailure?.({ error: 'Payment gateway could not be loaded. Please refresh the page.' });
-      return;
-    }
+  // Store latest callbacks in refs so changing closures don't trigger unmount / re-runs
+  const onSuccessRef = useRef(onSuccess);
+  const onFailureRef = useRef(onFailure);
+  const onDismissRef = useRef(onDismiss);
 
-    // Clean phone number for Razorpay prefill
-    const cleanPhone = (userPhone || '').replace(/\D/g, '').slice(-10);
+  useEffect(() => {
+    onSuccessRef.current = onSuccess;
+    onFailureRef.current = onFailure;
+    onDismissRef.current = onDismiss;
+  }, [onSuccess, onFailure, onDismiss]);
 
-    // Live fallback: 'rzp_live_TZUoFoXCMkJNkx' (Sanitize against accidental duplicate paste)
-    const rawKey = keyId || process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || 'rzp_test_Tai3sx6h51NmJP';
-    const activeKey = cleanRazorpayKey(rawKey);
+  // Flag to avoid firing onDismiss when modal closes automatically upon payment success or failure
+  const isPaymentHandledRef = useRef(false);
+  const hasOpenedRef = useRef(false);
 
-    const options = {
-      key: activeKey,
-      amount: Math.round(Number(amount) * 100), // paise
-      currency: currency || 'INR',
-      name: 'Trio Enterprises',
-      description: `Order #${orderNumber || ''}`,
-      order_id: razorpayOrderId,
-      image: '/logo.png',
-      prefill: {
-        name: userName || 'Valued Customer',
-        email: userEmail || '',
-        contact: cleanPhone || '',
-      },
-      notes: {
-        order_number: orderNumber,
-        order_id: orderId || '',
-      },
-      theme: {
-        color: '#4a0404',
-        backdrop_color: 'rgba(0,0,0,0.7)',
-      },
-      modal: {
-        ondismiss: () => {
-          onDismiss?.();
+  useEffect(() => {
+    let isCancelled = false;
+
+    if (!razorpayOrderId || hasOpenedRef.current) return;
+
+    loadRazorpayScript().then((loaded) => {
+      if (isCancelled || hasOpenedRef.current) return;
+
+      if (!loaded || !window.Razorpay) {
+        onFailureRef.current?.({ error: 'Failed to load Razorpay SDK. Please check your internet connection.' });
+        return;
+      }
+
+      hasOpenedRef.current = true;
+
+      // Clean phone number for Razorpay prefill
+      const cleanPhone = (userPhone || '').replace(/\D/g, '').slice(-10);
+
+      // Clean active key (Sanitize against accidental duplicate paste)
+      const rawKey = keyId || process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || 'rzp_test_Tai3sx6h51NmJP';
+      const activeKey = cleanRazorpayKey(rawKey);
+
+      const options = {
+        key: activeKey,
+        amount: Math.round(Number(amount) * 100), // paise
+        currency: currency || 'INR',
+        name: 'Trio Enterprises',
+        description: `Order #${orderNumber || ''}`,
+        order_id: razorpayOrderId,
+        image: '/logo.png',
+        prefill: {
+          name: userName || 'Valued Customer',
+          email: userEmail || '',
+          contact: cleanPhone || '',
         },
-      },
-      handler: async (response) => {
-        // Payment successful — verify on same-origin server
-        try {
-          const verifyRes = await fetch('/api/payments/verify', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              razorpay_order_id: response.razorpay_order_id,
-              razorpay_payment_id: response.razorpay_payment_id,
-              razorpay_signature: response.razorpay_signature,
-              orderId,
-              orderData,
-            }),
-          });
+        notes: {
+          order_number: orderNumber,
+          order_id: orderId || '',
+        },
+        theme: {
+          color: '#4a0404',
+          backdrop_color: 'rgba(0,0,0,0.7)',
+        },
+        modal: {
+          ondismiss: () => {
+            // Only trigger onDismiss if payment was NOT completed or failed
+            if (!isPaymentHandledRef.current) {
+              onDismissRef.current?.();
+            }
+          },
+        },
+        handler: async (response) => {
+          // Payment successful on Razorpay — mark handled so ondismiss doesn't cancel flow
+          isPaymentHandledRef.current = true;
 
-          const result = await verifyRes.json();
+          try {
+            const verifyRes = await fetch('/api/payments/verify', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_signature: response.razorpay_signature,
+                orderId,
+                orderData,
+              }),
+            });
 
-          if (verifyRes.ok && result.success) {
-            onSuccess?.(result);
-          } else {
-            onFailure?.({ error: result.error || 'Payment signature verification failed' });
+            const result = await verifyRes.json();
+
+            if (verifyRes.ok && result.success) {
+              onSuccessRef.current?.(result);
+            } else {
+              onFailureRef.current?.({ error: result.error || 'Payment signature verification failed' });
+            }
+          } catch (err) {
+            console.error('Verification network error:', err);
+            onFailureRef.current?.({ error: 'Payment verification failed due to network error.' });
           }
-        } catch (err) {
-          console.error('Verification network error:', err);
-          onFailure?.({ error: 'Payment verification failed due to network error.' });
-        }
-      },
-    };
+        },
+      };
 
-    try {
-      const rzp = new window.Razorpay(options);
+      try {
+        const rzp = new window.Razorpay(options);
 
-      rzp.on('payment.failed', (response) => {
-        console.error('Razorpay payment failed callback:', response);
-        onFailure?.({
-          error: response.error?.description || response.error?.reason || 'Payment failed',
-          code: response.error?.code,
-          reason: response.error?.reason,
+        rzp.on('payment.failed', (response) => {
+          console.error('Razorpay payment failed callback:', response);
+          isPaymentHandledRef.current = true;
+          onFailureRef.current?.({
+            error: response.error?.description || response.error?.reason || 'Payment failed. Please try again.',
+            code: response.error?.code,
+            reason: response.error?.reason,
+          });
         });
-      });
 
-      rzp.open();
-    } catch (err) {
-      console.error('Error opening Razorpay modal:', err);
-      onFailure?.({ error: 'Could not open payment window: ' + (err.message || 'Unknown error') });
-    }
+        rzp.open();
+      } catch (err) {
+        console.error('Error opening Razorpay modal:', err);
+        onFailureRef.current?.({ error: 'Could not open payment window: ' + (err.message || 'Unknown error') });
+      }
+    });
+
+    return () => {
+      isCancelled = true;
+    };
   }, [
     razorpayOrderId,
     amount,
@@ -156,35 +191,7 @@ export default function RazorpayCheckout({
     userEmail,
     userName,
     userPhone,
-    onSuccess,
-    onFailure,
-    onDismiss,
   ]);
-
-  // Load script and trigger modal
-  useEffect(() => {
-    let isMounted = true;
-
-    if (razorpayOrderId) {
-      loadRazorpayScript().then((loaded) => {
-        if (!isMounted) return;
-        if (!loaded) {
-          onFailure?.({ error: 'Failed to load Razorpay SDK. Please check your internet connection.' });
-          return;
-        }
-        // Small tick to ensure window.Razorpay is ready
-        setTimeout(() => {
-          if (isMounted) {
-            openPayment();
-          }
-        }, 100);
-      });
-    }
-
-    return () => {
-      isMounted = false;
-    };
-  }, [razorpayOrderId, openPayment, onFailure]);
 
   return null;
 }
