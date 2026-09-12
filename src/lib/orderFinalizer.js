@@ -121,6 +121,7 @@ export async function finalizePaidOrder({
       .from('orders')
       .update({
         status: 'confirmed',
+        payment_status: 'paid',
         updated_at: new Date().toISOString(),
       })
       .eq('id', order.id)
@@ -247,15 +248,27 @@ export async function finalizePaidOrder({
         awbNumber = shiprocketResult.awb_code || '';
         courierName = shiprocketResult.courier_name || '';
 
-        await supabaseAdmin.from('shipments').insert({
+        const { data: createdShip } = await supabaseAdmin.from('shipments').insert({
           order_id: order.id,
           shiprocket_order_id: String(shiprocketResult.order_id || ''),
           shiprocket_shipment_id: String(shiprocketResult.shipment_id || ''),
           awb_number: awbNumber,
           courier_name: courierName,
           courier_id: shiprocketResult.courier_company_id || null,
+          routing_code: shiprocketResult.routing_code || '',
+          cod_collectable: 0,
           status: 'pending',
-        });
+        }).select('id').single();
+
+        if (createdShip?.id) {
+          await supabaseAdmin.from('shipment_events').insert({
+            shipment_id: createdShip.id,
+            status: 'pending',
+            status_code: 'ORDER_PLACED',
+            activity: `Prepaid order confirmed & shipment initiated (AWB: ${awbNumber || 'Pending'})`,
+            location: 'Faridabad Hub',
+          });
+        }
       }
     } catch (shipError) {
       console.warn('Shiprocket order/AWB notice:', shipError.message);

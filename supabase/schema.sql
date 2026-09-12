@@ -142,9 +142,13 @@ CREATE TABLE IF NOT EXISTS public.orders (
   discount NUMERIC(10,2) NOT NULL DEFAULT 0,
   coupon_code TEXT,
   shipping_cost NUMERIC(10,2) NOT NULL DEFAULT 0,
+  platform_fee NUMERIC(10,2) NOT NULL DEFAULT 0,
   tax NUMERIC(10,2) NOT NULL DEFAULT 0,
   total NUMERIC(10,2) NOT NULL,
   payment_method TEXT NOT NULL DEFAULT 'razorpay',
+  payment_status TEXT NOT NULL DEFAULT 'pending',
+  refund_amount NUMERIC(10,2) NOT NULL DEFAULT 0,
+  refund_id TEXT DEFAULT '',
   shipping_address JSONB NOT NULL,
   delivery_method TEXT DEFAULT 'standard',
   estimated_delivery DATE,
@@ -167,10 +171,14 @@ CREATE TABLE IF NOT EXISTS public.order_items (
   order_id UUID NOT NULL REFERENCES public.orders(id) ON DELETE CASCADE,
   product_id INT REFERENCES public.products(id) ON DELETE SET NULL,
   name TEXT NOT NULL,
+  sku TEXT DEFAULT '',
+  hsn TEXT DEFAULT '6304',
   image TEXT DEFAULT '',
   price NUMERIC(10,2) NOT NULL,
   original_price NUMERIC(10,2),
   quantity INT NOT NULL DEFAULT 1,
+  discount_amount NUMERIC(10,2) DEFAULT 0,
+  tax_rate NUMERIC(5,2) DEFAULT 0,
   color TEXT DEFAULT '',
   size TEXT DEFAULT '',
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
@@ -217,9 +225,23 @@ CREATE TABLE IF NOT EXISTS public.shipments (
   status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN (
     'pending', 'pickup_scheduled', 'picked_up', 'in_transit',
     'out_for_delivery', 'delivered', 'rto_initiated', 'rto_delivered',
-    'cancelled', 'lost'
+    'cancelled', 'lost',
+    'shipped', 'ndr', 'failed_delivery', 'reattempt_scheduled',
+    'return_initiated', 'return_received', 'disposed'
   )),
   tracking_url TEXT DEFAULT '',
+  label_url TEXT DEFAULT '',
+  manifest_url TEXT DEFAULT '',
+  invoice_url TEXT DEFAULT '',
+  pickup_status TEXT DEFAULT '',
+  pickup_token TEXT DEFAULT '',
+  routing_code TEXT DEFAULT '',
+  ndr_reason TEXT DEFAULT '',
+  ndr_action TEXT DEFAULT '',
+  cancel_reason TEXT DEFAULT '',
+  courier_freight_cost NUMERIC(10,2) DEFAULT 0,
+  rto_cost NUMERIC(10,2) DEFAULT 0,
+  cod_collectable NUMERIC(10,2) DEFAULT 0,
   estimated_delivery DATE,
   delivered_at TIMESTAMPTZ,
   weight NUMERIC(6,2) DEFAULT 0.5,
@@ -230,6 +252,25 @@ CREATE TABLE IF NOT EXISTS public.shipments (
 
 CREATE INDEX idx_shipments_order ON public.shipments(order_id);
 CREATE INDEX idx_shipments_awb ON public.shipments(awb_number);
+
+-- ─────────────────────────────────────────
+-- 8B. SHIPMENT EVENTS (Audit / Tracking Log)
+-- ─────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS public.shipment_events (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  shipment_id UUID NOT NULL REFERENCES public.shipments(id) ON DELETE CASCADE,
+  status TEXT NOT NULL,
+  status_code TEXT DEFAULT '',
+  activity TEXT DEFAULT '',
+  location TEXT DEFAULT '',
+  shiprocket_status_id TEXT DEFAULT '',
+  event_time TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  raw_data JSONB DEFAULT '{}'::jsonb,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX idx_shipment_events_shipment ON public.shipment_events(shipment_id);
+CREATE INDEX idx_shipment_events_time ON public.shipment_events(event_time DESC);
 
 -- ─────────────────────────────────────────
 -- 9. COUPONS
@@ -316,6 +357,7 @@ ALTER TABLE public.orders ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.order_items ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.payments ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.shipments ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.shipment_events ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.coupons ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.reviews ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.wishlist ENABLE ROW LEVEL SECURITY;
@@ -376,6 +418,17 @@ CREATE POLICY "Users can view own shipments" ON public.shipments
       SELECT 1 FROM public.orders
       WHERE orders.id = shipments.order_id
       AND orders.user_id = auth.uid()
+    )
+  );
+
+-- SHIPMENT EVENTS: Users can view own shipment events
+CREATE POLICY "Users can view own shipment events" ON public.shipment_events
+  FOR SELECT USING (
+    EXISTS (
+      SELECT 1 FROM public.shipments s
+      JOIN public.orders o ON o.id = s.order_id
+      WHERE s.id = shipment_events.shipment_id
+      AND o.user_id = auth.uid()
     )
   );
 

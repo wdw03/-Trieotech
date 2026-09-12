@@ -82,6 +82,16 @@ export async function POST(request) {
       })
       .eq('id', targetOrderId);
 
+    // 6. Audit event in shipment_events
+    await supabaseAdmin.from('shipment_events').insert({
+      shipment_id: shipment.id,
+      status: 'pickup_scheduled',
+      status_code: 'PICKUP_SCHEDULED',
+      activity: `Pickup scheduled. Token: ${pickupToken || 'Generated'}`,
+      location: 'Faridabad Warehouse',
+      raw_data: { pickupToken, pickupStatus, pickupResult },
+    });
+
     return NextResponse.json({
       success: true,
       pickupStatus,

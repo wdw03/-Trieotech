@@ -14,9 +14,51 @@ const STATUS_MAP = {
   delivered: 'Delivered',
   cancelled: 'Cancelled',
   return_requested: 'Return Requested',
+  return_initiated: 'Return Initiated',
   returned: 'Returned',
   refunded: 'Refunded',
 };
+
+function computeAvailableActions(order, shipment) {
+  const actions = [];
+  const status = (shipment?.status || '').toLowerCase();
+  const hasShipment = !!(shipment?.shiprocket_order_id);
+  const hasAwb = !!(shipment?.awb_number && !shipment.awb_number.startsWith('SR-') && shipment.awb_number.length > 5);
+
+  if (!hasShipment) {
+    actions.push('create_shipment');
+    return actions;
+  }
+
+  if (status === 'cancelled') {
+    actions.push('view_history');
+    return actions;
+  }
+
+  if (!hasAwb) {
+    actions.push('assign_awb', 'cancel_shipment');
+    return actions;
+  }
+
+  // Once AWB is available, labels can always be printed
+  actions.push('print_label', 'print_custom_label');
+
+  if (status === 'pending') {
+    actions.push('request_pickup', 'view_couriers', 'cancel_shipment');
+  } else if (status === 'pickup_scheduled') {
+    actions.push('generate_manifest', 'track_shipment', 'cancel_shipment');
+  } else if (['picked_up', 'in_transit', 'out_for_delivery', 'shipped'].includes(status)) {
+    actions.push('track_shipment', 'generate_manifest', 'cancel_shipment');
+  } else if (['ndr', 'failed_delivery', 'reattempt_scheduled'].includes(status)) {
+    actions.push('ndr_action', 'track_shipment', 'cancel_shipment');
+  } else if (['rto_initiated', 'rto_delivered'].includes(status)) {
+    actions.push('track_shipment');
+  } else if (status === 'delivered') {
+    actions.push('print_invoice', 'create_return');
+  }
+
+  return actions;
+}
 
 // GET: Fetch all store orders for admin with dashboard normalization
 export async function GET(request) {
@@ -36,7 +78,7 @@ export async function GET(request) {
       .order('created_at', { ascending: false })
       .limit(limit);
 
-    // Always exclude uncompleted payment attempts and drafts from admin view
+    // Exclude abandoned checkouts and drafts
     query = query
       .neq('status', 'pending_payment')
       .neq('status', 'payment_failed')
@@ -48,7 +90,6 @@ export async function GET(request) {
     }
 
     const { data: orders, error } = await query;
-
     if (error) throw error;
 
     // Fetch auth users to resolve real user emails, phones, and names
@@ -86,26 +127,27 @@ export async function GET(request) {
 
     const normalizedOrders = (orders || []).map((ord) => {
       const addr = ord.shipping_address || {};
-      const shipment = ord.shipments?.[0] || {};
-      const payment = ord.payments?.[0] || {};
+      const shipment = Array.isArray(ord.shipments) ? (ord.shipments[0] || {}) : (ord.shipments || {});
+      const payment = Array.isArray(ord.payments) ? (ord.payments[0] || {}) : (ord.payments || {});
       const uId = ord.user_id;
 
       const items = (ord.order_items || []).map((item) => ({
         id: item.id,
         productId: item.product_id,
-        name: item.product_name || 'Handcrafted Item',
-        slug: (item.product_name || '').toLowerCase().replace(/[^a-z0-9]+/g, '-'),
-        image: item.product_image || '/products/pearl-zardosi-patch-1.jpg',
+        name: item.name || item.product_name || 'Handcrafted Item',
+        sku: item.sku || `TRIO-${item.product_id || 'GEN'}`,
+        hsn: item.hsn || '6304',
+        slug: (item.name || item.product_name || '').toLowerCase().replace(/[^a-z0-9]+/g, '-'),
+        image: item.image || item.product_image || '/products/pearl-zardosi-patch-1.jpg',
         category: 'Handcrafted',
         price: Number(item.price || 0),
-        originalPrice: Math.round(Number(item.price || 0) * 1.2),
-        discount: 15,
+        originalPrice: Number(item.original_price || Math.round(Number(item.price || 0) * 1.2)),
+        discount: Number(item.discount_amount || 0),
         quantity: Number(item.quantity || 1),
-        selectedColor: 'Standard',
-        selectedSize: 'Standard Pack',
+        selectedColor: item.color || 'Standard',
+        selectedSize: item.size || 'Standard Pack',
       }));
 
-      // Map raw status to dashboard standard
       const rawStatus = ord.status || 'pending';
       const displayStatus = STATUS_MAP[rawStatus.toLowerCase()] || 'New';
 
@@ -116,8 +158,52 @@ export async function GET(request) {
       const realEmail = addr.email || ord.customer_email || (uId && userEmailsMap[uId]) || '';
       const realPhone = addr.phone || ord.customer_phone || (uId && userPhonesMap[uId]) || '';
 
+      const isCod = ord.payment_method === 'cod';
+      const codCollectable = isCod ? Number(shipment.cod_collectable || ord.total || 0) : 0;
+
+      const financials = {
+        itemSubtotal: Number(ord.subtotal || 0),
+        discount: Number(ord.discount || 0),
+        customerShippingCharge: Number(ord.shipping_cost || 0),
+        platformFee: Number(ord.platform_fee || 0),
+        tax: Number(ord.tax || 0),
+        grandTotal: Number(ord.total || 0),
+        paymentMethod: ord.payment_method,
+        paymentStatus: ord.payment_status || (isCod ? 'cod_pending' : 'paid'),
+        codCollectable,
+        courierFreightCost: Number(shipment.courier_freight_cost || 0),
+        rtoCost: Number(shipment.rto_cost || 0),
+        refundAmount: Number(ord.refund_amount || 0),
+      };
+
+      const customLabelUrl = `/api/admin/shipments/label/custom?orderId=${encodeURIComponent(ord.order_number)}`;
+
+      const shipmentDetail = {
+        id: shipment.id || null,
+        status: shipment.status || (shipment.shiprocket_order_id ? 'pending' : 'not_created'),
+        awb: shipment.awb_number || '',
+        courierName: shipment.courier_name || '',
+        courierId: shipment.courier_id || null,
+        routingCode: shipment.routing_code || '',
+        weight: Number(shipment.weight || 0.5),
+        dimensions: shipment.dimensions || { length: 20, breadth: 15, height: 10 },
+        shiprocketOrderId: shipment.shiprocket_order_id || '',
+        shiprocketShipmentId: shipment.shiprocket_shipment_id || '',
+        labelUrl: shipment.label_url || '',
+        customLabelUrl,
+        manifestUrl: shipment.manifest_url || '',
+        invoiceUrl: shipment.invoice_url || `/api/admin/orders/${ord.id}/invoice`,
+        pickupStatus: shipment.pickup_status || '',
+        pickupToken: shipment.pickup_token || '',
+        ndrReason: shipment.ndr_reason || '',
+        ndrAction: shipment.ndr_action || '',
+        cancelReason: shipment.cancel_reason || '',
+        courierFreightCost: Number(shipment.courier_freight_cost || 0),
+        codCollectable,
+        availableActions: computeAvailableActions(ord, shipment),
+      };
+
       return {
-        // Dashboard expected keys
         id: ord.order_number || `ORD-${ord.id.substring(0, 6).toUpperCase()}`,
         db_id: ord.id,
         order_number: ord.order_number,
@@ -136,7 +222,7 @@ export async function GET(request) {
         },
         status: displayStatus,
         raw_status: ord.status,
-        paymentMethod: ord.payment_method === 'cod' ? 'COD' : (ord.payment_method === 'razorpay' ? 'Razorpay Online' : (ord.payment_method || 'Online')),
+        paymentMethod: isCod ? 'COD' : (ord.payment_method === 'razorpay' ? 'Razorpay Online' : (ord.payment_method || 'Online')),
         paymentStatus: (() => {
           const ps = (ord.payment_status || '').toLowerCase();
           if (['paid', 'captured'].includes(ps)) return 'Paid';
@@ -144,33 +230,34 @@ export async function GET(request) {
           if (ps === 'failed') return 'Failed';
           if (['refunded', 'refund_processed'].includes(ps)) return 'Refunded';
           if (ps === 'refund_failed') return 'Refund Failed';
-          // For confirmed orders without explicit payment_status, infer from order status
           const orderStatus = (ord.status || '').toLowerCase();
           if (['confirmed', 'processing', 'packed', 'shipped', 'delivered'].includes(orderStatus)) {
-            return ord.payment_method === 'cod' ? 'COD - Pay on Delivery' : 'Paid';
+            return isCod ? 'COD - Pay on Delivery' : 'Paid';
           }
           return 'Pending';
         })(),
         shippingPartner: shipment.courier_name || 'Awaiting Shipment',
         trackingNumber: shipment.awb_number || shipment.tracking_number || '',
         estimatedDelivery: shipment.estimated_delivery || ord.estimated_delivery || new Date(Date.now() + 4 * 86400000).toISOString().split('T')[0],
-        shippingCharge: Number(ord.shipping_cost || ord.shipping_amount || 0),
-        taxAmount: Number(ord.tax_amount || 0),
-        discountAmount: Number(ord.discount || ord.discount_amount || 0),
-        totalAmount: Number(ord.total || ord.total_amount || 0),
+        shippingCharge: Number(ord.shipping_cost || 0),
+        taxAmount: Number(ord.tax || 0),
+        discountAmount: Number(ord.discount || 0),
+        totalAmount: Number(ord.total || 0),
         items,
-        // Shiprocket shipment details for admin actions
+        // Detailed shipment object with all lifecycle actions
+        shipment: shipmentDetail,
+        financials,
+        // Legacy dashboard flat keys for backward compatibility
         shipmentStatus: shipment.status || (shipment.shiprocket_order_id ? 'confirmed' : 'none'),
         shiprocketOrderId: shipment.shiprocket_order_id || '',
         shiprocketShipmentId: shipment.shiprocket_shipment_id || '',
         labelUrl: shipment.label_url || '',
+        customLabelUrl,
         pickupStatus: shipment.pickup_status || 'pending',
         hasShipment: !!(shipment.shiprocket_order_id),
         hasAwb: !!(shipment.awb_number && !shipment.awb_number.startsWith('SR-') && shipment.awb_number.length > 5),
-        // Raw DB fields for compatibility
         created_at: ord.created_at,
         shipping_address: ord.shipping_address,
-        billing_address: ord.billing_address,
         notes: ord.notes,
       };
     });

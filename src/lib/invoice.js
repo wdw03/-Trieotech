@@ -9,27 +9,27 @@ export function generateInvoiceHTML(order) {
     .map(
       (item, i) => `
       <tr>
-        <td style="padding:12px 14px;border-bottom:1px solid #e7dfd5;text-align:center;color:#78716c">${i + 1}</td>
-        <td style="padding:12px 14px;border-bottom:1px solid #e7dfd5">
+        <td style="padding:10px 12px;border-bottom:1px solid #e7dfd5;text-align:center;color:#78716c">${i + 1}</td>
+        <td style="padding:10px 12px;border-bottom:1px solid #e7dfd5">
           <div style="display:flex;align-items:center;gap:12px">
             ${
               item.image
-                ? `<img src="${item.image}" alt="${item.name}" style="width:44px;height:44px;object-fit:cover;border-radius:8px;border:1px solid #D4AF37" />`
+                ? `<img src="${item.image}" alt="${item.name}" style="width:40px;height:40px;object-fit:cover;border-radius:6px;border:1px solid #D4AF37" />`
                 : ''
             }
             <div>
-              <strong style="color:#1c1917;font-size:13px;display:block">${item.name}</strong>
-              ${
-                item.color || item.size
-                  ? `<span style="font-size:11px;color:#78716c;margin-top:2px;display:block">${[item.color ? `Shade: ${item.color}` : '', item.size ? `Size: ${item.size}` : ''].filter(Boolean).join(' • ')}</span>`
-                  : ''
-              }
+              <strong style="color:#1c1917;font-size:13px;display:block;line-height:1.3">${item.name}</strong>
+              <div style="font-size:11px;color:#78716c;margin-top:2px">
+                SKU: <span style="font-family:monospace;font-weight:600;color:#444">${item.sku || `TRIO-${item.product_id || 'GEN'}`}</span>
+                ${item.color || item.size ? ` • ${[item.color ? `Shade: ${item.color}` : '', item.size ? `Size: ${item.size}` : ''].filter(Boolean).join(' • ')}` : ''}
+              </div>
             </div>
           </div>
         </td>
-        <td style="padding:12px 14px;border-bottom:1px solid #e7dfd5;text-align:center;font-weight:600;color:#1c1917">${item.quantity}</td>
-        <td style="padding:12px 14px;border-bottom:1px solid #e7dfd5;text-align:right;color:#44403c">₹${Number(item.price).toLocaleString('en-IN')}</td>
-        <td style="padding:12px 14px;border-bottom:1px solid #e7dfd5;text-align:right;font-weight:700;color:#7f1d1d">₹${(Number(item.price) * item.quantity).toLocaleString('en-IN')}</td>
+        <td style="padding:10px 12px;border-bottom:1px solid #e7dfd5;text-align:center;font-family:monospace;font-size:11px;color:#57534e">${item.hsn || '6304'}</td>
+        <td style="padding:10px 12px;border-bottom:1px solid #e7dfd5;text-align:center;font-weight:600;color:#1c1917">${item.quantity}</td>
+        <td style="padding:10px 12px;border-bottom:1px solid #e7dfd5;text-align:right;color:#44403c">₹${Number(item.price).toLocaleString('en-IN')}</td>
+        <td style="padding:10px 12px;border-bottom:1px solid #e7dfd5;text-align:right;font-weight:700;color:#7f1d1d">₹${(Number(item.price) * item.quantity).toLocaleString('en-IN')}</td>
       </tr>
     `
     )
@@ -47,17 +47,21 @@ export function generateInvoiceHTML(order) {
     hour12: true,
   });
 
+  const isCod = order.payment_method === 'cod';
   const paymentLabel =
     order.payment_method === 'razorpay'
-      ? 'Online Payment (Razorpay / UPI / NetBanking)'
-      : order.payment_method === 'cod'
+      ? 'Online Payment (Razorpay / UPI / Cards)'
+      : isCod
       ? 'Cash on Delivery (COD)'
       : (order.payment_method || 'Standard');
 
-  const paymentStatus =
-    order.status === 'confirmed' || order.status === 'processing' || order.status === 'delivered'
-      ? (order.payment_method === 'cod' ? 'Pending on Delivery' : 'PAID (Captured)')
-      : 'Pending';
+  const paymentStatus = order.payment_status === 'paid'
+    ? 'PAID (Online Captured)'
+    : isCod
+    ? 'Pending on Delivery (COD)'
+    : (order.payment_status || 'Pending');
+
+  const codCollectable = isCod ? Number(order.total || 0) : 0;
 
   return `
 <!DOCTYPE html>
@@ -161,11 +165,12 @@ export function generateInvoiceHTML(order) {
       <table style="width:100%;border-collapse:collapse;margin-bottom:24px">
         <thead>
           <tr style="background:#7f1d1d;color:#FAF5EA;font-size:11px;text-transform:uppercase;letter-spacing:0.5px">
-            <th style="padding:12px 14px;text-align:center;width:40px;border-top-left-radius:10px">#</th>
-            <th style="padding:12px 14px;text-align:left">Handcrafted Craft Description</th>
-            <th style="padding:12px 14px;text-align:center;width:60px">Qty</th>
-            <th style="padding:12px 14px;text-align:right;width:110px">Unit Price</th>
-            <th style="padding:12px 14px;text-align:right;width:120px;border-top-right-radius:10px">Amount</th>
+            <th style="padding:10px 12px;text-align:center;width:35px;border-top-left-radius:8px">#</th>
+            <th style="padding:10px 12px;text-align:left">Handcrafted Craft Description</th>
+            <th style="padding:10px 12px;text-align:center;width:70px">HSN</th>
+            <th style="padding:10px 12px;text-align:center;width:50px">Qty</th>
+            <th style="padding:10px 12px;text-align:right;width:100px">Unit Price</th>
+            <th style="padding:10px 12px;text-align:right;width:110px;border-top-right-radius:8px">Amount</th>
           </tr>
         </thead>
         <tbody>
@@ -179,9 +184,14 @@ export function generateInvoiceHTML(order) {
           <td style="vertical-align:top;width:55%;padding-right:24px">
             <div style="background:#f5f5f4;border:1px solid #e7e5e4;border-radius:12px;padding:16px;font-size:12px;color:#44403c">
               <p style="margin-bottom:6px"><strong>Payment Method:</strong> ${paymentLabel}</p>
-              <p style="margin-bottom:6px"><strong>Payment Status:</strong> ${paymentStatus}</p>
-              <p style="margin-bottom:6px"><strong>Delivery Partner:</strong> BlueDart Air Express</p>
-              <p style="color:#78716c;font-size:11px;margin-top:8px">All prices are inclusive of applicable GST. Thank you for supporting generational Indian karigars!</p>
+              <p style="margin-bottom:6px"><strong>Payment Status:</strong> <span style="font-weight:700;color:${order.payment_status === 'paid' ? '#166534' : isCod ? '#b45309' : '#1c1917'}">${paymentStatus}</span></p>
+              ${
+                isCod
+                  ? `<p style="margin-bottom:6px;color:#991b1b;font-weight:700"><strong>Amount to Collect on Delivery:</strong> ₹${codCollectable.toLocaleString('en-IN')}</p>`
+                  : `<p style="margin-bottom:6px;color:#166534;font-weight:700"><strong>Amount Paid Online:</strong> ₹${Number(order.total).toLocaleString('en-IN')}</p>`
+              }
+              <p style="margin-bottom:6px"><strong>Delivery Partner:</strong> Shiprocket Logistics Partner</p>
+              <p style="color:#78716c;font-size:11px;margin-top:8px">All prices are inclusive of applicable GST (HSN 6304). Thank you for supporting generational Indian karigars!</p>
             </div>
           </td>
           <td style="vertical-align:top;width:45%">
@@ -194,17 +204,26 @@ export function generateInvoiceHTML(order) {
                 Number(order.discount) > 0
                   ? `
               <tr>
-                <td style="padding:7px 12px;text-align:right;color:#16a34a">Festive Discount${order.coupon_code ? ` (${order.coupon_code})` : ''}:</td>
+                <td style="padding:7px 12px;text-align:right;color:#16a34a">Discount${order.coupon_code ? ` (${order.coupon_code})` : ''}:</td>
                 <td style="padding:7px 12px;text-align:right;font-weight:700;color:#16a34a">-₹${Number(order.discount).toLocaleString('en-IN')}</td>
               </tr>`
                   : ''
               }
               <tr>
-                <td style="padding:7px 12px;text-align:right;color:#57534e">Express Shipping:</td>
+                <td style="padding:7px 12px;text-align:right;color:#57534e">Customer Delivery Charge:</td>
                 <td style="padding:7px 12px;text-align:right;font-weight:600;color:#1c1917">${Number(order.shipping_cost) > 0 ? '₹' + Number(order.shipping_cost).toLocaleString('en-IN') : '<span style="color:#16a34a;font-weight:700">FREE</span>'}</td>
               </tr>
+              ${
+                Number(order.platform_fee) > 0
+                  ? `
+              <tr>
+                <td style="padding:7px 12px;text-align:right;color:#57534e">Platform / Handling Fee:</td>
+                <td style="padding:7px 12px;text-align:right;font-weight:600;color:#1c1917">₹${Number(order.platform_fee).toLocaleString('en-IN')}</td>
+              </tr>`
+                  : ''
+              }
               <tr style="border-top:2px solid #7f1d1d">
-                <td style="padding:12px;text-align:right;font-weight:900;font-size:16px;color:#1c1917">Grand Total:</td>
+                <td style="padding:12px;text-align:right;font-weight:900;font-size:16px;color:#1c1917">Total Invoice Amount:</td>
                 <td style="padding:12px;text-align:right;font-weight:900;font-size:18px;color:#7f1d1d">₹${Number(order.total).toLocaleString('en-IN')}</td>
               </tr>
             </table>

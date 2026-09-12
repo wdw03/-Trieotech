@@ -1,7 +1,7 @@
 export const dynamic = 'force-dynamic';
 import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '../../../../../lib/supabase/admin';
-import { createShiprocketOrder, createOrderAndAssignAWB } from '../../../../../lib/shiprocket';
+import { createOrderAndAssignAWB } from '../../../../../lib/shiprocket';
 
 /**
  * POST: Create a Shiprocket shipment for an existing order
@@ -41,24 +41,28 @@ export async function POST(request) {
         success: true,
         alreadyExists: true,
         shipment: existingShipment,
+        customLabelUrl: `/api/admin/shipments/label/custom?orderId=${encodeURIComponent(order.order_number)}`,
         message: 'Shipment already exists for this order',
       });
     }
 
-    // 3. Create Shiprocket order + attempt AWB assignment
+    const isCod = order.payment_method === 'cod';
+    const codCollectable = isCod ? Number(order.total || 0) : 0;
+
+    // 3. Create Shiprocket order + attempt live AWB assignment
     const shiprocketResult = await createOrderAndAssignAWB({
       orderNumber: order.order_number,
       orderDate: new Date(order.created_at || Date.now()).toISOString().split('T')[0],
       billingAddress: order.shipping_address,
       shippingAddress: order.shipping_address,
       items: order.order_items,
-      paymentMethod: order.payment_method === 'cod' ? 'cod' : 'prepaid',
+      paymentMethod: isCod ? 'cod' : 'prepaid',
       subtotal: order.subtotal,
       discount: order.discount,
       shippingCharges: order.shipping_cost,
     });
 
-    // 4. Save/update shipment record in DB
+    // 4. Save/update shipment record in DB with financial & routing fields
     const shipmentData = {
       order_id: order.id,
       shiprocket_order_id: String(shiprocketResult.order_id || ''),
@@ -66,13 +70,14 @@ export async function POST(request) {
       awb_number: shiprocketResult.awb_code || '',
       courier_name: shiprocketResult.courier_name || '',
       courier_id: shiprocketResult.courier_company_id || null,
+      routing_code: shiprocketResult.routing_code || '',
+      cod_collectable: codCollectable,
       status: 'pending',
       updated_at: new Date().toISOString(),
     };
 
     let savedShipment;
     if (existingShipment) {
-      // Update existing (failed/empty) record
       const { data: updated } = await supabaseAdmin
         .from('shipments')
         .update(shipmentData)
@@ -81,13 +86,24 @@ export async function POST(request) {
         .single();
       savedShipment = updated;
     } else {
-      // Insert new
       const { data: inserted } = await supabaseAdmin
         .from('shipments')
         .insert(shipmentData)
         .select()
         .single();
       savedShipment = inserted;
+    }
+
+    // 5. Audit event in shipment_events
+    if (savedShipment?.id) {
+      await supabaseAdmin.from('shipment_events').insert({
+        shipment_id: savedShipment.id,
+        status: 'pending',
+        status_code: 'ORDER_CREATED',
+        activity: `Shiprocket order created (${savedShipment.awb_number ? `AWB: ${savedShipment.awb_number}` : 'AWB assignment pending'})`,
+        location: 'Faridabad Hub',
+        raw_data: { shiprocketResult },
+      });
     }
 
     return NextResponse.json({
@@ -97,6 +113,7 @@ export async function POST(request) {
       shipmentId: shiprocketResult.shipment_id,
       awbNumber: shiprocketResult.awb_code || '',
       courierName: shiprocketResult.courier_name || '',
+      customLabelUrl: `/api/admin/shipments/label/custom?orderId=${encodeURIComponent(order.order_number)}`,
     });
   } catch (err) {
     console.error('Create shipment error:', err);

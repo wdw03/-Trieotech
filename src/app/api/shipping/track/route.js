@@ -48,16 +48,28 @@ export async function GET(request) {
       }
 
       try {
+        let tracking = null;
         if (shipment.awb_number) {
-          const tracking = await trackShipment(shipment.awb_number);
-          return NextResponse.json({ tracking, shipment });
+          tracking = await trackShipment(shipment.awb_number).catch(() => null);
+        }
+        if (!tracking && shipment.shiprocket_order_id) {
+          tracking = await trackByOrderId(shipment.shiprocket_order_id).catch(() => null);
         }
 
-        const tracking = await trackByOrderId(shipment.shiprocket_order_id);
-        return NextResponse.json({ tracking, shipment });
+        const { data: events } = await supabaseAdmin
+          .from('shipment_events')
+          .select('status, activity, location, event_time')
+          .eq('shipment_id', shipment.id)
+          .order('event_time', { ascending: false });
+
+        return NextResponse.json({
+          tracking: tracking || { status: shipment.status, message: 'Shipment in progress' },
+          shipment,
+          events: events || [],
+        });
       } catch (shipErr) {
         return NextResponse.json({
-          tracking: { status: 'processing', message: 'Shipment is being prepared by workshop' },
+          tracking: { status: shipment.status || 'processing', message: 'Shipment is being prepared by workshop' },
           shipment,
         });
       }

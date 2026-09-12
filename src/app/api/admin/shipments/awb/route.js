@@ -49,12 +49,13 @@ export async function POST(request) {
 
     // 2. Idempotency: if a real AWB already exists (not a placeholder), return it
     const existingAwb = shipment.awb_number || '';
-    if (existingAwb && !existingAwb.startsWith('SR-') && existingAwb.length > 5) {
+    if (existingAwb && !existingAwb.startsWith('SR-') && existingAwb.length > 5 && !courierId) {
       return NextResponse.json({
         success: true,
         alreadyAssigned: true,
         awbNumber: existingAwb,
         courierName: shipment.courier_name || '',
+        routingCode: shipment.routing_code || '',
         message: 'AWB already assigned',
       });
     }
@@ -64,38 +65,60 @@ export async function POST(request) {
 
     let awbCode = '';
     let courierName = shipment.courier_name || '';
+    let routingCode = shipment.routing_code || '';
+    let freightCost = shipment.courier_freight_cost || 0;
 
-    if (awbResult?.response?.data?.awb_code) {
-      awbCode = awbResult.response.data.awb_code;
-      courierName = awbResult.response.data.courier_name || courierName;
-    } else if (awbResult?.awb_code) {
-      awbCode = awbResult.awb_code;
-      courierName = awbResult.courier_name || courierName;
+    const resData = awbResult?.response?.data || awbResult;
+
+    if (resData?.awb_code) {
+      awbCode = resData.awb_code;
+      courierName = resData.courier_name || courierName;
+      routingCode = resData.routing_code || routingCode;
+      if (resData.freight_charge) {
+        freightCost = Number(resData.freight_charge);
+      }
     }
 
     if (!awbCode) {
       return NextResponse.json(
-        { error: 'Shiprocket could not assign AWB. Courier may not be available.' },
+        { error: 'Shiprocket could not assign AWB. Courier may not be available or account balance insufficient.', raw: awbResult },
         { status: 502 }
       );
     }
 
     // 4. Update shipment in DB
+    const updatePayload = {
+      awb_number: awbCode,
+      courier_name: courierName,
+      courier_id: resData?.courier_company_id || shipment.courier_id || null,
+      routing_code: routingCode,
+      updated_at: new Date().toISOString(),
+    };
+    if (freightCost > 0) {
+      updatePayload.courier_freight_cost = freightCost;
+    }
+
     await supabaseAdmin
       .from('shipments')
-      .update({
-        awb_number: awbCode,
-        courier_name: courierName,
-        courier_id: awbResult?.response?.data?.courier_company_id || shipment.courier_id || null,
-        status: 'pending',
-        updated_at: new Date().toISOString(),
-      })
+      .update(updatePayload)
       .eq('id', shipment.id);
+
+    // 5. Audit event in shipment_events
+    await supabaseAdmin.from('shipment_events').insert({
+      shipment_id: shipment.id,
+      status: shipment.status || 'pending',
+      status_code: 'AWB_ASSIGNED',
+      activity: `AWB ${awbCode} assigned via ${courierName}`,
+      location: 'Faridabad Hub',
+      raw_data: { awbCode, courierName, routingCode, freightCost, awbResult },
+    });
 
     return NextResponse.json({
       success: true,
       awbNumber: awbCode,
       courierName,
+      routingCode,
+      freightCost,
     });
   } catch (err) {
     console.error('Assign AWB error:', err);

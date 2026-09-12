@@ -2,7 +2,7 @@ export const dynamic = 'force-dynamic';
 import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '../../../../../lib/supabase/admin';
 import { sendShippingUpdate } from '../../../../../lib/resend';
-import { createOrderAndAssignAWB, requestPickup as shiprocketRequestPickup } from '../../../../../lib/shiprocket';
+import { createOrderAndAssignAWB, requestPickup as shiprocketRequestPickup, cancelShipment } from '../../../../../lib/shiprocket';
 
 // Map dashboard status to DB status
 const DB_STATUS_MAP = {
@@ -15,6 +15,7 @@ const DB_STATUS_MAP = {
   'Delivered': 'delivered',
   'Cancelled': 'cancelled',
   'Return Requested': 'return_requested',
+  'Return Initiated': 'return_initiated',
   'Returned': 'returned',
   'Refunded': 'refunded',
 };
@@ -27,42 +28,121 @@ const NOTIFY_STATUS_MAP = {
   shipped: '🚚 Your Order Has Been Shipped!',
   out_for_delivery: '🏍️ Out for Delivery — Arriving Today!',
   delivered: '🎉 Order Delivered Successfully!',
+  cancelled: '❌ Order Cancelled',
 };
 
-// PATCH: Update order status or details
+/**
+ * GET: Retrieve detailed view of a single order (including items, shipment, audit events, financials)
+ */
+export async function GET(request, { params }) {
+  try {
+    const { id } = await params;
+
+    let findQuery = supabaseAdmin
+      .from('orders')
+      .select('*, order_items(*), payments(*), shipments(*)')
+      .or(`id.eq.${id},order_number.eq.${id}`);
+
+    const { data: matches, error } = await findQuery;
+    let order = matches?.[0];
+
+    if (!order) {
+      const { data: fallback } = await supabaseAdmin
+        .from('orders')
+        .select('*, order_items(*), payments(*), shipments(*)')
+        .ilike('order_number', `%${id}%`)
+        .limit(1);
+      order = fallback?.[0];
+    }
+
+    if (!order) {
+      return NextResponse.json({ error: 'Order not found' }, { status: 404 });
+    }
+
+    const shipment = Array.isArray(order.shipments) ? (order.shipments[0] || null) : (order.shipments || null);
+
+    // Fetch tracking / audit events if shipment exists
+    let auditEvents = [];
+    if (shipment?.id) {
+      const { data: events } = await supabaseAdmin
+        .from('shipment_events')
+        .select('*')
+        .eq('shipment_id', shipment.id)
+        .order('event_time', { ascending: false });
+      auditEvents = events || [];
+    }
+
+    const isCod = order.payment_method === 'cod';
+    const codCollectable = isCod ? Number(shipment?.cod_collectable || order.total || 0) : 0;
+
+    const financials = {
+      itemSubtotal: Number(order.subtotal || 0),
+      discount: Number(order.discount || 0),
+      customerShippingCharge: Number(order.shipping_cost || 0),
+      platformFee: Number(order.platform_fee || 0),
+      tax: Number(order.tax || 0),
+      grandTotal: Number(order.total || 0),
+      paymentMethod: order.payment_method,
+      paymentStatus: order.payment_status || (isCod ? 'cod_pending' : 'paid'),
+      codCollectable,
+      courierFreightCost: Number(shipment?.courier_freight_cost || 0),
+      rtoCost: Number(shipment?.rto_cost || 0),
+      refundAmount: Number(order.refund_amount || 0),
+    };
+
+    return NextResponse.json({
+      success: true,
+      order,
+      shipment: shipment ? {
+        ...shipment,
+        customLabelUrl: `/api/admin/shipments/label/custom?orderId=${encodeURIComponent(order.order_number)}`,
+        invoiceUrl: `/api/admin/orders/${order.id}/invoice`,
+        events: auditEvents,
+      } : null,
+      financials,
+    });
+  } catch (err) {
+    console.error('Get single order error:', err);
+    return NextResponse.json({ error: err.message }, { status: 500 });
+  }
+}
+
+/**
+ * PATCH: Update order status or details and manage shipment lifecycle
+ */
 export async function PATCH(request, { params }) {
   try {
     const { id } = await params;
     const body = await request.json();
-    const { status, trackingNumber, courierName, paymentStatus } = body;
+    const { status, trackingNumber, courierName, paymentStatus, cancelReason } = body;
 
-    // Convert dashboard status to db status if needed
     const mappedStatus = DB_STATUS_MAP[status] || (status ? status.toLowerCase().replace(/\s+/g, '_') : undefined);
 
+    const nowIso = new Date().toISOString();
     const updates = {
-      updated_at: new Date().toISOString(),
+      updated_at: nowIso,
     };
     if (mappedStatus) {
       updates.status = mappedStatus;
       if (mappedStatus === 'delivered') {
-        updates.delivered_at = new Date().toISOString();
+        updates.delivered_at = nowIso;
+        updates.payment_status = 'paid'; // COD collected
       }
     }
 
     // Find order first by id or order_number
     let findQuery = supabaseAdmin
       .from('orders')
-      .select('id, order_number, customer_email, shipping_address, user_id')
+      .select('id, order_number, customer_email, shipping_address, user_id, payment_method, total')
       .or(`id.eq.${id},order_number.eq.${id}`);
 
     const { data: orderMatches } = await findQuery;
     let targetOrder = orderMatches?.[0];
 
     if (!targetOrder) {
-      // Try single search by order_number ilike
       const { data: fallbackMatches } = await supabaseAdmin
         .from('orders')
-        .select('id, order_number, customer_email, shipping_address, user_id')
+        .select('id, order_number, customer_email, shipping_address, user_id, payment_method, total')
         .ilike('order_number', `%${id}%`)
         .limit(1);
 
@@ -86,32 +166,37 @@ export async function PATCH(request, { params }) {
     if (paymentStatus) {
       await supabaseAdmin
         .from('payments')
-        .update({ status: paymentStatus.toLowerCase(), updated_at: new Date().toISOString() })
+        .update({ status: paymentStatus.toLowerCase(), updated_at: nowIso })
         .eq('order_id', orderDbId);
+      await supabaseAdmin
+        .from('orders')
+        .update({ payment_status: paymentStatus.toLowerCase(), updated_at: nowIso })
+        .eq('id', orderDbId);
     }
 
-    // If tracking number provided, update or create shipment
+    // If manual tracking number provided, update shipment
     if (trackingNumber) {
       const { data: existingShipment } = await supabaseAdmin
         .from('shipments')
         .select('id')
         .eq('order_id', orderDbId)
-        .single();
+        .maybeSingle();
 
       if (existingShipment) {
         await supabaseAdmin
           .from('shipments')
           .update({
             awb_number: trackingNumber,
-            courier_name: courierName || 'BlueDart Express',
+            courier_name: courierName || 'Shiprocket Express',
             status: mappedStatus === 'shipped' ? 'in_transit' : (mappedStatus === 'delivered' ? 'delivered' : 'in_transit'),
+            updated_at: nowIso,
           })
           .eq('id', existingShipment.id);
       } else {
         await supabaseAdmin.from('shipments').insert({
           order_id: orderDbId,
           awb_number: trackingNumber,
-          courier_name: courierName || 'BlueDart Express',
+          courier_name: courierName || 'Shiprocket Express',
           status: 'in_transit',
         });
       }
@@ -130,15 +215,17 @@ export async function PATCH(request, { params }) {
           .eq('order_id', orderDbId)
           .maybeSingle();
 
+        const isCod = updatedOrder.payment_method === 'cod';
+        const codCollectable = isCod ? Number(updatedOrder.total || 0) : 0;
+
         if (!existingShipment?.shiprocket_order_id) {
-          // No shipment yet — create one
           const shiprocketResult = await createOrderAndAssignAWB({
             orderNumber: updatedOrder.order_number,
             orderDate: new Date(updatedOrder.created_at || Date.now()).toISOString().split('T')[0],
             billingAddress: updatedOrder.shipping_address,
             shippingAddress: updatedOrder.shipping_address,
             items: updatedOrder.order_items || [],
-            paymentMethod: updatedOrder.payment_method === 'cod' ? 'cod' : 'prepaid',
+            paymentMethod: isCod ? 'cod' : 'prepaid',
             subtotal: updatedOrder.subtotal,
             discount: updatedOrder.discount,
             shippingCharges: updatedOrder.shipping_cost,
@@ -151,25 +238,32 @@ export async function PATCH(request, { params }) {
             awb_number: shiprocketResult.awb_code || '',
             courier_name: shiprocketResult.courier_name || '',
             courier_id: shiprocketResult.courier_company_id || null,
+            routing_code: shiprocketResult.routing_code || '',
+            cod_collectable: codCollectable,
             status: 'pending',
-            updated_at: new Date().toISOString(),
+            updated_at: nowIso,
           };
 
+          let savedId = existingShipment?.id;
           if (existingShipment) {
             await supabaseAdmin.from('shipments').update(shipmentData).eq('id', existingShipment.id);
           } else {
-            await supabaseAdmin.from('shipments').insert(shipmentData);
+            const { data: ins } = await supabaseAdmin.from('shipments').insert(shipmentData).select('id').single();
+            savedId = ins?.id;
           }
-        } else {
-          // Shipment exists — keep it pending until pickup scheduled
-          await supabaseAdmin
-            .from('shipments')
-            .update({ status: 'pending', updated_at: new Date().toISOString() })
-            .eq('id', existingShipment.id);
+
+          if (savedId) {
+            await supabaseAdmin.from('shipment_events').insert({
+              shipment_id: savedId,
+              status: 'pending',
+              status_code: 'PACKED',
+              activity: `Order packed & shipment initialized (AWB: ${shiprocketResult.awb_code || 'Pending'})`,
+              location: 'Packing Station',
+            });
+          }
         }
       } catch (packErr) {
         console.warn('Auto Shiprocket on Packed notice:', packErr.message);
-        // Non-blocking — order status still updates
       }
     }
 
@@ -189,20 +283,59 @@ export async function PATCH(request, { params }) {
           await supabaseAdmin
             .from('shipments')
             .update({
-              status: 'shipped',
+              status: 'pickup_scheduled',
               pickup_status: 'scheduled',
               pickup_token: String(pickupToken || ''),
-              updated_at: new Date().toISOString(),
+              updated_at: nowIso,
             })
             .eq('id', existingShipment.id);
-        } else if (existingShipment) {
-          await supabaseAdmin
-            .from('shipments')
-            .update({ status: 'shipped', updated_at: new Date().toISOString() })
-            .eq('id', existingShipment.id);
+
+          await supabaseAdmin.from('shipment_events').insert({
+            shipment_id: existingShipment.id,
+            status: 'pickup_scheduled',
+            status_code: 'PICKUP_SCHEDULED',
+            activity: `Courier pickup scheduled (Token: ${pickupToken || 'Active'})`,
+            location: 'Faridabad Hub',
+          });
         }
       } catch (shipErr) {
         console.warn('Auto pickup on Shipped notice:', shipErr.message);
+      }
+    }
+
+    // When admin cancels order → cancel shipment in Shiprocket & DB
+    if (mappedStatus === 'cancelled') {
+      try {
+        const { data: existingShipment } = await supabaseAdmin
+          .from('shipments')
+          .select('*')
+          .eq('order_id', orderDbId)
+          .maybeSingle();
+
+        if (existingShipment) {
+          if (existingShipment.awb_number && !existingShipment.awb_number.startsWith('SR-')) {
+            await cancelShipment(existingShipment.awb_number).catch(() => {});
+          }
+
+          await supabaseAdmin
+            .from('shipments')
+            .update({
+              status: 'cancelled',
+              cancel_reason: cancelReason || 'Order cancelled by admin',
+              updated_at: nowIso,
+            })
+            .eq('id', existingShipment.id);
+
+          await supabaseAdmin.from('shipment_events').insert({
+            shipment_id: existingShipment.id,
+            status: 'cancelled',
+            status_code: 'CANCELLED',
+            activity: `Shipment cancelled: ${cancelReason || 'Order cancelled by admin'}`,
+            location: 'Admin Panel',
+          });
+        }
+      } catch (cancelErr) {
+        console.warn('Cancel shipment on order cancel notice:', cancelErr.message);
       }
     }
 
@@ -216,7 +349,6 @@ export async function PATCH(request, { params }) {
         const statusLabel = NOTIFY_STATUS_MAP[mappedStatus];
         const trackingUrl = `${process.env.NEXT_PUBLIC_SITE_URL || 'https://trioenterprises.in'}/track-order?id=${encodeURIComponent(orderNumber)}`;
 
-        // Get AWB from shipment (could be newly set or existing)
         let awb = trackingNumber || '';
         let courier = courierName || '';
         if (!awb) {
@@ -224,7 +356,7 @@ export async function PATCH(request, { params }) {
             .from('shipments')
             .select('awb_number, courier_name')
             .eq('order_id', orderDbId)
-            .single();
+            .maybeSingle();
           awb = ship?.awb_number || '';
           courier = ship?.courier_name || '';
         }
@@ -235,12 +367,11 @@ export async function PATCH(request, { params }) {
             orderNumber,
             status: statusLabel,
             trackingNumber: awb,
-            courierName: courier || 'BlueDart Express',
+            courierName: courier || 'Shiprocket Express',
             trackingUrl,
           });
         } catch (emailErr) {
           console.error('Status update email failed (non-blocking):', emailErr);
-          // Non-blocking — order update still succeeds
         }
       }
     }

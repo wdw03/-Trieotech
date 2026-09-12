@@ -131,13 +131,13 @@ export async function createShiprocketOrder({
     shipping_email: shippingAddress.email || '',
     shipping_phone: shippingAddress.phone?.replace(/[^0-9]/g, '').slice(-10) || '',
     order_items: items.map((item) => ({
-      name: item.name?.substring(0, 100),
-      sku: `TRIO-${item.product_id || item.productId}`,
-      units: item.quantity,
-      selling_price: item.price,
-      discount: 0,
-      tax: 0,
-      hsn: '',
+      name: (item.name || 'Handicraft Item').trim(),
+      sku: item.sku || `TRIO-${item.product_id || item.productId || 'GEN'}`,
+      units: Number(item.quantity) || 1,
+      selling_price: Number(item.price) || 0,
+      discount: Number(item.discount_amount || item.discount || 0),
+      tax: Number(item.tax_rate || 0),
+      hsn: String(item.hsn || '6304'),
     })),
     payment_method: paymentMethod === 'cod' ? 'COD' : 'Prepaid',
     sub_total: subtotal,
@@ -384,4 +384,175 @@ export async function generateLabel(shipmentIds) {
  */
 export async function getShiprocketOrderDetails(shiprocketOrderId) {
   return shiprocketFetch(`/orders/show/${shiprocketOrderId}`);
+}
+
+/**
+ * Cancel shipments by AWB numbers
+ */
+export async function cancelShipment(awbNumbers) {
+  const awbs = Array.isArray(awbNumbers) ? awbNumbers : [awbNumbers];
+  return shiprocketFetch('/orders/cancel/shipment/awbs', {
+    method: 'POST',
+    body: JSON.stringify({ awbs }),
+  });
+}
+
+/**
+ * Get available couriers for a specific Shiprocket order
+ */
+export async function getAvailableCouriers(orderId) {
+  return shiprocketFetch(`/courier/courierListWithCounts?order_id=${orderId}`);
+}
+
+/**
+ * Assign a specific courier company to a shipment
+ */
+export async function assignCourier(shipmentId, courierId) {
+  return shiprocketFetch('/courier/assign/awb', {
+    method: 'POST',
+    body: JSON.stringify({
+      shipment_id: shipmentId,
+      courier_id: courierId,
+    }),
+  });
+}
+
+/**
+ * Generate manifest PDF for one or multiple shipments
+ */
+export async function generateManifest(shipmentIds) {
+  const ids = Array.isArray(shipmentIds) ? shipmentIds : [shipmentIds];
+  return shiprocketFetch('/manifests/generate', {
+    method: 'POST',
+    body: JSON.stringify({
+      shipment_id: ids,
+    }),
+  });
+}
+
+/**
+ * Print manifest for orders
+ */
+export async function printManifest(orderIds) {
+  const ids = Array.isArray(orderIds) ? orderIds : [orderIds];
+  return shiprocketFetch('/manifests/print', {
+    method: 'POST',
+    body: JSON.stringify({
+      order_ids: ids,
+    }),
+  });
+}
+
+/**
+ * Generate official Shiprocket invoice PDF for orders
+ */
+export async function generateInvoice(orderIds) {
+  const ids = Array.isArray(orderIds) ? orderIds : [orderIds];
+  return shiprocketFetch('/orders/print/invoice', {
+    method: 'POST',
+    body: JSON.stringify({
+      ids: ids,
+    }),
+  });
+}
+
+/**
+ * Get NDR details by AWB or retrieve open NDRs
+ */
+export async function getShiprocketNDR(awb) {
+  if (awb) {
+    return shiprocketFetch(`/ndr?awb=${encodeURIComponent(awb)}`);
+  }
+  return shiprocketFetch('/ndr/all');
+}
+
+/**
+ * Submit NDR action (reattempt, RTO, or cancellation)
+ */
+export async function ndrReattempt({ awb, action, comments = '', deferredDate = '' }) {
+  const body = {
+    awb,
+    action: action || 'reattempt', // 'reattempt' | 'rto' | 'cancel'
+    comments: comments || 'Customer requested reattempt via admin',
+  };
+  if (deferredDate) {
+    body.deferred_date = deferredDate;
+  }
+  return shiprocketFetch('/ndr', {
+    method: 'POST',
+    body: JSON.stringify(body),
+  });
+}
+
+/**
+ * Get detailed live shipment information by shipment ID
+ */
+export async function getShipmentDetails(shipmentId) {
+  return shiprocketFetch(`/shipments/${shipmentId}`);
+}
+
+/**
+ * Create a return order in Shiprocket
+ */
+export async function createReturnOrder({
+  orderNumber,
+  orderDate,
+  pickupCustomerName,
+  pickupAddress,
+  pickupCity,
+  pickupState,
+  pickupPincode,
+  pickupPhone,
+  items,
+  subtotal,
+  length = 20,
+  breadth = 15,
+  height = 10,
+  weight = 0.5,
+}) {
+  let deliveryLocation = 'Home';
+  try {
+    deliveryLocation = await getPrimaryPickupLocation();
+  } catch (_) {}
+
+  const returnData = {
+    order_id: `RET-${orderNumber}`,
+    order_date: orderDate || new Date().toISOString().split('T')[0],
+    channel_id: '',
+    pickup_customer_name: pickupCustomerName?.split(' ')[0] || 'Customer',
+    pickup_last_name: pickupCustomerName?.split(' ').slice(1).join(' ') || '',
+    pickup_address: pickupAddress,
+    pickup_city: pickupCity,
+    pickup_state: pickupState,
+    pickup_pincode: pickupPincode,
+    pickup_phone: pickupPhone?.replace(/[^0-9]/g, '').slice(-10) || '',
+    pickup_is_primary: 0,
+    shipping_customer_name: 'Trio Enterprises',
+    shipping_last_name: '',
+    shipping_address: 'House 731, Jawahar Colony',
+    shipping_city: 'Faridabad',
+    shipping_pincode: '121005',
+    shipping_state: 'Haryana',
+    shipping_country: 'India',
+    shipping_phone: '9999999999',
+    order_items: items.map((item) => ({
+      name: (item.name || 'Handicraft Item').trim(),
+      sku: item.sku || `TRIO-${item.product_id || item.productId || 'GEN'}`,
+      units: Number(item.quantity) || 1,
+      selling_price: Number(item.price) || 0,
+      discount: 0,
+      tax: 0,
+      hsn: String(item.hsn || '6304'),
+    })),
+    sub_total: subtotal,
+    length,
+    breadth,
+    height,
+    weight,
+  };
+
+  return shiprocketFetch('/orders/create/return', {
+    method: 'POST',
+    body: JSON.stringify(returnData),
+  });
 }
