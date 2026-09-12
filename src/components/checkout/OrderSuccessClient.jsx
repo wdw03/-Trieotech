@@ -37,6 +37,13 @@ export default function OrderSuccessClient({ initialOrderId }) {
   const [cancelReason, setCancelReason] = useState('');
   const [isCancelling, setIsCancelling] = useState(false);
   const [isCancelled, setIsCancelled] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  const hasRefreshedRef = React.useRef(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // Fetch full order record from backend API
   useEffect(() => {
@@ -49,7 +56,7 @@ export default function OrderSuccessClient({ initialOrderId }) {
       }
 
       try {
-        const res = await fetch(`/api/orders/${orderId}`);
+        const res = await fetch(`/api/orders/${encodeURIComponent(orderId)}`);
         const data = await res.json();
         if (isMounted) {
           if (res.status === 402 || data.isPendingPayment) {
@@ -77,6 +84,12 @@ export default function OrderSuccessClient({ initialOrderId }) {
                 colors: ['#C5A028', '#8B1A1A', '#065F46', '#F59E0B'],
               });
             } catch (e) {}
+
+            // Background sync user order list only once
+            if (!hasRefreshedRef.current && refreshOrders) {
+              hasRefreshedRef.current = true;
+              refreshOrders();
+            }
           }
         }
       } catch (err) {
@@ -87,12 +100,12 @@ export default function OrderSuccessClient({ initialOrderId }) {
     }
 
     fetchOrderDetails();
-    if (refreshOrders) refreshOrders();
 
     return () => {
       isMounted = false;
     };
-  }, [orderId, refreshOrders]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [orderId]);
 
   // Fallback to order from auth context if direct fetch was unavailable
   const contextOrder = userOrders?.find((o) => o.id === orderId || o.dbId === orderId);
@@ -101,15 +114,15 @@ export default function OrderSuccessClient({ initialOrderId }) {
   const displayDbId = dbOrder?.id || contextOrder?.dbId || orderId;
 
   const rawDate = dbOrder?.created_at || contextOrder?.date;
-  const formattedDate = rawDate
+  const formattedDate = mounted && rawDate
     ? new Date(rawDate).toLocaleDateString('en-IN', {
       day: 'numeric',
       month: 'long',
       year: 'numeric',
     })
-    : 'Today';
+    : (rawDate ? String(rawDate).slice(0, 10) : 'Today');
 
-  const formattedTime = rawDate
+  const formattedTime = mounted && rawDate
     ? new Date(rawDate).toLocaleTimeString('en-IN', {
       hour: '2-digit',
       minute: '2-digit',
@@ -174,6 +187,24 @@ export default function OrderSuccessClient({ initialOrderId }) {
     }
   };
 
+  if (isLoading) {
+    return (
+      <div className="max-w-xl mx-auto px-4 py-24 text-center space-y-4 animate-fade-in">
+        <div className="w-16 h-16 rounded-full bg-gold-500/10 border border-gold-500/30 flex items-center justify-center mx-auto text-gold-600">
+          <Loader2 className="w-8 h-8 animate-spin text-maroon-700 dark:text-gold-400" />
+        </div>
+        <div className="space-y-1">
+          <h2 className="font-serif font-bold text-lg text-stone-900 dark:text-ivory-100">
+            Confirming Your Order...
+          </h2>
+          <p className="text-xs text-stone-500">
+            Fetching verified order details and preparing your invoice receipt.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   if (!isLoading && (isPendingPayment || ['pending_payment', 'payment_failed', 'draft'].includes((dbOrder?.status || '').toLowerCase()))) {
     return (
       <div className="max-w-xl mx-auto px-4 py-16 text-center space-y-6 animate-fade-in">
@@ -194,6 +225,32 @@ export default function OrderSuccessClient({ initialOrderId }) {
         <div className="flex items-center justify-center gap-3 pt-4">
           <Link href="/cart" className="btn-primary py-2.5 px-6 text-xs font-bold uppercase tracking-wider">
             Return to Cart
+          </Link>
+          <Link href="/shop" className="btn-outline-maroon py-2.5 px-6 text-xs font-bold">
+            Continue Shopping
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  if (!isLoading && !dbOrder && !contextOrder) {
+    return (
+      <div className="max-w-xl mx-auto px-4 py-16 text-center space-y-6 animate-fade-in">
+        <div className="w-20 h-20 rounded-full bg-stone-100 dark:bg-stone-900 border border-stone-300 dark:border-stone-700 flex items-center justify-center mx-auto text-stone-500">
+          <Package className="w-10 h-10" />
+        </div>
+        <div className="space-y-2">
+          <h1 className="font-serif font-black text-2xl text-stone-900 dark:text-ivory-100">
+            Order Not Found
+          </h1>
+          <p className="text-xs text-stone-500">
+            We could not locate order #{displayOrderNumber}. Please check your order history in your account.
+          </p>
+        </div>
+        <div className="flex justify-center gap-3">
+          <Link href="/profile/orders" className="btn-primary py-2.5 px-6 text-xs font-bold uppercase">
+            View My Orders
           </Link>
           <Link href="/shop" className="btn-outline-maroon py-2.5 px-6 text-xs font-bold">
             Continue Shopping
@@ -232,14 +289,14 @@ export default function OrderSuccessClient({ initialOrderId }) {
           </div>
           <div>
             <span className="text-stone-500 block text-[10px] uppercase font-bold">Order Date &amp; Time</span>
-            <strong className="text-xs text-stone-800 dark:text-stone-200 block truncate">
+            <strong suppressHydrationWarning className="text-xs text-stone-800 dark:text-stone-200 block truncate">
               {formattedDate} {formattedTime ? `• ${formattedTime}` : ''}
             </strong>
           </div>
           <div className="col-span-2 sm:col-span-1">
             <span className="text-stone-500 block text-[10px] uppercase font-bold">Courier Partner</span>
             <strong className="font-mono text-xs text-stone-800 dark:text-stone-200 block truncate">
-              BlueDart Air Express
+              {courierName || 'Shiprocket Express'}
             </strong>
           </div>
         </div>
@@ -381,7 +438,7 @@ export default function OrderSuccessClient({ initialOrderId }) {
                 })
                 : '3 - 5 Business Days'}
             </p>
-            <p className="text-stone-500">Carrier: BlueDart Air Express</p>
+            <p className="text-stone-500">Carrier: {courierName || 'Shiprocket Express'}</p>
             <p className="text-[11px] text-stone-400">Packaging: Eco-friendly tamper-proof bag</p>
           </div>
 

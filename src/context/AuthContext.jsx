@@ -175,9 +175,17 @@ export const AuthProvider = ({ children }) => {
     return () => subscription.unsubscribe();
   }, [supabase, fetchProfile, fetchOrders]);
 
-  // ── Realtime subscription for customer's orders & shipments ──
+  // ── Realtime subscription for customer's orders ──
   useEffect(() => {
     if (!user?.id) return;
+
+    let debounceTimer = null;
+    const triggerRefresh = () => {
+      if (debounceTimer) clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(() => {
+        fetchOrders(user.id);
+      }, 500);
+    };
 
     const channel = supabase
       .channel(`customer-orders-${user.id}`)
@@ -191,24 +199,13 @@ export const AuthProvider = ({ children }) => {
         },
         (payload) => {
           console.log('[Realtime] Customer order update event:', payload.eventType);
-          fetchOrders(user.id);
-        }
-      )
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'shipments',
-        },
-        () => {
-          console.log('[Realtime] Customer shipment update event');
-          fetchOrders(user.id);
+          triggerRefresh();
         }
       )
       .subscribe();
 
     return () => {
+      if (debounceTimer) clearTimeout(debounceTimer);
       supabase.removeChannel(channel);
     };
   }, [user?.id, supabase, fetchOrders]);
@@ -520,20 +517,20 @@ export const AuthProvider = ({ children }) => {
   };
 
   // ── Add Order (called after payment verification) ──
-  const addOrder = (order) => {
+  const addOrder = useCallback((order) => {
     if (!order) return;
     const s = (order.rawStatus || order.status || '').toLowerCase();
     if (['pending_payment', 'payment_failed', 'draft'].includes(s)) return;
     setUserOrders((prev) => [order, ...prev.filter((o) => o.id !== order.id && o.dbId !== order.dbId)]);
-  };
+  }, []);
 
   // ── Refresh Orders ──
-  const refreshOrders = async () => {
-    if (user) await fetchOrders(user.id);
-  };
+  const refreshOrders = useCallback(async () => {
+    if (user?.id) await fetchOrders(user.id);
+  }, [user?.id, fetchOrders]);
 
   // ── Cancel Order ──
-  const cancelOrder = async (orderId, reason) => {
+  const cancelOrder = useCallback(async (orderId, reason) => {
     try {
       const res = await fetch(`/api/orders/${orderId}/cancel`, {
         method: 'POST',
@@ -545,16 +542,16 @@ export const AuthProvider = ({ children }) => {
         return { success: false, error: data.error || 'Failed to cancel order' };
       }
       // Refresh orders to reflect updated status
-      if (user) await fetchOrders(user.id);
+      if (user?.id) await fetchOrders(user.id);
       return { success: true, ...data };
     } catch (err) {
       console.error('Cancel order error:', err);
       return { success: false, error: err.message || 'Failed to cancel order' };
     }
-  };
+  }, [user?.id, fetchOrders]);
 
   // ── Raise Return & Refund Support Ticket ──
-  const raiseReturnTicket = async (orderId, claimData) => {
+  const raiseReturnTicket = useCallback(async (orderId, claimData) => {
     try {
       const res = await fetch(`/api/orders/${orderId}/return`, {
         method: 'POST',
@@ -565,13 +562,13 @@ export const AuthProvider = ({ children }) => {
       if (!res.ok) {
         return { success: false, error: data.error || 'Failed to submit return ticket' };
       }
-      if (user) await fetchOrders(user.id);
+      if (user?.id) await fetchOrders(user.id);
       return { success: true, ...data };
     } catch (err) {
       console.error('Raise return ticket error:', err);
       return { success: false, error: err.message || 'Failed to submit return ticket' };
     }
-  };
+  }, [user?.id, fetchOrders]);
 
   // ── Computed user object for backward compatibility ──
   const compatUser = user

@@ -82,35 +82,42 @@ export async function GET(request, { params }) {
         currentActivity = auditEvents[0].activity || '';
       }
 
-      // 2. Fetch live carrier tracking if AWB exists
+      // 2. Fetch live carrier tracking if AWB exists and not checked recently (> 3 mins)
+      const isTerminal = ['delivered', 'cancelled', 'returned'].includes((order.status || '').toLowerCase());
+      const lastUpdatedMs = shipment.updated_at ? new Date(shipment.updated_at).getTime() : 0;
+      const threeMinutesAgo = Date.now() - 3 * 60 * 1000;
+      const shouldQueryCarrier = !isTerminal && (lastUpdatedMs < threeMinutesAgo || !shipment.updated_at);
+
       const awb = shipment.awb_number;
-      if (awb && !awb.startsWith('SR-')) {
-        try {
-          const liveRes = await trackShipment(awb);
-          const tracks = liveRes?.tracking_data?.shipment_track_activities || liveRes?.tracking_data?.shipment_track;
-          if (Array.isArray(tracks) && tracks.length > 0) {
-            liveScans = tracks;
-            currentLocation = tracks[0].location || tracks[0].city || currentLocation;
-            currentActivity = tracks[0].activity || tracks[0]['sr-status-label'] || currentActivity;
+      if (shouldQueryCarrier) {
+        if (awb && !awb.startsWith('SR-')) {
+          try {
+            const liveRes = await trackShipment(awb);
+            const tracks = liveRes?.tracking_data?.shipment_track_activities || liveRes?.tracking_data?.shipment_track;
+            if (Array.isArray(tracks) && tracks.length > 0) {
+              liveScans = tracks;
+              currentLocation = tracks[0].location || tracks[0].city || currentLocation;
+              currentActivity = tracks[0].activity || tracks[0]['sr-status-label'] || currentActivity;
+            }
+          } catch (shipErr) {
+            console.warn('Live tracking lookup notice:', shipErr.message);
           }
-        } catch (shipErr) {
-          console.warn('Live tracking lookup notice:', shipErr.message);
+        } else if (shipment.shiprocket_order_id) {
+          try {
+            const liveRes = await trackByOrderId(shipment.shiprocket_order_id);
+            const tracks = liveRes?.tracking_data?.shipment_track_activities || liveRes?.tracking_data?.shipment_track;
+            if (Array.isArray(tracks) && tracks.length > 0) {
+              liveScans = tracks;
+              currentLocation = tracks[0].location || tracks[0].city || currentLocation;
+              currentActivity = tracks[0].activity || tracks[0]['sr-status-label'] || currentActivity;
+            }
+          } catch (_) {}
         }
-      } else if (shipment.shiprocket_order_id) {
-        try {
-          const liveRes = await trackByOrderId(shipment.shiprocket_order_id);
-          const tracks = liveRes?.tracking_data?.shipment_track_activities || liveRes?.tracking_data?.shipment_track;
-          if (Array.isArray(tracks) && tracks.length > 0) {
-            liveScans = tracks;
-            currentLocation = tracks[0].location || tracks[0].city || currentLocation;
-            currentActivity = tracks[0].activity || tracks[0]['sr-status-label'] || currentActivity;
-          }
-        } catch (_) {}
       }
 
-      // Auto-sync status progression into DB
+      // Auto-sync status progression into DB (only when status actually changed and progressed)
       const rawSrStatus = String(currentActivity || liveScans?.[0]?.current_status || '').toLowerCase().trim();
-      if (rawSrStatus) {
+      if (shouldQueryCarrier && rawSrStatus) {
         let mappedStatus = null;
         if (rawSrStatus.includes('cancel')) mappedStatus = 'cancelled';
         else if (rawSrStatus.includes('deliver') && !rawSrStatus.includes('undeliver') && !rawSrStatus.includes('out')) mappedStatus = 'delivered';
@@ -118,7 +125,7 @@ export async function GET(request, { params }) {
         else if (rawSrStatus.includes('transit') || rawSrStatus.includes('shipped')) mappedStatus = 'in_transit';
         else if (rawSrStatus.includes('pick')) mappedStatus = 'picked_up';
 
-        if (mappedStatus) {
+        if (mappedStatus && mappedStatus !== (order.status || '').toLowerCase()) {
           const WEIGHTS = {
             pending_payment: 5, pending: 10, confirmed: 20, processing: 30, packed: 35,
             pickup_scheduled: 40, picked_up: 45, shipped: 50, in_transit: 55,
