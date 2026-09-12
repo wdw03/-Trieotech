@@ -87,7 +87,7 @@ export async function GET(request) {
       .order('created_at', { ascending: false })
       .limit(limit);
 
-    // Exclude abandoned checkouts and drafts
+    // Exclude abandoned checkouts and drafts strictly
     query = query
       .neq('status', 'pending_payment')
       .neq('status', 'payment_failed')
@@ -95,7 +95,11 @@ export async function GET(request) {
 
     if (status && status !== 'all' && status !== 'All') {
       const lower = status.toLowerCase().replace(/\s+/g, '_');
-      query = query.or(`status.ilike.%${status}%,status.ilike.%${lower}%`);
+      if (['new', 'pending'].includes(lower)) {
+        query = query.eq('status', 'pending');
+      } else {
+        query = query.eq('status', lower);
+      }
     }
 
     const { data: orders, error } = await query;
@@ -134,7 +138,13 @@ export async function GET(request) {
       }
     } catch (_) {}
 
-    const normalizedOrders = (orders || []).map((ord) => {
+    // Defensive filter: Ensure no incomplete/pending_payment checkout records reach admin panel
+    const validOrders = (orders || []).filter((ord) => {
+      const s = (ord.status || '').toLowerCase();
+      return !['pending_payment', 'payment_failed', 'draft'].includes(s);
+    });
+
+    const normalizedOrders = validOrders.map((ord) => {
       const addr = ord.shipping_address || {};
       const shipment = Array.isArray(ord.shipments) ? (ord.shipments[0] || {}) : (ord.shipments || {});
       const payment = Array.isArray(ord.payments) ? (ord.payments[0] || {}) : (ord.payments || {});

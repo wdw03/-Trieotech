@@ -39,6 +39,13 @@ export async function GET(request) {
       }
       const { data: ord } = await query.maybeSingle();
       if (ord) {
+        const orderStatus = (ord.status || '').toLowerCase();
+        if (['pending_payment', 'payment_failed', 'draft'].includes(orderStatus)) {
+          return NextResponse.json({
+            tracking: null,
+            error: 'Order payment is incomplete or pending. Tracking is only available for confirmed orders.',
+          }, { status: 400 });
+        }
         order = ord;
         shipment = Array.isArray(ord.shipments) ? ord.shipments[0] : ord.shipments;
         if (shipment?.awb_number) targetAwb = shipment.awb_number;

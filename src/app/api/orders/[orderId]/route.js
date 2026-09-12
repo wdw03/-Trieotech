@@ -43,6 +43,25 @@ export async function GET(request, { params }) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
     }
 
+    // If order is an incomplete / abandoned checkout (pending_payment or payment_failed), do not expose as a confirmed order
+    const currentStatus = (order.status || 'pending').toLowerCase();
+    if (['pending_payment', 'payment_failed', 'draft'].includes(currentStatus)) {
+      return NextResponse.json({
+        success: false,
+        error: 'Order payment is incomplete or pending. This order is not yet confirmed.',
+        isPendingPayment: true,
+        order: {
+          id: order.id,
+          order_number: order.order_number,
+          status: order.status,
+          total: order.total,
+          payment_method: order.payment_method,
+          payment_status: order.payment_status || 'pending',
+          created_at: order.created_at,
+        },
+      }, { status: 402 });
+    }
+
     const shipment = Array.isArray(order.shipments) ? order.shipments[0] : order.shipments;
     let liveScans = [];
     let auditEvents = [];
@@ -110,8 +129,7 @@ export async function GET(request, { params }) {
       .eq('order_id', order.id)
       .order('created_at', { ascending: false });
 
-    const currentStatus = (order.status || 'pending').toLowerCase();
-    const cancellable = ['pending_payment', 'pending', 'confirmed', 'processing'].includes(currentStatus);
+    const cancellable = ['pending', 'confirmed', 'processing'].includes(currentStatus);
 
     return NextResponse.json({
       success: true,

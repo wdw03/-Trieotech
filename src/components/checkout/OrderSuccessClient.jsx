@@ -32,6 +32,7 @@ export default function OrderSuccessClient({ initialOrderId }) {
 
   const [dbOrder, setDbOrder] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isPendingPayment, setIsPendingPayment] = useState(false);
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [cancelReason, setCancelReason] = useState('');
   const [isCancelling, setIsCancelling] = useState(false);
@@ -50,8 +51,33 @@ export default function OrderSuccessClient({ initialOrderId }) {
       try {
         const res = await fetch(`/api/orders/${orderId}`);
         const data = await res.json();
-        if (isMounted && res.ok && data.order) {
-          setDbOrder(data.order);
+        if (isMounted) {
+          if (res.status === 402 || data.isPendingPayment) {
+            setIsPendingPayment(true);
+            if (data.order) setDbOrder(data.order);
+            setIsLoading(false);
+            return;
+          }
+          if (res.ok && data.order) {
+            const s = (data.order.status || '').toLowerCase();
+            if (['pending_payment', 'payment_failed', 'draft'].includes(s)) {
+              setIsPendingPayment(true);
+              setDbOrder(data.order);
+              setIsLoading(false);
+              return;
+            }
+            setDbOrder(data.order);
+
+            // Trigger festive celebratory confetti only for confirmed placed orders
+            try {
+              confetti({
+                particleCount: 120,
+                spread: 80,
+                origin: { y: 0.6 },
+                colors: ['#C5A028', '#8B1A1A', '#065F46', '#F59E0B'],
+              });
+            } catch (e) {}
+          }
         }
       } catch (err) {
         console.warn('Failed to fetch direct order details:', err);
@@ -62,16 +88,6 @@ export default function OrderSuccessClient({ initialOrderId }) {
 
     fetchOrderDetails();
     if (refreshOrders) refreshOrders();
-
-    // Trigger festive celebratory confetti
-    try {
-      confetti({
-        particleCount: 120,
-        spread: 80,
-        origin: { y: 0.6 },
-        colors: ['#C5A028', '#8B1A1A', '#065F46', '#F59E0B'],
-      });
-    } catch (e) { }
 
     return () => {
       isMounted = false;
@@ -157,6 +173,35 @@ export default function OrderSuccessClient({ initialOrderId }) {
       setIsCancelling(false);
     }
   };
+
+  if (!isLoading && (isPendingPayment || ['pending_payment', 'payment_failed', 'draft'].includes((dbOrder?.status || '').toLowerCase()))) {
+    return (
+      <div className="max-w-xl mx-auto px-4 py-16 text-center space-y-6 animate-fade-in">
+        <div className="w-20 h-20 rounded-full bg-amber-100 dark:bg-amber-950/60 border-2 border-amber-500/50 flex items-center justify-center mx-auto text-amber-600 dark:text-amber-400 shadow-xl">
+          <AlertTriangle className="w-10 h-10" />
+        </div>
+        <div className="space-y-2">
+          <h1 className="font-serif font-black text-2xl sm:text-3xl text-stone-900 dark:text-ivory-100">
+            Payment Incomplete
+          </h1>
+          <p className="text-xs sm:text-sm text-stone-600 dark:text-stone-300 leading-relaxed">
+            Order #{displayOrderNumber} has not been confirmed because the online payment was not completed or was cancelled.
+          </p>
+          <p className="text-[11px] text-stone-500">
+            If money was deducted from your account, please wait a few moments — our gateway reconciliation will automatically confirm your order once the bank responds.
+          </p>
+        </div>
+        <div className="flex items-center justify-center gap-3 pt-4">
+          <Link href="/cart" className="btn-primary py-2.5 px-6 text-xs font-bold uppercase tracking-wider">
+            Return to Cart
+          </Link>
+          <Link href="/shop" className="btn-outline-maroon py-2.5 px-6 text-xs font-bold">
+            Continue Shopping
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 py-10 space-y-8 animate-fade-in">

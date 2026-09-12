@@ -54,6 +54,9 @@ export const AuthProvider = ({ children }) => {
           shipments (*)
         `)
         .eq('user_id', userId)
+        .neq('status', 'pending_payment')
+        .neq('status', 'payment_failed')
+        .neq('status', 'draft')
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -83,7 +86,12 @@ export const AuthProvider = ({ children }) => {
         payment_failed: 'Payment Failed',
       };
 
-      const normalized = (orders || []).map((o) => {
+      const validOrders = (orders || []).filter((o) => {
+        const s = (o.status || '').toLowerCase();
+        return !['pending_payment', 'payment_failed', 'draft'].includes(s);
+      });
+
+      const normalized = validOrders.map((o) => {
         let returnClaim = null;
         if (o.notes) {
           try {
@@ -513,7 +521,10 @@ export const AuthProvider = ({ children }) => {
 
   // ── Add Order (called after payment verification) ──
   const addOrder = (order) => {
-    setUserOrders((prev) => [order, ...prev]);
+    if (!order) return;
+    const s = (order.rawStatus || order.status || '').toLowerCase();
+    if (['pending_payment', 'payment_failed', 'draft'].includes(s)) return;
+    setUserOrders((prev) => [order, ...prev.filter((o) => o.id !== order.id && o.dbId !== order.dbId)]);
   };
 
   // ── Refresh Orders ──

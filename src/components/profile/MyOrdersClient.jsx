@@ -1,5 +1,5 @@
 'use client';
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useMemo } from 'react';
 import Link from 'next/link';
 import Breadcrumb from '../../components/common/Breadcrumb';
 import EmptyState from '../../components/common/EmptyState';
@@ -14,7 +14,7 @@ import {
 } from 'lucide-react';
 
 // Statuses that allow customer cancellation — strictly before order is packed
-const CANCELLABLE_STATUSES = ['pending_payment', 'pending payment', 'pending', 'new', 'confirmed', 'processing'];
+const CANCELLABLE_STATUSES = ['pending', 'new', 'confirmed', 'processing'];
 
 // Post-packed logistics statuses where cancellation is locked
 const POST_PACKED_STATUSES = [
@@ -72,6 +72,14 @@ export default function MyOrdersClient() {
   const { userOrders, cancelOrder, raiseReturnTicket } = useAuth();
   const { addToCart, openCart } = useCart();
   const { addToast } = useToast();
+
+  // Exclude unpaid / abandoned checkout attempts — only show placed orders
+  const placedOrders = useMemo(() => {
+    return (userOrders || []).filter((o) => {
+      const s = (o.rawStatus || o.status || '').toLowerCase();
+      return !['pending_payment', 'pending payment', 'payment_failed', 'payment failed', 'draft'].includes(s);
+    });
+  }, [userOrders]);
 
   // Cancel modal state
   const [cancelModal, setCancelModal] = useState({ open: false, order: null });
@@ -389,7 +397,7 @@ export default function MyOrdersClient() {
     );
   };
 
-  if (!userOrders || userOrders.length === 0) {
+  if (!placedOrders || placedOrders.length === 0) {
     return (
       <div className="max-w-4xl mx-auto px-4 sm:px-6 py-10 space-y-6">
         <Breadcrumb items={[{ name: 'Account', url: '/profile' }, { name: 'My Orders', url: '/profile/orders' }]} />
@@ -412,7 +420,7 @@ export default function MyOrdersClient() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-gold-500/20 pb-4">
         <div>
           <h1 className="font-serif font-black text-2xl sm:text-3xl text-stone-900 dark:text-ivory-100">
-            My Past Orders ({userOrders.length})
+            My Past Orders ({placedOrders.length})
           </h1>
           <p className="text-xs text-stone-500">
             View orders, track parcels, download invoices, or raise return &amp; damage claims.
@@ -422,7 +430,7 @@ export default function MyOrdersClient() {
 
       {/* Orders List Cards */}
       <div className="space-y-6">
-        {userOrders.map((order) => {
+        {placedOrders.map((order) => {
           const isReturned = hasReturnClaim(order);
           const claimStatus = order.returnClaim?.status || order.rawStatus;
 
