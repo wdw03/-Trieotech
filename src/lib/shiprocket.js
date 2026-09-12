@@ -63,6 +63,29 @@ async function shiprocketFetch(endpoint, options = {}) {
   return res.json();
 }
 
+let cachedPickupLocation = null;
+
+/**
+ * Fetch primary pickup location nickname from Shiprocket dynamically
+ */
+export async function getPrimaryPickupLocation() {
+  if (cachedPickupLocation) return cachedPickupLocation;
+  try {
+    const data = await shiprocketFetch('/settings/company/pickup');
+    const addresses = data?.data?.shipping_address;
+    if (Array.isArray(addresses) && addresses.length > 0) {
+      const primary = addresses.find((a) => a.is_primary_location === 1) || addresses[0];
+      if (primary?.pickup_location) {
+        cachedPickupLocation = primary.pickup_location;
+        return cachedPickupLocation;
+      }
+    }
+  } catch (err) {
+    console.warn('Could not fetch pickup location, falling back to Home:', err.message);
+  }
+  return 'Home';
+}
+
 /**
  * Create a Shiprocket order
  */
@@ -77,10 +100,15 @@ export async function createShiprocketOrder({
   discount = 0,
   shippingCharges = 0,
 }) {
+  let pickupLocation = 'Home';
+  try {
+    pickupLocation = await getPrimaryPickupLocation();
+  } catch (_) {}
+
   const orderData = {
     order_id: orderNumber,
     order_date: orderDate || new Date().toISOString().split('T')[0],
-    pickup_location: 'Primary',
+    pickup_location: pickupLocation || 'Home',
     channel_id: '',
     comment: `Trio Enterprises Order ${orderNumber}`,
     billing_customer_name: billingAddress.name?.split(' ')[0] || '',
