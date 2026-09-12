@@ -134,9 +134,11 @@ CREATE TABLE IF NOT EXISTS public.orders (
   user_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE SET NULL,
   order_number TEXT NOT NULL UNIQUE,
   status TEXT NOT NULL DEFAULT 'pending_payment' CHECK (status IN (
-    'pending_payment', 'confirmed', 'processing', 'packed',
-    'shipped', 'out_for_delivery', 'delivered', 'cancelled',
-    'refunded', 'payment_failed'
+    'pending_payment', 'pending', 'confirmed', 'processing', 'packed',
+    'pickup_scheduled', 'picked_up', 'shipped', 'in_transit',
+    'out_for_delivery', 'delivered', 'cancelled', 'failed_delivery',
+    'rto_initiated', 'rto_delivered', 'return_requested',
+    'return_approved', 'returned', 'refunded', 'payment_failed'
   )),
   subtotal NUMERIC(10,2) NOT NULL,
   discount NUMERIC(10,2) NOT NULL DEFAULT 0,
@@ -506,3 +508,36 @@ INSERT INTO public.coupons (code, description, discount_type, value, min_spend, 
   ('FIRSTBUY', '15% off on your first order', 'percentage', 15, 0, true),
   ('CRAFT100', 'Flat ₹100 off on orders above ₹999', 'flat', 100, 999, true)
 ON CONFLICT (code) DO NOTHING;
+
+-- ══════════════════════════════════════════════════════════════
+-- 15. ORDER STATUS HISTORY (AUDIT TRAIL)
+-- ══════════════════════════════════════════════════════════════
+CREATE TABLE IF NOT EXISTS public.order_status_history (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  order_id UUID NOT NULL REFERENCES public.orders(id) ON DELETE CASCADE,
+  from_status TEXT,
+  to_status TEXT NOT NULL,
+  changed_by TEXT DEFAULT 'system',
+  source TEXT NOT NULL, -- 'customer', 'admin', 'shiprocket_webhook', 'system'
+  reason TEXT DEFAULT '',
+  metadata JSONB DEFAULT '{}'::jsonb,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_order_status_history_order ON public.order_status_history(order_id);
+CREATE INDEX IF NOT EXISTS idx_order_status_history_created ON public.order_status_history(created_at DESC);
+ALTER TABLE public.order_status_history ENABLE ROW LEVEL SECURITY;
+
+-- ══════════════════════════════════════════════════════════════
+-- 16. WEBHOOK LOGS (IDEMPOTENCY & DUPLICATE PROTECTION)
+-- ══════════════════════════════════════════════════════════════
+CREATE TABLE IF NOT EXISTS public.webhook_logs (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  source TEXT NOT NULL DEFAULT 'shiprocket',
+  event_id TEXT NOT NULL UNIQUE,
+  payload JSONB NOT NULL,
+  processed_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_webhook_logs_event_id ON public.webhook_logs(event_id);
+CREATE INDEX IF NOT EXISTS idx_webhook_logs_processed_at ON public.webhook_logs(processed_at DESC);

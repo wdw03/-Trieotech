@@ -10,26 +10,51 @@ import {
   Package, Truck, ArrowRight, CheckCircle2, Clock, RotateCcw, FileText, Download,
   XCircle, AlertTriangle, Loader2, Ban, RefreshCw, Camera, UploadCloud, Eye, Trash2,
   ShieldCheck, ShieldAlert, Check, Info, X, ExternalLink, Image as ImageIcon, MessageCircle,
-  MapPin, Copy, CreditCard, Navigation, Activity
+  MapPin, Copy, CreditCard, Navigation, Activity, Lock
 } from 'lucide-react';
 
-// Statuses that allow cancellation (only while pending — before confirmed)
-const CANCELLABLE_STATUSES = ['pending', 'pending payment'];
+// Statuses that allow customer cancellation — strictly before order is packed
+const CANCELLABLE_STATUSES = ['pending_payment', 'pending payment', 'pending', 'new', 'confirmed', 'processing'];
+
+// Post-packed logistics statuses where cancellation is locked
+const POST_PACKED_STATUSES = [
+  'packed',
+  'pickup_scheduled',
+  'pickup scheduled',
+  'picked_up',
+  'picked up',
+  'shipped',
+  'in_transit',
+  'in transit',
+  'out_for_delivery',
+  'out for delivery',
+  'failed_delivery',
+  'delivery failed',
+  'rto_initiated',
+  'rto_delivered',
+];
 
 // Status badge styling map
 const STATUS_BADGE = {
   'Delivered': 'bg-emerald-700 text-white',
   'Return Requested': 'bg-amber-600 text-white',
   'Return Approved': 'bg-indigo-600 text-white',
+  'Return Initiated': 'bg-indigo-700 text-white',
   'Returned': 'bg-purple-700 text-white',
   'Cancelled': 'bg-rose-700 text-white',
   'Refunded': 'bg-blue-700 text-white',
   'Payment Failed': 'bg-red-600 text-white',
   'Shipped': 'bg-sky-700 text-white',
+  'In Transit': 'bg-blue-600 text-white',
+  'Picked Up': 'bg-indigo-600 text-white',
+  'Pickup Scheduled': 'bg-cyan-700 text-white',
   'Out for Delivery': 'bg-orange-600 text-white',
+  'Delivery Failed': 'bg-amber-700 text-white',
+  'RTO Initiated': 'bg-purple-800 text-white',
+  'RTO Delivered': 'bg-purple-900 text-white',
   'Packed': 'bg-teal-600 text-white',
   'Processing': 'bg-amber-600 text-white',
-  'Confirmed': 'bg-amber-600 text-white',
+  'Confirmed': 'bg-emerald-600 text-white',
   'Pending': 'bg-stone-500 text-white',
   'Pending Payment': 'bg-stone-500 text-white',
 };
@@ -346,6 +371,11 @@ export default function MyOrdersClient() {
     return CANCELLABLE_STATUSES.includes(status);
   };
 
+  const isPostPacked = (order) => {
+    const status = (order.rawStatus || order.status || '').toLowerCase();
+    return POST_PACKED_STATUSES.includes(status);
+  };
+
   const isReturnEligible = (order) => {
     const status = (order.rawStatus || order.status || '').toLowerCase();
     return status === 'delivered';
@@ -648,11 +678,22 @@ export default function MyOrdersClient() {
                     <button
                       onClick={() => openCancelModal(order)}
                       className="px-3 py-2 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-300 dark:border-rose-700 text-rose-700 dark:text-rose-300 hover:bg-rose-100 dark:hover:bg-rose-900/50 text-xs font-bold flex items-center gap-1.5 transition-colors"
-                      title="Cancel this order"
+                      title="Cancel this order (Instant refund if prepaid)"
                     >
                       <XCircle className="w-3.5 h-3.5" />
                       <span>Cancel Order</span>
                     </button>
+                  )}
+
+                  {/* Cancellation Closed Badge — when packed or in logistics */}
+                  {isPostPacked(order) && (
+                    <div
+                      className="px-3 py-1.5 rounded-xl bg-stone-100 dark:bg-stone-800/80 border border-stone-300 dark:border-stone-700 text-stone-600 dark:text-stone-300 text-[11px] font-medium flex items-center gap-1.5"
+                      title="Order has been packed and handed over to logistics. Cancellation is closed."
+                    >
+                      <Lock className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400 shrink-0" />
+                      <span>Cancellation Closed (Packed / In Transit)</span>
+                    </div>
                   )}
 
                   {/* Return / Refund Ticket Button — for delivered orders */}

@@ -4,19 +4,28 @@ import { supabaseAdmin } from '../../../../lib/supabase/admin';
 
 // Map status to dashboard friendly title case
 const STATUS_MAP = {
+  pending_payment: 'Pending Payment',
   pending: 'New',
   new: 'New',
   confirmed: 'Confirmed',
   processing: 'Processing',
   packed: 'Packed',
+  pickup_scheduled: 'Pickup Scheduled',
+  picked_up: 'Picked Up',
   shipped: 'Shipped',
+  in_transit: 'In Transit',
   out_for_delivery: 'Out for Delivery',
   delivered: 'Delivered',
   cancelled: 'Cancelled',
+  failed_delivery: 'Delivery Failed',
+  rto_initiated: 'RTO Initiated',
+  rto_delivered: 'RTO Delivered',
   return_requested: 'Return Requested',
+  return_approved: 'Return Approved',
   return_initiated: 'Return Initiated',
   returned: 'Returned',
   refunded: 'Refunded',
+  payment_failed: 'Payment Failed',
 };
 
 function computeAvailableActions(order, shipment) {

@@ -4,9 +4,10 @@ import { createClient } from '../../../../../lib/supabase/server';
 import { supabaseAdmin } from '../../../../../lib/supabase/admin';
 import { createRefund } from '../../../../../lib/razorpay';
 import { sendOrderCancellation } from '../../../../../lib/resend';
+import { cancelShipment } from '../../../../../lib/shiprocket';
 
-// Statuses that allow cancellation — only before order is confirmed
-const CANCELLABLE_STATUSES = ['pending_payment', 'pending'];
+// Statuses that allow customer cancellation — strictly before order is packed
+const CANCELLABLE_STATUSES = ['pending_payment', 'pending', 'confirmed', 'processing'];
 
 export async function POST(request, { params }) {
   try {
@@ -19,36 +20,31 @@ export async function POST(request, { params }) {
     } catch (_) {}
 
     const { orderId } = await params;
+    if (!orderId) {
+      return NextResponse.json({ error: 'orderId is required' }, { status: 400 });
+    }
 
-    // 2. Fetch the order with related data
-    const { data: order, error: fetchError } = await supabaseAdmin
+    // 2. Fetch the order with items, payments, and shipments
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(orderId);
+    let query = supabaseAdmin
       .from('orders')
       .select(`
         *,
         order_items (*),
-        payments (*)
-      `)
-      .eq('id', orderId)
-      .single();
+        payments (*),
+        shipments (*)
+      `);
+
+    if (isUuid) {
+      query = query.eq('id', orderId);
+    } else {
+      query = query.eq('order_number', orderId);
+    }
+
+    const { data: order, error: fetchError } = await query.maybeSingle();
 
     if (fetchError || !order) {
-      // Try by order_number
-      const { data: orderByNum, error: fetchError2 } = await supabaseAdmin
-        .from('orders')
-        .select(`
-          *,
-          order_items (*),
-          payments (*)
-        `)
-        .eq('order_number', orderId)
-        .single();
-
-      if (fetchError2 || !orderByNum) {
-        return NextResponse.json({ error: 'Order not found' }, { status: 404 });
-      }
-
-      // Use the order found by order_number
-      return await processCancellation(orderByNum, user, request);
+      return NextResponse.json({ error: 'Order not found' }, { status: 404 });
     }
 
     return await processCancellation(order, user, request);
@@ -59,54 +55,102 @@ export async function POST(request, { params }) {
 }
 
 async function processCancellation(order, user, request) {
-  // 3. Authorization check — only the order owner can cancel
+  // 3. Authorization check — only the order owner (or guest by order token) can cancel
   if (order.user_id && user && order.user_id !== user.id) {
-    return NextResponse.json({ error: 'Unauthorized — you can only cancel your own orders' }, { status: 403 });
+    return NextResponse.json(
+      { error: 'Unauthorized — you can only cancel your own orders' },
+      { status: 403 }
+    );
   }
 
-  // 4. Check if order is in a cancellable state
+  // 4. Check if order is in a cancellable state (Strictly before Packed)
   const currentStatus = (order.status || '').toLowerCase();
   if (!CANCELLABLE_STATUSES.includes(currentStatus)) {
     const statusLabel = currentStatus.charAt(0).toUpperCase() + currentStatus.slice(1).replace(/_/g, ' ');
     return NextResponse.json(
       {
-        error: `This order cannot be cancelled. Current status: "${statusLabel}". Orders can only be cancelled before they are packed or shipped.`,
+        error: `Order cannot be cancelled. Current status is "${statusLabel}". Orders can only be cancelled while in Confirmed or Processing stage, before being packed for shipping.`,
+        currentStatus,
       },
       { status: 400 }
     );
   }
 
-  // 5. Optionally parse cancellation reason from request body
+  // 5. Parse cancellation reason
   let reason = 'Customer requested cancellation';
   try {
     const body = await request.json();
-    if (body?.reason) reason = body.reason;
+    if (body?.reason) reason = body.reason.trim();
   } catch (_) {}
 
-  // 6. Update order status to cancelled
+  const nowIso = new Date().toISOString();
+
+  // 6. If shipment was already registered in Shiprocket, trigger Shiprocket cancellation
+  let shipmentCancelled = false;
+  const shipment = Array.isArray(order.shipments) ? order.shipments[0] : order.shipments;
+
+  if (shipment?.id) {
+    try {
+      const awb = shipment.awb_number;
+      if (awb && !awb.startsWith('SR-') && awb.length > 5) {
+        await cancelShipment([awb]);
+        shipmentCancelled = true;
+      }
+
+      await supabaseAdmin
+        .from('shipments')
+        .update({
+          status: 'cancelled',
+          cancel_reason: reason,
+          updated_at: nowIso,
+        })
+        .eq('id', shipment.id);
+
+      await supabaseAdmin.from('shipment_events').insert({
+        shipment_id: shipment.id,
+        status: 'cancelled',
+        status_code: 'CANCELLED_BY_CUSTOMER',
+        activity: `Order cancelled by customer. Reason: ${reason}`,
+        location: 'Customer Service',
+        raw_data: { cancelledBy: user?.id || 'customer', reason },
+      });
+    } catch (shipErr) {
+      console.warn('Shiprocket cancellation notice:', shipErr.message);
+    }
+  }
+
+  // 7. Update order status in database (Single Source of Truth)
+  const isCod = order.payment_method === 'cod';
+  const orderUpdatePayload = {
+    status: 'cancelled',
+    cancelled_at: nowIso,
+    cancellation_reason: reason,
+    updated_at: nowIso,
+  };
+
+  // If COD, mark payment_status as cancelled
+  if (isCod) {
+    orderUpdatePayload.payment_status = 'cancelled';
+  }
+
   const { error: updateError } = await supabaseAdmin
     .from('orders')
-    .update({
-      status: 'cancelled',
-      cancelled_at: new Date().toISOString(),
-      cancellation_reason: reason,
-    })
+    .update(orderUpdatePayload)
     .eq('id', order.id);
 
   if (updateError) {
     console.error('Failed to update order status:', updateError);
-    return NextResponse.json({ error: 'Failed to cancel order' }, { status: 500 });
+    return NextResponse.json({ error: 'Failed to cancel order in database' }, { status: 500 });
   }
 
-  // 7. Process refund if online payment was captured
+  // 8. Process refund if online payment was captured (Prepaid only, skip COD)
   let refundResult = null;
   const payment = (order.payments || []).find(
-    (p) => p.status === 'captured' && p.razorpay_payment_id
+    (p) => (p.status === 'captured' || p.status === 'paid') && p.razorpay_payment_id
   );
 
-  if (payment) {
+  if (!isCod && payment?.razorpay_payment_id) {
     try {
-      // Initiate Razorpay refund
       const refundAmount = Number(order.total) || Number(payment.amount);
       refundResult = await createRefund(payment.razorpay_payment_id, refundAmount, {
         order_id: order.order_number,
@@ -119,18 +163,21 @@ async function processCancellation(order, user, request) {
         .update({
           status: 'refunded',
           refund_id: refundResult?.id || null,
-          refunded_at: new Date().toISOString(),
+          refunded_at: nowIso,
         })
         .eq('id', payment.id);
 
-      // Update order payment_status
+      // Update order payment_status & refund fields
       await supabaseAdmin
         .from('orders')
-        .update({ payment_status: 'refunded' })
+        .update({
+          payment_status: 'refunded',
+          refund_amount: refundAmount,
+          refund_id: refundResult?.id || '',
+        })
         .eq('id', order.id);
     } catch (refundErr) {
       console.error('Razorpay refund error:', refundErr);
-      // Mark as refund_failed but still keep order cancelled
       await supabaseAdmin
         .from('payments')
         .update({ status: 'refund_failed', error_description: refundErr.message })
@@ -138,7 +185,7 @@ async function processCancellation(order, user, request) {
     }
   }
 
-  // 8. Restore product stock
+  // 9. Restore product inventory
   for (const item of order.order_items || []) {
     if (item.product_id) {
       try {
@@ -158,12 +205,29 @@ async function processCancellation(order, user, request) {
             .eq('id', item.product_id);
         }
       } catch (stockErr) {
-        console.warn('Stock restore warning for product', item.product_id, stockErr);
+        console.warn('Stock restore notice for product', item.product_id, stockErr.message);
       }
     }
   }
 
-  // 9. Send cancellation email
+  // 10. Audit Log in order_status_history
+  await supabaseAdmin.from('order_status_history').insert({
+    order_id: order.id,
+    from_status: currentStatus,
+    to_status: 'cancelled',
+    source: 'customer',
+    changed_by: user?.id || order.user_id || 'customer',
+    reason,
+    metadata: {
+      refundInitiated: !!refundResult,
+      refundId: refundResult?.id || null,
+      refundAmount: refundResult ? Number(order.total) : 0,
+      paymentMethod: order.payment_method,
+      shipmentCancelled,
+    },
+  });
+
+  // 11. Send customer email notification via Resend
   try {
     let recipientEmail = user?.email;
     if (!recipientEmail && order.user_id) {
@@ -179,7 +243,7 @@ async function processCancellation(order, user, request) {
         to: recipientEmail,
         orderNumber: order.order_number,
         orderId: order.id,
-        cancelDate: new Date().toISOString(),
+        cancelDate: nowIso,
         reason,
         items: order.order_items || [],
         total: order.total,
@@ -193,13 +257,15 @@ async function processCancellation(order, user, request) {
     console.warn('Cancellation email send failed (non-critical):', emailErr);
   }
 
-  // 10. Return success
+  // 12. Return clean production response
   return NextResponse.json({
     success: true,
     message: 'Order cancelled successfully',
     orderId: order.id,
     orderNumber: order.order_number,
+    status: 'cancelled',
     refundInitiated: !!refundResult,
     refundId: refundResult?.id || null,
+    shipmentCancelled,
   });
 }

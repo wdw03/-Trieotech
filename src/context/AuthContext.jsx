@@ -59,17 +59,25 @@ export const AuthProvider = ({ children }) => {
       if (error) throw error;
 
       const STATUS_DISPLAY_MAP = {
-        pending: 'Pending',
         pending_payment: 'Pending Payment',
+        pending: 'Pending',
+        new: 'Pending',
         confirmed: 'Confirmed',
         processing: 'Processing',
         packed: 'Packed',
+        pickup_scheduled: 'Pickup Scheduled',
+        picked_up: 'Picked Up',
         shipped: 'Shipped',
+        in_transit: 'In Transit',
         out_for_delivery: 'Out for Delivery',
         delivered: 'Delivered',
         cancelled: 'Cancelled',
+        failed_delivery: 'Delivery Failed',
+        rto_initiated: 'RTO Initiated',
+        rto_delivered: 'RTO Delivered',
         return_requested: 'Return Requested',
         return_approved: 'Return Approved',
+        return_initiated: 'Return Initiated',
         returned: 'Returned',
         refunded: 'Refunded',
         payment_failed: 'Payment Failed',
@@ -158,6 +166,44 @@ export const AuthProvider = ({ children }) => {
 
     return () => subscription.unsubscribe();
   }, [supabase, fetchProfile, fetchOrders]);
+
+  // ── Realtime subscription for customer's orders & shipments ──
+  useEffect(() => {
+    if (!user?.id) return;
+
+    const channel = supabase
+      .channel(`customer-orders-${user.id}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'orders',
+          filter: `user_id=eq.${user.id}`,
+        },
+        (payload) => {
+          console.log('[Realtime] Customer order update event:', payload.eventType);
+          fetchOrders(user.id);
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'shipments',
+        },
+        () => {
+          console.log('[Realtime] Customer shipment update event');
+          fetchOrders(user.id);
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user?.id, supabase, fetchOrders]);
 
   // ── Login ──
   const login = async (email, password) => {

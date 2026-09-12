@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Breadcrumb from '../../components/common/Breadcrumb';
 import { useAuth } from '../../context/AuthContext';
+import { createClient } from '../../lib/supabase/client';
 import {
   Package,
   Search,
@@ -362,6 +363,46 @@ export default function OrderTrackingClient() {
       performTracking(query);
     }
   }, [idFromUrl]);
+
+  // ── Realtime live subscription for tracked parcel ──
+  useEffect(() => {
+    if (!foundOrder?.dbId) return;
+
+    const supabase = createClient();
+    const orderIdentifier = foundOrder.orderNumber || foundOrder.id;
+
+    const channel = supabase
+      .channel(`live-track-${foundOrder.dbId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'orders',
+          filter: `id=eq.${foundOrder.dbId}`,
+        },
+        () => {
+          performTracking(orderIdentifier);
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'shipments',
+          filter: `order_id=eq.${foundOrder.dbId}`,
+        },
+        () => {
+          performTracking(orderIdentifier);
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [foundOrder?.dbId]);
 
   const handleSearch = (e) => {
     e.preventDefault();

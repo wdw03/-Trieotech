@@ -1,8 +1,9 @@
 export const dynamic = 'force-dynamic';
 import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '../../../../../lib/supabase/admin';
-import { sendShippingUpdate } from '../../../../../lib/resend';
+import { sendShippingUpdate, sendOrderCancellation } from '../../../../../lib/resend';
 import { createOrderAndAssignAWB, requestPickup as shiprocketRequestPickup, cancelShipment } from '../../../../../lib/shiprocket';
+import { createRefund } from '../../../../../lib/razorpay';
 
 // Map dashboard status to DB status
 const DB_STATUS_MAP = {
@@ -10,11 +11,18 @@ const DB_STATUS_MAP = {
   'Confirmed': 'confirmed',
   'Processing': 'processing',
   'Packed': 'packed',
+  'Pickup Scheduled': 'pickup_scheduled',
+  'Picked Up': 'picked_up',
   'Shipped': 'shipped',
+  'In Transit': 'in_transit',
   'Out for Delivery': 'out_for_delivery',
   'Delivered': 'delivered',
   'Cancelled': 'cancelled',
+  'Delivery Failed': 'failed_delivery',
+  'RTO Initiated': 'rto_initiated',
+  'RTO Delivered': 'rto_delivered',
   'Return Requested': 'return_requested',
+  'Return Approved': 'return_approved',
   'Return Initiated': 'return_initiated',
   'Returned': 'returned',
   'Refunded': 'refunded',
@@ -32,7 +40,7 @@ const NOTIFY_STATUS_MAP = {
 };
 
 /**
- * GET: Retrieve detailed view of a single order (including items, shipment, audit events, financials)
+ * GET: Retrieve detailed view of a single order (including items, shipment, audit events, financials, status history)
  */
 export async function GET(request, { params }) {
   try {
@@ -61,7 +69,7 @@ export async function GET(request, { params }) {
 
     const shipment = Array.isArray(order.shipments) ? (order.shipments[0] || null) : (order.shipments || null);
 
-    // Fetch tracking / audit events if shipment exists
+    // Fetch tracking / carrier events if shipment exists
     let auditEvents = [];
     if (shipment?.id) {
       const { data: events } = await supabaseAdmin
@@ -71,6 +79,13 @@ export async function GET(request, { params }) {
         .order('event_time', { ascending: false });
       auditEvents = events || [];
     }
+
+    // Fetch order status history audit log
+    const { data: statusHistory } = await supabaseAdmin
+      .from('order_status_history')
+      .select('*')
+      .eq('order_id', order.id)
+      .order('created_at', { ascending: false });
 
     const isCod = order.payment_method === 'cod';
     const codCollectable = isCod ? Number(shipment?.cod_collectable || order.total || 0) : 0;
@@ -93,6 +108,7 @@ export async function GET(request, { params }) {
     return NextResponse.json({
       success: true,
       order,
+      statusHistory: statusHistory || [],
       shipment: shipment ? {
         ...shipment,
         labelUrl: shipment.label_url || `/api/admin/shipments/label?orderId=${encodeURIComponent(order.order_number)}`,
@@ -114,26 +130,15 @@ export async function PATCH(request, { params }) {
   try {
     const { id } = await params;
     const body = await request.json();
-    const { status, trackingNumber, courierName, paymentStatus, cancelReason } = body;
+    const { status, trackingNumber, courierName, paymentStatus, cancelReason, adminUser } = body;
 
     const mappedStatus = DB_STATUS_MAP[status] || (status ? status.toLowerCase().replace(/\s+/g, '_') : undefined);
-
     const nowIso = new Date().toISOString();
-    const updates = {
-      updated_at: nowIso,
-    };
-    if (mappedStatus) {
-      updates.status = mappedStatus;
-      if (mappedStatus === 'delivered') {
-        updates.delivered_at = nowIso;
-        updates.payment_status = 'paid'; // COD collected
-      }
-    }
 
-    // Find order first by id or order_number
+    // 1. Find target order first (including related items and payments)
     let findQuery = supabaseAdmin
       .from('orders')
-      .select('id, order_number, customer_email, shipping_address, user_id, payment_method, total')
+      .select('*, order_items(*), payments(*), shipments(*)')
       .or(`id.eq.${id},order_number.eq.${id}`);
 
     const { data: orderMatches } = await findQuery;
@@ -142,7 +147,7 @@ export async function PATCH(request, { params }) {
     if (!targetOrder) {
       const { data: fallbackMatches } = await supabaseAdmin
         .from('orders')
-        .select('id, order_number, customer_email, shipping_address, user_id, payment_method, total')
+        .select('*, order_items(*), payments(*), shipments(*)')
         .ilike('order_number', `%${id}%`)
         .limit(1);
 
@@ -153,7 +158,139 @@ export async function PATCH(request, { params }) {
     }
 
     const orderDbId = targetOrder.id;
+    const previousStatus = (targetOrder.status || '').toLowerCase();
 
+    // 2. Cancellation validation: cannot cancel if already delivered, returned, or refunded
+    if (mappedStatus === 'cancelled') {
+      if (['delivered', 'returned', 'refunded'].includes(previousStatus)) {
+        return NextResponse.json(
+          { error: `Cannot cancel order with status "${targetOrder.status}". Please process as a return or refund.` },
+          { status: 400 }
+        );
+      }
+    }
+
+    const updates = {
+      updated_at: nowIso,
+    };
+
+    if (mappedStatus) {
+      updates.status = mappedStatus;
+      if (mappedStatus === 'delivered') {
+        updates.delivered_at = nowIso;
+        if (targetOrder.payment_method === 'cod') {
+          updates.payment_status = 'paid';
+        }
+      }
+    }
+
+    let refundResult = null;
+    let shipmentCancelled = false;
+
+    // 3. Admin Cancellation Workflow (Stock restore, Shiprocket sync, Razorpay refund)
+    if (mappedStatus === 'cancelled') {
+      updates.cancelled_at = nowIso;
+      updates.cancellation_reason = cancelReason || 'Order cancelled by admin';
+
+      const isCod = targetOrder.payment_method === 'cod';
+
+      // 3a. Razorpay refund for online payments
+      if (!isCod) {
+        const payment = (targetOrder.payments || []).find(
+          (p) => (p.status === 'captured' || p.status === 'paid') && p.razorpay_payment_id
+        );
+
+        if (payment?.razorpay_payment_id) {
+          try {
+            const refundAmount = Number(targetOrder.total) || Number(payment.amount);
+            refundResult = await createRefund(payment.razorpay_payment_id, refundAmount, {
+              order_id: targetOrder.order_number,
+              reason: cancelReason || 'Order cancelled by admin',
+            });
+
+            await supabaseAdmin
+              .from('payments')
+              .update({
+                status: 'refunded',
+                refund_id: refundResult?.id || null,
+                refunded_at: nowIso,
+              })
+              .eq('id', payment.id);
+
+            updates.payment_status = 'refunded';
+            updates.refund_amount = refundAmount;
+            updates.refund_id = refundResult?.id || '';
+          } catch (refundErr) {
+            console.error('Admin order refund error:', refundErr);
+            await supabaseAdmin
+              .from('payments')
+              .update({ status: 'refund_failed', error_description: refundErr.message })
+              .eq('id', payment.id);
+          }
+        }
+      } else {
+        updates.payment_status = 'cancelled';
+      }
+
+      // 3b. Restore inventory
+      for (const item of targetOrder.order_items || []) {
+        if (item.product_id) {
+          try {
+            const { data: prod } = await supabaseAdmin
+              .from('products')
+              .select('stock')
+              .eq('id', item.product_id)
+              .single();
+
+            if (prod) {
+              await supabaseAdmin
+                .from('products')
+                .update({
+                  stock: (prod.stock || 0) + (item.quantity || 1),
+                  in_stock: true,
+                })
+                .eq('id', item.product_id);
+            }
+          } catch (stockErr) {
+            console.warn('Admin cancel: stock restore failed for product', item.product_id, stockErr.message);
+          }
+        }
+      }
+
+      // 3c. Cancel shipment in Shiprocket & DB
+      try {
+        const existingShipment = Array.isArray(targetOrder.shipments) ? targetOrder.shipments[0] : targetOrder.shipments;
+        if (existingShipment?.id) {
+          const awb = existingShipment.awb_number;
+          if (awb && !awb.startsWith('SR-') && awb.length > 5) {
+            await cancelShipment([awb]).catch(() => {});
+            shipmentCancelled = true;
+          }
+
+          await supabaseAdmin
+            .from('shipments')
+            .update({
+              status: 'cancelled',
+              cancel_reason: cancelReason || 'Order cancelled by admin',
+              updated_at: nowIso,
+            })
+            .eq('id', existingShipment.id);
+
+          await supabaseAdmin.from('shipment_events').insert({
+            shipment_id: existingShipment.id,
+            status: 'cancelled',
+            status_code: 'CANCELLED_BY_ADMIN',
+            activity: `Shipment cancelled by admin: ${cancelReason || 'Order cancelled'}`,
+            location: 'Admin Panel',
+            raw_data: { adminUser: adminUser || 'admin', cancelReason },
+          });
+        }
+      } catch (cancelErr) {
+        console.warn('Admin cancel: Shiprocket shipment cancel warning:', cancelErr.message);
+      }
+    }
+
+    // 4. Update the order record in database
     const { data: updatedOrder, error: orderError } = await supabaseAdmin
       .from('orders')
       .update(updates)
@@ -163,7 +300,8 @@ export async function PATCH(request, { params }) {
 
     if (orderError) throw orderError;
 
-    if (paymentStatus) {
+    // 5. Update payment status if explicitly passed
+    if (paymentStatus && mappedStatus !== 'cancelled') {
       await supabaseAdmin
         .from('payments')
         .update({ status: paymentStatus.toLowerCase(), updated_at: nowIso })
@@ -174,7 +312,26 @@ export async function PATCH(request, { params }) {
         .eq('id', orderDbId);
     }
 
-    // If manual tracking number provided, update shipment
+    // 6. Record status transition audit log in order_status_history
+    if (mappedStatus && mappedStatus !== previousStatus) {
+      await supabaseAdmin.from('order_status_history').insert({
+        order_id: orderDbId,
+        from_status: previousStatus,
+        to_status: mappedStatus,
+        source: 'admin',
+        changed_by: adminUser || 'admin',
+        reason: cancelReason || `Status updated from ${previousStatus} to ${mappedStatus} via admin panel`,
+        metadata: {
+          courierName,
+          trackingNumber,
+          paymentStatus,
+          refundId: updates.refund_id || null,
+          shipmentCancelled,
+        },
+      });
+    }
+
+    // 7. Manual tracking number update
     if (trackingNumber) {
       const { data: existingShipment } = await supabaseAdmin
         .from('shipments')
@@ -202,11 +359,8 @@ export async function PATCH(request, { params }) {
       }
     }
 
-    // ═══════════════════════════════════════════════════════════
-    // AUTO-SHIPROCKET ACTIONS ON STATUS CHANGE
-    // ═══════════════════════════════════════════════════════════
-
-    // When admin marks as "Packed" → auto-create Shiprocket shipment + AWB if not already done
+    // 8. Auto-Shiprocket actions on status change
+    // Packed → create shipment + AWB
     if (mappedStatus === 'packed') {
       try {
         const { data: existingShipment } = await supabaseAdmin
@@ -267,7 +421,7 @@ export async function PATCH(request, { params }) {
       }
     }
 
-    // When admin marks as "Shipped" → auto-request pickup if shipment has AWB
+    // Shipped → auto-request pickup
     if (mappedStatus === 'shipped') {
       try {
         const { data: existingShipment } = await supabaseAdmin
@@ -303,75 +457,59 @@ export async function PATCH(request, { params }) {
       }
     }
 
-    // When admin cancels order → cancel shipment in Shiprocket & DB
-    if (mappedStatus === 'cancelled') {
-      try {
-        const { data: existingShipment } = await supabaseAdmin
-          .from('shipments')
-          .select('*')
-          .eq('order_id', orderDbId)
-          .maybeSingle();
-
-        if (existingShipment) {
-          if (existingShipment.awb_number && !existingShipment.awb_number.startsWith('SR-')) {
-            await cancelShipment(existingShipment.awb_number).catch(() => {});
-          }
-
-          await supabaseAdmin
-            .from('shipments')
-            .update({
-              status: 'cancelled',
-              cancel_reason: cancelReason || 'Order cancelled by admin',
-              updated_at: nowIso,
-            })
-            .eq('id', existingShipment.id);
-
-          await supabaseAdmin.from('shipment_events').insert({
-            shipment_id: existingShipment.id,
-            status: 'cancelled',
-            status_code: 'CANCELLED',
-            activity: `Shipment cancelled: ${cancelReason || 'Order cancelled by admin'}`,
-            location: 'Admin Panel',
-          });
-        }
-      } catch (cancelErr) {
-        console.warn('Cancel shipment on order cancel notice:', cancelErr.message);
-      }
-    }
-
-    // Send notification email on status change
+    // 9. Send notification email on status change
     if (mappedStatus && NOTIFY_STATUS_MAP[mappedStatus]) {
       const addr = targetOrder.shipping_address || {};
       const customerEmail = targetOrder.customer_email || addr.email;
       const orderNumber = targetOrder.order_number || id;
 
       if (customerEmail) {
-        const statusLabel = NOTIFY_STATUS_MAP[mappedStatus];
-        const trackingUrl = `${process.env.NEXT_PUBLIC_SITE_URL || 'https://trioenterprises.in'}/track-order?id=${encodeURIComponent(orderNumber)}`;
+        if (mappedStatus === 'cancelled') {
+          try {
+            await sendOrderCancellation({
+              to: customerEmail,
+              orderNumber,
+              orderId: orderDbId,
+              cancelDate: nowIso,
+              reason: cancelReason || 'Order cancelled by store administrator',
+              items: targetOrder.order_items || [],
+              total: targetOrder.total,
+              paymentMethod: targetOrder.payment_method,
+              refundAmount: updates.refund_amount || 0,
+              refundId: updates.refund_id || null,
+              shippingAddress: addr,
+            });
+          } catch (emailErr) {
+            console.warn('Admin cancel email failed:', emailErr.message);
+          }
+        } else {
+          const statusLabel = NOTIFY_STATUS_MAP[mappedStatus];
+          const trackingUrl = `${process.env.NEXT_PUBLIC_SITE_URL || 'https://trioenterprises.in'}/track-order?id=${encodeURIComponent(orderNumber)}`;
 
-        let awb = trackingNumber || '';
-        let courier = courierName || '';
-        if (!awb) {
-          const { data: ship } = await supabaseAdmin
-            .from('shipments')
-            .select('awb_number, courier_name')
-            .eq('order_id', orderDbId)
-            .maybeSingle();
-          awb = ship?.awb_number || '';
-          courier = ship?.courier_name || '';
-        }
+          let awb = trackingNumber || '';
+          let courier = courierName || '';
+          if (!awb) {
+            const { data: ship } = await supabaseAdmin
+              .from('shipments')
+              .select('awb_number, courier_name')
+              .eq('order_id', orderDbId)
+              .maybeSingle();
+            awb = ship?.awb_number || '';
+            courier = ship?.courier_name || '';
+          }
 
-        try {
-          await sendShippingUpdate({
-            to: customerEmail,
-            orderNumber,
-            status: statusLabel,
-            trackingNumber: awb,
-            courierName: courier || 'Shiprocket Express',
-            trackingUrl,
-          });
-        } catch (emailErr) {
-          console.error('Status update email failed (non-blocking):', emailErr);
+          try {
+            await sendShippingUpdate({
+              to: customerEmail,
+              orderNumber,
+              status: statusLabel,
+              trackingNumber: awb,
+              courierName: courier || 'Shiprocket Express',
+              trackingUrl,
+            });
+          } catch (emailErr) {
+            console.error('Status update email failed (non-blocking):', emailErr);
+          }
         }
       }
     }

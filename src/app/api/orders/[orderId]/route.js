@@ -103,10 +103,27 @@ export async function GET(request, { params }) {
       auditEvents,
     };
 
+    // 3. Fetch status history audit log
+    const { data: statusHistory } = await supabaseAdmin
+      .from('order_status_history')
+      .select('*')
+      .eq('order_id', order.id)
+      .order('created_at', { ascending: false });
+
+    const currentStatus = (order.status || 'pending').toLowerCase();
+    const cancellable = ['pending_payment', 'pending', 'confirmed', 'processing'].includes(currentStatus);
+
     return NextResponse.json({
       success: true,
       order,
       tracking,
+      statusHistory: statusHistory || [],
+      cancellation: {
+        cancellable,
+        reason: cancellable
+          ? 'Order can be cancelled before packing/logistics handover.'
+          : 'Order has reached packing/logistics dispatch stage. Cancellation is locked.',
+      },
     });
   } catch (err) {
     return NextResponse.json({ error: err.message }, { status: 500 });
