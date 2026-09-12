@@ -66,7 +66,7 @@ export async function POST(request) {
       awb_number: shiprocketResult.awb_code || '',
       courier_name: shiprocketResult.courier_name || '',
       courier_id: shiprocketResult.courier_company_id || null,
-      status: 'confirmed',
+      status: 'pending',
       updated_at: new Date().toISOString(),
     };
 

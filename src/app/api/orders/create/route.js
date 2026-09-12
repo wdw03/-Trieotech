@@ -322,7 +322,7 @@ export async function POST(request) {
             awb_number: awbNumber,
             courier_name: courierName,
             courier_id: shiprocketResult.courier_company_id || null,
-            status: 'confirmed',
+            status: 'pending',
           });
         }
       } catch (shipErr) {

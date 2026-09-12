@@ -151,7 +151,7 @@ export async function PATCH(request, { params }) {
             awb_number: shiprocketResult.awb_code || '',
             courier_name: shiprocketResult.courier_name || '',
             courier_id: shiprocketResult.courier_company_id || null,
-            status: 'packed',
+            status: 'pending',
             updated_at: new Date().toISOString(),
           };
 
@@ -161,10 +161,10 @@ export async function PATCH(request, { params }) {
             await supabaseAdmin.from('shipments').insert(shipmentData);
           }
         } else {
-          // Shipment exists — just update status to packed
+          // Shipment exists — keep it pending until pickup scheduled
           await supabaseAdmin
             .from('shipments')
-            .update({ status: 'packed', updated_at: new Date().toISOString() })
+            .update({ status: 'pending', updated_at: new Date().toISOString() })
             .eq('id', existingShipment.id);
         }
       } catch (packErr) {

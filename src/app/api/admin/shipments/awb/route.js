@@ -87,7 +87,7 @@ export async function POST(request) {
         awb_number: awbCode,
         courier_name: courierName,
         courier_id: awbResult?.response?.data?.courier_company_id || shipment.courier_id || null,
-        status: 'awb_assigned',
+        status: 'pending',
         updated_at: new Date().toISOString(),
       })
       .eq('id', shipment.id);
