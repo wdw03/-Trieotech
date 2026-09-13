@@ -46,10 +46,16 @@ export async function GET(request, { params }) {
   try {
     const { id } = await params;
 
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
     let findQuery = supabaseAdmin
       .from('orders')
-      .select('*, order_items(*), payments(*), shipments(*)')
-      .or(`id.eq.${id},order_number.eq.${id}`);
+      .select('*, order_items(*), payments(*), shipments(*)');
+
+    if (isUuid) {
+      findQuery = findQuery.eq('id', id);
+    } else {
+      findQuery = findQuery.eq('order_number', id);
+    }
 
     const { data: matches, error } = await findQuery;
     let order = matches?.[0];
@@ -136,10 +142,16 @@ export async function PATCH(request, { params }) {
     const nowIso = new Date().toISOString();
 
     // 1. Find target order first (including related items and payments)
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
     let findQuery = supabaseAdmin
       .from('orders')
-      .select('*, order_items(*), payments(*), shipments(*)')
-      .or(`id.eq.${id},order_number.eq.${id}`);
+      .select('*, order_items(*), payments(*), shipments(*)');
+
+    if (isUuid) {
+      findQuery = findQuery.eq('id', id);
+    } else {
+      findQuery = findQuery.eq('order_number', id);
+    }
 
     const { data: orderMatches } = await findQuery;
     let targetOrder = orderMatches?.[0];
@@ -172,15 +184,6 @@ export async function PATCH(request, { params }) {
       if (['delivered', 'returned', 'refunded'].includes(previousStatus)) {
         return NextResponse.json(
           { error: `Cannot cancel order with status "${targetOrder.status}". Please process as a return or refund.` },
-          { status: 400 }
-        );
-      }
-
-      // 2-Step cancellation guard: If an active shipment exists that is NOT cancelled, block order cancellation
-      const existingShipment = Array.isArray(targetOrder.shipments) ? targetOrder.shipments[0] : targetOrder.shipments;
-      if (existingShipment && existingShipment.status && existingShipment.status !== 'cancelled' && existingShipment.status !== 'not_created') {
-        return NextResponse.json(
-          { error: 'Active shipment exists in Shiprocket for this order. Please cancel the shipment first before cancelling the order.' },
           { status: 400 }
         );
       }
@@ -402,7 +405,7 @@ export async function PATCH(request, { params }) {
       pending: 'pending',
       confirmed: 'pending',
       processing: 'pending',
-      packed: 'packed',
+      packed: 'pending',
       pickup_scheduled: 'pickup_scheduled',
       picked_up: 'picked_up',
       shipped: 'shipped',
