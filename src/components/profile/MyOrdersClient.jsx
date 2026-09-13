@@ -825,20 +825,6 @@ export default function MyOrdersClient() {
                     <span>Order Details</span>
                   </button>
 
-                  {/* Cancel Order button — strictly before packed */}
-                  {!order.status?.toLowerCase().includes('cancel') &&
-                    CANCELLABLE_STATUSES.includes((order.rawStatus || order.status || '').toLowerCase()) && (
-                    <button
-                      type="button"
-                      onClick={() => openCancelModal(order)}
-                      className="px-3.5 py-2 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-300 dark:border-rose-800 text-rose-700 dark:text-rose-300 hover:bg-rose-100 dark:hover:bg-rose-900/50 text-xs font-bold flex items-center gap-1.5 transition-colors"
-                      title="Cancel this order before dispatch"
-                    >
-                      <XCircle className="w-3.5 h-3.5 text-rose-600" />
-                      <span>Cancel Order</span>
-                    </button>
-                  )}
-
                   {order.status !== 'Cancelled' && (
                     <>
                       <a
