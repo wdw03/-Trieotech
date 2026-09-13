@@ -115,9 +115,9 @@ export async function GET(request, { params }) {
         }
       }
 
-      // Auto-sync status progression into DB (only when status actually changed and progressed)
-      const rawSrStatus = String(currentActivity || liveScans?.[0]?.current_status || '').toLowerCase().trim();
-      if (shouldQueryCarrier && rawSrStatus) {
+      // Auto-sync status progression into DB (only when real live carrier scan exists)
+      const rawSrStatus = String(liveScans?.[0]?.current_status || liveScans?.[0]?.activity || '').toLowerCase().trim();
+      if (shouldQueryCarrier && rawSrStatus && liveScans.length > 0) {
         let mappedStatus = null;
         if (rawSrStatus.includes('cancel')) mappedStatus = 'cancelled';
         else if (rawSrStatus.includes('deliver') && !rawSrStatus.includes('undeliver') && !rawSrStatus.includes('out')) mappedStatus = 'delivered';

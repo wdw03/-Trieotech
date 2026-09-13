@@ -102,78 +102,90 @@ export default function OrderTrackingClient() {
     const s = (rawStatus || '').toLowerCase();
     const isCancelled = s === 'cancelled';
     const isPacked = ['packed', 'pickup_scheduled', 'picked_up', 'in_transit', 'shipped', 'out_for_delivery', 'delivered'].includes(s);
-    const isShipped = ['picked_up', 'in_transit', 'shipped', 'out_for_delivery', 'delivered'].includes(s);
+    const isDispatched = ['picked_up', 'in_transit', 'shipped', 'out_for_delivery', 'delivered'].includes(s);
+    const isInTransit = ['in_transit', 'shipped', 'out_for_delivery', 'delivered'].includes(s);
     const isOutForDelivery = ['out_for_delivery', 'delivered'].includes(s);
     const isDelivered = s === 'delivered';
 
-    const courier = shipment.courier_name || liveTracking.carrier || 'Express Courier';
-    const awb = shipment.awb_number || liveTracking.awb || '';
-    const loc = liveTracking.currentLocation || shipment.routing_code || 'Faridabad Hub';
+    const courier = shipment.courier_name || liveTracking.carrier || '';
+    const rawAwb = shipment.awb_number || liveTracking.awb || '';
+    const awb = (rawAwb && !rawAwb.startsWith('SR-')) ? rawAwb : '';
+    const loc = liveTracking.currentLocation || shipment.routing_code || 'Trio Central Workshop, Faridabad';
+
+    if (isCancelled) {
+      return [
+        {
+          title: 'Order Placed',
+          desc: 'Order received at workshop',
+          time: fmtDate(orderDate),
+          location: 'Trio Workshop, Faridabad',
+          completed: true,
+        },
+        {
+          title: 'Order Cancelled',
+          desc: 'This order was cancelled.',
+          time: fmtDate(updatedAt),
+          location: 'Customer Support Hub',
+          completed: true,
+          isCancelled: true,
+        },
+      ];
+    }
 
     const milestones = [
       {
-        title: 'Order Confirmed',
-        desc: 'Order received and verified at workshop',
+        title: s === 'processing' ? 'Order Placed & Processing' : 'Order Confirmed',
+        desc: s === 'processing'
+          ? 'Payment verified. Order is being processed by our workshop team.'
+          : 'Order verified and confirmed at workshop',
         time: fmtDate(orderDate),
         location: 'Trio Workshop, Faridabad / Jaipur',
         completed: true,
       },
       {
         title: 'Packed & Quality Inspected',
-        desc: 'Inspected for craftsmanship and packed securely with protective seal',
-        time: isPacked ? fmtDate(updatedAt) : '',
-        location: 'Faridabad Hub',
+        desc: isPacked
+          ? 'Inspected for craftsmanship and packed securely with protective seal'
+          : (s === 'confirmed' ? 'Scheduled for quality check and artisan packaging' : 'Awaiting confirmation and packaging'),
+        time: isPacked ? fmtDate(shipment.created_at || (s === 'packed' ? updatedAt : '')) : '',
+        location: 'Faridabad Workshop Hub',
         completed: isPacked,
       },
       {
         title: 'Dispatched via Courier',
-        desc: awb
-          ? `Handed over to ${courier} (AWB: ${awb})`
-          : `Assigned to ${courier}`,
-        time: isShipped ? fmtDate(shipment.created_at || updatedAt) : '',
+        desc: isDispatched
+          ? (awb ? `Handed over to ${courier || 'Courier Partner'} (AWB: ${awb})` : `Handed over to ${courier || 'Courier Partner'}`)
+          : (isPacked ? `Shipment created with ${courier || 'carrier'}. Awaiting courier pickup.` : 'Carrier will be assigned after packaging'),
+        time: isDispatched ? fmtDate(shipment.updated_at || (s === 'picked_up' ? updatedAt : '')) : '',
         location: 'Faridabad Logistics Center',
-        completed: isShipped,
+        completed: isDispatched,
       },
       {
         title: 'In Transit / Hub Movement',
-        desc: isShipped
-          ? (liveTracking.currentActivity || `Package moving through ${loc}`)
-          : 'Package will move to nearest sorting facility',
-        time: isShipped ? (liveTracking.liveScans?.[0]?.date || fmtDate(updatedAt)) : '',
-        location: loc,
-        completed: isShipped,
+        desc: isInTransit
+          ? (liveTracking.currentActivity || `Package in transit via ${loc}`)
+          : 'Package will move to nearest sorting facility once dispatched',
+        time: isInTransit ? (liveTracking.liveScans?.[0]?.date || (s === 'in_transit' ? fmtDate(updatedAt) : '')) : '',
+        location: isInTransit ? loc : 'Logistics Sorting Network',
+        completed: isInTransit,
       },
       {
         title: 'Out for Delivery',
         desc: isOutForDelivery
-          ? 'Package is with delivery executive for final doorstep handover'
-          : 'Package will reach your delivery station soon',
+          ? 'Package is with delivery executive for final doorstep handover today'
+          : 'Package will reach your local delivery station soon',
         time: isOutForDelivery ? fmtDate(updatedAt) : '',
-        location: 'Local Delivery Hub',
+        location: isOutForDelivery ? (liveTracking.currentLocation || 'Local Delivery Station') : 'Local Delivery Hub',
         completed: isOutForDelivery,
       },
       {
         title: 'Delivered',
         desc: isDelivered ? 'Handed over safely to patron' : 'Expected doorstep delivery',
         time: isDelivered ? fmtDate(shipment.delivered_at || updatedAt) : '',
-        location: 'Patron Destination',
+        location: isDelivered ? (liveTracking.currentLocation || 'Patron Destination') : 'Patron Destination',
         completed: isDelivered,
       },
     ];
-
-    if (isCancelled) {
-      return [
-        milestones[0],
-        {
-          title: 'Order Cancelled',
-          desc: 'This order was cancelled by request.',
-          time: fmtDate(updatedAt),
-          location: 'Customer Service Hub',
-          completed: true,
-          isCancelled: true,
-        },
-      ];
-    }
 
     return milestones;
   };
@@ -221,16 +233,19 @@ export default function OrderTrackingClient() {
             trk
           );
 
+          const rawAwb = trk.awb || ship.awb_number || '';
+          const cleanAwb = (rawAwb && !rawAwb.startsWith('SR-') && rawAwb !== ord.orderNumber && rawAwb !== ord.id) ? rawAwb : '';
+
           setFoundOrder({
             id: ord.orderNumber || ord.id || clean,
             dbId: ord.id,
             orderNumber: ord.orderNumber || ord.id || clean,
             status: displayStatus,
             rawStatus,
-            carrier: trk.carrier || ship.courier_name || 'Shiprocket Express',
-            trackingNumber: trk.awb || ship.awb_number || clean,
-            currentLocation: trk.currentLocation || 'Faridabad Central Hub',
-            currentActivity: trk.currentActivity || 'Package processing in progress',
+            carrier: cleanAwb ? (trk.carrier || ship.courier_name || 'Shiprocket Express') : (['packed', 'pickup_scheduled'].includes(rawStatus) ? (ship.courier_name || 'Shiprocket Express') : 'Awaiting Dispatch'),
+            trackingNumber: cleanAwb,
+            currentLocation: trk.currentLocation || 'Trio Enterprises Central Workshop, Faridabad',
+            currentActivity: trk.currentActivity || 'Order verified and in processing',
             estimatedDelivery: trk.etd
               ? new Date(trk.etd).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })
               : '3 - 5 Business Days',
@@ -280,16 +295,19 @@ export default function OrderTrackingClient() {
             trk
           );
 
+          const rawAwb = trk.awb || ship.awb_number || '';
+          const cleanAwb = (rawAwb && !rawAwb.startsWith('SR-') && rawAwb !== ord.order_number && rawAwb !== ord.id) ? rawAwb : '';
+
           setFoundOrder({
             id: ord.order_number || ord.id,
             dbId: ord.id,
             orderNumber: ord.order_number || ord.id,
             status: displayStatus,
             rawStatus,
-            carrier: trk.carrier || ship.courier_name || 'Shiprocket Express',
-            trackingNumber: trk.awb || ship.awb_number || ord.order_number || clean,
-            currentLocation: trk.currentLocation || 'Faridabad Central Hub',
-            currentActivity: trk.currentActivity || 'Package in transit',
+            carrier: cleanAwb ? (trk.carrier || ship.courier_name || 'Shiprocket Express') : (['packed', 'pickup_scheduled'].includes(rawStatus) ? (ship.courier_name || 'Shiprocket Express') : 'Awaiting Dispatch'),
+            trackingNumber: cleanAwb,
+            currentLocation: trk.currentLocation || 'Trio Enterprises Central Workshop, Faridabad',
+            currentActivity: trk.currentActivity || 'Order verified and in processing',
             estimatedDelivery: ord.estimated_delivery
               ? new Date(ord.estimated_delivery).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })
               : '3 - 5 Business Days',
@@ -325,16 +343,19 @@ export default function OrderTrackingClient() {
           {}
         );
 
+        const rawAwb = localMatch.trackingNumber || '';
+        const cleanAwb = (rawAwb && !rawAwb.startsWith('SR-') && rawAwb !== localMatch.id && rawAwb !== localMatch.order_number) ? rawAwb : '';
+
         setFoundOrder({
           id: localMatch.order_number || localMatch.id,
           dbId: localMatch.dbId,
           orderNumber: localMatch.order_number || localMatch.id,
           status: localMatch.status || 'Processing',
           rawStatus: localMatch.rawStatus || 'pending',
-          carrier: localMatch.carrier || 'Shiprocket Express',
-          trackingNumber: localMatch.trackingNumber || localMatch.id,
-          currentLocation: 'Faridabad Workshop Hub',
-          currentActivity: 'Order registered in logistics system',
+          carrier: cleanAwb ? (localMatch.carrier || 'Shiprocket Express') : 'Awaiting Dispatch',
+          trackingNumber: cleanAwb,
+          currentLocation: 'Trio Enterprises Central Workshop, Faridabad',
+          currentActivity: 'Order received and in processing',
           estimatedDelivery: '3 - 5 Business Days',
           deliveredDate: localMatch.rawStatus === 'delivered' ? fmtDate(localMatch.updated_at) : null,
           items: localMatch.items || [],

@@ -88,8 +88,35 @@ export async function GET(request) {
       liveTracking?.tracking_data?.shipment_track ||
       [];
 
-    let currentLocation = 'Trio Enterprises Central Warehouse, Faridabad';
-    let currentActivity = order?.status === 'delivered' ? 'Delivered safely' : 'Package in transit';
+    const orderStatus = (order?.status || 'processing').toLowerCase();
+    let currentLocation = 'Trio Enterprises Central Workshop, Faridabad';
+    let currentActivity = 'Order verified and in processing';
+
+    if (orderStatus === 'delivered') {
+      currentLocation = order?.shipping_address?.city ? `${order.shipping_address.city} Destination` : 'Patron Destination';
+      currentActivity = 'Delivered safely to patron';
+    } else if (orderStatus === 'out_for_delivery') {
+      currentLocation = order?.shipping_address?.city ? `${order.shipping_address.city} Delivery Hub` : 'Local Delivery Hub';
+      currentActivity = 'Out for delivery today with courier partner';
+    } else if (orderStatus === 'in_transit' || orderStatus === 'shipped') {
+      currentLocation = 'In Transit - Logistics Network';
+      currentActivity = 'Package moving through sorting facility';
+    } else if (orderStatus === 'picked_up') {
+      currentLocation = 'Faridabad Logistics Center';
+      currentActivity = 'Handed over to courier partner';
+    } else if (orderStatus === 'packed' || orderStatus === 'pickup_scheduled') {
+      currentLocation = 'Trio Workshop & Warehouse, Faridabad';
+      currentActivity = 'Order packed & quality inspected. Awaiting courier pickup.';
+    } else if (orderStatus === 'confirmed') {
+      currentLocation = 'Trio Workshop, Faridabad';
+      currentActivity = 'Order confirmed. Scheduled for quality check and packaging.';
+    } else if (orderStatus === 'processing') {
+      currentLocation = 'Trio Workshop, Faridabad';
+      currentActivity = 'Payment verified. Order is being processed by our team.';
+    } else if (orderStatus === 'cancelled') {
+      currentLocation = 'Customer Support Hub';
+      currentActivity = 'Order has been cancelled.';
+    }
 
     if (liveScans.length > 0) {
       currentLocation = liveScans[0].location || liveScans[0].city || currentLocation;
@@ -99,15 +126,15 @@ export async function GET(request) {
       currentActivity = events[0].activity || currentActivity;
     }
 
-    // Auto-sync status progression from live Shiprocket scans into DB
+    // Auto-sync status progression ONLY from real live Shiprocket scans into DB
     const rawSrStatus = String(
       liveTracking?.tracking_data?.shipment_track?.[0]?.current_status ||
       liveTracking?.tracking_data?.shipment_status ||
-      currentActivity ||
+      (liveScans.length > 0 ? liveScans[0].activity || liveScans[0]['sr-status-label'] : '') ||
       ''
     ).toLowerCase().trim();
 
-    if (rawSrStatus && order) {
+    if (rawSrStatus && order && (liveScans.length > 0 || liveTracking?.tracking_data)) {
       let mappedStatus = null;
       if (rawSrStatus.includes('cancel')) {
         mappedStatus = 'cancelled';
