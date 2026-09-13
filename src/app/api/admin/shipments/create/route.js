@@ -1,11 +1,12 @@
 export const dynamic = 'force-dynamic';
 import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '../../../../../lib/supabase/admin';
-import { createOrderAndAssignAWB } from '../../../../../lib/shiprocket';
+import { createShiprocketOrder } from '../../../../../lib/shiprocket';
 
 /**
  * POST: Create a Shiprocket shipment for an existing order
  * Admin action — idempotent (won't create duplicate if shipment already exists)
+ * Creates Shiprocket order without assigning AWB yet (saves courier freight balance).
  */
 export async function POST(request) {
   try {
@@ -49,7 +50,10 @@ export async function POST(request) {
         success: true,
         alreadyExists: true,
         shipment: existingShipment,
-        labelUrl: existingShipment.label_url || `/api/admin/shipments/label?orderId=${encodeURIComponent(order.order_number)}`,
+        shiprocketOrderId: existingShipment.shiprocket_order_id,
+        shipmentId: existingShipment.shiprocket_shipment_id,
+        awbNumber: existingShipment.awb_number || '',
+        courierName: existingShipment.courier_name || 'Awaiting AWB Assignment',
         message: 'Shipment already exists for this order',
       });
     }
@@ -57,8 +61,8 @@ export async function POST(request) {
     const isCod = order.payment_method === 'cod';
     const codCollectable = isCod ? Number(order.total || 0) : 0;
 
-    // 3. Create Shiprocket order + attempt live AWB assignment
-    const shiprocketResult = await createOrderAndAssignAWB({
+    // 3. Create Shiprocket order WITHOUT assigning AWB yet (no courier wallet charge)
+    const shiprocketResult = await createShiprocketOrder({
       orderNumber: order.order_number,
       orderDate: new Date(order.created_at || Date.now()).toISOString().split('T')[0],
       billingAddress: order.shipping_address,
@@ -70,15 +74,15 @@ export async function POST(request) {
       shippingCharges: order.shipping_cost,
     });
 
-    // 4. Save/update shipment record in DB with financial & routing fields
+    // 4. Save/update shipment record in DB with financial & routing fields (AWB unassigned)
     const shipmentData = {
       order_id: order.id,
       shiprocket_order_id: String(shiprocketResult.order_id || ''),
       shiprocket_shipment_id: String(shiprocketResult.shipment_id || ''),
-      awb_number: shiprocketResult.awb_code || '',
-      courier_name: shiprocketResult.courier_name || '',
-      courier_id: shiprocketResult.courier_company_id || null,
-      routing_code: shiprocketResult.routing_code || '',
+      awb_number: '',
+      courier_name: 'Awaiting AWB Assignment',
+      courier_id: null,
+      routing_code: '',
       cod_collectable: codCollectable,
       status: 'pending',
       updated_at: new Date().toISOString(),
@@ -108,8 +112,8 @@ export async function POST(request) {
         shipment_id: savedShipment.id,
         status: 'packed',
         status_code: 'ORDER_PACKED',
-        activity: `Shiprocket order created & packed (${savedShipment.awb_number ? `AWB: ${savedShipment.awb_number}` : 'AWB assignment pending'})`,
-        location: 'Faridabad Hub',
+        activity: `Shiprocket order created & packed (Shipment ID: ${savedShipment.shiprocket_shipment_id}). AWB assignment pending.`,
+        location: 'Faridabad Workshop Hub',
         raw_data: { shiprocketResult },
       });
     }
@@ -131,7 +135,7 @@ export async function POST(request) {
         to_status: 'packed',
         source: 'admin',
         changed_by: 'admin',
-        reason: `Shipment created with Shiprocket by admin (AWB: ${shiprocketResult.awb_code || 'Pending'})`,
+        reason: `Shipment created in Shiprocket (Shipment ID: ${shiprocketResult.shipment_id}). Ready for AWB assignment.`,
       }).catch(() => {});
     }
 
@@ -140,9 +144,9 @@ export async function POST(request) {
       shipment: savedShipment,
       shiprocketOrderId: shiprocketResult.order_id,
       shipmentId: shiprocketResult.shipment_id,
-      awbNumber: shiprocketResult.awb_code || '',
-      courierName: shiprocketResult.courier_name || '',
-      labelUrl: `/api/admin/shipments/label?orderId=${encodeURIComponent(order.order_number)}`,
+      awbNumber: '',
+      courierName: 'Awaiting AWB Assignment',
+      message: 'Shipment created successfully in Shiprocket without AWB. Click Assign AWB to assign courier.',
     });
   } catch (err) {
     console.error('Create shipment error:', err);

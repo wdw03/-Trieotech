@@ -35,9 +35,15 @@ function computeAvailableActions(order, shipment) {
   const hasShipment = !!(shipment?.shiprocket_order_id);
   const hasAwb = !!(shipment?.awb_number && !shipment.awb_number.startsWith('SR-') && shipment.awb_number.length > 5);
 
-  // If order or shipment is cancelled, NEVER show create_shipment or assign_awb!
-  if (orderStatus === 'cancelled' || status === 'cancelled') {
+  // If order is cancelled, only view_history
+  if (orderStatus === 'cancelled') {
     actions.push('view_history');
+    return actions;
+  }
+
+  // If shipment is cancelled, admin can cancel the order or create a new shipment
+  if (status === 'cancelled') {
+    actions.push('cancel_order', 'create_shipment', 'view_history');
     return actions;
   }
 

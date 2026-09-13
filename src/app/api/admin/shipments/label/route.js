@@ -1,24 +1,29 @@
 export const dynamic = 'force-dynamic';
 import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '../../../../../lib/supabase/admin';
-import { generateLabel, createOrderAndAssignAWB, generateAWB } from '../../../../../lib/shiprocket';
+import { generateLabel } from '../../../../../lib/shiprocket';
 
 /**
- * Helper: Ensure an order has a valid Shiprocket shipment & real AWB assigned
+ * Helper: Find existing Shiprocket shipment & verify real AWB assigned
+ * Does NOT auto-create shipments or auto-assign AWBs to prevent unauthorized charges.
  */
-async function ensureShipmentAndAwb(orderIdOrNumber) {
-  if (!orderIdOrNumber) return null;
+async function getExistingShipmentAndAwb(orderIdOrNumber) {
+  if (!orderIdOrNumber) return { error: 'Order ID is required' };
 
-  // 1. Find order + order_items
+  // 1. Find order
   const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(orderIdOrNumber);
-  let orderQuery = supabaseAdmin.from('orders').select('*, order_items(*)');
+  let orderQuery = supabaseAdmin.from('orders').select('id, order_number, status');
   if (isUuid) {
     orderQuery = orderQuery.eq('id', orderIdOrNumber);
   } else {
     orderQuery = orderQuery.eq('order_number', orderIdOrNumber);
   }
   const { data: order } = await orderQuery.maybeSingle();
-  if (!order) return null;
+  if (!order) return { error: `Order ${orderIdOrNumber} not found` };
+
+  if (order.status === 'cancelled') {
+    return { error: `Order ${order.order_number || orderIdOrNumber} is cancelled. Cannot generate or print label for cancelled orders.` };
+  }
 
   // 2. Check existing shipment in DB
   let { data: shipment } = await supabaseAdmin
@@ -27,82 +32,16 @@ async function ensureShipmentAndAwb(orderIdOrNumber) {
     .eq('order_id', order.id)
     .maybeSingle();
 
-  // 3. If no shipment or missing shiprocket_shipment_id, create it live in Shiprocket
   if (!shipment || !shipment.shiprocket_shipment_id || shipment.shiprocket_shipment_id === '') {
-    try {
-      const isCod = order.payment_method === 'cod';
-      const shiprocketResult = await createOrderAndAssignAWB({
-        orderNumber: order.order_number,
-        orderDate: new Date(order.created_at || Date.now()).toISOString().split('T')[0],
-        billingAddress: order.shipping_address,
-        shippingAddress: order.shipping_address,
-        items: order.order_items,
-        paymentMethod: isCod ? 'cod' : 'prepaid',
-        subtotal: order.subtotal,
-        discount: order.discount,
-        shippingCharges: order.shipping_cost,
-      });
-
-      const shipmentData = {
-        order_id: order.id,
-        shiprocket_order_id: String(shiprocketResult.order_id || ''),
-        shiprocket_shipment_id: String(shiprocketResult.shipment_id || ''),
-        awb_number: shiprocketResult.awb_code || '',
-        courier_name: shiprocketResult.courier_name || '',
-        courier_id: shiprocketResult.courier_company_id || null,
-        routing_code: shiprocketResult.routing_code || '',
-        cod_collectable: isCod ? Number(order.total || 0) : 0,
-        status: 'pending',
-        updated_at: new Date().toISOString(),
-      };
-
-      if (shipment) {
-        const { data: updated } = await supabaseAdmin
-          .from('shipments')
-          .update(shipmentData)
-          .eq('id', shipment.id)
-          .select()
-          .single();
-        shipment = updated;
-      } else {
-        const { data: inserted } = await supabaseAdmin
-          .from('shipments')
-          .insert(shipmentData)
-          .select()
-          .single();
-        shipment = inserted;
-      }
-    } catch (createErr) {
-      console.warn(`Shiprocket order auto-creation notice for ${order.order_number}:`, createErr.message);
-    }
+    return { error: `Shipment has not been created yet for order ${order.order_number || orderIdOrNumber}. Please click "Create Shipment" first.` };
   }
 
-  // 4. If shipment has no AWB or placeholder, assign real courier AWB in Shiprocket
-  const currentAwb = shipment?.awb_number || '';
-  if (shipment?.shiprocket_shipment_id && (!currentAwb || currentAwb.startsWith('SR-') || currentAwb.length < 5)) {
-    try {
-      const awbRes = await generateAWB(shipment.shiprocket_shipment_id);
-      const resData = awbRes?.response?.data || awbRes;
-      if (resData?.awb_code) {
-        const { data: updated } = await supabaseAdmin
-          .from('shipments')
-          .update({
-            awb_number: resData.awb_code,
-            courier_name: resData.courier_name || shipment.courier_name,
-            routing_code: resData.routing_code || shipment.routing_code,
-            updated_at: new Date().toISOString(),
-          })
-          .eq('id', shipment.id)
-          .select()
-          .single();
-        shipment = updated || shipment;
-      }
-    } catch (awbErr) {
-      console.warn(`Shiprocket AWB auto-assignment notice for ${order.order_number}:`, awbErr.message);
-    }
+  const currentAwb = shipment.awb_number || '';
+  if (!currentAwb || currentAwb.startsWith('SR-') || currentAwb.length < 5) {
+    return { error: `AWB has not been assigned yet for order ${order.order_number || orderIdOrNumber}. Please click "Assign AWB" first before printing label.` };
   }
 
-  return shipment;
+  return { shipment };
 }
 
 /**
@@ -136,8 +75,11 @@ export async function GET(request) {
     }
 
     for (const ordId of orderIds) {
-      const sh = await ensureShipmentAndAwb(ordId);
-      if (sh) resolvedShipments.push(sh);
+      const res = await getExistingShipmentAndAwb(ordId);
+      if (res.error) {
+        return NextResponse.json({ error: res.error }, { status: 400 });
+      }
+      if (res.shipment) resolvedShipments.push(res.shipment);
     }
 
     if (!resolvedShipments.length) {
@@ -233,12 +175,15 @@ export async function POST(request) {
     }
 
     for (const ordId of orderIds) {
-      const sh = await ensureShipmentAndAwb(ordId);
-      if (sh) resolvedShipments.push(sh);
+      const res = await getExistingShipmentAndAwb(ordId);
+      if (res.error) {
+        return NextResponse.json({ error: res.error }, { status: 400 });
+      }
+      if (res.shipment) resolvedShipments.push(res.shipment);
     }
 
     if (!resolvedShipments.length) {
-      return NextResponse.json({ error: 'No valid shipments found to generate label' }, { status: 404 });
+      return NextResponse.json({ error: 'No valid shipments found with assigned AWB to generate label' }, { status: 404 });
     }
 
     // Collect valid numeric Shiprocket shipment IDs

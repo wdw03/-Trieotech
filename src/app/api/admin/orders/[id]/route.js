@@ -2,7 +2,7 @@ export const dynamic = 'force-dynamic';
 import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '../../../../../lib/supabase/admin';
 import { sendShippingUpdate, sendOrderCancellation } from '../../../../../lib/resend';
-import { createOrderAndAssignAWB, requestPickup as shiprocketRequestPickup, cancelShipment, cancelShiprocketComplete } from '../../../../../lib/shiprocket';
+import { createShiprocketOrder, createOrderAndAssignAWB, requestPickup as shiprocketRequestPickup, cancelShipment, cancelShiprocketComplete } from '../../../../../lib/shiprocket';
 import { createRefund } from '../../../../../lib/razorpay';
 
 // Map dashboard status to DB status
@@ -172,6 +172,15 @@ export async function PATCH(request, { params }) {
       if (['delivered', 'returned', 'refunded'].includes(previousStatus)) {
         return NextResponse.json(
           { error: `Cannot cancel order with status "${targetOrder.status}". Please process as a return or refund.` },
+          { status: 400 }
+        );
+      }
+
+      // 2-Step cancellation guard: If an active shipment exists that is NOT cancelled, block order cancellation
+      const existingShipment = Array.isArray(targetOrder.shipments) ? targetOrder.shipments[0] : targetOrder.shipments;
+      if (existingShipment && existingShipment.status && existingShipment.status !== 'cancelled' && existingShipment.status !== 'not_created') {
+        return NextResponse.json(
+          { error: 'Active shipment exists in Shiprocket for this order. Please cancel the shipment first before cancelling the order.' },
           { status: 400 }
         );
       }
@@ -453,7 +462,8 @@ export async function PATCH(request, { params }) {
         const codCollectable = isCod ? Number(updatedOrder.total || 0) : 0;
 
         if (!existingShipment?.shiprocket_order_id) {
-          const shiprocketResult = await createOrderAndAssignAWB({
+          // IMPORTANT: Only create order in Shiprocket, DO NOT assign AWB or deduct freight wallet!
+          const shiprocketResult = await createShiprocketOrder({
             orderNumber: updatedOrder.order_number,
             orderDate: new Date(updatedOrder.created_at || Date.now()).toISOString().split('T')[0],
             billingAddress: updatedOrder.shipping_address,
@@ -469,10 +479,10 @@ export async function PATCH(request, { params }) {
             order_id: orderDbId,
             shiprocket_order_id: String(shiprocketResult.order_id || ''),
             shiprocket_shipment_id: String(shiprocketResult.shipment_id || ''),
-            awb_number: shiprocketResult.awb_code || '',
-            courier_name: shiprocketResult.courier_name || '',
-            courier_id: shiprocketResult.courier_company_id || null,
-            routing_code: shiprocketResult.routing_code || '',
+            awb_number: '',
+            courier_name: 'Awaiting AWB Assignment',
+            courier_id: null,
+            routing_code: '',
             cod_collectable: codCollectable,
             status: 'packed',
             updated_at: nowIso,
@@ -491,7 +501,7 @@ export async function PATCH(request, { params }) {
               shipment_id: savedId,
               status: 'packed',
               status_code: 'PACKED',
-              activity: `Order packed & shipment initialized (AWB: ${shiprocketResult.awb_code || 'Pending'})`,
+              activity: `Order packed & registered in Shiprocket (Order ID: ${shiprocketResult.order_id || 'Pending'}). Courier AWB assignment pending.`,
               location: 'Packing Station',
             });
           }
