@@ -197,19 +197,21 @@ export async function GET(request) {
             await supabaseAdmin.from('shipments').update(shipUpdates).eq('id', shipment.id);
           }
 
-          await supabaseAdmin.from('order_status_history').insert({
-            order_id: order.id,
-            from_status: order.status || 'pending',
-            to_status: mappedStatus,
-            source: 'carrier_tracking_sync',
-            changed_by: 'shiprocket',
-            reason: `Live carrier sync: ${mappedStatus.replace(/_/g, ' ')} (${currentLocation})`,
-            metadata: {
-              rawSrStatus,
-              awb: targetAwb,
-              location: currentLocation,
-            },
-          }).catch(() => {});
+          try {
+            await supabaseAdmin.from('order_status_history').insert({
+              order_id: order.id,
+              from_status: order.status || 'pending',
+              to_status: mappedStatus,
+              source: 'carrier_tracking_sync',
+              changed_by: 'shiprocket',
+              reason: `Live carrier sync: ${mappedStatus.replace(/_/g, ' ')} (${currentLocation})`,
+              metadata: {
+                rawSrStatus,
+                awb: targetAwb,
+                location: currentLocation,
+              },
+            });
+          } catch (_) {}
 
           order.status = mappedStatus;
           if (shipment) shipment.status = mappedStatus;

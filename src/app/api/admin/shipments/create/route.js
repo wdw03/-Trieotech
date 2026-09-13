@@ -129,14 +129,16 @@ export async function POST(request) {
         })
         .eq('id', order.id);
 
-      await supabaseAdmin.from('order_status_history').insert({
-        order_id: order.id,
-        from_status: order.status,
-        to_status: 'packed',
-        source: 'admin',
-        changed_by: 'admin',
-        reason: `Shipment created in Shiprocket (Shipment ID: ${shiprocketResult.shipment_id}). Ready for AWB assignment.`,
-      }).catch(() => {});
+      try {
+        await supabaseAdmin.from('order_status_history').insert({
+          order_id: order.id,
+          from_status: order.status,
+          to_status: 'packed',
+          source: 'admin',
+          changed_by: 'admin',
+          reason: `Shipment created in Shiprocket (Shipment ID: ${shiprocketResult.shipment_id}). Ready for AWB assignment.`,
+        });
+      } catch (_) {}
     }
 
     return NextResponse.json({

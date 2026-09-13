@@ -299,14 +299,16 @@ export async function PATCH(request, { params }) {
             })
             .eq('id', existingShipment.id);
 
-          await supabaseAdmin.from('shipment_events').insert({
-            shipment_id: existingShipment.id,
-            status: 'cancelled',
-            status_code: 'CANCELLED_BY_ADMIN',
-            activity: `Shipment cancelled by admin: ${cancelReason || 'Order cancelled'}`,
-            location: 'Admin Panel',
-            raw_data: { adminUser: adminUser || 'admin', cancelReason },
-          }).catch(() => {});
+          try {
+            await supabaseAdmin.from('shipment_events').insert({
+              shipment_id: existingShipment.id,
+              status: 'cancelled',
+              status_code: 'CANCELLED_BY_ADMIN',
+              activity: `Shipment cancelled by admin: ${cancelReason || 'Order cancelled'}`,
+              location: 'Admin Panel',
+              raw_data: { adminUser: adminUser || 'admin', cancelReason },
+            });
+          } catch (_) {}
         }
       } catch (cancelErr) {
         console.warn('Admin cancel: Shiprocket shipment cancel warning:', cancelErr.message);
@@ -438,13 +440,15 @@ export async function PATCH(request, { params }) {
         .maybeSingle();
 
       if (currentShipment?.id) {
-        await supabaseAdmin.from('shipment_events').insert({
-          shipment_id: currentShipment.id,
-          status: targetShipmentStatus,
-          status_code: targetShipmentStatus.toUpperCase(),
-          activity: `Status updated to ${mappedStatus.replace(/_/g, ' ')} via admin panel`,
-          location: targetShipmentStatus === 'delivered' ? 'Doorstep Handover' : targetShipmentStatus === 'out_for_delivery' ? 'Local Hub' : 'Logistics Desk',
-        }).catch(() => {});
+        try {
+          await supabaseAdmin.from('shipment_events').insert({
+            shipment_id: currentShipment.id,
+            status: targetShipmentStatus,
+            status_code: targetShipmentStatus.toUpperCase(),
+            activity: `Status updated to ${mappedStatus.replace(/_/g, ' ')} via admin panel`,
+            location: targetShipmentStatus === 'delivered' ? 'Doorstep Handover' : targetShipmentStatus === 'out_for_delivery' ? 'Local Hub' : 'Logistics Desk',
+          });
+        } catch (_) {}
       }
     }
 
@@ -484,7 +488,7 @@ export async function PATCH(request, { params }) {
             courier_id: null,
             routing_code: '',
             cod_collectable: codCollectable,
-            status: 'packed',
+            status: 'pending',
             updated_at: nowIso,
           };
 

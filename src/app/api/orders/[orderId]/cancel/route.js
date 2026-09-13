@@ -120,14 +120,16 @@ async function processCancellation(order, user, request) {
           })
           .eq('id', sh.id);
 
-        await supabaseAdmin.from('shipment_events').insert({
-          shipment_id: sh.id,
-          status: 'cancelled',
-          status_code: 'CANCELLED_BY_CUSTOMER',
-          activity: `Order cancelled by customer. Reason: ${reason}`,
-          location: 'Customer Service',
-          raw_data: { cancelledBy: user?.id || 'customer', reason },
-        }).catch(() => {});
+        try {
+          await supabaseAdmin.from('shipment_events').insert({
+            shipment_id: sh.id,
+            status: 'cancelled',
+            status_code: 'CANCELLED_BY_CUSTOMER',
+            activity: `Order cancelled by customer. Reason: ${reason}`,
+            location: 'Customer Service',
+            raw_data: { cancelledBy: user?.id || 'customer', reason },
+          });
+        } catch (_) {}
       } catch (shipErr) {
         console.warn('Shiprocket cancellation notice:', shipErr.message);
       }

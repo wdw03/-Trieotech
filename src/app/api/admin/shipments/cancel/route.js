@@ -120,27 +120,31 @@ export async function POST(request) {
         })
         .eq('id', targetOrderId);
 
-      await supabaseAdmin.from('order_status_history').insert({
-        order_id: targetOrderId,
-        from_status: 'packed',
-        to_status: 'processing',
-        source: 'admin',
-        changed_by: 'admin',
-        reason: `Shipment cancelled: ${reason}. Order status reverted to processing.`,
-      }).catch(() => {});
+      try {
+        await supabaseAdmin.from('order_status_history').insert({
+          order_id: targetOrderId,
+          from_status: 'packed',
+          to_status: 'processing',
+          source: 'admin',
+          changed_by: 'admin',
+          reason: `Shipment cancelled: ${reason}. Order status reverted to processing.`,
+        });
+      } catch (_) {}
     }
 
     // 4. Log in shipment_events
-    await supabaseAdmin
-      .from('shipment_events')
-      .insert({
-        shipment_id: shipment.id,
-        status: 'cancelled',
-        status_code: 'CANCELLED_BY_ADMIN',
-        activity: `Shipment cancelled by admin: ${reason}`,
-        location: 'Admin Panel',
-        raw_data: { reason, shiprocketResult: shiprocketCancelResult },
-      }).catch(() => {});
+    try {
+      await supabaseAdmin
+        .from('shipment_events')
+        .insert({
+          shipment_id: shipment.id,
+          status: 'cancelled',
+          status_code: 'CANCELLED_BY_ADMIN',
+          activity: `Shipment cancelled by admin: ${reason}`,
+          location: 'Admin Panel',
+          raw_data: { reason, shiprocketResult: shiprocketCancelResult },
+        });
+    } catch (_) {}
 
     return NextResponse.json({
       success: true,
