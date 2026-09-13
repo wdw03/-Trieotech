@@ -31,28 +31,37 @@ const STATUS_MAP = {
 function computeAvailableActions(order, shipment) {
   const actions = [];
   const status = (shipment?.status || '').toLowerCase();
+  const orderStatus = (order?.status || '').toLowerCase();
   const hasShipment = !!(shipment?.shiprocket_order_id);
   const hasAwb = !!(shipment?.awb_number && !shipment.awb_number.startsWith('SR-') && shipment.awb_number.length > 5);
 
-  if (!hasShipment) {
-    actions.push('create_shipment');
-    return actions;
-  }
-
-  if (status === 'cancelled') {
+  // If order or shipment is cancelled, NEVER show create_shipment or assign_awb!
+  if (orderStatus === 'cancelled' || status === 'cancelled') {
     actions.push('view_history');
     return actions;
   }
 
+  // If order is still in processing, Admin must confirm it first (or cancel)
+  if (orderStatus === 'processing' || orderStatus === 'new') {
+    actions.push('confirm_order', 'cancel_order');
+    return actions;
+  }
+
+  // If order is confirmed and not yet in Shiprocket, allow creating shipment
+  if (!hasShipment) {
+    actions.push('create_shipment', 'cancel_order');
+    return actions;
+  }
+
   if (!hasAwb) {
-    actions.push('assign_awb', 'cancel_shipment');
+    actions.push('assign_awb', 'cancel_shipment', 'cancel_order');
     return actions;
   }
 
   // Once AWB is available, official Shiprocket labels can be printed
-  actions.push('print_label', 'print_shiprocket_label');
+  actions.push('print_label', 'print_shiprocket_label', 'cancel_order');
 
-  if (status === 'pending') {
+  if (status === 'pending' || status === 'packed') {
     actions.push('request_pickup', 'view_couriers', 'cancel_shipment');
   } else if (status === 'pickup_scheduled') {
     actions.push('generate_manifest', 'track_shipment', 'cancel_shipment');

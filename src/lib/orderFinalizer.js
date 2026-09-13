@@ -99,8 +99,8 @@ export async function finalizePaidOrder({
       return { success: false, error: 'Order not found for finalization' };
     }
 
-    // Idempotency: If already confirmed, return existing details
-    if (['confirmed', 'processing', 'packed', 'shipped', 'delivered'].includes((order.status || '').toLowerCase())) {
+    // Idempotency: If already processing or beyond, return existing details
+    if (['processing', 'confirmed', 'packed', 'shipped', 'delivered'].includes((order.status || '').toLowerCase())) {
       const { data: existingShipment } = await supabaseAdmin
         .from('shipments')
         .select('*')
@@ -116,11 +116,11 @@ export async function finalizePaidOrder({
       };
     }
 
-    // 1. Update order status to confirmed
+    // 1. Update order status to processing (Payment verified; ready for admin confirmation & dispatch)
     const { data: updatedOrder, error: updateOrderErr } = await supabaseAdmin
       .from('orders')
       .update({
-        status: 'confirmed',
+        status: 'processing',
         payment_status: 'paid',
         updated_at: new Date().toISOString(),
       })
@@ -228,51 +228,9 @@ export async function finalizePaidOrder({
       } catch (_) {}
     }
 
-    // 6. Create Shiprocket order and generate live AWB
+    // 6. Shipment will be initiated manually by Admin from Admin Dashboard once verified
     let awbNumber = '';
     let courierName = '';
-    try {
-      const shiprocketResult = await createOrderAndAssignAWB({
-        orderNumber: order.order_number,
-        orderDate: new Date(order.created_at || Date.now()).toISOString().split('T')[0],
-        billingAddress: order.shipping_address,
-        shippingAddress: order.shipping_address,
-        items: order.order_items,
-        paymentMethod: 'prepaid',
-        subtotal: order.subtotal,
-        discount: order.discount,
-        shippingCharges: order.shipping_cost,
-      });
-
-      if (shiprocketResult) {
-        awbNumber = shiprocketResult.awb_code || '';
-        courierName = shiprocketResult.courier_name || '';
-
-        const { data: createdShip } = await supabaseAdmin.from('shipments').insert({
-          order_id: order.id,
-          shiprocket_order_id: String(shiprocketResult.order_id || ''),
-          shiprocket_shipment_id: String(shiprocketResult.shipment_id || ''),
-          awb_number: awbNumber,
-          courier_name: courierName,
-          courier_id: shiprocketResult.courier_company_id || null,
-          routing_code: shiprocketResult.routing_code || '',
-          cod_collectable: 0,
-          status: 'pending',
-        }).select('id').single();
-
-        if (createdShip?.id) {
-          await supabaseAdmin.from('shipment_events').insert({
-            shipment_id: createdShip.id,
-            status: 'pending',
-            status_code: 'ORDER_PLACED',
-            activity: `Prepaid order confirmed & shipment initiated (AWB: ${awbNumber || 'Pending'})`,
-            location: 'Faridabad Hub',
-          });
-        }
-      }
-    } catch (shipError) {
-      console.warn('Shiprocket order/AWB notice:', shipError.message);
-    }
 
     // 7. Send confirmation email with invoice details
     try {

@@ -212,13 +212,13 @@ export async function POST(request) {
         );
       }
 
-      // Create order directly with confirmed status for COD
+      // Create order with processing status for COD (Admin will confirm and dispatch to Shiprocket)
       const { data: order, error: orderError } = await supabaseAdmin
         .from('orders')
         .insert({
           user_id: user.id,
           order_number: orderNumber,
-          status: 'confirmed',
+          status: 'processing',
           subtotal,
           discount,
           coupon_code: appliedCouponCode,
@@ -247,7 +247,6 @@ export async function POST(request) {
 
       // Decrement stock
       for (const item of validatedItems) {
-        // Simple stock decrement
         const { data: prod } = await supabaseAdmin
           .from('products')
           .select('stock')
@@ -295,39 +294,9 @@ export async function POST(request) {
         method: 'cod',
       });
 
-      // Create Shiprocket order & generate live AWB for COD order
+      // Shipment will be initiated manually by Admin from Admin Dashboard once verified
       let awbNumber = '';
       let courierName = '';
-      try {
-        const shiprocketResult = await createOrderAndAssignAWB({
-          orderNumber: order.order_number,
-          orderDate: new Date(order.created_at || Date.now()).toISOString().split('T')[0],
-          billingAddress: shippingAddress,
-          shippingAddress: shippingAddress,
-          items: validatedItems,
-          paymentMethod: 'cod',
-          subtotal: order.subtotal,
-          discount: order.discount,
-          shippingCharges: order.shipping_cost,
-        });
-
-        if (shiprocketResult) {
-          awbNumber = shiprocketResult.awb_code || '';
-          courierName = shiprocketResult.courier_name || '';
-
-          await supabaseAdmin.from('shipments').insert({
-            order_id: order.id,
-            shiprocket_order_id: String(shiprocketResult.order_id || ''),
-            shiprocket_shipment_id: String(shiprocketResult.shipment_id || ''),
-            awb_number: awbNumber,
-            courier_name: courierName,
-            courier_id: shiprocketResult.courier_company_id || null,
-            status: 'pending',
-          });
-        }
-      } catch (shipErr) {
-        console.warn('Shiprocket COD order/AWB notice:', shipErr);
-      }
 
       // Send Order Confirmation & Invoice Details Email
       try {
@@ -354,13 +323,15 @@ export async function POST(request) {
           });
         }
       } catch (emailErr) {
-        console.warn('Failed to send COD order confirmation email:', emailErr);
+        console.warn('Confirmation email notice (COD):', emailErr.message);
       }
 
       return NextResponse.json({
         success: true,
         orderId: order.id,
-        orderNumber,
+        orderNumber: order.order_number,
+        status: 'processing',
+        total: order.total,
         paymentMethod: 'cod',
         awbNumber: awbNumber || undefined,
         courierName: courierName || undefined,

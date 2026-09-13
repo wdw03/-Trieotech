@@ -160,7 +160,14 @@ export async function PATCH(request, { params }) {
     const orderDbId = targetOrder.id;
     const previousStatus = (targetOrder.status || '').toLowerCase();
 
-    // 2. Cancellation validation: cannot cancel if already delivered, returned, or refunded
+    // 2. Cancellation validation: cannot update if already cancelled
+    if (previousStatus === 'cancelled' && mappedStatus !== 'cancelled') {
+      return NextResponse.json(
+        { error: 'This order is cancelled and cannot be updated to an active status or shipped.' },
+        { status: 400 }
+      );
+    }
+
     if (mappedStatus === 'cancelled') {
       if (['delivered', 'returned', 'refunded'].includes(previousStatus)) {
         return NextResponse.json(

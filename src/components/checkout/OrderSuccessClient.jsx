@@ -83,7 +83,7 @@ export default function OrderSuccessClient({ initialOrderId }) {
                 origin: { y: 0.6 },
                 colors: ['#C5A028', '#8B1A1A', '#065F46', '#F59E0B'],
               });
-            } catch (e) {}
+            } catch (e) { }
 
             // Background sync user order list only once
             if (!hasRefreshedRef.current && refreshOrders) {
@@ -104,7 +104,7 @@ export default function OrderSuccessClient({ initialOrderId }) {
     return () => {
       isMounted = false;
     };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [orderId]);
 
   // Fallback to order from auth context if direct fetch was unavailable
@@ -160,9 +160,9 @@ export default function OrderSuccessClient({ initialOrderId }) {
   const courierName = shipment?.courier_name || contextOrder?.carrier || 'Shiprocket Express';
   const trackingUrl = shipment?.tracking_url || (awbNumber ? `https://shiprocket.co/tracking/${awbNumber}` : null);
 
-  // Check if order is cancellable
-  const rawStatus = (dbOrder?.status || contextOrder?.rawStatus || 'confirmed').toLowerCase();
-  const cancellable = !isCancelled && ['pending_payment', 'pending'].includes(rawStatus);
+  // Check if order is cancellable — allowed in pending, processing, confirmed (strictly before packed)
+  const rawStatus = (dbOrder?.status || contextOrder?.rawStatus || 'processing').toLowerCase();
+  const cancellable = !isCancelled && ['pending_payment', 'pending', 'processing', 'confirmed'].includes(rawStatus);
 
   const handleCancelOrder = async () => {
     setIsCancelling(true);

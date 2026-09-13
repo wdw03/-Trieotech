@@ -29,6 +29,14 @@ export async function POST(request) {
       return NextResponse.json({ error: 'Order not found' }, { status: 404 });
     }
 
+    // Guard: Never create a shipment for a cancelled order
+    if ((order.status || '').toLowerCase() === 'cancelled') {
+      return NextResponse.json(
+        { error: 'Cannot create shipment for an order that has been cancelled.' },
+        { status: 400 }
+      );
+    }
+
     // 2. Idempotency check: if a valid shipment already exists, return it
     const { data: existingShipment } = await supabaseAdmin
       .from('shipments')
@@ -98,12 +106,33 @@ export async function POST(request) {
     if (savedShipment?.id) {
       await supabaseAdmin.from('shipment_events').insert({
         shipment_id: savedShipment.id,
-        status: 'pending',
-        status_code: 'ORDER_CREATED',
-        activity: `Shiprocket order created (${savedShipment.awb_number ? `AWB: ${savedShipment.awb_number}` : 'AWB assignment pending'})`,
+        status: 'packed',
+        status_code: 'ORDER_PACKED',
+        activity: `Shiprocket order created & packed (${savedShipment.awb_number ? `AWB: ${savedShipment.awb_number}` : 'AWB assignment pending'})`,
         location: 'Faridabad Hub',
         raw_data: { shiprocketResult },
       });
+    }
+
+    // 6. Advance order status to packed
+    const currentStatus = (order.status || '').toLowerCase();
+    if (['pending', 'processing', 'confirmed'].includes(currentStatus)) {
+      await supabaseAdmin
+        .from('orders')
+        .update({
+          status: 'packed',
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', order.id);
+
+      await supabaseAdmin.from('order_status_history').insert({
+        order_id: order.id,
+        from_status: order.status,
+        to_status: 'packed',
+        source: 'admin',
+        changed_by: 'admin',
+        reason: `Shipment created with Shiprocket by admin (AWB: ${shiprocketResult.awb_code || 'Pending'})`,
+      }).catch(() => {});
     }
 
     return NextResponse.json({
