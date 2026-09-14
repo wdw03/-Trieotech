@@ -12,6 +12,7 @@ export async function GET(request) {
       searchParams.get('deliveryPincode') ||
       searchParams.get('delivery_postcode');
     const quantity = parseInt(searchParams.get('quantity') || '1', 10);
+    const productId = searchParams.get('productId') || searchParams.get('id');
     const cod = searchParams.get('cod') === '1' || searchParams.get('cod') === 'true';
 
     if (!deliveryPincode) {
@@ -19,7 +20,7 @@ export async function GET(request) {
     }
 
     const calculation = await calculateCartShipping({
-      items: [{ quantity: Math.max(1, quantity) }],
+      items: [{ productId: productId ? Number(productId) || productId : null, quantity: Math.max(1, quantity) }],
       pincode: deliveryPincode,
       cod,
     });

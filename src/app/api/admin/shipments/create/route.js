@@ -61,17 +61,66 @@ export async function POST(request) {
     const isCod = order.payment_method === 'cod';
     const codCollectable = isCod ? Number(order.total || 0) : 0;
 
+    // Fetch product specs (weight, dimensions) for each ordered item
+    const productIds = (order.order_items || []).map((i) => i.product_id).filter(Boolean);
+    let productsMap = {};
+    if (productIds.length > 0) {
+      const { data: prods } = await supabaseAdmin
+        .from('products')
+        .select('id, weight, length, breadth, height, dimensions')
+        .in('id', productIds);
+      (prods || []).forEach((p) => {
+        productsMap[p.id] = p;
+      });
+    }
+
+    let calculatedWeight = 0;
+    let maxItemLength = 15;
+    let maxItemBreadth = 10;
+    let totalItemHeight = 0;
+
+    const enrichedItems = (order.order_items || []).map((item) => {
+      const prod = productsMap[item.product_id] || {};
+      const qty = Number(item.quantity) || 1;
+      const w = Number(prod.weight !== undefined && prod.weight !== null ? prod.weight : (item.weight || 0.5));
+      const l = Number(prod.length || prod.dimensions?.length || item.length || 15);
+      const b = Number(prod.breadth || prod.dimensions?.breadth || item.breadth || 10);
+      const h = Number(prod.height || prod.dimensions?.height || item.height || 5);
+
+      calculatedWeight += w * qty;
+      if (l > maxItemLength) maxItemLength = l;
+      if (b > maxItemBreadth) maxItemBreadth = b;
+      totalItemHeight += h * qty;
+
+      return {
+        ...item,
+        weight: w,
+        length: l,
+        breadth: b,
+        height: h,
+      };
+    });
+
+    const packageWeight = Math.max(0.1, Number(calculatedWeight ? calculatedWeight.toFixed(3) : 0.5));
+    const packageLength = Math.max(10, Math.round(maxItemLength || 15));
+    const packageBreadth = Math.max(10, Math.round(maxItemBreadth || 10));
+    const packageHeight = Math.max(5, Math.min(100, Math.round(totalItemHeight || 5)));
+
     // 3. Create Shiprocket order WITHOUT assigning AWB yet (no courier wallet charge)
     const shiprocketResult = await createShiprocketOrder({
       orderNumber: order.order_number,
       orderDate: new Date(order.created_at || Date.now()).toISOString().split('T')[0],
       billingAddress: order.shipping_address,
       shippingAddress: order.shipping_address,
-      items: order.order_items,
+      items: enrichedItems,
       paymentMethod: isCod ? 'cod' : 'prepaid',
       subtotal: order.subtotal,
       discount: order.discount,
       shippingCharges: order.shipping_cost,
+      weight: packageWeight,
+      length: packageLength,
+      breadth: packageBreadth,
+      height: packageHeight,
     });
 
     // 4. Save/update shipment record in DB with financial & routing fields (AWB unassigned)
@@ -84,6 +133,12 @@ export async function POST(request) {
       courier_id: null,
       routing_code: '',
       cod_collectable: codCollectable,
+      weight: packageWeight,
+      dimensions: {
+        length: packageLength,
+        breadth: packageBreadth,
+        height: packageHeight,
+      },
       status: 'pending',
       updated_at: new Date().toISOString(),
     };

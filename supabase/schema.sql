@@ -115,6 +115,11 @@ CREATE TABLE IF NOT EXISTS public.products (
   is_wedding_special BOOLEAN DEFAULT false,
   is_festival_special BOOLEAN DEFAULT false,
   is_handmade BOOLEAN DEFAULT false,
+  weight NUMERIC(6,3) DEFAULT 0.5,
+  length NUMERIC(6,2) DEFAULT 15.0,
+  breadth NUMERIC(6,2) DEFAULT 10.0,
+  height NUMERIC(6,2) DEFAULT 5.0,
+  dimensions JSONB DEFAULT '{"length": 15, "breadth": 10, "height": 5}'::jsonb,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );

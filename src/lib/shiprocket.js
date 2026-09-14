@@ -99,11 +99,50 @@ export async function createShiprocketOrder({
   subtotal,
   discount = 0,
   shippingCharges = 0,
+  weight,
+  length,
+  breadth,
+  height,
 }) {
   let pickupLocation = 'Home';
   try {
     pickupLocation = await getPrimaryPickupLocation();
   } catch (_) {}
+
+  // Calculate package weight and dimensions from items if not directly provided
+  let computedWeight = Number(weight);
+  let computedLength = Number(length);
+  let computedBreadth = Number(breadth);
+  let computedHeight = Number(height);
+
+  if (isNaN(computedWeight) || computedWeight <= 0) {
+    computedWeight = (items || []).reduce((sum, it) => {
+      const w = Number(it.weight || 0.5);
+      const q = Number(it.quantity || it.units || 1);
+      return sum + (w * q);
+    }, 0);
+  }
+
+  if (isNaN(computedLength) || computedLength <= 0) {
+    computedLength = Math.max(15, ...(items || []).map(it => Number(it.length || it.dimensions?.length || 15)));
+  }
+
+  if (isNaN(computedBreadth) || computedBreadth <= 0) {
+    computedBreadth = Math.max(10, ...(items || []).map(it => Number(it.breadth || it.dimensions?.breadth || 10)));
+  }
+
+  if (isNaN(computedHeight) || computedHeight <= 0) {
+    computedHeight = (items || []).reduce((sum, it) => {
+      const h = Number(it.height || it.dimensions?.height || 5);
+      const q = Number(it.quantity || it.units || 1);
+      return sum + (h * q);
+    }, 0);
+  }
+
+  const finalWeight = Math.max(0.1, Number(computedWeight ? computedWeight.toFixed(3) : 0.5));
+  const finalLength = Math.max(10, Math.round(computedLength || 15));
+  const finalBreadth = Math.max(10, Math.round(computedBreadth || 10));
+  const finalHeight = Math.max(5, Math.min(100, Math.round(computedHeight || 5)));
 
   const orderData = {
     order_id: orderNumber,
@@ -133,18 +172,18 @@ export async function createShiprocketOrder({
     order_items: items.map((item) => ({
       name: (item.name || 'Handicraft Item').trim(),
       sku: item.sku || `TRIO-${item.product_id || item.productId || 'GEN'}`,
-      units: Number(item.quantity) || 1,
-      selling_price: Number(item.price) || 0,
+      units: Number(item.quantity || item.units) || 1,
+      selling_price: Number(item.price || item.selling_price) || 0,
       discount: Number(item.discount_amount || item.discount || 0),
       tax: Number(item.tax_rate || 0),
       hsn: String(item.hsn || '6304'),
     })),
     payment_method: paymentMethod === 'cod' ? 'COD' : 'Prepaid',
     sub_total: subtotal,
-    length: 20,
-    breadth: 15,
-    height: 10,
-    weight: 0.5,
+    length: finalLength,
+    breadth: finalBreadth,
+    height: finalHeight,
+    weight: finalWeight,
   };
 
   return shiprocketFetch('/orders/create/adhoc', {
@@ -193,6 +232,9 @@ export async function getShippingRates({
   pickupPincode = '121005', // Faridabad pickup default
   deliveryPincode,
   weight = 0.5,
+  length = 15,
+  breadth = 10,
+  height = 5,
   cod = false,
 }) {
   const cleanPin = String(deliveryPincode || '').trim().replace(/\D/g, '').slice(0, 6);
@@ -200,6 +242,9 @@ export async function getShippingRates({
     pickup_postcode: String(pickupPincode || '121005'),
     delivery_postcode: cleanPin,
     weight: String(weight || 0.5),
+    length: String(length || 15),
+    breadth: String(breadth || 10),
+    height: String(height || 5),
     cod: cod ? '1' : '0',
   });
 
@@ -226,6 +271,9 @@ export async function calculateDynamicShipping(deliveryPincode, options = {}) {
       pickupPincode: options.pickupPincode || '121005',
       deliveryPincode: cleanPin,
       weight: options.weight || 0.5,
+      length: options.length || 15,
+      breadth: options.breadth || 10,
+      height: options.height || 5,
       cod: !!options.cod,
     });
 

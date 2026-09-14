@@ -55,11 +55,46 @@ export async function calculateCartShipping({
   let totalQuantity = 0;
   const itemsBreakdown = [];
 
-  // Optional: check product DB for specific custom shipping costs or weights
+  // Optional: check product DB for specific custom shipping costs, weights & dimensions
+  const productIds = items
+    .map((it) => it.productId || it.product_id || (typeof it.id === 'number' ? it.id : null))
+    .filter(Boolean);
+
+  let productsMap = {};
+  if (productIds.length > 0) {
+    try {
+      const { data: prods } = await supabaseAdmin
+        .from('products')
+        .select('id, weight, length, breadth, height, dimensions, price')
+        .in('id', productIds);
+      (prods || []).forEach((p) => {
+        productsMap[p.id] = p;
+      });
+    } catch (_) {}
+  }
+
+  let totalPackageWeight = 0;
+  let maxPackageLength = 15;
+  let maxPackageBreadth = 10;
+  let totalPackageHeight = 0;
+
   for (const item of items) {
     const rawQty = item.quantity !== undefined ? item.quantity : 1;
     const quantity = Math.max(1, parseInt(rawQty, 10) || 1);
     totalQuantity += quantity;
+
+    const pId = item.productId || item.product_id || (typeof item.id === 'number' ? item.id : null);
+    const prod = productsMap[pId] || item.product || {};
+
+    const itemWeight = Number(item.weight !== undefined ? item.weight : (prod.weight !== undefined ? prod.weight : 0.5));
+    const itemLength = Number(item.length || item.dimensions?.length || prod.length || prod.dimensions?.length || 15);
+    const itemBreadth = Number(item.breadth || item.dimensions?.breadth || prod.breadth || prod.dimensions?.breadth || 10);
+    const itemHeight = Number(item.height || item.dimensions?.height || prod.height || prod.dimensions?.height || 5);
+
+    totalPackageWeight += itemWeight * quantity;
+    if (itemLength > maxPackageLength) maxPackageLength = itemLength;
+    if (itemBreadth > maxPackageBreadth) maxPackageBreadth = itemBreadth;
+    totalPackageHeight += itemHeight * quantity;
 
     // Unit rate resolution (check item.shippingCost, product.shipping_cost, or default)
     let unitStandardRate = DEFAULT_UNIT_SHIPPING;
@@ -81,15 +116,22 @@ export async function calculateCartShipping({
     totalExpressShipping += itemExpressShipping;
 
     itemsBreakdown.push({
-      productId: item.productId || item.product_id || item.id || null,
-      name: item.name || item.product?.name || 'Craft Product',
+      productId: pId || null,
+      name: item.name || item.product?.name || prod.name || 'Craft Product',
       quantity,
+      weight: itemWeight,
+      dimensions: { length: itemLength, breadth: itemBreadth, height: itemHeight },
       unitStandardRate,
       unitExpressRate,
       itemStandardShipping,
       itemExpressShipping,
     });
   }
+
+  const calculatedWeight = Math.max(0.1, Number(totalPackageWeight ? totalPackageWeight.toFixed(3) : 0.5));
+  const calculatedLength = Math.max(10, Math.round(maxPackageLength || 15));
+  const calculatedBreadth = Math.max(10, Math.round(maxPackageBreadth || 10));
+  const calculatedHeight = Math.max(5, Math.min(100, Math.round(totalPackageHeight || 5)));
 
   // Check COD availability if pincode is present
   let isCodAvailable = true;
@@ -104,11 +146,13 @@ export async function calculateCartShipping({
       isCodAvailable = true;
     }
 
-    // Optional carrier details from Shiprocket
+    // Dynamic rate calculation from Shiprocket using actual item weights & package dimensions
     try {
-      const approxWeight = Math.max(0.5, totalQuantity * 0.25);
       const srRates = await calculateDynamicShipping(cleanPincode, {
-        weight: approxWeight,
+        weight: calculatedWeight,
+        length: calculatedLength,
+        breadth: calculatedBreadth,
+        height: calculatedHeight,
         cod: !!cod,
       });
 
@@ -138,6 +182,12 @@ export async function calculateCartShipping({
     standardRate: totalStandardShipping,
     expressRate: totalExpressShipping,
     itemCount: totalQuantity,
+    packageWeight: calculatedWeight,
+    packageDimensions: {
+      length: calculatedLength,
+      breadth: calculatedBreadth,
+      height: calculatedHeight,
+    },
     productCount: items.length,
     itemsBreakdown,
     deliveryMethod: isExpress ? 'express' : 'standard',

@@ -96,6 +96,22 @@ async function handleUpdateProduct(request, { params }) {
       updates.features = Array.isArray(body.features) ? body.features : [];
     }
 
+    // Shipping Weight & Dimensions
+    if (body.weight !== undefined) updates.weight = Number(body.weight);
+    if (body.length !== undefined) updates.length = Number(body.length);
+    if (body.breadth !== undefined) updates.breadth = Number(body.breadth);
+    if (body.height !== undefined) updates.height = Number(body.height);
+    if (body.dimensions !== undefined) {
+      updates.dimensions = typeof body.dimensions === 'object' && body.dimensions !== null ? body.dimensions : updates.dimensions;
+    }
+    if (updates.length !== undefined || updates.breadth !== undefined || updates.height !== undefined) {
+      updates.dimensions = {
+        length: updates.length !== undefined ? updates.length : (body.dimensions?.length || 15.0),
+        breadth: updates.breadth !== undefined ? updates.breadth : (body.dimensions?.breadth || 10.0),
+        height: updates.height !== undefined ? updates.height : (body.dimensions?.height || 5.0),
+      };
+    }
+
     // Badge & Feature Flags
     if (body.badge !== undefined) {
       updates.badge = body.badge;

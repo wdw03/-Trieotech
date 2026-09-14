@@ -60,7 +60,16 @@ export function normalizeProduct(p) {
       Material: p.material || 'Velvet & Zari',
       Care: 'Keep in dry muslin cloth',
       Origin: p.country_of_origin || 'India'
-    }
+    },
+    weight: Number(p.weight !== undefined && p.weight !== null ? p.weight : 0.5),
+    length: Number(p.length || p.dimensions?.length || 15.0),
+    breadth: Number(p.breadth || p.dimensions?.breadth || 10.0),
+    height: Number(p.height || p.dimensions?.height || 5.0),
+    dimensions: typeof p.dimensions === 'object' && p.dimensions ? p.dimensions : {
+      length: Number(p.length || 15.0),
+      breadth: Number(p.breadth || 10.0),
+      height: Number(p.height || 5.0),
+    },
   };
 }
 
@@ -191,6 +200,15 @@ export async function POST(request) {
       full_description: body.full_description || body.fullDescription || body.description || '',
       specifications: typeof body.specifications === 'object' && body.specifications !== null ? body.specifications : {},
       features: Array.isArray(body.features) ? body.features : [],
+      weight: Number(body.weight !== undefined && body.weight !== null ? body.weight : 0.5),
+      length: Number(body.length || body.dimensions?.length || 15.0),
+      breadth: Number(body.breadth || body.dimensions?.breadth || 10.0),
+      height: Number(body.height || body.dimensions?.height || 5.0),
+      dimensions: typeof body.dimensions === 'object' && body.dimensions ? body.dimensions : {
+        length: Number(body.length || 15.0),
+        breadth: Number(body.breadth || 10.0),
+        height: Number(body.height || 5.0),
+      },
       is_featured: Boolean(body.is_featured || body.featured),
       is_best_seller: Boolean(body.is_best_seller || badge === 'Best Seller'),
       is_wedding_special: Boolean(body.is_wedding_special || badge === 'Wedding Special'),
