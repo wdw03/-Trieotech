@@ -20,11 +20,16 @@ export async function getProducts({
   isNew,
   minPrice,
   maxPrice,
+  includeHidden = false,
 } = {}) {
   let query = supabaseAdmin
     .from('products')
-    .select('*', { count: 'exact' })
-    .eq('in_stock', true);
+    .select('*', { count: 'exact' });
+
+  // Only show visible products on storefront unless includeHidden is true
+  if (!includeHidden) {
+    query = query.or('is_visible.is.null,is_visible.eq.true');
+  }
 
   if (category) query = query.ilike('category', category);
   if (subcategory) query = query.ilike('subcategory', subcategory);
@@ -126,7 +131,7 @@ export async function getProductsByCategory(categorySlug) {
     .from('products')
     .select('*')
     .ilike('category', cat.name)
-    .eq('in_stock', true)
+    .or('is_visible.is.null,is_visible.eq.true')
     .order('is_featured', { ascending: false });
 
   if (error) return [];
@@ -142,7 +147,7 @@ export async function getRelatedProducts(productId, category, limit = 8) {
     .select('*')
     .ilike('category', category)
     .neq('id', productId)
-    .eq('in_stock', true)
+    .or('is_visible.is.null,is_visible.eq.true')
     .limit(limit);
 
   if (error) return [];
@@ -191,30 +196,44 @@ export async function getReviewsByProductId(productId) {
 }
 
 /**
- * Decrement product stock (atomic operation)
+ * Decrement product stock & variant stock and increment sold_quantity
  */
-export async function decrementStock(productId, quantity) {
-  const { data, error } = await supabaseAdmin.rpc('decrement_stock', {
-    p_product_id: productId,
-    p_quantity: quantity,
-  });
-
-  // Fallback if RPC doesn't exist yet
-  if (error && error.message.includes('function')) {
+export async function decrementStock(productId, quantity = 1, colorName = '') {
+  try {
     const product = await getProductById(productId);
     if (!product) return false;
 
-    const newStock = Math.max(0, product.stock - quantity);
+    const newStock = Math.max(0, (Number(product.stock) || 0) - quantity);
+    const newSold = (Number(product.sold_quantity) || 0) + quantity;
+
+    let updatedColors = product.colors;
+    if (colorName && Array.isArray(product.colors) && product.colors.length > 0) {
+      updatedColors = product.colors.map((c) => {
+        if (c.name === colorName || c.hex === colorName) {
+          const currentVariantStock = c.stock !== undefined ? Number(c.stock) : (Number(product.stock) || 0);
+          return {
+            ...c,
+            stock: Math.max(0, currentVariantStock - quantity),
+          };
+        }
+        return c;
+      });
+    }
+
     const { error: updateError } = await supabaseAdmin
       .from('products')
       .update({
         stock: newStock,
         in_stock: newStock > 0,
+        sold_quantity: newSold,
+        colors: updatedColors,
+        updated_at: new Date().toISOString(),
       })
       .eq('id', productId);
 
     return !updateError;
+  } catch (err) {
+    console.error('Error in decrementStock:', err);
+    return false;
   }
-
-  return !error;
 }

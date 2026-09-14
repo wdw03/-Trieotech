@@ -30,6 +30,11 @@ export const ProductCard = ({ product, onQuickView = null, viewMode = 'grid' }) 
 
   const secondaryImage = product.images?.[1] || activeImage;
 
+  // Out of stock and inventory metrics
+  const isOutOfStock = product.inStock === false || product.in_stock === false || Number(product.stock) <= 0 || (selectedColor?.stock !== undefined && Number(selectedColor.stock) <= 0);
+  const remainingStock = selectedColor?.stock !== undefined ? Number(selectedColor.stock) : Number(product.stock || 0);
+  const totalSold = Number(product.sold_quantity ?? product.soldQuantity ?? 0);
+
   // Compute discount percentage
   const discountPercent = activeOriginalPrice && activeOriginalPrice > activePrice
     ? Math.round(((activeOriginalPrice - activePrice) / activeOriginalPrice) * 100)
@@ -81,10 +86,22 @@ export const ProductCard = ({ product, onQuickView = null, viewMode = 'grid' }) 
               src={isHovered && secondaryImage !== activeImage ? secondaryImage : activeImage}
               alt={product.name}
               onError={() => setImgError(true)}
-              className="w-full h-full object-cover object-center transition-transform duration-700 ease-out group-hover:scale-105"
+              className={`w-full h-full object-cover object-center transition-transform duration-700 ease-out group-hover:scale-105 ${
+                isOutOfStock ? 'filter grayscale contrast-125 opacity-70' : ''
+              }`}
               loading="lazy"
             />
           </Link>
+
+          {/* Out of Stock Overlay */}
+          {isOutOfStock && (
+            <div className="absolute inset-0 bg-stone-950/40 backdrop-blur-[1px] flex items-center justify-center z-10 pointer-events-none">
+              <div className="px-3 py-1 bg-stone-900/95 text-white border border-stone-600/80 rounded-full text-[11px] font-black tracking-widest uppercase shadow-xl flex items-center gap-1.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse" />
+                <span>Out of Stock</span>
+              </div>
+            </div>
+          )}
 
           {/* Badges */}
           <div className="absolute top-2.5 left-2.5 flex flex-col gap-1.5 z-10 items-start">
@@ -177,20 +194,29 @@ export const ProductCard = ({ product, onQuickView = null, viewMode = 'grid' }) 
                   ₹{activeOriginalPrice?.toLocaleString('en-IN')}
                 </span>
               )}
-              {product.inStock ? (
-                <span className="hidden sm:inline text-[11px] text-emerald-600 font-semibold ml-2">● In Stock</span>
+              {isOutOfStock ? (
+                <span className="hidden sm:inline text-[11px] text-rose-600 font-bold ml-2">● Out of Stock</span>
+              ) : remainingStock <= 10 ? (
+                <span className="hidden sm:inline text-[11px] text-amber-600 font-bold ml-2 animate-pulse">● Only {remainingStock} left!</span>
               ) : (
-                <span className="hidden sm:inline text-[11px] text-rose-600 font-semibold ml-2">● Out of Stock</span>
+                <span className="hidden sm:inline text-[11px] text-emerald-600 font-semibold ml-2">● In Stock</span>
+              )}
+              {totalSold > 0 && (
+                <span className="hidden sm:inline text-[10px] text-stone-400 font-medium">({totalSold} sold)</span>
               )}
             </div>
 
             <button
               onClick={handleQuickAdd}
-              disabled={!product.inStock}
-              className="py-2.5 px-5 rounded-xl btn-primary text-xs font-bold flex items-center gap-2 shadow-xs active:scale-95 transition-all cursor-pointer"
+              disabled={isOutOfStock}
+              className={`py-2.5 px-5 rounded-xl text-xs font-bold flex items-center gap-2 shadow-xs transition-all ${
+                isOutOfStock 
+                  ? 'bg-stone-300 dark:bg-stone-800 text-stone-500 cursor-not-allowed border border-stone-400/30' 
+                  : 'btn-primary active:scale-95 cursor-pointer'
+              }`}
             >
               <ShoppingBag className="w-4 h-4" />
-              <span>{product.inStock ? 'Quick Add to Cart' : 'Out of Stock'}</span>
+              <span>{isOutOfStock ? 'Out of Stock' : 'Quick Add to Cart'}</span>
             </button>
           </div>
         </div>
@@ -212,10 +238,22 @@ export const ProductCard = ({ product, onQuickView = null, viewMode = 'grid' }) 
             src={isHovered && secondaryImage !== activeImage ? secondaryImage : activeImage}
             alt={product.name}
             onError={() => setImgError(true)}
-            className="w-full h-full object-cover object-center transition-transform duration-700 ease-out group-hover:scale-108"
+            className={`w-full h-full object-cover object-center transition-transform duration-700 ease-out group-hover:scale-108 ${
+              isOutOfStock ? 'filter grayscale contrast-125 opacity-70' : ''
+            }`}
             loading="lazy"
           />
         </Link>
+
+        {/* Out of Stock Overlay */}
+        {isOutOfStock && (
+          <div className="absolute inset-0 bg-stone-950/40 backdrop-blur-[1px] flex items-center justify-center z-10 pointer-events-none">
+            <div className="px-3.5 py-1 bg-stone-900/95 text-white border border-stone-600/80 rounded-full text-[11px] font-black tracking-widest uppercase shadow-xl flex items-center gap-1.5">
+              <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse" />
+              <span>Out of Stock</span>
+            </div>
+          </div>
+        )}
 
         {/* Top Badges */}
         <div className="absolute top-2.5 left-2.5 flex flex-col gap-1.5 z-10 items-start">
@@ -256,11 +294,15 @@ export const ProductCard = ({ product, onQuickView = null, viewMode = 'grid' }) 
         <div className="absolute inset-x-3 bottom-3 hidden sm:block opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-y-2 group-hover:translate-y-0 z-10">
           <button
             onClick={handleQuickAdd}
-            disabled={!product.inStock}
-            className="w-full py-2.5 px-4 rounded-xl btn-gold text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-lg cursor-pointer"
+            disabled={isOutOfStock}
+            className={`w-full py-2.5 px-4 rounded-xl text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-lg transition-all ${
+              isOutOfStock 
+                ? 'bg-stone-800 text-stone-400 border border-stone-700 cursor-not-allowed' 
+                : 'btn-gold cursor-pointer'
+            }`}
           >
             <ShoppingBag className="w-4 h-4" />
-            <span>{product.inStock ? 'Quick Add to Cart' : 'Out of Stock'}</span>
+            <span>{isOutOfStock ? 'Out of Stock' : 'Quick Add to Cart'}</span>
           </button>
         </div>
       </div>
@@ -312,23 +354,42 @@ export const ProductCard = ({ product, onQuickView = null, viewMode = 'grid' }) 
 
         {/* Price & Mobile Add Button */}
         <div className="pt-2 border-t border-gold-500/10 dark:border-stone-800 flex items-center justify-between gap-2">
-          <div className="flex items-baseline gap-1.5 flex-wrap">
-            <span className="font-serif font-extrabold text-base sm:text-lg text-maroon-800 dark:text-gold-400">
-              ₹{activePrice?.toLocaleString('en-IN')}
-            </span>
-            {activeOriginalPrice && activeOriginalPrice > activePrice && (
-              <span className="text-xs text-stone-400 line-through">
-                ₹{activeOriginalPrice?.toLocaleString('en-IN')}
+          <div>
+            <div className="flex items-baseline gap-1.5 flex-wrap">
+              <span className="font-serif font-extrabold text-base sm:text-lg text-maroon-800 dark:text-gold-400">
+                ₹{activePrice?.toLocaleString('en-IN')}
               </span>
-            )}
+              {activeOriginalPrice && activeOriginalPrice > activePrice && (
+                <span className="text-xs text-stone-400 line-through">
+                  ₹{activeOriginalPrice?.toLocaleString('en-IN')}
+                </span>
+              )}
+            </div>
+            <div className="flex items-center gap-1.5 mt-0.5">
+              {isOutOfStock ? (
+                <span className="text-[10px] text-rose-600 font-bold">● Out of Stock</span>
+              ) : remainingStock <= 10 ? (
+                <span className="text-[10px] text-amber-600 font-bold animate-pulse">● Only {remainingStock} left!</span>
+              ) : (
+                <span className="text-[10px] text-emerald-600 font-semibold">● In Stock</span>
+              )}
+              {totalSold > 0 && (
+                <span className="text-[10px] text-stone-400">({totalSold} sold)</span>
+              )}
+            </div>
           </div>
 
           {/* Mobile Quick Add Button */}
           <button
             onClick={handleQuickAdd}
-            disabled={!product.inStock}
-            className="sm:hidden p-2 rounded-lg bg-maroon-700 text-white hover:bg-maroon-800 active:scale-95 shadow-xs cursor-pointer"
+            disabled={isOutOfStock}
+            className={`sm:hidden p-2 rounded-lg transition-all ${
+              isOutOfStock
+                ? 'bg-stone-300 dark:bg-stone-800 text-stone-500 cursor-not-allowed border border-stone-400/30'
+                : 'bg-maroon-700 text-white hover:bg-maroon-800 active:scale-95 shadow-xs cursor-pointer'
+            }`}
             aria-label="Add to cart"
+            title={isOutOfStock ? "Out of Stock" : "Add to cart"}
           >
             <ShoppingBag className="w-4 h-4" />
           </button>

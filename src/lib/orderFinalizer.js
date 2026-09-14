@@ -174,29 +174,48 @@ export async function finalizePaidOrder({
         .eq('order_id', order.id);
     }
 
-    // 3. Decrement stock for purchased items
+    // 3. Decrement stock, variant stock, and increment sold_quantity for purchased items
     if (Array.isArray(order.order_items)) {
       for (const item of order.order_items) {
         if (!item.product_id) continue;
         try {
           const { data: prod } = await supabaseAdmin
             .from('products')
-            .select('stock')
+            .select('stock, sold_quantity, colors')
             .eq('id', item.product_id)
             .single();
 
           if (prod) {
-            const newStock = Math.max(0, prod.stock - item.quantity);
+            const newStock = Math.max(0, (Number(prod.stock) || 0) - item.quantity);
+            const newSold = (Number(prod.sold_quantity) || 0) + item.quantity;
+            let updatedColors = prod.colors;
+
+            if (item.color && Array.isArray(prod.colors) && prod.colors.length > 0) {
+              updatedColors = prod.colors.map((c) => {
+                if (c.name === item.color || c.hex === item.color) {
+                  const currentVariantStock = c.stock !== undefined ? Number(c.stock) : (Number(prod.stock) || 0);
+                  return {
+                    ...c,
+                    stock: Math.max(0, currentVariantStock - item.quantity),
+                  };
+                }
+                return c;
+              });
+            }
+
             await supabaseAdmin
               .from('products')
               .update({
                 stock: newStock,
                 in_stock: newStock > 0,
+                sold_quantity: newSold,
+                colors: updatedColors,
+                updated_at: new Date().toISOString(),
               })
               .eq('id', item.product_id);
           }
         } catch (stockErr) {
-          console.warn('Stock decrement notice:', stockErr.message);
+          console.warn('Paid Order stock decrement notice:', stockErr.message);
         }
       }
     }

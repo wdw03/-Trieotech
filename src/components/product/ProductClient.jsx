@@ -31,7 +31,9 @@ import {
   Send,
   MessageCircle,
   Copy,
-  Loader2
+  Loader2,
+  XCircle,
+  AlertTriangle
 } from 'lucide-react';
 
 export default function ProductClient({ initialSlug }) {
@@ -151,6 +153,13 @@ export default function ProductClient({ initialSlug }) {
   const discountPercent = activeOriginalPrice && activeOriginalPrice > activePrice
     ? Math.round(((activeOriginalPrice - activePrice) / activeOriginalPrice) * 100)
     : product.discount || 0;
+
+  // Inventory & stock calculations
+  const isProductOutOfStock = product.inStock === false || product.in_stock === false || Number(product.stock) <= 0;
+  const isColorOutOfStock = selectedColor && selectedColor.stock !== undefined && Number(selectedColor.stock) <= 0;
+  const isOutOfStock = isProductOutOfStock || isColorOutOfStock;
+  const remainingStock = selectedColor?.stock !== undefined ? Number(selectedColor.stock) : Number(product.stock || 0);
+  const totalSold = Number(product.sold_quantity ?? product.soldQuantity ?? 0);
 
   const isWishlisted = isInWishlist(product.id);
   const relatedProducts = getRelatedProducts(product, 4);
@@ -317,8 +326,20 @@ export default function ProductClient({ initialSlug }) {
             <img
               src={selectedImage}
               alt={product.name}
-              className="w-full h-full object-cover object-center transition-transform duration-700 ease-out group-hover:scale-110"
+              className={`w-full h-full object-cover object-center transition-transform duration-700 ease-out group-hover:scale-110 ${
+                isOutOfStock ? 'filter grayscale contrast-125 opacity-75' : ''
+              }`}
             />
+
+            {/* Out of Stock Banner Overlay */}
+            {isOutOfStock && (
+              <div className="absolute inset-0 bg-stone-950/40 backdrop-blur-[2px] flex items-center justify-center z-10 pointer-events-none">
+                <div className="px-5 py-2 bg-stone-900/95 text-white border border-stone-600/90 rounded-full text-xs sm:text-sm font-black tracking-widest uppercase shadow-2xl flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-rose-500 animate-pulse" />
+                  <span>{isColorOutOfStock ? `Color "${selectedColor?.name}" Out of Stock` : 'Currently Out of Stock'}</span>
+                </div>
+              </div>
+            )}
 
             {/* Badges */}
             <div className="absolute top-4 left-4 flex flex-col gap-1.5 z-10 items-start">
@@ -420,20 +441,26 @@ export default function ProductClient({ initialSlug }) {
                   </span>
                 </div>
                 <div className="flex flex-wrap gap-2">
-                  {product.colors.map((col, idx) => (
-                    <button
-                      key={idx}
-                      onClick={() => handleColorChange(col)}
-                      className={`px-3 py-1.5 rounded-xl text-xs font-medium border flex items-center gap-2 transition-all ${
-                        selectedColor?.name === col.name
-                          ? 'border-maroon-700 bg-maroon-50 text-maroon-900 dark:bg-maroon-950/60 dark:border-gold-500 dark:text-gold-300 shadow-xs ring-1 ring-gold-500'
-                          : 'border-stone-200 dark:border-stone-700 text-stone-600 dark:text-stone-300 hover:border-gold-500'
-                      }`}
-                    >
-                      <span className="w-3.5 h-3.5 rounded-full border shrink-0" style={{ backgroundColor: col.hex || '#C5A028' }} />
-                      <span>{col.name}</span>
-                    </button>
-                  ))}
+                  {product.colors.map((col, idx) => {
+                    const isColSoldOut = col.stock !== undefined && Number(col.stock) <= 0;
+                    return (
+                      <button
+                        key={idx}
+                        onClick={() => handleColorChange(col)}
+                        className={`px-3 py-1.5 rounded-xl text-xs font-medium border flex items-center gap-2 transition-all ${
+                          selectedColor?.name === col.name
+                            ? 'border-maroon-700 bg-maroon-50 text-maroon-900 dark:bg-maroon-950/60 dark:border-gold-500 dark:text-gold-300 shadow-xs ring-1 ring-gold-500'
+                            : (isColSoldOut ? 'border-stone-300 dark:border-stone-800 opacity-60 bg-stone-100 dark:bg-stone-900/50' : 'border-stone-200 dark:border-stone-700 text-stone-600 dark:text-stone-300 hover:border-gold-500')
+                        }`}
+                      >
+                        <span className="w-3.5 h-3.5 rounded-full border shrink-0 relative overflow-hidden" style={{ backgroundColor: col.hex || '#C5A028' }}>
+                          {isColSoldOut && <span className="absolute inset-0 bg-stone-900/60 flex items-center justify-center text-[8px] text-white">✕</span>}
+                        </span>
+                        <span>{col.name}</span>
+                        {isColSoldOut && <span className="text-[10px] text-rose-500 font-bold ml-0.5">(Out of Stock)</span>}
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
             )}
@@ -463,57 +490,91 @@ export default function ProductClient({ initialSlug }) {
             )}
 
             {/* Quantity Stepper & Stock status */}
-            <div className="flex items-center gap-4 pt-2">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-4 pt-2">
               <div className="space-y-1">
                 <span className="text-[11px] font-bold text-stone-500">Quantity</span>
-                <div className="flex items-center border border-stone-300 dark:border-stone-700 rounded-xl overflow-hidden bg-white dark:bg-stone-900">
+                <div className="flex items-center border border-stone-300 dark:border-stone-700 rounded-xl overflow-hidden bg-white dark:bg-stone-900 w-fit">
                   <button
                     type="button"
+                    disabled={isOutOfStock || quantity <= 1}
                     onClick={() => setQuantity(q => Math.max(1, q - 1))}
-                    className="px-3.5 py-2 text-stone-600 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-stone-800 font-bold"
+                    className="px-3.5 py-2 text-stone-600 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-stone-800 font-bold disabled:opacity-40 disabled:cursor-not-allowed"
                   >
                     -
                   </button>
-                  <span className="px-3 py-2 text-xs font-bold text-stone-900 dark:text-ivory-100 min-w-8 text-center">
+                  <span className="px-3 py-2 text-xs font-bold text-stone-900 dark:text-ivory-100 min-w-8 text-center font-mono">
                     {quantity}
                   </span>
                   <button
                     type="button"
-                    onClick={() => setQuantity(q => q + 1)}
-                    className="px-3.5 py-2 text-stone-600 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-stone-800 font-bold"
+                    disabled={isOutOfStock || (remainingStock > 0 && quantity >= remainingStock)}
+                    onClick={() => setQuantity(q => Math.min(remainingStock || 99, q + 1))}
+                    className="px-3.5 py-2 text-stone-600 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-stone-800 font-bold disabled:opacity-40 disabled:cursor-not-allowed"
                   >
                     +
                   </button>
                 </div>
               </div>
 
-              <div className="space-y-1 pl-4">
-                <span className="text-[11px] font-bold text-stone-500">Stock Status</span>
-                <div className="flex items-center gap-1.5 text-xs font-bold text-emerald-700 dark:text-emerald-400">
-                  <Check className="w-4 h-4 text-emerald-600 stroke-[3]" />
-                  <span>{product.inStock ? 'Ready for Dispatch in 24 Hrs' : 'Out of Stock'}</span>
-                </div>
+              <div className="space-y-1 sm:pl-4">
+                <span className="text-[11px] font-bold text-stone-500">Live Inventory Status</span>
+                {isOutOfStock ? (
+                  <div className="flex items-center gap-1.5 text-xs font-bold text-rose-600 dark:text-rose-400">
+                    <XCircle className="w-4 h-4 text-rose-500 stroke-[2.5]" />
+                    <span>{isColorOutOfStock ? `Shade "${selectedColor?.name}" Out of Stock` : 'Currently Out of Stock'}</span>
+                  </div>
+                ) : (
+                  <div className="flex flex-col gap-0.5">
+                    <div className="flex items-center gap-1.5 text-xs font-bold text-emerald-700 dark:text-emerald-400">
+                      <Check className="w-4 h-4 text-emerald-600 stroke-[3]" />
+                      <span>In Stock ({remainingStock} units available)</span>
+                    </div>
+                    {remainingStock <= 10 ? (
+                      <span className="text-[11px] text-amber-600 font-bold animate-pulse">🔥 Hurry, only {remainingStock} items left in stock!</span>
+                    ) : (
+                      <span className="text-[10px] text-stone-500">Ready for dispatch in 24 hours</span>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
 
+            {/* Total Units Sold Social Proof Banner */}
+            {totalSold > 0 && (
+              <div className="p-2.5 rounded-xl bg-gold-500/10 border border-gold-500/25 flex items-center gap-2 text-xs text-gold-900 dark:text-gold-200">
+                <Sparkles className="w-4 h-4 text-gold-600 shrink-0" />
+                <span>
+                  <strong>{totalSold} units</strong> handcrafted &amp; delivered to happy patrons.
+                </span>
+              </div>
+            )}
+
             {/* Main Action Buttons */}
-            <div className="flex flex-col sm:flex-row gap-3 pt-4">
+            <div className="flex flex-col sm:flex-row gap-3 pt-3">
               <button
                 onClick={handleAddToCart}
-                disabled={!product.inStock}
-                className="flex-1 btn-primary py-3.5 px-6 text-xs sm:text-sm font-bold uppercase tracking-wider flex items-center justify-center gap-2 shadow-maroon-md"
+                disabled={isOutOfStock}
+                className={`flex-1 py-3.5 px-6 text-xs sm:text-sm font-bold uppercase tracking-wider flex items-center justify-center gap-2 shadow-maroon-md transition-all ${
+                  isOutOfStock
+                    ? 'bg-stone-300 dark:bg-stone-800 text-stone-500 cursor-not-allowed border border-stone-400/30'
+                    : 'btn-primary active:scale-95 cursor-pointer'
+                }`}
               >
                 <ShoppingBag className="w-4 h-4" />
-                <span>Add to Cart</span>
+                <span>{isColorOutOfStock ? 'Shade Out of Stock' : (isProductOutOfStock ? 'Out of Stock' : 'Add to Cart')}</span>
               </button>
 
               <button
                 onClick={handleBuyNow}
-                disabled={!product.inStock}
-                className="flex-1 btn-gold py-3.5 px-6 text-xs sm:text-sm font-bold uppercase tracking-wider flex items-center justify-center gap-2 shadow-gold-md"
+                disabled={isOutOfStock}
+                className={`flex-1 py-3.5 px-6 text-xs sm:text-sm font-bold uppercase tracking-wider flex items-center justify-center gap-2 shadow-gold-md transition-all ${
+                  isOutOfStock
+                    ? 'bg-stone-200 dark:bg-stone-850 text-stone-400 cursor-not-allowed border border-stone-300/30'
+                    : 'btn-gold active:scale-95 cursor-pointer'
+                }`}
               >
                 <Zap className="w-4 h-4 fill-current" />
-                <span>Buy Now (Instant Checkout)</span>
+                <span>{isOutOfStock ? 'Out of Stock' : 'Buy Now (Instant Checkout)'}</span>
               </button>
 
               <button

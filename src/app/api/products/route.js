@@ -24,6 +24,7 @@ export async function GET(request) {
       isNew: searchParams.get('isNew') === 'true' || searchParams.get('new') === 'true',
       minPrice: searchParams.get('minPrice') ? parseFloat(searchParams.get('minPrice')) : undefined,
       maxPrice: searchParams.get('maxPrice') ? parseFloat(searchParams.get('maxPrice')) : undefined,
+      includeHidden: searchParams.get('includeHidden') === 'true' || searchParams.get('all') === 'true',
     });
 
     return NextResponse.json({ products: products || [], total: total || 0 });

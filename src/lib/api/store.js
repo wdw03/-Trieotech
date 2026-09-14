@@ -43,15 +43,20 @@ export function normalizeProduct(p) {
     images = ['/products/shreenathji-statement-patch-1.jpg'];
   }
 
-  // Normalize colors
+  // Normalize colors with variant stocks
   let colors = [];
   if (Array.isArray(p.colors)) {
-    colors = p.colors;
+    colors = p.colors.map(c => typeof c === 'object' && c !== null 
+      ? { ...c, stock: c.stock !== undefined ? Number(c.stock) : (Number(p.stock) || 50) } 
+      : { name: String(c), stock: Number(p.stock) || 50 });
   } else if (typeof p.colors === 'string' && p.colors.trim()) {
     try {
-      colors = JSON.parse(p.colors);
+      const parsed = JSON.parse(p.colors);
+      colors = Array.isArray(parsed)
+        ? parsed.map(c => typeof c === 'object' && c !== null ? { ...c, stock: c.stock !== undefined ? Number(c.stock) : (Number(p.stock) || 50) } : { name: String(c), stock: Number(p.stock) || 50 })
+        : [];
     } catch {
-      colors = p.colors.split(',').map((c) => ({ name: c.trim() })).filter((c) => c.name);
+      colors = p.colors.split(',').map((c) => ({ name: c.trim(), stock: Number(p.stock) || 50 })).filter((c) => c.name);
     }
   }
 
@@ -104,8 +109,14 @@ export function normalizeProduct(p) {
     reviewsCount: Number(p.review_count ?? p.reviewsCount ?? p.rating_count) || 0,
     review_count: Number(p.review_count ?? p.reviewsCount ?? p.rating_count) || 0,
     stock: Number(p.stock) || 0,
-    inStock,
-    in_stock: inStock,
+    inStock: inStock && (Number(p.stock) > 0),
+    in_stock: inStock && (Number(p.stock) > 0),
+    is_visible: p.is_visible !== undefined ? Boolean(p.is_visible) : true,
+    isVisible: p.is_visible !== undefined ? Boolean(p.is_visible) : true,
+    sold_quantity: Number(p.sold_quantity ?? p.soldQuantity ?? 0),
+    soldQuantity: Number(p.sold_quantity ?? p.soldQuantity ?? 0),
+    low_stock_threshold: Number(p.low_stock_threshold ?? p.lowStockThreshold ?? 15),
+    lowStockThreshold: Number(p.low_stock_threshold ?? p.lowStockThreshold ?? 15),
     isBestSeller,
     is_best_seller: isBestSeller,
     isFestivalSpecial,

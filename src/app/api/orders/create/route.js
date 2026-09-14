@@ -94,11 +94,53 @@ export async function POST(request) {
       const itemQty = item.quantity || 1;
       let itemPrice = Number(product?.price || item.price || 0);
 
-      // Check for color-specific pricing
-      if (item.color && product?.colors && Array.isArray(product.colors)) {
-        const matchedColor = product.colors.find((c) => c.name === item.color);
-        if (matchedColor && matchedColor.price) {
-          itemPrice = Number(matchedColor.price);
+      // Server-side inventory & visibility validation
+      if (product) {
+        if (product.is_visible === false) {
+          return NextResponse.json(
+            { error: `"${product.name}" is currently not available.` },
+            { status: 400 }
+          );
+        }
+
+        const currentStock = Number(product.stock || 0);
+        if (!product.in_stock || currentStock <= 0) {
+          return NextResponse.json(
+            { error: `"${product.name}" is out of stock.` },
+            { status: 400 }
+          );
+        }
+
+        if (currentStock < itemQty) {
+          return NextResponse.json(
+            { error: `Only ${currentStock} units available for "${product.name}". Please reduce quantity.` },
+            { status: 400 }
+          );
+        }
+
+        // Check for color-specific pricing & color-specific stock
+        if (item.color && product?.colors && Array.isArray(product.colors)) {
+          const matchedColor = product.colors.find((c) => c.name === item.color || c.hex === item.color);
+          if (matchedColor) {
+            if (matchedColor.price) {
+              itemPrice = Number(matchedColor.price);
+            }
+            if (matchedColor.stock !== undefined) {
+              const variantStock = Number(matchedColor.stock);
+              if (variantStock <= 0) {
+                return NextResponse.json(
+                  { error: `Color shade "${item.color}" for "${product.name}" is out of stock.` },
+                  { status: 400 }
+                );
+              }
+              if (variantStock < itemQty) {
+                return NextResponse.json(
+                  { error: `Only ${variantStock} units available in "${item.color}" for "${product.name}". Please reduce quantity.` },
+                  { status: 400 }
+                );
+              }
+            }
+          }
         }
       }
 
@@ -245,22 +287,47 @@ export async function POST(request) {
         }))
       );
 
-      // Decrement stock
+      // Decrement stock, variant stock, and increment sold_quantity
       for (const item of validatedItems) {
-        const { data: prod } = await supabaseAdmin
-          .from('products')
-          .select('stock')
-          .eq('id', item.product_id)
-          .single();
-
-        if (prod) {
-          await supabaseAdmin
+        if (!item.product_id) continue;
+        try {
+          const { data: prod } = await supabaseAdmin
             .from('products')
-            .update({
-              stock: Math.max(0, prod.stock - item.quantity),
-              in_stock: prod.stock - item.quantity > 0,
-            })
-            .eq('id', item.product_id);
+            .select('stock, sold_quantity, colors')
+            .eq('id', item.product_id)
+            .single();
+
+          if (prod) {
+            const newStock = Math.max(0, (Number(prod.stock) || 0) - item.quantity);
+            const newSold = (Number(prod.sold_quantity) || 0) + item.quantity;
+            let updatedColors = prod.colors;
+
+            if (item.color && Array.isArray(prod.colors) && prod.colors.length > 0) {
+              updatedColors = prod.colors.map((c) => {
+                if (c.name === item.color || c.hex === item.color) {
+                  const currentVariantStock = c.stock !== undefined ? Number(c.stock) : (Number(prod.stock) || 0);
+                  return {
+                    ...c,
+                    stock: Math.max(0, currentVariantStock - item.quantity),
+                  };
+                }
+                return c;
+              });
+            }
+
+            await supabaseAdmin
+              .from('products')
+              .update({
+                stock: newStock,
+                in_stock: newStock > 0,
+                sold_quantity: newSold,
+                colors: updatedColors,
+                updated_at: new Date().toISOString(),
+              })
+              .eq('id', item.product_id);
+          }
+        } catch (stockErr) {
+          console.warn('COD Stock decrement notice:', stockErr.message);
         }
       }
 

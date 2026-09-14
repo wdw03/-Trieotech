@@ -56,10 +56,22 @@ async function handleUpdateProduct(request, { params }) {
       : (body.availableStock !== undefined ? Number(body.availableStock) : undefined);
     if (stockVal !== undefined) {
       updates.stock = stockVal;
-      updates.in_stock = stockVal > 0;
+      if (stockVal === 0) updates.in_stock = false;
+      else updates.in_stock = true;
     }
     if (body.in_stock !== undefined) updates.in_stock = Boolean(body.in_stock);
     if (body.inStock !== undefined) updates.in_stock = Boolean(body.inStock);
+
+    // Storefront Visibility (Hide / Unhide)
+    if (body.is_visible !== undefined) updates.is_visible = Boolean(body.is_visible);
+    else if (body.isVisible !== undefined) updates.is_visible = Boolean(body.isVisible);
+
+    // Sold Quantity & Thresholds
+    if (body.sold_quantity !== undefined) updates.sold_quantity = Math.max(0, Number(body.sold_quantity));
+    else if (body.soldQuantity !== undefined) updates.sold_quantity = Math.max(0, Number(body.soldQuantity));
+
+    if (body.low_stock_threshold !== undefined) updates.low_stock_threshold = Number(body.low_stock_threshold);
+    else if (body.lowStockThreshold !== undefined) updates.low_stock_threshold = Number(body.lowStockThreshold);
 
     // Media
     if (body.images !== undefined) {
@@ -68,9 +80,20 @@ async function handleUpdateProduct(request, { params }) {
       updates.images = [body.image];
     }
 
-    // Variants & Attributes
+    // Variants & Attributes (preserve per-color stock)
     if (body.colors !== undefined) {
-      updates.colors = Array.isArray(body.colors) ? body.colors : [];
+      const fallbackStock = updates.stock !== undefined ? updates.stock : (stockVal !== undefined ? stockVal : 50);
+      updates.colors = Array.isArray(body.colors)
+        ? body.colors.map(c => {
+            if (typeof c === 'object' && c !== null) {
+              return {
+                ...c,
+                stock: c.stock !== undefined ? Number(c.stock) : fallbackStock,
+              };
+            }
+            return { name: String(c), hex: '#C5A028', stock: fallbackStock };
+          })
+        : [];
     }
     if (body.sizes !== undefined) {
       updates.sizes = Array.isArray(body.sizes) ? body.sizes : [];

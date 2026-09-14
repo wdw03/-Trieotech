@@ -24,6 +24,22 @@ export function normalizeProduct(p) {
   }
 
   const inStock = p.in_stock !== undefined ? Boolean(p.in_stock) : Number(p.stock || 0) > 0;
+  const isVisible = p.is_visible !== undefined ? Boolean(p.is_visible) : true;
+  const soldQuantity = Number(p.sold_quantity || 0);
+  const lowStockThreshold = Number(p.low_stock_threshold || 15);
+  const stock = Number(p.stock || 0);
+
+  const colors = Array.isArray(p.colors)
+    ? p.colors.map(c => {
+        if (typeof c === 'object' && c !== null) {
+          return {
+            ...c,
+            stock: c.stock !== undefined ? Number(c.stock) : stock,
+          };
+        }
+        return { name: String(c), hex: '#C5A028', stock };
+      })
+    : [];
 
   return {
     ...p,
@@ -37,13 +53,19 @@ export function normalizeProduct(p) {
     originalPrice: origPrice,
     original_price: origPrice,
     discount,
-    stock: Number(p.stock || 0),
+    stock,
     inStock,
     in_stock: inStock,
+    is_visible: isVisible,
+    isVisible,
+    sold_quantity: soldQuantity,
+    soldQuantity,
+    low_stock_threshold: lowStockThreshold,
+    lowStockThreshold,
     badge,
     image: mainImage,
     images: images.length > 0 ? images : [mainImage],
-    colors: Array.isArray(p.colors) ? p.colors : [],
+    colors,
     sizes: Array.isArray(p.sizes) ? p.sizes : [],
     rating: Number(p.rating || 5),
     ratingCount: Number(p.review_count ?? p.reviews_count ?? 0),
@@ -184,6 +206,25 @@ export async function POST(request) {
       ? Boolean(body.inStock)
       : (body.in_stock !== undefined ? Boolean(body.in_stock) : stock > 0);
 
+    const isVisible = body.is_visible !== undefined
+      ? Boolean(body.is_visible)
+      : (body.isVisible !== undefined ? Boolean(body.isVisible) : true);
+
+    const soldQuantity = Number(body.sold_quantity || body.soldQuantity || 0);
+    const lowStockThreshold = Number(body.low_stock_threshold || body.lowStockThreshold || 15);
+
+    const colors = Array.isArray(body.colors)
+      ? body.colors.map(c => {
+          if (typeof c === 'object' && c !== null) {
+            return {
+              ...c,
+              stock: c.stock !== undefined ? Number(c.stock) : stock,
+            };
+          }
+          return { name: String(c), hex: '#D4AF37', stock };
+        })
+      : [];
+
     let badge = body.badge || '';
     if (!badge) {
       if (body.is_best_seller) badge = 'Best Seller';
@@ -205,9 +246,12 @@ export async function POST(request) {
       discount,
       stock,
       in_stock: inStock,
+      is_visible: isVisible,
+      sold_quantity: soldQuantity,
+      low_stock_threshold: lowStockThreshold,
       badge,
       images,
-      colors: Array.isArray(body.colors) ? body.colors : [],
+      colors,
       sizes: Array.isArray(body.sizes) ? body.sizes : [],
       material: body.material || 'Silk & Velvet',
       color: body.color || '',
