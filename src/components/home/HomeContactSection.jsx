@@ -126,8 +126,8 @@ export default function HomeContactSection() {
                 rel="noopener noreferrer"
                 className="flex items-center gap-3.5 p-3.5 rounded-2xl bg-white/5 border border-gold-500/20 hover:border-gold-500/60 hover:bg-gold-500/10 transition-all group cursor-pointer"
               >
-                <div className="w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
-                  <MessageCircle className="w-5 h-5" />
+                <div className="w-10 h-10 rounded-xl bg-emerald-500/20 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
+                  <img src="/whatsapp.png" alt="WhatsApp" className="w-6 h-6 object-contain" />
                 </div>
                 <div className="text-xs min-w-0 flex-1">
                   <div className="flex items-center justify-between">
@@ -213,7 +213,7 @@ export default function HomeContactSection() {
                     rel="noopener noreferrer"
                     className="btn-primary py-2.5 px-5 text-xs font-bold flex items-center gap-2"
                   >
-                    <MessageCircle className="w-4 h-4" /> Chat on WhatsApp
+                    <img src="/whatsapp.png" alt="WhatsApp" className="w-4 h-4 object-contain" /> Chat on WhatsApp
                   </a>
                 </div>
               </div>

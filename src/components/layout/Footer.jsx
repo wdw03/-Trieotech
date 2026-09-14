@@ -181,6 +181,15 @@ export const Footer = () => {
               </span>
               <div className="flex items-center gap-2">
                 <a
+                  href="https://wa.me/919876543210"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="w-8 h-8 rounded-lg bg-[#1C120B] border border-emerald-500/30 flex items-center justify-center hover:bg-emerald-500/20 hover:scale-105 transition-all"
+                  aria-label="WhatsApp"
+                >
+                  <img src="/whatsapp.png" alt="WhatsApp" className="w-4 h-4 object-contain" />
+                </a>
+                <a
                   href="https://instagram.com"
                   target="_blank"
                   rel="noreferrer"

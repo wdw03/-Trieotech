@@ -1,21 +1,54 @@
 'use client';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import Breadcrumb from '../../components/common/Breadcrumb';
 import EmptyState from '../../components/common/EmptyState';
 import { getBlogBySlug, blogs as fallbackBlogs } from '../../data/blogs';
 import { fetchLiveBlogs } from '../../lib/api/store';
-import { Clock, Tag, Share2, ArrowLeft, ArrowRight, Sparkles, BookOpen } from 'lucide-react';
+import { Clock, Tag, Share2, ArrowLeft, ArrowRight, Sparkles, BookOpen, Link2, Copy, ChevronRight, List } from 'lucide-react';
 import { useToast } from '../../context/ToastContext';
+
+// Extract headings from HTML content for TOC
+function extractHeadings(html) {
+  if (!html) return [];
+  const regex = /<h([23])[^>]*>(.*?)<\/h[23]>/gi;
+  const headings = [];
+  let match;
+  let index = 0;
+  while ((match = regex.exec(html)) !== null) {
+    const id = `section-${index}`;
+    headings.push({
+      level: parseInt(match[1]),
+      text: match[2].replace(/<[^>]*>/g, ''),
+      id
+    });
+    index++;
+  }
+  return headings;
+}
+
+// Inject IDs into HTML headings for anchor scrolling
+function injectHeadingIds(html) {
+  if (!html) return '';
+  let index = 0;
+  return html.replace(/<h([23])([^>]*)>/gi, (match, level, attrs) => {
+    const id = `section-${index}`;
+    index++;
+    return `<h${level}${attrs} id="${id}">`;
+  });
+}
 
 export default function BlogDetailClient({ initialSlug, initialBlog }) {
   const params = useParams();
   const slug = initialSlug || params?.slug;
   const { addToast } = useToast();
+  const articleRef = useRef(null);
 
   const [blog, setBlog] = useState(() => initialBlog || getBlogBySlug(slug));
   const [allBlogs, setAllBlogs] = useState(fallbackBlogs);
+  const [readingProgress, setReadingProgress] = useState(0);
+  const [showToc, setShowToc] = useState(false);
 
   useEffect(() => {
     let isMounted = true;
@@ -33,7 +66,26 @@ export default function BlogDetailClient({ initialSlug, initialBlog }) {
     };
   }, [slug]);
 
-  const relatedBlogs = allBlogs.filter(b => b.slug !== slug).slice(0, 2);
+  // Reading progress bar
+  useEffect(() => {
+    const handleScroll = () => {
+      const el = articleRef.current;
+      if (!el) return;
+      const rect = el.getBoundingClientRect();
+      const articleTop = window.scrollY + rect.top;
+      const articleHeight = rect.height;
+      const scrolled = window.scrollY - articleTop;
+      const progress = Math.min(100, Math.max(0, (scrolled / articleHeight) * 100));
+      setReadingProgress(progress);
+    };
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [blog]);
+
+  const relatedBlogs = allBlogs.filter(b => b.slug !== slug).slice(0, 3);
+
+  const headings = useMemo(() => extractHeadings(blog?.content), [blog?.content]);
+  const processedContent = useMemo(() => injectHeadingIds(blog?.content), [blog?.content]);
 
   if (!blog) {
     return (
@@ -57,118 +109,259 @@ export default function BlogDetailClient({ initialSlug, initialBlog }) {
     }
   };
 
+  const shareUrl = typeof window !== 'undefined' ? window.location.href : `https://trioenterprises.in/blog/${blog.slug}`;
+  const shareTitle = blog.seoTitle || blog.title;
+
+  // Schema.org structured data for Article
+  const schemaData = {
+    '@context': 'https://schema.org',
+    '@type': 'Article',
+    headline: blog.title,
+    description: blog.seoDescription || blog.excerpt || '',
+    image: blog.image,
+    author: {
+      '@type': 'Person',
+      name: blog.author,
+      jobTitle: blog.authorRole || blog.author_role
+    },
+    publisher: {
+      '@type': 'Organization',
+      name: 'Trio Enterprises',
+      logo: { '@type': 'ImageObject', url: 'https://trioenterprises.in/logo.png' }
+    },
+    datePublished: blog.date,
+    dateModified: blog.date,
+    mainEntityOfPage: shareUrl
+  };
+
   return (
-    <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6 space-y-8">
-      
-      <Breadcrumb
-        items={[
-          { name: 'Craft Journal', url: '/blog' },
-          { name: blog.title, url: `/blog/${blog.slug}` }
-        ]}
+    <>
+      {/* Reading Progress Bar */}
+      <div className="fixed top-0 left-0 right-0 z-[100] h-1 bg-transparent">
+        <div
+          className="h-full bg-gradient-to-r from-maroon-700 via-gold-500 to-maroon-700 transition-all duration-150 ease-out shadow-sm"
+          style={{ width: `${readingProgress}%` }}
+        />
+      </div>
+
+      {/* Schema.org JSON-LD */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(schemaData) }}
       />
 
-      {/* Article Header */}
-      <div className="space-y-4 text-center sm:text-left">
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-maroon-100 dark:bg-maroon-950 text-maroon-800 dark:text-gold-300 text-xs font-bold uppercase tracking-wider border border-maroon-300 dark:border-gold-500/30">
-          <Sparkles className="w-3.5 h-3.5" />
-          <span>{blog.category}</span>
-        </div>
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6 space-y-8">
+        
+        <Breadcrumb
+          items={[
+            { name: 'Craft Journal', url: '/blog' },
+            { name: blog.title, url: `/blog/${blog.slug}` }
+          ]}
+        />
 
-        <h1 className="font-serif font-black text-2xl sm:text-4xl md:text-5xl text-stone-900 dark:text-ivory-100 leading-tight">
-          {blog.title}
-        </h1>
-
-        {/* Author & Read Time Meta */}
-        <div className="flex flex-wrap items-center justify-between gap-4 pt-3 pb-6 border-b border-gold-500/20 text-xs text-stone-500">
-          <div className="flex items-center gap-3">
-            <img src={blog.authorImage} alt={blog.author} className="w-10 h-10 rounded-full object-cover border border-gold-500/40" />
-            <div>
-              <p className="font-bold text-stone-900 dark:text-ivory-100 text-sm leading-none">{blog.author}</p>
-              <p className="text-[11px] text-stone-400 mt-0.5">{blog.authorRole}</p>
-            </div>
+        {/* Article Header */}
+        <div className="space-y-4 text-center sm:text-left">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-maroon-100 dark:bg-maroon-950 text-maroon-800 dark:text-gold-300 text-xs font-bold uppercase tracking-wider border border-maroon-300 dark:border-gold-500/30">
+            <Sparkles className="w-3.5 h-3.5" />
+            <span>{blog.category}</span>
           </div>
 
-          <div className="flex items-center gap-4">
-            <span className="flex items-center gap-1">
-              <Clock className="w-4 h-4 text-gold-600" /> {blog.readTime}
+          <h1 className="font-serif font-black text-2xl sm:text-4xl md:text-5xl text-stone-900 dark:text-ivory-100 leading-tight">
+            {blog.title}
+          </h1>
+
+          {/* Author & Read Time Meta */}
+          <div className="flex flex-wrap items-center justify-between gap-4 pt-3 pb-6 border-b border-gold-500/20 text-xs text-stone-500">
+            <div className="flex items-center gap-3">
+              <img src={blog.authorImage || blog.author_image} alt={blog.author} className="w-10 h-10 rounded-full object-cover border border-gold-500/40" />
+              <div>
+                <p className="font-bold text-stone-900 dark:text-ivory-100 text-sm leading-none">{blog.author}</p>
+                <p className="text-[11px] text-stone-400 mt-0.5">{blog.authorRole || blog.author_role}</p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-4">
+              <span className="flex items-center gap-1">
+                <Clock className="w-4 h-4 text-gold-600" /> {blog.readTime || blog.read_time}
+              </span>
+              <span>•</span>
+              <span>{blog.date}</span>
+              
+              {/* Social Share Buttons */}
+              <div className="flex items-center gap-1.5">
+                <button
+                  onClick={handleShare}
+                  className="p-2 rounded-xl bg-ivory-200 dark:bg-stone-800 hover:text-maroon-700 transition-colors"
+                  title="Copy link"
+                  aria-label="Copy article link"
+                >
+                  <Copy className="w-4 h-4" />
+                </button>
+                <a
+                  href={`https://wa.me/?text=${encodeURIComponent(shareTitle + ' ' + shareUrl)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="p-2 rounded-xl bg-ivory-200 dark:bg-stone-800 hover:bg-emerald-100 dark:hover:bg-emerald-900/20 transition-colors"
+                  title="Share on WhatsApp"
+                  aria-label="Share on WhatsApp"
+                >
+                  <img src="/whatsapp.png" alt="WhatsApp" className="w-4 h-4 object-contain" />
+                </a>
+                <a
+                  href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="p-2 rounded-xl bg-ivory-200 dark:bg-stone-800 hover:bg-blue-100 dark:hover:bg-blue-900/20 transition-colors"
+                  title="Share on Facebook"
+                  aria-label="Share on Facebook"
+                >
+                  <svg className="w-4 h-4 fill-current text-blue-600" viewBox="0 0 24 24">
+                    <path d="M9 8H6v4h3v12h5V12h3.642L18 8h-4V6.333C14 5.374 14.5 5 15.5 5H18V0h-3.808C10.595 0 9 1.582 9 4.615V8z"/>
+                  </svg>
+                </a>
+                <a
+                  href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(shareTitle)}&url=${encodeURIComponent(shareUrl)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="p-2 rounded-xl bg-ivory-200 dark:bg-stone-800 hover:bg-stone-200 dark:hover:bg-stone-700 transition-colors"
+                  title="Share on X (Twitter)"
+                  aria-label="Share on X"
+                >
+                  <svg className="w-4 h-4 fill-current text-stone-800 dark:text-stone-200" viewBox="0 0 24 24">
+                    <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+                  </svg>
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Featured Image */}
+        <div className="aspect-[16/9] rounded-3xl overflow-hidden ethnic-card border-2 border-gold-500/30 shadow-2xl">
+          <img
+            src={blog.image}
+            alt={blog.imageAlt || blog.image_alt || blog.title}
+            className="w-full h-full object-cover"
+          />
+        </div>
+
+        {/* Table of Contents (if headings exist) */}
+        {headings.length > 2 && (
+          <div className="ethnic-card rounded-2xl border border-gold-500/20 overflow-hidden">
+            <button
+              onClick={() => setShowToc(!showToc)}
+              className="w-full p-4 flex items-center justify-between text-xs font-bold text-stone-800 dark:text-gold-300"
+            >
+              <span className="flex items-center gap-2">
+                <List className="w-4 h-4 text-gold-600" />
+                Table of Contents ({headings.length} sections)
+              </span>
+              <ChevronRight className={`w-4 h-4 text-gold-600 transition-transform ${showToc ? 'rotate-90' : ''}`} />
+            </button>
+            {showToc && (
+              <div className="px-4 pb-4 border-t border-gold-500/10">
+                <nav className="space-y-1.5 pt-3">
+                  {headings.map((h, idx) => (
+                    <a
+                      key={idx}
+                      href={`#${h.id}`}
+                      className={`block text-xs transition-colors hover:text-maroon-700 dark:hover:text-gold-400 ${
+                        h.level === 3 ? 'pl-4 text-stone-500 dark:text-stone-400' : 'font-semibold text-stone-700 dark:text-stone-200'
+                      }`}
+                    >
+                      {h.level === 2 ? '📖 ' : '• '}{h.text}
+                    </a>
+                  ))}
+                </nav>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Rich Article Body Content */}
+        <article
+          ref={articleRef}
+          className="prose dark:prose-invert max-w-none text-xs sm:text-sm text-stone-700 dark:text-stone-300 leading-relaxed space-y-4 font-sans prose-headings:scroll-mt-20"
+          dangerouslySetInnerHTML={{ __html: processedContent }}
+        />
+
+        {/* Tags Row */}
+        {blog.tags && blog.tags.length > 0 && (
+          <div className="pt-6 border-t border-gold-500/20 flex items-center gap-2 flex-wrap">
+            <span className="text-xs font-bold text-stone-500 flex items-center gap-1">
+              <Tag className="w-3.5 h-3.5 text-gold-600" /> Tags:
             </span>
-            <span>•</span>
-            <span>{blog.date}</span>
+            {blog.tags.map((tag) => (
+              <span
+                key={tag}
+                className="px-3 py-1 rounded-full bg-gold-500/10 text-gold-800 dark:text-gold-300 border border-gold-500/20 text-xs font-semibold"
+              >
+                #{tag}
+              </span>
+            ))}
+          </div>
+        )}
+
+        {/* Share Strip */}
+        <div className="pt-4 pb-2 border-t border-gold-500/20 flex items-center justify-between">
+          <span className="text-xs font-bold text-stone-500">Share this article:</span>
+          <div className="flex items-center gap-2">
+            <a
+              href={`https://wa.me/?text=${encodeURIComponent(shareTitle + ' ' + shareUrl)}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="px-3 py-1.5 rounded-xl bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/20 text-xs font-bold flex items-center gap-1.5 hover:shadow-sm transition-all"
+            >
+              <img src="/whatsapp.png" alt="WhatsApp" className="w-4 h-4 object-contain" /> WhatsApp
+            </a>
             <button
               onClick={handleShare}
-              className="p-2 rounded-xl bg-ivory-200 dark:bg-stone-800 hover:text-maroon-700 transition-colors"
-              title="Share"
-              aria-label="Share article"
+              className="px-3 py-1.5 rounded-xl bg-stone-100 dark:bg-stone-800 text-stone-600 dark:text-stone-300 border border-stone-200 dark:border-stone-700 text-xs font-bold flex items-center gap-1.5 hover:shadow-sm transition-all"
             >
-              <Share2 className="w-4 h-4" />
+              <Link2 className="w-3.5 h-3.5" /> Copy Link
             </button>
           </div>
         </div>
-      </div>
 
-      {/* Featured Image */}
-      <div className="aspect-[16/9] rounded-3xl overflow-hidden ethnic-card border-2 border-gold-500/30 shadow-2xl">
-        <img src={blog.image} alt={blog.title} className="w-full h-full object-cover" />
-      </div>
-
-      {/* Rich Article Body Content */}
-      <article
-        className="prose dark:prose-invert max-w-none text-xs sm:text-sm text-stone-700 dark:text-stone-300 leading-relaxed space-y-4 font-sans"
-        dangerouslySetInnerHTML={{ __html: blog.content }}
-      />
-
-      {/* Tags Row */}
-      {blog.tags && blog.tags.length > 0 && (
-        <div className="pt-6 border-t border-gold-500/20 flex items-center gap-2 flex-wrap">
-          <span className="text-xs font-bold text-stone-500 flex items-center gap-1">
-            <Tag className="w-3.5 h-3.5 text-gold-600" /> Tags:
-          </span>
-          {blog.tags.map((tag) => (
-            <span
-              key={tag}
-              className="px-3 py-1 rounded-full bg-gold-500/10 text-gold-800 dark:text-gold-300 border border-gold-500/20 text-xs font-semibold"
-            >
-              #{tag}
-            </span>
-          ))}
-        </div>
-      )}
-
-      {/* Related Blog Articles */}
-      {relatedBlogs.length > 0 && (
-        <div className="pt-10 border-t border-gold-500/30 space-y-6">
-          <h3 className="font-serif font-bold text-xl text-stone-900 dark:text-ivory-100">
-            More from the Artisan Journal
-          </h3>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-            {relatedBlogs.map((b) => (
-              <Link
-                key={b.id}
-                href={`/blog/${b.slug}`}
-                className="ethnic-card p-4 rounded-2xl flex gap-4 items-center group hover:border-gold-500/50 transition-all"
-              >
-                <img src={b.image} alt={b.title} className="w-20 h-20 rounded-xl object-cover shrink-0 border border-gold-500/20" />
-                <div className="space-y-1 min-w-0">
-                  <span className="text-[10px] font-bold uppercase text-gold-700 dark:text-gold-400">{b.category}</span>
-                  <h4 className="font-serif font-bold text-xs sm:text-sm text-stone-900 dark:text-ivory-100 group-hover:text-maroon-700 dark:group-hover:text-gold-400 line-clamp-2">
-                    {b.title}
-                  </h4>
-                </div>
-              </Link>
-            ))}
+        {/* Related Blog Articles */}
+        {relatedBlogs.length > 0 && (
+          <div className="pt-10 border-t border-gold-500/30 space-y-6">
+            <h3 className="font-serif font-bold text-xl text-stone-900 dark:text-ivory-100">
+              More from the Artisan Journal
+            </h3>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
+              {relatedBlogs.map((b) => (
+                <Link
+                  key={b.id}
+                  href={`/blog/${b.slug}`}
+                  className="ethnic-card rounded-2xl overflow-hidden group hover:border-gold-500/50 transition-all transform hover:-translate-y-1"
+                >
+                  <div className="aspect-[16/10] overflow-hidden bg-stone-100 dark:bg-stone-900">
+                    <img src={b.image} alt={b.imageAlt || b.image_alt || b.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                  </div>
+                  <div className="p-4 space-y-1.5">
+                    <span className="text-[10px] font-bold uppercase text-gold-700 dark:text-gold-400">{b.category}</span>
+                    <h4 className="font-serif font-bold text-xs sm:text-sm text-stone-900 dark:text-ivory-100 group-hover:text-maroon-700 dark:group-hover:text-gold-400 line-clamp-2">
+                      {b.title}
+                    </h4>
+                    <p className="text-[11px] text-stone-500 flex items-center gap-1.5">
+                      <Clock className="w-3 h-3 text-gold-500" /> {b.readTime || b.read_time} • {b.date}
+                    </p>
+                  </div>
+                </Link>
+              ))}
+            </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {/* Back to Blog */}
-      <div className="pt-4 text-center">
-        <Link href="/blog" className="btn-outline-maroon py-2.5 px-6 text-xs font-bold inline-flex items-center gap-2">
-          <ArrowLeft className="w-4 h-4" />
-          <span>Back to All Articles</span>
-        </Link>
+        {/* Back to Blog */}
+        <div className="pt-4 text-center">
+          <Link href="/blog" className="btn-outline-maroon py-2.5 px-6 text-xs font-bold inline-flex items-center gap-2">
+            <ArrowLeft className="w-4 h-4" />
+            <span>Back to All Articles</span>
+          </Link>
+        </div>
       </div>
-    </div>
+    </>
   );
 };
-
-

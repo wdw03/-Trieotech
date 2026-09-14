@@ -686,7 +686,7 @@ export default function MyOrdersClient() {
                         className="px-3 py-1.5 text-xs font-bold rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white flex items-center gap-1.5 transition-colors shadow-sm"
                         title="Chat with support on WhatsApp"
                       >
-                        <MessageCircle className="w-3.5 h-3.5" />
+                        <img src="/whatsapp.png" alt="WhatsApp" className="w-4 h-4 object-contain" />
                         <span>Chat on WhatsApp</span>
                       </a>
 
@@ -1251,7 +1251,7 @@ export default function MyOrdersClient() {
                 rel="noopener noreferrer"
                 className="flex-1 py-2.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold flex items-center justify-center gap-2 transition-colors text-xs shadow-sm"
               >
-                <MessageCircle className="w-4 h-4" />
+                <img src="/whatsapp.png" alt="WhatsApp" className="w-4 h-4 object-contain" />
                 <span>Chat with Support on WhatsApp</span>
               </a>
               <button

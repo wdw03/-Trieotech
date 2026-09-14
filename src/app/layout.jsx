@@ -6,6 +6,7 @@ import Footer from '../components/layout/Footer';
 import MobileNav from '../components/layout/MobileNav';
 import CartDrawer from '../components/cart/CartDrawer';
 import AuthRequiredModal from '../components/auth/AuthRequiredModal';
+import WhatsAppFloatingButton from '../components/common/WhatsAppFloatingButton';
 
 export const metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || 'https://trioenterprises.in'),
@@ -77,6 +78,7 @@ export default function RootLayout({ children }) {
             <MobileNav />
             <CartDrawer />
             <AuthRequiredModal />
+            <WhatsAppFloatingButton />
           </div>
         </Providers>
         <Script src="https://checkout.razorpay.com/v1/checkout.js" strategy="lazyOnload" />

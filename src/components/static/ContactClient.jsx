@@ -106,8 +106,8 @@ export default function ContactClient() {
               rel="noopener noreferrer"
               className="ethnic-card p-4 rounded-2xl flex items-center gap-3.5 hover:border-gold-500/50 transition-all group"
             >
-              <div className="w-10 h-10 rounded-xl bg-gold-500/20 text-gold-600 dark:text-gold-400 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
-                <MessageCircle className="w-5 h-5" />
+              <div className="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                <img src="/whatsapp.png" alt="WhatsApp" className="w-6 h-6 object-contain" />
               </div>
               <div className="text-xs min-w-0">
                 <span className="font-bold text-stone-900 dark:text-ivory-100 block">WhatsApp Chat Desk</span>
@@ -184,7 +184,7 @@ export default function ContactClient() {
                   rel="noopener noreferrer"
                   className="btn-primary py-2.5 px-5 text-xs font-bold flex items-center gap-2"
                 >
-                  <MessageCircle className="w-4 h-4" /> Chat on WhatsApp
+                  <img src="/whatsapp.png" alt="WhatsApp" className="w-4 h-4 object-contain" /> Chat on WhatsApp
                 </a>
               </div>
             </div>
