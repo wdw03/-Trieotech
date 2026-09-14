@@ -69,10 +69,10 @@ module.exports = {
         }
       },
       fontFamily: {
-        serif: ['"Playfair Display"', 'Georgia', 'serif'],
-        cinzel: ['"Cinzel"', 'serif'],
-        cormorant: ['"Cormorant Garamond"', 'serif'],
-        sans: ['"Plus Jakarta Sans"', 'Inter', '-apple-system', 'sans-serif'],
+        serif: ['"Inter"', '-apple-system', 'BlinkMacSystemFont', '"Segoe UI"', 'Roboto', 'sans-serif'],
+        cinzel: ['"Inter"', '"Cinzel"', 'serif'],
+        cormorant: ['"Inter"', '"Cormorant Garamond"', 'serif'],
+        sans: ['"Inter"', '-apple-system', 'BlinkMacSystemFont', '"Segoe UI"', 'Roboto', 'sans-serif'],
         inter: ['"Inter"', '-apple-system', 'BlinkMacSystemFont', '"Segoe UI"', 'Roboto', 'sans-serif'],
       },
       boxShadow: {
