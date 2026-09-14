@@ -220,7 +220,7 @@ export async function GET(request) {
         courierId: shipment.courier_id || null,
         routingCode: shipment.routing_code || '',
         weight: Number(shipment.weight || 0.5),
-        dimensions: shipment.dimensions || { length: 20, breadth: 15, height: 10 },
+        dimensions: shipment.dimensions || { length: 15, breadth: 10, height: 5 },
         shiprocketOrderId: shipment.shiprocket_order_id || '',
         shiprocketShipmentId: shipment.shiprocket_shipment_id || '',
         labelUrl: shipment.label_url || `/api/admin/shipments/label?orderId=${encodeURIComponent(ord.order_number)}`,
@@ -280,6 +280,8 @@ export async function GET(request) {
         // Detailed shipment object with all lifecycle actions
         shipment: shipmentDetail,
         financials,
+        packageWeight: Number(shipment.weight || 0.5),
+        packageDimensions: shipment.dimensions || { length: 15, breadth: 10, height: 5 },
         // Legacy dashboard flat keys for backward compatibility
         shipmentStatus: shipment.status || (shipment.shiprocket_order_id ? 'confirmed' : 'none'),
         shiprocketOrderId: shipment.shiprocket_order_id || '',
