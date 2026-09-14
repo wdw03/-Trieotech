@@ -113,6 +113,25 @@ export async function POST(request) {
       return NextResponse.json({ error: 'Product name and price are required' }, { status: 400 });
     }
 
+    // Validate mandatory shipping weight & dimensions
+    const weightVal = Number(body.weight);
+    const lengthVal = Number(body.length || body.dimensions?.length);
+    const breadthVal = Number(body.breadth || body.dimensions?.breadth);
+    const heightVal = Number(body.height || body.dimensions?.height);
+
+    if (body.weight === undefined || body.weight === null || body.weight === '' || isNaN(weightVal) || weightVal <= 0) {
+      return NextResponse.json({ error: 'Product weight is mandatory and must be greater than 0 kg' }, { status: 400 });
+    }
+    if (isNaN(lengthVal) || lengthVal <= 0) {
+      return NextResponse.json({ error: 'Package length is mandatory and must be greater than 0 cm' }, { status: 400 });
+    }
+    if (isNaN(breadthVal) || breadthVal <= 0) {
+      return NextResponse.json({ error: 'Package breadth is mandatory and must be greater than 0 cm' }, { status: 400 });
+    }
+    if (isNaN(heightVal) || heightVal <= 0) {
+      return NextResponse.json({ error: 'Package height is mandatory and must be greater than 0 cm' }, { status: 400 });
+    }
+
     // Unique Slug Generation
     let baseSlug = (body.slug || body.name || 'product')
       .toLowerCase()

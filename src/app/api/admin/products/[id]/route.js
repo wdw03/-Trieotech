@@ -97,10 +97,34 @@ async function handleUpdateProduct(request, { params }) {
     }
 
     // Shipping Weight & Dimensions
-    if (body.weight !== undefined) updates.weight = Number(body.weight);
-    if (body.length !== undefined) updates.length = Number(body.length);
-    if (body.breadth !== undefined) updates.breadth = Number(body.breadth);
-    if (body.height !== undefined) updates.height = Number(body.height);
+    if (body.weight !== undefined) {
+      const w = Number(body.weight);
+      if (isNaN(w) || w <= 0) {
+        return NextResponse.json({ error: 'Product weight is mandatory and must be greater than 0 kg' }, { status: 400 });
+      }
+      updates.weight = w;
+    }
+    if (body.length !== undefined) {
+      const l = Number(body.length);
+      if (isNaN(l) || l <= 0) {
+        return NextResponse.json({ error: 'Package length is mandatory and must be greater than 0 cm' }, { status: 400 });
+      }
+      updates.length = l;
+    }
+    if (body.breadth !== undefined) {
+      const b = Number(body.breadth);
+      if (isNaN(b) || b <= 0) {
+        return NextResponse.json({ error: 'Package breadth is mandatory and must be greater than 0 cm' }, { status: 400 });
+      }
+      updates.breadth = b;
+    }
+    if (body.height !== undefined) {
+      const h = Number(body.height);
+      if (isNaN(h) || h <= 0) {
+        return NextResponse.json({ error: 'Package height is mandatory and must be greater than 0 cm' }, { status: 400 });
+      }
+      updates.height = h;
+    }
     if (body.dimensions !== undefined) {
       updates.dimensions = typeof body.dimensions === 'object' && body.dimensions !== null ? body.dimensions : updates.dimensions;
     }
