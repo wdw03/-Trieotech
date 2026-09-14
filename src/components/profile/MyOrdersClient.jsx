@@ -169,7 +169,7 @@ export default function MyOrdersClient() {
       setCopiedAwb(true);
       addToast(`Tracking AWB "${awb}" copied to clipboard!`, 'info');
       setTimeout(() => setCopiedAwb(false), 2500);
-    } catch (_) {}
+    } catch (_) { }
   };
 
   const formatAddress = (addr) => {
@@ -368,7 +368,7 @@ export default function MyOrdersClient() {
         if (data.success && data.claim) {
           claim = data.claim;
         }
-      } catch (_) {}
+      } catch (_) { }
     }
 
     setViewTicketModal({
@@ -454,13 +454,12 @@ export default function MyOrdersClient() {
           return (
             <div
               key={order.dbId || order.id}
-              className={`ethnic-card p-6 sm:p-8 rounded-3xl space-y-5 border transition-all ${
-                order.status === 'Cancelled'
+              className={`ethnic-card p-6 sm:p-8 rounded-3xl space-y-5 border transition-all ${order.status === 'Cancelled'
                   ? 'border-rose-300/40 dark:border-rose-800/40 opacity-80'
                   : isReturned
-                  ? 'border-amber-500/40 dark:border-amber-700/50 bg-amber-50/20 dark:bg-amber-950/10'
-                  : 'border-gold-500/20 hover:border-gold-500/40'
-              }`}
+                    ? 'border-amber-500/40 dark:border-amber-700/50 bg-amber-50/20 dark:bg-amber-950/10'
+                    : 'border-gold-500/20 hover:border-gold-500/40'
+                }`}
             >
               {/* Top Bar Info */}
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-gold-500/10 text-xs">
@@ -487,11 +486,10 @@ export default function MyOrdersClient() {
                 <div className="text-left sm:text-right">
                   <span className="text-[11px] text-stone-500 uppercase font-bold block">Total Amount</span>
                   <span
-                    className={`font-serif font-black text-base ${
-                      order.status === 'Cancelled'
+                    className={`font-serif font-black text-base ${order.status === 'Cancelled'
                         ? 'text-rose-700 dark:text-rose-400 line-through'
                         : 'text-maroon-800 dark:text-gold-400'
-                    }`}
+                      }`}
                   >
                     ₹{order.total?.toLocaleString('en-IN')}
                   </span>
@@ -517,11 +515,10 @@ export default function MyOrdersClient() {
                       <div className="min-w-0">
                         <Link
                           href={`/product/${item.slug || item.productId || ''}`}
-                          className={`font-serif font-bold truncate block hover:text-maroon-800 dark:hover:text-gold-400 transition-colors ${
-                            order.status === 'Cancelled'
+                          className={`font-serif font-bold truncate block hover:text-maroon-800 dark:hover:text-gold-400 transition-colors ${order.status === 'Cancelled'
                               ? 'text-stone-500 dark:text-stone-500 line-through'
                               : 'text-stone-900 dark:text-ivory-100'
-                          }`}
+                            }`}
                           title="View product page"
                         >
                           {item.name}
@@ -542,9 +539,8 @@ export default function MyOrdersClient() {
                     </div>
                     <div className="text-right shrink-0">
                       <span
-                        className={`font-serif font-bold block ${
-                          order.status === 'Cancelled' ? 'text-stone-400 line-through' : 'text-stone-800 dark:text-stone-200'
-                        }`}
+                        className={`font-serif font-bold block ${order.status === 'Cancelled' ? 'text-stone-400 line-through' : 'text-stone-800 dark:text-stone-200'
+                          }`}
                       >
                         ₹{(item.price * item.quantity)?.toLocaleString('en-IN')}
                       </span>
@@ -593,13 +589,12 @@ export default function MyOrdersClient() {
                       return (
                         <div key={st.label} className="relative z-10 flex flex-col items-center text-center">
                           <div
-                            className={`w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold transition-all shadow-sm ${
-                              isDone
+                            className={`w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold transition-all shadow-sm ${isDone
                                 ? 'bg-emerald-600 text-white'
                                 : isCurrent
-                                ? 'bg-gold-500 text-white ring-4 ring-gold-500/20 scale-110 animate-pulse'
-                                : 'bg-stone-200 dark:bg-stone-800 text-stone-400 border border-stone-300 dark:border-stone-700'
-                            }`}
+                                  ? 'bg-gold-500 text-white ring-4 ring-gold-500/20 scale-110 animate-pulse'
+                                  : 'bg-stone-200 dark:bg-stone-800 text-stone-400 border border-stone-300 dark:border-stone-700'
+                              }`}
                           >
                             {isDone ? (
                               <Check className="w-3.5 h-3.5 stroke-[3]" />
@@ -608,13 +603,12 @@ export default function MyOrdersClient() {
                             )}
                           </div>
                           <span
-                            className={`text-[10px] mt-1.5 font-medium hidden sm:block ${
-                              isCurrent
+                            className={`text-[10px] mt-1.5 font-medium hidden sm:block ${isCurrent
                                 ? 'font-bold text-gold-700 dark:text-gold-400'
                                 : isDone
-                                ? 'text-emerald-700 dark:text-emerald-400 font-medium'
-                                : 'text-stone-400'
-                            }`}
+                                  ? 'text-emerald-700 dark:text-emerald-400 font-medium'
+                                  : 'text-stone-400'
+                              }`}
                           >
                             {st.label}
                           </span>
@@ -651,24 +645,23 @@ export default function MyOrdersClient() {
                           <p className="font-bold text-amber-900 dark:text-amber-200 text-sm">
                             Return / Refund Ticket: {order.returnClaim?.ticketId || `Claim for ${order.id}`}
                           </p>
-                          <span className={`px-2 py-0.5 rounded-full font-bold text-[10px] capitalize ${
-                            claimStatus === 'approved'
+                          <span className={`px-2 py-0.5 rounded-full font-bold text-[10px] capitalize ${claimStatus === 'approved'
                               ? 'bg-indigo-600 text-white'
                               : claimStatus === 'refunded'
-                              ? 'bg-blue-600 text-white'
-                              : claimStatus === 'rejected'
-                              ? 'bg-rose-600 text-white'
-                              : 'bg-amber-600 text-white'
-                          }`}>
+                                ? 'bg-blue-600 text-white'
+                                : claimStatus === 'rejected'
+                                  ? 'bg-rose-600 text-white'
+                                  : 'bg-amber-600 text-white'
+                            }`}>
                             {claimStatus === 'pending_review'
                               ? 'Pending Admin Verification'
                               : claimStatus === 'approved'
-                              ? 'Approved - Reverse Pickup'
-                              : claimStatus === 'rejected'
-                              ? 'Claim Rejected'
-                              : claimStatus === 'refunded'
-                              ? 'Refund Completed'
-                              : claimStatus?.replace(/_/g, ' ')}
+                                ? 'Approved - Reverse Pickup'
+                                : claimStatus === 'rejected'
+                                  ? 'Claim Rejected'
+                                  : claimStatus === 'refunded'
+                                    ? 'Refund Completed'
+                                    : claimStatus?.replace(/_/g, ' ')}
                           </span>
                         </div>
                         <p className="text-[11px] text-amber-800 dark:text-amber-300 mt-1">
@@ -732,8 +725,8 @@ export default function MyOrdersClient() {
                         {claimStatus === 'refunded'
                           ? `₹${order.returnClaim?.refundAmount || order.total} Refunded to Original Method`
                           : order.returnClaim?.resolution === 'replacement'
-                          ? 'Free Handcrafted Replacement'
-                          : `100% Refund (₹${order.total})`}
+                            ? 'Free Handcrafted Replacement'
+                            : `100% Refund (₹${order.total})`}
                       </strong>
                     </div>
 
@@ -918,11 +911,10 @@ export default function MyOrdersClient() {
                 </label>
                 <div className="grid grid-cols-2 gap-2">
                   <label
-                    className={`p-3 rounded-xl border cursor-pointer flex items-center gap-2 transition-all ${
-                      returnResolution === 'refund'
+                    className={`p-3 rounded-xl border cursor-pointer flex items-center gap-2 transition-all ${returnResolution === 'refund'
                         ? 'border-maroon-800 dark:border-gold-500 bg-maroon-50 dark:bg-gold-950/20 font-bold'
                         : 'border-stone-200 dark:border-stone-800 hover:bg-stone-50'
-                    }`}
+                      }`}
                   >
                     <input
                       type="radio"
@@ -939,11 +931,10 @@ export default function MyOrdersClient() {
                   </label>
 
                   <label
-                    className={`p-3 rounded-xl border cursor-pointer flex items-center gap-2 transition-all ${
-                      returnResolution === 'replacement'
+                    className={`p-3 rounded-xl border cursor-pointer flex items-center gap-2 transition-all ${returnResolution === 'replacement'
                         ? 'border-maroon-800 dark:border-gold-500 bg-maroon-50 dark:bg-gold-950/20 font-bold'
                         : 'border-stone-200 dark:border-stone-800 hover:bg-stone-50'
-                    }`}
+                      }`}
                   >
                     <input
                       type="radio"
@@ -1085,15 +1076,14 @@ export default function MyOrdersClient() {
                     {viewTicketModal.claim?.ticketId}
                   </span>
                   <span
-                    className={`badge-ribbon ${
-                      viewTicketModal.claim?.status === 'approved'
+                    className={`badge-ribbon ${viewTicketModal.claim?.status === 'approved'
                         ? 'bg-emerald-600 text-white'
                         : viewTicketModal.claim?.status === 'rejected'
-                        ? 'bg-rose-600 text-white'
-                        : viewTicketModal.claim?.status === 'refunded'
-                        ? 'bg-blue-600 text-white'
-                        : 'bg-amber-600 text-white'
-                    }`}
+                          ? 'bg-rose-600 text-white'
+                          : viewTicketModal.claim?.status === 'refunded'
+                            ? 'bg-blue-600 text-white'
+                            : 'bg-amber-600 text-white'
+                      }`}
                   >
                     {viewTicketModal.claim?.status === 'pending_review'
                       ? 'Under Admin Verification'
@@ -1194,11 +1184,10 @@ export default function MyOrdersClient() {
 
                 <div className="flex items-center gap-2">
                   <div
-                    className={`w-5 h-5 rounded-full flex items-center justify-center font-bold text-[10px] ${
-                      viewTicketModal.claim?.status !== 'pending_review'
+                    className={`w-5 h-5 rounded-full flex items-center justify-center font-bold text-[10px] ${viewTicketModal.claim?.status !== 'pending_review'
                         ? 'bg-emerald-500 text-white'
                         : 'bg-amber-500 text-slate-950 animate-pulse'
-                    }`}
+                      }`}
                   >
                     {viewTicketModal.claim?.status !== 'pending_review' ? '✓' : '•'}
                   </div>
@@ -1215,19 +1204,18 @@ export default function MyOrdersClient() {
 
                 <div className="flex items-center gap-2">
                   <div
-                    className={`w-5 h-5 rounded-full flex items-center justify-center font-bold text-[10px] ${
-                      ['approved', 'pickup_scheduled', 'returned', 'refunded'].includes(viewTicketModal.claim?.status)
+                    className={`w-5 h-5 rounded-full flex items-center justify-center font-bold text-[10px] ${['approved', 'pickup_scheduled', 'returned', 'refunded'].includes(viewTicketModal.claim?.status)
                         ? 'bg-emerald-500 text-white'
                         : viewTicketModal.claim?.status === 'rejected'
-                        ? 'bg-rose-500 text-white'
-                        : 'bg-stone-300 dark:bg-stone-700 text-stone-500'
-                    }`}
+                          ? 'bg-rose-500 text-white'
+                          : 'bg-stone-300 dark:bg-stone-700 text-stone-500'
+                      }`}
                   >
                     {['approved', 'pickup_scheduled', 'returned', 'refunded'].includes(viewTicketModal.claim?.status)
                       ? '✓'
                       : viewTicketModal.claim?.status === 'rejected'
-                      ? '✕'
-                      : '3'}
+                        ? '✕'
+                        : '3'}
                   </div>
                   <span className="text-stone-600 dark:text-stone-400">
                     {viewTicketModal.claim?.status === 'rejected'
@@ -1238,11 +1226,10 @@ export default function MyOrdersClient() {
 
                 <div className="flex items-center gap-2">
                   <div
-                    className={`w-5 h-5 rounded-full flex items-center justify-center font-bold text-[10px] ${
-                      viewTicketModal.claim?.status === 'refunded'
+                    className={`w-5 h-5 rounded-full flex items-center justify-center font-bold text-[10px] ${viewTicketModal.claim?.status === 'refunded'
                         ? 'bg-blue-600 text-white'
                         : 'bg-stone-300 dark:bg-stone-700 text-stone-500'
-                    }`}
+                      }`}
                   >
                     {viewTicketModal.claim?.status === 'refunded' ? '✓' : '4'}
                   </div>
@@ -1388,13 +1375,12 @@ export default function MyOrdersClient() {
                   <span className={`badge-ribbon ${STATUS_BADGE[detailsModal.order.status] || 'bg-amber-600 text-white'}`}>
                     {detailsModal.order.status}
                   </span>
-                  <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase ${
-                    detailsModal.order.payment_status === 'captured' || detailsModal.order.payment_status === 'paid'
+                  <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase ${detailsModal.order.payment_status === 'captured' || detailsModal.order.payment_status === 'paid'
                       ? 'bg-emerald-100 dark:bg-emerald-950/50 text-emerald-800 dark:text-emerald-300 border border-emerald-500/30'
                       : detailsModal.order.payment_status === 'refunded'
-                      ? 'bg-blue-100 dark:bg-blue-950/50 text-blue-800 dark:text-blue-300 border border-blue-500/30'
-                      : 'bg-amber-100 dark:bg-amber-950/50 text-amber-800 dark:text-amber-300 border border-amber-500/30'
-                  }`}>
+                        ? 'bg-blue-100 dark:bg-blue-950/50 text-blue-800 dark:text-blue-300 border border-blue-500/30'
+                        : 'bg-amber-100 dark:bg-amber-950/50 text-amber-800 dark:text-amber-300 border border-amber-500/30'
+                    }`}>
                     Payment: {detailsModal.order.payment_status || 'Pending'}
                   </span>
                 </div>
@@ -1633,20 +1619,20 @@ export default function MyOrdersClient() {
                 {/* Cancel Order button in modal — strictly before packed */}
                 {!detailsModal.order.status?.toLowerCase().includes('cancel') &&
                   CANCELLABLE_STATUSES.includes((detailsModal.order.rawStatus || detailsModal.order.status || '').toLowerCase()) && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const ord = detailsModal.order;
-                      closeDetailsModal();
-                      openCancelModal(ord);
-                    }}
-                    className="py-2.5 px-3.5 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-300 dark:border-rose-800 text-rose-700 dark:text-rose-300 hover:bg-rose-100 dark:hover:bg-rose-900/50 text-xs font-bold flex items-center gap-1.5 transition-colors"
-                    title="Cancel this order before dispatch"
-                  >
-                    <XCircle className="w-3.5 h-3.5 text-rose-600" />
-                    <span>Cancel Order</span>
-                  </button>
-                )}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const ord = detailsModal.order;
+                        closeDetailsModal();
+                        openCancelModal(ord);
+                      }}
+                      className="py-2.5 px-3.5 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-300 dark:border-rose-800 text-rose-700 dark:text-rose-300 hover:bg-rose-100 dark:hover:bg-rose-900/50 text-xs font-bold flex items-center gap-1.5 transition-colors"
+                      title="Cancel this order before dispatch"
+                    >
+                      <XCircle className="w-3.5 h-3.5 text-rose-600" />
+                      <span>Cancel Order</span>
+                    </button>
+                  )}
 
                 <button
                   type="button"
