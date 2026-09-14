@@ -70,9 +70,9 @@ export const BlogPreview = () => {
               </div>
 
               {/* Blog Content */}
-              <div className="p-5 flex-1 flex flex-col justify-between space-y-3">
+              <div className="p-5 flex-1 flex flex-col justify-between space-y-3 font-inter">
                 <div className="space-y-2">
-                  <div className="flex items-center gap-3 text-[11px] text-stone-400">
+                  <div className="flex items-center gap-3 text-[11px] text-slate-400 font-medium">
                     <span className="flex items-center gap-1">
                       <Clock className="w-3 h-3 text-gold-500" /> {blog.readTime || '5 min read'}
                     </span>
@@ -80,11 +80,11 @@ export const BlogPreview = () => {
                     <span>{blog.date}</span>
                   </div>
 
-                  <h3 className="font-serif font-bold text-sm sm:text-base text-stone-900 dark:text-ivory-100 group-hover:text-maroon-700 dark:group-hover:text-gold-400 transition-colors leading-snug line-clamp-2">
+                  <h3 className="font-inter font-bold text-sm sm:text-base text-slate-900 dark:text-slate-100 group-hover:text-maroon-700 dark:group-hover:text-gold-400 transition-colors leading-snug line-clamp-2">
                     {blog.title}
                   </h3>
 
-                  <p className="text-xs text-stone-600 dark:text-stone-300 line-clamp-2 leading-relaxed">
+                  <p className="font-inter font-medium text-xs text-slate-600 dark:text-slate-300 line-clamp-2 leading-relaxed">
                     {blog.excerpt}
                   </p>
                 </div>
@@ -97,10 +97,10 @@ export const BlogPreview = () => {
                       alt={blog.author || 'Trio Author'}
                       className="w-6 h-6 rounded-full object-cover border border-gold-500/30"
                     />
-                    <span className="text-[11px] font-bold text-stone-700 dark:text-stone-300">{blog.author || 'Trio Editorial'}</span>
+                    <span className="text-[11px] font-bold text-slate-900 dark:text-slate-100">{blog.author || 'Trio Editorial'}</span>
                   </div>
-                  <span className="text-xs font-bold text-maroon-700 dark:text-gold-400 group-hover:translate-x-1 transition-transform inline-flex items-center gap-0.5">
-                    Read →
+                  <span className="text-xs font-bold text-maroon-700 dark:text-gold-400 group-hover:translate-x-1 transition-transform inline-flex items-center gap-1">
+                    Read <ArrowRight className="w-3.5 h-3.5" />
                   </span>
                 </div>
               </div>

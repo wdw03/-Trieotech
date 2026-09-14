@@ -73,6 +73,7 @@ module.exports = {
         cinzel: ['"Cinzel"', 'serif'],
         cormorant: ['"Cormorant Garamond"', 'serif'],
         sans: ['"Plus Jakarta Sans"', 'Inter', '-apple-system', 'sans-serif'],
+        inter: ['"Inter"', '-apple-system', 'BlinkMacSystemFont', '"Segoe UI"', 'Roboto', 'sans-serif'],
       },
       boxShadow: {
         '2xs': '0 1px 2px 0 rgba(0, 0, 0, 0.05)',

@@ -150,7 +150,7 @@ export default function BlogDetailClient({ initialSlug, initialBlog }) {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(schemaData) }}
       />
 
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6 space-y-8">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6 space-y-8 font-inter">
         
         <Breadcrumb
           items={[
@@ -160,23 +160,23 @@ export default function BlogDetailClient({ initialSlug, initialBlog }) {
         />
 
         {/* Article Header */}
-        <div className="space-y-4 text-center sm:text-left">
+        <div className="space-y-4 text-center sm:text-left font-inter">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-maroon-100 dark:bg-maroon-950 text-maroon-800 dark:text-gold-300 text-xs font-bold uppercase tracking-wider border border-maroon-300 dark:border-gold-500/30">
             <Sparkles className="w-3.5 h-3.5" />
             <span>{blog.category}</span>
           </div>
 
-          <h1 className="font-serif font-black text-2xl sm:text-4xl md:text-5xl text-stone-900 dark:text-ivory-100 leading-tight">
+          <h1 className="font-inter font-extrabold text-2xl sm:text-4xl md:text-5xl text-slate-900 dark:text-slate-100 leading-tight tracking-tight">
             {blog.title}
           </h1>
 
           {/* Author & Read Time Meta */}
-          <div className="flex flex-wrap items-center justify-between gap-4 pt-3 pb-6 border-b border-gold-500/20 text-xs text-stone-500">
+          <div className="flex flex-wrap items-center justify-between gap-4 pt-3 pb-6 border-b border-gold-500/20 text-xs text-slate-500 font-medium font-inter">
             <div className="flex items-center gap-3">
               <img src={blog.authorImage || blog.author_image} alt={blog.author} className="w-10 h-10 rounded-full object-cover border border-gold-500/40" />
               <div>
-                <p className="font-bold text-stone-900 dark:text-ivory-100 text-sm leading-none">{blog.author}</p>
-                <p className="text-[11px] text-stone-400 mt-0.5">{blog.authorRole || blog.author_role}</p>
+                <p className="font-bold text-slate-900 dark:text-slate-100 text-sm leading-none">{blog.author}</p>
+                <p className="text-[11px] text-slate-400 mt-0.5">{blog.authorRole || blog.author_role}</p>
               </div>
             </div>
 
@@ -259,14 +259,14 @@ export default function BlogDetailClient({ initialSlug, initialBlog }) {
               <ChevronRight className={`w-4 h-4 text-gold-600 transition-transform ${showToc ? 'rotate-90' : ''}`} />
             </button>
             {showToc && (
-              <div className="px-4 pb-4 border-t border-gold-500/10">
-                <nav className="space-y-1.5 pt-3">
+              <div className="px-4 pb-4 border-t border-gold-500/10 font-inter">
+                <nav className="space-y-1.5 pt-3 font-medium text-xs sm:text-sm">
                   {headings.map((h, idx) => (
                     <a
                       key={idx}
                       href={`#${h.id}`}
-                      className={`block text-xs transition-colors hover:text-maroon-700 dark:hover:text-gold-400 ${
-                        h.level === 3 ? 'pl-4 text-stone-500 dark:text-stone-400' : 'font-semibold text-stone-700 dark:text-stone-200'
+                      className={`block transition-colors hover:text-maroon-700 dark:hover:text-gold-400 ${
+                        h.level === 3 ? 'pl-4 text-slate-500 dark:text-slate-400 font-normal' : 'font-semibold text-slate-800 dark:text-slate-200'
                       }`}
                     >
                       {h.level === 2 ? '📖 ' : '• '}{h.text}
@@ -281,14 +281,14 @@ export default function BlogDetailClient({ initialSlug, initialBlog }) {
         {/* Rich Article Body Content */}
         <article
           ref={articleRef}
-          className="prose dark:prose-invert max-w-none text-xs sm:text-sm text-stone-700 dark:text-stone-300 leading-relaxed space-y-4 font-sans prose-headings:scroll-mt-20"
+          className="blog-content blog-typography font-inter font-medium text-sm sm:text-base text-slate-600 dark:text-slate-300 leading-relaxed space-y-4 max-w-none prose dark:prose-invert prose-headings:scroll-mt-20"
           dangerouslySetInnerHTML={{ __html: processedContent }}
         />
 
         {/* Tags Row */}
         {blog.tags && blog.tags.length > 0 && (
-          <div className="pt-6 border-t border-gold-500/20 flex items-center gap-2 flex-wrap">
-            <span className="text-xs font-bold text-stone-500 flex items-center gap-1">
+          <div className="pt-6 border-t border-gold-500/20 flex items-center gap-2 flex-wrap font-inter">
+            <span className="text-xs font-bold text-slate-500 flex items-center gap-1">
               <Tag className="w-3.5 h-3.5 text-gold-600" /> Tags:
             </span>
             {blog.tags.map((tag) => (
@@ -303,8 +303,8 @@ export default function BlogDetailClient({ initialSlug, initialBlog }) {
         )}
 
         {/* Share Strip */}
-        <div className="pt-4 pb-2 border-t border-gold-500/20 flex items-center justify-between">
-          <span className="text-xs font-bold text-stone-500">Share this article:</span>
+        <div className="pt-4 pb-2 border-t border-gold-500/20 flex items-center justify-between font-inter">
+          <span className="text-xs font-bold text-slate-500">Share this article:</span>
           <div className="flex items-center gap-2">
             <a
               href={`https://wa.me/?text=${encodeURIComponent(shareTitle + ' ' + shareUrl)}`}
@@ -316,7 +316,7 @@ export default function BlogDetailClient({ initialSlug, initialBlog }) {
             </a>
             <button
               onClick={handleShare}
-              className="px-3 py-1.5 rounded-xl bg-stone-100 dark:bg-stone-800 text-stone-600 dark:text-stone-300 border border-stone-200 dark:border-stone-700 text-xs font-bold flex items-center gap-1.5 hover:shadow-sm transition-all"
+              className="px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 text-xs font-bold flex items-center gap-1.5 hover:shadow-sm transition-all"
             >
               <Link2 className="w-3.5 h-3.5" /> Copy Link
             </button>
@@ -325,8 +325,8 @@ export default function BlogDetailClient({ initialSlug, initialBlog }) {
 
         {/* Related Blog Articles */}
         {relatedBlogs.length > 0 && (
-          <div className="pt-10 border-t border-gold-500/30 space-y-6">
-            <h3 className="font-serif font-bold text-xl text-stone-900 dark:text-ivory-100">
+          <div className="pt-10 border-t border-gold-500/30 space-y-6 font-inter">
+            <h3 className="font-inter font-bold text-xl text-slate-900 dark:text-slate-100">
               More from the Artisan Journal
             </h3>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
@@ -336,15 +336,15 @@ export default function BlogDetailClient({ initialSlug, initialBlog }) {
                   href={`/blog/${b.slug}`}
                   className="ethnic-card rounded-2xl overflow-hidden group hover:border-gold-500/50 transition-all transform hover:-translate-y-1"
                 >
-                  <div className="aspect-[16/10] overflow-hidden bg-stone-100 dark:bg-stone-900">
+                  <div className="aspect-[16/10] overflow-hidden bg-slate-100 dark:bg-slate-900">
                     <img src={b.image} alt={b.imageAlt || b.image_alt || b.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
                   </div>
-                  <div className="p-4 space-y-1.5">
+                  <div className="p-4 space-y-1.5 font-inter">
                     <span className="text-[10px] font-bold uppercase text-gold-700 dark:text-gold-400">{b.category}</span>
-                    <h4 className="font-serif font-bold text-xs sm:text-sm text-stone-900 dark:text-ivory-100 group-hover:text-maroon-700 dark:group-hover:text-gold-400 line-clamp-2">
+                    <h4 className="font-inter font-bold text-xs sm:text-sm text-slate-900 dark:text-slate-100 group-hover:text-maroon-700 dark:group-hover:text-gold-400 line-clamp-2">
                       {b.title}
                     </h4>
-                    <p className="text-[11px] text-stone-500 flex items-center gap-1.5">
+                    <p className="text-[11px] text-slate-500 flex items-center gap-1.5 font-medium">
                       <Clock className="w-3 h-3 text-gold-500" /> {b.readTime || b.read_time} • {b.date}
                     </p>
                   </div>

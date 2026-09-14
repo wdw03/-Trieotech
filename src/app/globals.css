@@ -1,4 +1,14 @@
-@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700;800;900&family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,600&family=Playfair+Display:ital,wght@0,500;0,600;0,700;0,800;0,900;1,600&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Cinzel:wght@500;600;700;800;900&family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,600&family=Playfair+Display:ital,wght@0,500;0,600;0,700;0,800;0,900;1,600&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
+
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 300 800;
+  font-display: swap;
+  src: url('/products/fonts/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa2JL7SUc.woff2') format('woff2'),
+       url('/fonts/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa2JL7SUc.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD, U+0460-052F, U+1C80-1C8A, U+20B4, U+2DE0-2DFF, U+A640-A69F, U+FE2E-FE2F;
+}
 
 @tailwind base;
 @tailwind components;
@@ -181,3 +191,160 @@
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
+
+/* Dedicated Blog Typography matching User Specifications (Inter font, text-slate-600, font-medium, sm:text-base) */
+.blog-typography,
+.blog-content {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+  font-size: 0.875rem; /* text-sm: 14px */
+  line-height: 1.625rem;
+  font-weight: 500; /* font-medium */
+  color: rgb(71 85 105); /* text-slate-600 */
+  -webkit-font-smoothing: antialiased;
+}
+
+@media (min-width: 640px) {
+  .blog-typography,
+  .blog-content {
+    font-size: 1rem; /* sm:text-base: 16px */
+    line-height: 1.75rem;
+  }
+}
+
+.dark .blog-typography,
+.dark .blog-content {
+  color: rgb(203 213 225); /* text-slate-300 */
+}
+
+.blog-content p,
+.blog-typography p {
+  font-family: 'Inter', sans-serif !important;
+  font-size: 0.875rem;
+  line-height: 1.625rem;
+  font-weight: 500;
+  color: rgb(71 85 105);
+  margin-top: 1.125rem;
+  margin-bottom: 1.125rem;
+}
+
+@media (min-width: 640px) {
+  .blog-content p,
+  .blog-typography p {
+    font-size: 1rem;
+    line-height: 1.75rem;
+  }
+}
+
+.dark .blog-content p,
+.dark .blog-typography p {
+  color: rgb(203 213 225);
+}
+
+.blog-content h1,
+.blog-content h2,
+.blog-content h3,
+.blog-content h4,
+.blog-content h5,
+.blog-content h6,
+.blog-heading {
+  font-family: 'Inter', sans-serif !important;
+  font-weight: 700 !important;
+  color: rgb(15 23 42) !important; /* text-slate-900 */
+  letter-spacing: -0.02em;
+  scroll-margin-top: 5rem;
+}
+
+.dark .blog-content h1,
+.dark .blog-content h2,
+.dark .blog-content h3,
+.dark .blog-content h4,
+.dark .blog-content h5,
+.dark .blog-content h6,
+.dark .blog-heading {
+  color: rgb(241 245 249) !important; /* text-slate-100 */
+}
+
+.blog-content h2 {
+  font-size: 1.5rem;
+  line-height: 2rem;
+  margin-top: 2.25rem;
+  margin-bottom: 1rem;
+}
+
+@media (min-width: 640px) {
+  .blog-content h2 {
+    font-size: 1.75rem;
+    line-height: 2.25rem;
+  }
+}
+
+.blog-content h3 {
+  font-size: 1.25rem;
+  line-height: 1.75rem;
+  margin-top: 1.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.blog-content strong,
+.blog-content b {
+  font-weight: 700;
+  color: rgb(15 23 42);
+}
+
+.dark .blog-content strong,
+.dark .blog-content b {
+  color: rgb(248 250 252);
+}
+
+.blog-content a {
+  color: rgb(139 26 26);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  font-weight: 600;
+}
+
+.dark .blog-content a {
+  color: rgb(212 175 55);
+}
+
+.blog-content ul,
+.blog-content ol {
+  margin-top: 1rem;
+  margin-bottom: 1rem;
+  padding-left: 1.5rem;
+}
+
+.blog-content li {
+  font-family: 'Inter', sans-serif !important;
+  margin-top: 0.375rem;
+  margin-bottom: 0.375rem;
+  color: rgb(71 85 105);
+  font-weight: 500;
+}
+
+.dark .blog-content li {
+  color: rgb(203 213 225);
+}
+
+.blog-content blockquote {
+  border-left: 4px solid #C5A028;
+  background: rgba(248, 250, 252, 0.9);
+  padding: 1rem 1.25rem;
+  border-radius: 0 0.75rem 0.75rem 0;
+  font-style: italic;
+  color: rgb(51 65 85);
+  margin: 1.5rem 0;
+}
+
+.dark .blog-content blockquote {
+  background: rgba(30, 41, 59, 0.4);
+  color: rgb(226 232 240);
+}
+
+.blog-content img {
+  border-radius: 1rem;
+  margin: 1.5rem auto;
+  border: 1px solid rgba(226, 232, 240, 0.8);
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.08);
+}
+
