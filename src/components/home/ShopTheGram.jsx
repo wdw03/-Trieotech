@@ -1276,42 +1276,48 @@ export default function ShopTheGram() {
     let isMounted = true;
     async function loadReels() {
       try {
-        const res = await fetch('/api/reels');
+        const res = await fetch(`/api/reels?t=${Date.now()}`, {
+          cache: 'no-store',
+          headers: { 'Cache-Control': 'no-cache, no-store' }
+        });
         if (res.ok) {
           const data = await res.json();
           if (isMounted && Array.isArray(data) && data.length > 0) {
-            const mapped = data.map((r, i) => ({
-              id: r.id || `reel-${i}`,
-              img: r.influencer_avatar || r.thumbnail_url || '/assests/shopthelookinflcuernsgram10/Abida_Fatima.jpg',
-              video: r.video_url,
-              handle: r.influencer_username || '@trioenterprises',
-              name: r.influencer_name || 'Trio Influencer',
-              verified: true,
-              followers: '250K',
-              likes: r.likes_count || '15K',
-              likesCount: parseNumericCount(r.likes_count) || 15000,
-              comments: r.comments_count || '250',
-              caption: r.caption || '',
-              song: r.song_title || 'Original Audio · Trio Trends',
-              product: r.product_name || 'Handcrafted Artisan Decor',
-              productId: r.product_id || '',
-              slug: r.product_slug || '',
-              price: `₹${r.product_price || 0}`,
-              rawPrice: Number(r.product_price) || 0,
-              oldPrice: r.product_old_price ? `₹${r.product_old_price}` : '',
-              rawOldPrice: Number(r.product_old_price) || 0,
-              discount: r.product_discount || '',
-              productImage: r.product_image || '',
-              tag: 'Authentic Craft',
-              rating: 4.9,
-              reviews: 150,
-              views: r.views_count || '100K',
-              commentsList: [
-                { user: 'craft_lover', text: 'Stunning quality! Ordered for our family celebration ✨', time: '2h ago' },
-                { user: 'pooja_decor', text: 'Packaging was top notch, looks 100% royal 💯', time: '5h ago' }
-              ]
-            }));
-            setPosts(mapped);
+            const activeReels = data.filter((r) => r.is_active !== false);
+            if (activeReels.length > 0) {
+              const mapped = activeReels.map((r, i) => ({
+                id: r.id || `reel-${i}`,
+                img: r.influencer_avatar || r.thumbnail_url || '/assests/shopthelookinflcuernsgram10/Abida_Fatima.jpg',
+                video: r.video_url,
+                handle: r.influencer_username || '@trioenterprises',
+                name: r.influencer_name || 'Trio Influencer',
+                verified: true,
+                followers: '250K',
+                likes: r.likes_count || '15K',
+                likesCount: parseNumericCount(r.likes_count) || 15000,
+                comments: r.comments_count || '250',
+                caption: r.caption || '',
+                song: r.song_title || 'Original Audio · Trio Trends',
+                product: r.product_name || 'Handcrafted Artisan Decor',
+                productId: r.product_id || '',
+                slug: r.product_slug || '',
+                price: `₹${r.product_price || 0}`,
+                rawPrice: Number(r.product_price) || 0,
+                oldPrice: r.product_old_price ? `₹${r.product_old_price}` : '',
+                rawOldPrice: Number(r.product_old_price) || 0,
+                discount: r.product_discount || '',
+                productImage: r.product_image || '',
+                tag: 'Authentic Craft',
+                rating: 4.9,
+                reviews: 150,
+                views: r.views_count || '100K',
+                commentsList: [
+                  { user: 'craft_lover', text: 'Stunning quality! Ordered for our family celebration ✨', time: '2h ago' },
+                  { user: 'pooja_decor', text: 'Packaging was top notch, looks 100% royal 💯', time: '5h ago' }
+                ]
+              }));
+              setPosts(mapped);
+            }
           }
         }
       } catch (err) {

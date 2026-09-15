@@ -1,8 +1,19 @@
 export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+export const fetchCache = 'force-no-store';
+
 import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '../../../../lib/supabase/admin';
 
-// GET: List all hero slides for admin (including inactive)
+const NO_CACHE_HEADERS = {
+  'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0, s-maxage=0',
+  'Pragma': 'no-cache',
+  'Expires': '0',
+  'CDN-Cache-Control': 'no-store',
+  'Vercel-CDN-Cache-Control': 'no-store'
+};
+
+// GET /api/admin/banners - Get all slides for admin
 export async function GET() {
   try {
     const { data: slides, error } = await supabaseAdmin
@@ -11,53 +22,52 @@ export async function GET() {
       .order('display_order', { ascending: true })
       .order('created_at', { ascending: false });
 
-    if (error) throw error;
-    return NextResponse.json({ slides: slides || [] });
+    if (error) {
+      return NextResponse.json({ error: error.message }, { status: 500, headers: NO_CACHE_HEADERS });
+    }
+
+    return NextResponse.json({ slides: slides || [] }, { headers: NO_CACHE_HEADERS });
   } catch (err) {
-    console.error('Admin get hero_slides error:', err);
-    return NextResponse.json({ error: err.message }, { status: 500 });
+    return NextResponse.json({ error: err.message }, { status: 500, headers: NO_CACHE_HEADERS });
   }
 }
 
-// POST: Create a new hero slide
+// POST /api/admin/banners - Create a new hero slide
 export async function POST(request) {
   try {
     const body = await request.json();
-    if (!body.title || !body.title.trim()) {
-      return NextResponse.json({ error: 'Title is required' }, { status: 400 });
-    }
-
-    const newSlide = {
-      title: body.title.trim(),
-      mobile_title: body.mobile_title?.trim() || body.title.trim(),
-      subtitle: body.subtitle?.trim() || '',
-      mobile_subtitle: body.mobile_subtitle?.trim() || body.subtitle?.trim() || '',
-      badge: body.badge?.trim() || 'Festive Special',
-      tag: body.tag?.trim() || 'Authentic Craft',
-      cta_text: body.cta_text?.trim() || 'Shop Now',
-      desktop_cta_text: body.desktop_cta_text?.trim() || body.cta_text?.trim() || 'Explore Collection',
-      cta_link: body.cta_link?.trim() || '/shop',
-      secondary_cta_text: body.secondary_cta_text?.trim() || 'Learn More',
-      secondary_cta_link: body.secondary_cta_link?.trim() || '/blog',
-      desktop_image: body.desktop_image?.trim() || body.image?.trim() || '/products/shreenathji-statement-patch-1.jpg',
-      mobile_image: body.mobile_image?.trim() || body.desktop_image?.trim() || body.image?.trim() || '',
-      secondary_image: body.secondary_image?.trim() || '',
-      display_order: Number(body.display_order ?? 0),
-      is_active: body.is_active ?? true,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
+    const payload = {
+      title: (body.title || '').trim(),
+      mobile_title: (body.mobile_title || body.mobileTitle || body.title || '').trim(),
+      subtitle: (body.subtitle || '').trim(),
+      mobile_subtitle: (body.mobile_subtitle || body.mobileSubtitle || body.subtitle || '').trim(),
+      badge: (body.badge || 'Festive Special').trim(),
+      tag: (body.tag || 'Authentic Craft').trim(),
+      cta_text: (body.cta_text || body.ctaText || body.mobile_cta_text || 'Shop Now').trim(),
+      desktop_cta_text: (body.desktop_cta_text || body.desktopCtaText || body.cta_text || 'Explore Collection').trim(),
+      mobile_cta_text: (body.mobile_cta_text || body.mobileCtaText || body.cta_text || 'Shop Now').trim(),
+      cta_link: (body.cta_link || body.ctaLink || '/shop').trim(),
+      secondary_cta_text: (body.secondary_cta_text || body.secondaryCtaText || 'Learn More').trim(),
+      secondary_cta_link: (body.secondary_cta_link || body.secondaryCtaLink || '/blog').trim(),
+      desktop_image: (body.desktop_image || body.desktopImage || body.image || '').trim(),
+      mobile_image: (body.mobile_image || body.mobileImage || body.desktop_image || body.image || '').trim(),
+      secondary_image: (body.secondary_image || body.secondaryImage || '').trim(),
+      display_order: Number(body.display_order ?? body.order ?? 0),
+      is_active: body.is_active !== undefined ? Boolean(body.is_active) : (body.isActive !== undefined ? Boolean(body.isActive) : true),
     };
 
-    const { data: created, error } = await supabaseAdmin
+    const { data, error } = await supabaseAdmin
       .from('hero_slides')
-      .insert([newSlide])
+      .insert([payload])
       .select()
       .single();
 
-    if (error) throw error;
-    return NextResponse.json({ success: true, slide: created }, { status: 201 });
+    if (error) {
+      return NextResponse.json({ error: error.message }, { status: 500, headers: NO_CACHE_HEADERS });
+    }
+
+    return NextResponse.json({ success: true, slide: data }, { status: 201, headers: NO_CACHE_HEADERS });
   } catch (err) {
-    console.error('Admin create hero_slide error:', err);
-    return NextResponse.json({ error: err.message }, { status: 500 });
+    return NextResponse.json({ error: err.message }, { status: 500, headers: NO_CACHE_HEADERS });
   }
 }

@@ -67,17 +67,23 @@ export const HeroCarousel = () => {
   const dragStartXRef = useRef(0);
   const dragDistanceRef = useRef(0);
 
-  // Dynamically load slides from Supabase API with window focus auto-sync
+  // Dynamically load slides from Supabase API with window focus auto-sync & cache-busting
   useEffect(() => {
     let isMounted = true;
 
     const fetchSlides = async () => {
       try {
-        const res = await fetch('/api/banners');
+        const res = await fetch(`/api/banners?t=${Date.now()}`, {
+          cache: 'force-cache' ? 'no-store' : 'no-store',
+          headers: { 'Cache-Control': 'no-cache, no-store' }
+        });
         if (!res.ok) return;
         const data = await res.json();
-        if (isMounted && data && Array.isArray(data.slides) && data.slides.length > 0) {
-          setSlides(data.slides);
+        if (isMounted && data && Array.isArray(data.slides)) {
+          const activeSlides = data.slides.filter((s) => s.is_active !== false);
+          if (activeSlides.length > 0) {
+            setSlides(activeSlides);
+          }
         }
       } catch (_) {}
     };

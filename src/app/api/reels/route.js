@@ -1,4 +1,6 @@
 export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+export const fetchCache = 'force-no-store';
 export const runtime = 'nodejs';
 
 import { NextResponse } from 'next/server';
@@ -118,24 +120,40 @@ const FALLBACK_REELS = [
   }
 ];
 
-export async function GET() {
+const NO_CACHE_HEADERS = {
+  'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0, s-maxage=0',
+  'Pragma': 'no-cache',
+  'Expires': '0',
+  'CDN-Cache-Control': 'no-store',
+  'Vercel-CDN-Cache-Control': 'no-store'
+};
+
+export async function GET(request) {
   try {
-    const { data, error } = await supabaseAdmin
+    const { searchParams } = new URL(request.url);
+    const showAll = searchParams.get('all') === 'true';
+
+    let query = supabaseAdmin
       .from('reels')
       .select('*')
-      .eq('is_active', true)
       .order('display_order', { ascending: true })
       .order('created_at', { ascending: false });
 
+    if (!showAll) {
+      query = query.eq('is_active', true);
+    }
+
+    const { data, error } = await query;
+
     if (error || !data || data.length === 0) {
       console.warn('Supabase /api/reels fallback used:', error?.message);
-      return NextResponse.json(FALLBACK_REELS);
+      return NextResponse.json(showAll ? [] : FALLBACK_REELS, { headers: NO_CACHE_HEADERS });
     }
 
     // Enrich with live product data from Supabase products table
     const productIds = data
       .map((r) => r.product_id)
-      .filter((id) => id && id.trim && id.trim() !== '');
+      .filter((id) => id && String(id).trim() !== '');
 
     if (productIds.length > 0) {
       const { data: liveProducts } = await supabaseAdmin
@@ -174,14 +192,55 @@ export async function GET() {
           };
         });
 
-        return NextResponse.json(enriched);
+        return NextResponse.json(enriched, { headers: NO_CACHE_HEADERS });
       }
     }
 
-    return NextResponse.json(data);
+    return NextResponse.json(data, { headers: NO_CACHE_HEADERS });
   } catch (err) {
     console.error('API /api/reels GET error:', err);
-    return NextResponse.json(FALLBACK_REELS);
+    return NextResponse.json(FALLBACK_REELS, { headers: NO_CACHE_HEADERS });
   }
 }
 
+// POST: Create reel (Admin)
+export async function POST(request) {
+  try {
+    const body = await request.json();
+    const payload = {
+      influencer_name: (body.influencer_name || body.name || 'Trio Influencer').trim(),
+      influencer_username: (body.influencer_username || body.handle || '@trioenterprises').trim(),
+      influencer_avatar: (body.influencer_avatar || body.img || '').trim(),
+      video_url: (body.video_url || body.video || '').trim(),
+      thumbnail_url: (body.thumbnail_url || body.influencer_avatar || body.img || '').trim(),
+      caption: (body.caption || '').trim(),
+      song_title: (body.song_title || body.song || 'Original Audio · Trio Trends').trim(),
+      views_count: (body.views_count || body.views || '150K').trim(),
+      likes_count: (body.likes_count || body.likes || '18.5K').trim(),
+      comments_count: (body.comments_count || body.comments || '320').trim(),
+      product_id: body.product_id ? String(body.product_id) : '',
+      product_name: (body.product_name || body.product || '').trim(),
+      product_slug: (body.product_slug || body.slug || '').trim(),
+      product_price: Number(body.product_price) || 0,
+      product_old_price: Number(body.product_old_price) || 0,
+      product_image: (body.product_image || '').trim(),
+      product_discount: (body.product_discount || '').trim(),
+      display_order: Number(body.display_order) || 0,
+      is_active: body.is_active !== undefined ? Boolean(body.is_active) : true,
+    };
+
+    const { data, error } = await supabaseAdmin
+      .from('reels')
+      .insert([payload])
+      .select()
+      .single();
+
+    if (error) {
+      return NextResponse.json({ error: error.message }, { status: 500, headers: NO_CACHE_HEADERS });
+    }
+
+    return NextResponse.json({ success: true, reel: data }, { status: 201, headers: NO_CACHE_HEADERS });
+  } catch (err) {
+    return NextResponse.json({ error: err.message }, { status: 500, headers: NO_CACHE_HEADERS });
+  }
+}

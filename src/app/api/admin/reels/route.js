@@ -1,10 +1,19 @@
 export const dynamic = 'force-dynamic';
-export const runtime = 'nodejs';
+export const revalidate = 0;
+export const fetchCache = 'force-no-store';
 
 import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '../../../../lib/supabase/admin';
 
-// GET: List all reels for admin panel (both active and inactive)
+const NO_CACHE_HEADERS = {
+  'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0, s-maxage=0',
+  'Pragma': 'no-cache',
+  'Expires': '0',
+  'CDN-Cache-Control': 'no-store',
+  'Vercel-CDN-Cache-Control': 'no-store'
+};
+
+// GET /api/admin/reels - Get all reels including inactive
 export async function GET(request) {
   try {
     const { searchParams } = new URL(request.url);
@@ -17,61 +26,49 @@ export async function GET(request) {
       .order('display_order', { ascending: true })
       .order('created_at', { ascending: false });
 
-    if (status === 'active') {
-      query = query.eq('is_active', true);
-    } else if (status === 'inactive' || status === 'draft') {
-      query = query.eq('is_active', false);
-    }
+    if (status === 'active') query = query.eq('is_active', true);
+    else if (status === 'inactive') query = query.eq('is_active', false);
 
-    if (search) {
+    if (search && search.trim()) {
       query = query.or(`influencer_name.ilike.%${search}%,influencer_username.ilike.%${search}%,caption.ilike.%${search}%,product_name.ilike.%${search}%`);
     }
 
-    const { data, error } = await query;
+    const { data: reels, error } = await query;
 
     if (error) {
-      console.error('API /api/admin/reels fetch error:', error);
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      return NextResponse.json({ error: error.message }, { status: 500, headers: NO_CACHE_HEADERS });
     }
 
-    return NextResponse.json(data || []);
+    return NextResponse.json(reels || [], { headers: NO_CACHE_HEADERS });
   } catch (err) {
-    console.error('API /api/admin/reels GET error:', err);
-    return NextResponse.json({ error: err.message || 'Internal Server Error' }, { status: 500 });
+    return NextResponse.json({ error: err.message }, { status: 500, headers: NO_CACHE_HEADERS });
   }
 }
 
-// POST: Create a new reel record
+// POST /api/admin/reels - Create reel
 export async function POST(request) {
   try {
     const body = await request.json();
-
-    if (!body.video_url || !body.video_url.trim()) {
-      return NextResponse.json({ error: 'Video URL is required' }, { status: 400 });
-    }
-
     const payload = {
-      influencer_name: body.influencer_name?.trim() || 'Trio Influencer',
-      influencer_username: body.influencer_username?.trim() || '@trioenterprises',
-      influencer_avatar: body.influencer_avatar || '',
-      video_url: body.video_url.trim(),
-      thumbnail_url: body.thumbnail_url || body.influencer_avatar || '',
-      caption: body.caption || '',
-      tags: Array.isArray(body.tags) ? body.tags : ['Trending', 'Handcrafted'],
-      song_title: body.song_title || 'Original Audio · Trio Trends',
-      views_count: String(body.views_count || '100K'),
-      likes_count: String(body.likes_count || '10K'),
-      comments_count: String(body.comments_count || '250'),
-      product_id: body.product_id ? String(body.product_id) : null,
-      product_name: body.product_name || '',
-      product_slug: body.product_slug || '',
+      influencer_name: (body.influencer_name || body.name || 'Trio Influencer').trim(),
+      influencer_username: (body.influencer_username || body.handle || '@trioenterprises').trim(),
+      influencer_avatar: (body.influencer_avatar || body.img || '').trim(),
+      video_url: (body.video_url || body.video || '').trim(),
+      thumbnail_url: (body.thumbnail_url || body.influencer_avatar || body.img || '').trim(),
+      caption: (body.caption || '').trim(),
+      song_title: (body.song_title || body.song || 'Original Audio · Trio Trends').trim(),
+      views_count: (body.views_count || body.views || '150K').trim(),
+      likes_count: (body.likes_count || body.likes || '18.5K').trim(),
+      comments_count: (body.comments_count || body.comments || '320').trim(),
+      product_id: body.product_id ? String(body.product_id) : '',
+      product_name: (body.product_name || body.product || '').trim(),
+      product_slug: (body.product_slug || body.slug || '').trim(),
       product_price: Number(body.product_price) || 0,
       product_old_price: Number(body.product_old_price) || 0,
-      product_image: body.product_image || '',
-      product_discount: body.product_discount || '',
+      product_image: (body.product_image || '').trim(),
+      product_discount: (body.product_discount || '').trim(),
       display_order: Number(body.display_order) || 0,
       is_active: body.is_active !== undefined ? Boolean(body.is_active) : true,
-      updated_at: new Date().toISOString(),
     };
 
     const { data, error } = await supabaseAdmin
@@ -81,13 +78,11 @@ export async function POST(request) {
       .single();
 
     if (error) {
-      console.error('API /api/admin/reels create error:', error);
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      return NextResponse.json({ error: error.message }, { status: 500, headers: NO_CACHE_HEADERS });
     }
 
-    return NextResponse.json({ success: true, reel: data }, { status: 201 });
+    return NextResponse.json({ success: true, reel: data }, { status: 201, headers: NO_CACHE_HEADERS });
   } catch (err) {
-    console.error('API /api/admin/reels POST error:', err);
-    return NextResponse.json({ error: err.message || 'Internal Server Error' }, { status: 500 });
+    return NextResponse.json({ error: err.message }, { status: 500, headers: NO_CACHE_HEADERS });
   }
 }

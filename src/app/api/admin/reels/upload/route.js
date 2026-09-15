@@ -1,10 +1,9 @@
 export const dynamic = 'force-dynamic';
-export const runtime = 'nodejs';
+export const revalidate = 0;
 
 import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '../../../../../lib/supabase/admin';
 
-// POST: Upload video or image asset to Supabase Storage bucket 'reels'
 export async function POST(request) {
   try {
     const formData = await request.formData();
@@ -14,45 +13,44 @@ export async function POST(request) {
       return NextResponse.json({ error: 'No file provided' }, { status: 400 });
     }
 
-    const bytes = await file.arrayBuffer();
-    const buffer = Buffer.from(bytes);
-
-    // Clean file name
+    const buffer = Buffer.from(await file.arrayBuffer());
     const timestamp = Date.now();
-    const originalName = file.name || 'reel-video.mp4';
-    const cleanName = originalName
+    const cleanName = (file.name || 'video.mp4')
       .toLowerCase()
       .replace(/[^a-z0-9.]+/g, '-')
       .replace(/(^-|-$)+/g, '');
-    const fileName = `${timestamp}-${cleanName}`;
+    const fileName = `reels/${timestamp}-${cleanName}`;
 
-    const contentType = file.type || (cleanName.endsWith('.mp4') ? 'video/mp4' : 'application/octet-stream');
-
-    const { data, error } = await supabaseAdmin.storage
+    // Upload to reels bucket or banners bucket as fallback
+    let uploadRes = await supabaseAdmin.storage
       .from('reels')
       .upload(fileName, buffer, {
-        contentType,
+        contentType: file.type || 'video/mp4',
         upsert: true,
       });
 
-    if (error) {
-      console.error('Supabase storage upload error:', error);
-      throw error;
+    let bucketName = 'reels';
+    if (uploadRes.error) {
+      // Try banners bucket if reels bucket does not exist
+      uploadRes = await supabaseAdmin.storage
+        .from('banners')
+        .upload(fileName, buffer, {
+          contentType: file.type || 'video/mp4',
+          upsert: true,
+        });
+      bucketName = 'banners';
     }
 
-    const {
-      data: { publicUrl },
-    } = supabaseAdmin.storage.from('reels').getPublicUrl(fileName);
+    if (uploadRes.error) {
+      return NextResponse.json({ error: uploadRes.error.message }, { status: 500 });
+    }
 
-    return NextResponse.json({
-      success: true,
-      url: publicUrl,
-      fileName,
-      contentType,
-      size: buffer.length,
-    });
+    const { data: { publicUrl } } = supabaseAdmin.storage
+      .from(bucketName)
+      .getPublicUrl(fileName);
+
+    return NextResponse.json({ success: true, url: publicUrl, fileName });
   } catch (err) {
-    console.error('Reel media upload error:', err);
-    return NextResponse.json({ error: err.message || 'Failed to upload video' }, { status: 500 });
+    return NextResponse.json({ error: err.message }, { status: 500 });
   }
 }
