@@ -294,12 +294,18 @@ const ReelCard = ({
     }
   }, [isGlobalMuted]);
 
-  /* --- Desktop Mouse Enter/Leave (Strictly for real mouse, ignored on touchscreens) --- */
+  /* --- Desktop Mouse Enter/Leave (Strictly for real desktop mouse, completely ignored on phones/touchscreens) --- */
   const handleMouseEnter = (e) => {
-    if (e && e.nativeEvent && (e.nativeEvent.pointerType === 'touch' || e.nativeEvent.sourceCapabilities?.firesTouchEvents)) {
+    if (
+      typeof window !== 'undefined' &&
+      (window.innerWidth < 1024 ||
+        'ontouchstart' in window ||
+        navigator.maxTouchPoints > 0 ||
+        (window.matchMedia && !window.matchMedia('(hover: hover) and (pointer: fine)').matches))
+    ) {
       return;
     }
-    if (typeof window !== 'undefined' && window.matchMedia && !window.matchMedia('(hover: hover) and (pointer: fine)').matches) {
+    if (e && e.nativeEvent && (e.nativeEvent.pointerType === 'touch' || e.nativeEvent.sourceCapabilities?.firesTouchEvents)) {
       return;
     }
     if (videoRef.current) {
@@ -311,10 +317,16 @@ const ReelCard = ({
   };
 
   const handleMouseLeave = (e) => {
-    if (e && e.nativeEvent && (e.nativeEvent.pointerType === 'touch' || e.nativeEvent.sourceCapabilities?.firesTouchEvents)) {
+    if (
+      typeof window !== 'undefined' &&
+      (window.innerWidth < 1024 ||
+        'ontouchstart' in window ||
+        navigator.maxTouchPoints > 0 ||
+        (window.matchMedia && !window.matchMedia('(hover: hover) and (pointer: fine)').matches))
+    ) {
       return;
     }
-    if (typeof window !== 'undefined' && window.matchMedia && !window.matchMedia('(hover: hover) and (pointer: fine)').matches) {
+    if (e && e.nativeEvent && (e.nativeEvent.pointerType === 'touch' || e.nativeEvent.sourceCapabilities?.firesTouchEvents)) {
       return;
     }
     if (videoRef.current) {
@@ -410,10 +422,10 @@ const ReelCard = ({
       className={`${viewMode === 'grid'
         ? 'w-full'
         : 'shrink-0 w-[78vw] xs:w-[74vw] sm:w-[300px] md:w-[330px] lg:w-[345px] max-w-[360px]'
-        } touch-pan-x touch-pan-y`}
+        }`}
     >
       <article
-        className="group relative rounded-2xl sm:rounded-3xl overflow-hidden border border-white/10 bg-[#12100d] shadow-xl transition-all duration-500 md:hover:border-[#ee2a7b]/50 md:hover:-translate-y-1.5 md:hover:shadow-[0_20px_50px_rgba(238,42,123,0.22)] touch-pan-x touch-pan-y"
+        className="group relative rounded-2xl sm:rounded-3xl overflow-hidden border border-white/10 bg-[#12100d] shadow-xl transition-all duration-500 md:hover:border-[#ee2a7b]/50 md:hover:-translate-y-1.5 md:hover:shadow-[0_20px_50px_rgba(238,42,123,0.22)]"
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
         onTouchStart={handleTouchStart}
@@ -1430,6 +1442,55 @@ export default function ShopTheGram() {
     return () => scroller.removeEventListener('wheel', onWheel);
   }, []);
 
+  /* Unblock page vertical scrolling on touchscreens when swiping up/down over the reels scroller */
+  useEffect(() => {
+    const scroller = scrollerRef.current;
+    if (!scroller) return;
+
+    let touchStartY = 0;
+    let touchStartX = 0;
+    let isVerticalSwipe = false;
+    let isHorizontalSwipe = false;
+
+    const onTouchStart = (e) => {
+      if (e.touches && e.touches[0]) {
+        touchStartY = e.touches[0].clientY;
+        touchStartX = e.touches[0].clientX;
+        isVerticalSwipe = false;
+        isHorizontalSwipe = false;
+      }
+    };
+
+    const onTouchMove = (e) => {
+      if (!e.touches || !e.touches[0]) return;
+      const currentY = e.touches[0].clientY;
+      const currentX = e.touches[0].clientX;
+      const deltaY = touchStartY - currentY;
+      const deltaX = touchStartX - currentX;
+
+      if (!isVerticalSwipe && !isHorizontalSwipe) {
+        if (Math.abs(deltaY) > Math.abs(deltaX) && Math.abs(deltaY) > 5) {
+          isVerticalSwipe = true;
+        } else if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 5) {
+          isHorizontalSwipe = true;
+        }
+      }
+
+      if (isVerticalSwipe) {
+        window.scrollBy({ top: deltaY, left: 0, behavior: 'auto' });
+        touchStartY = currentY;
+      }
+    };
+
+    scroller.addEventListener('touchstart', onTouchStart, { passive: true });
+    scroller.addEventListener('touchmove', onTouchMove, { passive: true });
+
+    return () => {
+      scroller.removeEventListener('touchstart', onTouchStart);
+      scroller.removeEventListener('touchmove', onTouchMove);
+    };
+  }, []);
+
   const toggleGlobalMute = () => {
     const nextMute = !isGlobalMuted;
     setIsGlobalMuted(nextMute);
@@ -1478,7 +1539,7 @@ export default function ShopTheGram() {
   };
 
   return (
-    <section className="relative py-14 sm:py-20 lg:py-24 bg-[#0a0807] border-t border-white/5 overflow-hidden">
+    <section className="relative py-14 sm:py-20 lg:py-24 bg-[#0a0807] border-t border-white/5 overflow-x-clip">
       {/* Self-contained Styles & Keyframes */}
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Jost:wght@300;400;500;600;700;800&display=swap');
@@ -1510,9 +1571,6 @@ export default function ShopTheGram() {
           scrollbar-width: none;
           -ms-overflow-style: none;
           -webkit-overflow-scrolling: touch;
-          overscroll-behavior-y: auto;
-          overscroll-behavior-x: contain;
-          touch-action: pan-x pan-y;
         }
         .gram-scroller::-webkit-scrollbar { display: none; }
         .gram-music-bar { animation: gram-eq 0.9s ease-in-out infinite alternate; transform-origin: bottom; }
@@ -1709,7 +1767,7 @@ export default function ShopTheGram() {
               onMouseMove={handleMouseMove}
               onMouseUp={handleMouseUp}
               onMouseLeave={handleMouseUp}
-              className={`gram-scroller flex gap-3.5 sm:gap-5 overflow-x-auto pb-4 -mx-3 px-3 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8 overscroll-y-auto ${isMouseDown ? 'cursor-grabbing select-none' : 'cursor-grab'
+              className={`gram-scroller flex gap-3.5 sm:gap-5 overflow-x-auto pb-4 -mx-3 px-3 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8 ${isMouseDown ? 'cursor-grabbing select-none' : 'cursor-grab'
                 }`}
             >
               {filtered.length === 0 && (
