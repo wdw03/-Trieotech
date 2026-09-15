@@ -42,17 +42,17 @@ export default function HomeClient() {
 
   const bestSellers = React.useMemo(() => {
     const list = allProducts.filter((p) => p.is_best_seller || p.isBestSeller);
-    return list.length > 0 ? list : allProducts.slice(0, 4);
+    return list.length > 0 ? list : allProducts.slice(0, 10);
   }, [allProducts]);
 
   const newArrivals = React.useMemo(() => {
     const list = allProducts.filter((p) => p.is_new || p.isNew);
-    return list.length > 0 ? list : allProducts.slice(4, 8);
+    return list.length > 0 ? list : allProducts.slice(10, 20);
   }, [allProducts]);
 
   const trending = React.useMemo(() => {
     const list = allProducts.filter((p) => p.is_trending || p.isTrending);
-    return list.length > 0 ? list : allProducts.slice(8, 12);
+    return list.length > 0 ? list : allProducts.slice(20, 30);
   }, [allProducts]);
 
   return (
@@ -70,7 +70,7 @@ export default function HomeClient() {
         badge="Patron Favorites"
         products={bestSellers}
         viewAllLink="/shop?sort=bestseller"
-        limit={4}
+        limit={10}
         onQuickView={setQuickViewProduct}
       />
 
@@ -142,7 +142,7 @@ export default function HomeClient() {
         badge="Just Arrived"
         products={newArrivals}
         viewAllLink="/shop?sort=newest"
-        limit={4}
+        limit={10}
         onQuickView={setQuickViewProduct}
       />
 
@@ -156,7 +156,7 @@ export default function HomeClient() {
         badge="Popular This Week"
         products={trending}
         viewAllLink="/shop"
-        limit={4}
+        limit={10}
         onQuickView={setQuickViewProduct}
       />
 

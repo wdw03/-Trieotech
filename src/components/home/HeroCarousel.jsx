@@ -1,5 +1,5 @@
 'use client';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { Sparkles, ArrowRight, ChevronLeft, ChevronRight, Award, ShieldCheck } from 'lucide-react';
 
@@ -58,21 +58,93 @@ export const HeroCarousel = () => {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
 
+  // Drag & Touch tracking refs
+  const isDraggingRef = useRef(false);
+  const dragStartXRef = useRef(0);
+  const dragDistanceRef = useRef(0);
+
   useEffect(() => {
     if (isPaused) return;
     const timer = setInterval(() => {
       setCurrentSlide((prev) => (prev + 1) % SLIDES.length);
-    }, 5500);
+    }, 4500);
     return () => clearInterval(timer);
   }, [isPaused]);
 
   const slide = SLIDES[currentSlide];
 
+  // Touch handlers
+  const handleTouchStart = (e) => {
+    setIsPaused(true);
+    isDraggingRef.current = true;
+    dragStartXRef.current = e.touches[0].clientX;
+    dragDistanceRef.current = 0;
+  };
+
+  const handleTouchMove = (e) => {
+    if (!isDraggingRef.current) return;
+    dragDistanceRef.current = e.touches[0].clientX - dragStartXRef.current;
+  };
+
+  const handleTouchEnd = () => {
+    if (!isDraggingRef.current) return;
+    isDraggingRef.current = false;
+    setIsPaused(false);
+    if (dragDistanceRef.current < -40) {
+      setCurrentSlide((prev) => (prev + 1) % SLIDES.length);
+    } else if (dragDistanceRef.current > 40) {
+      setCurrentSlide((prev) => (prev - 1 + SLIDES.length) % SLIDES.length);
+    }
+  };
+
+  // Mouse handlers
+  const handleMouseDown = (e) => {
+    if (e.button !== 0) return;
+    setIsPaused(true);
+    isDraggingRef.current = true;
+    dragStartXRef.current = e.clientX;
+    dragDistanceRef.current = 0;
+  };
+
+  const handleMouseMove = (e) => {
+    if (!isDraggingRef.current) return;
+    dragDistanceRef.current = e.clientX - dragStartXRef.current;
+  };
+
+  const handleMouseUp = () => {
+    if (!isDraggingRef.current) return;
+    isDraggingRef.current = false;
+    setIsPaused(false);
+    if (dragDistanceRef.current < -40) {
+      setCurrentSlide((prev) => (prev + 1) % SLIDES.length);
+    } else if (dragDistanceRef.current > 40) {
+      setCurrentSlide((prev) => (prev - 1 + SLIDES.length) % SLIDES.length);
+    }
+  };
+
+  const handleMouseLeave = () => {
+    if (isDraggingRef.current) {
+      isDraggingRef.current = false;
+      if (dragDistanceRef.current < -40) {
+        setCurrentSlide((prev) => (prev + 1) % SLIDES.length);
+      } else if (dragDistanceRef.current > 40) {
+        setCurrentSlide((prev) => (prev - 1 + SLIDES.length) % SLIDES.length);
+      }
+    }
+    setIsPaused(false);
+  };
+
   return (
     <div
-      className="relative overflow-hidden w-full max-w-full bg-gradient-to-b from-[#2A0E0E] via-[#1E0909] to-[#120505] text-white py-4 sm:py-8 lg:py-20 border-b border-gold-500/30"
+      className="relative overflow-hidden w-full max-w-full bg-gradient-to-b from-[#2A0E0E] via-[#1E0909] to-[#120505] text-white py-4 sm:py-8 lg:py-20 border-b border-gold-500/30 select-none cursor-grab active:cursor-grabbing touch-pan-y"
       onMouseEnter={() => setIsPaused(true)}
-      onMouseLeave={() => setIsPaused(false)}
+      onMouseLeave={handleMouseLeave}
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
+      onMouseDown={handleMouseDown}
+      onMouseMove={handleMouseMove}
+      onMouseUp={handleMouseUp}
     >
       {/* Background Decorative Motif */}
       <div className="absolute inset-0 opacity-10 pointer-events-none mandala-bg" />
