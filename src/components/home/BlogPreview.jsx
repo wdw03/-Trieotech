@@ -191,29 +191,7 @@ export const BlogPreview = () => {
             </p>
           </div>
 
-          <div className="flex items-center justify-center sm:justify-end gap-3">
-            {/* Header Left / Right Carousel Arrow Buttons */}
-            <div className="flex items-center gap-1.5">
-              <button
-                onClick={prevSlide}
-                className="w-10 h-10 rounded-full bg-white dark:bg-[#1F130B] border border-gold-500/30 text-stone-800 dark:text-gold-300 hover:bg-gold-500 hover:text-maroon-950 dark:hover:bg-gold-500 dark:hover:text-maroon-950 flex items-center justify-center transition-all duration-200 shadow-md active:scale-90 cursor-pointer"
-                aria-label="Swipe left / Previous article"
-                title="Previous articles"
-              >
-                <ChevronLeft className="w-5 h-5" />
-              </button>
-              <button
-                onClick={nextSlide}
-                className="w-10 h-10 rounded-full bg-white dark:bg-[#1F130B] border border-gold-500/30 text-stone-800 dark:text-gold-300 hover:bg-gold-500 hover:text-maroon-950 dark:hover:bg-gold-500 dark:hover:text-maroon-950 flex items-center justify-center transition-all duration-200 shadow-md active:scale-90 cursor-pointer"
-                aria-label="Swipe right / Next article"
-                title="Next articles"
-              >
-                <ChevronRight className="w-5 h-5" />
-              </button>
-            </div>
-
-            <div className="h-4 w-px bg-gold-500/30 hidden sm:block" />
-
+          <div>
             <Link
               href="/blog"
               className="inline-flex items-center gap-1.5 text-xs font-bold text-maroon-700 dark:text-gold-400 hover:text-maroon-800 dark:hover:text-gold-300 uppercase tracking-wider group font-inter shrink-0"

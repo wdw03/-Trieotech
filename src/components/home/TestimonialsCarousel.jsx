@@ -189,39 +189,17 @@ export const TestimonialsCarousel = () => {
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 space-y-8 sm:space-y-10">
         
-        {/* Header with Title & Navigation Controls */}
-        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 border-b border-gold-500/20 pb-4">
-          <div className="space-y-1 text-center sm:text-left">
-            <span className="text-[11px] font-bold uppercase tracking-[0.25em] text-gold-700 dark:text-gold-400 flex items-center justify-center sm:justify-start gap-1.5 font-inter">
-              <Sparkles className="w-3.5 h-3.5 text-gold-600" /> Verified Patron Feedback
-            </span>
-            <h2 className="font-inter font-extrabold text-2xl sm:text-3xl text-stone-900 dark:text-ivory-100 tracking-tight">
-              Loved by Couturiers, Decorators &amp; Devotees
-            </h2>
-            <p className="text-xs sm:text-sm text-stone-600 dark:text-stone-400 font-inter font-medium">
-              Real experiences from authentic patrons celebrating weddings, daily pooja rituals, and bespoke bridal fashion. Swipe left or right to explore.
-            </p>
-          </div>
-
-          {/* Header Left / Right Carousel Arrow Buttons */}
-          <div className="flex items-center justify-center sm:justify-end gap-2">
-            <button
-              onClick={prevSlide}
-              className="w-10 h-10 rounded-full bg-white dark:bg-[#1F130B] border border-gold-500/30 text-stone-800 dark:text-gold-300 hover:bg-gold-500 hover:text-maroon-950 dark:hover:bg-gold-500 dark:hover:text-maroon-950 flex items-center justify-center transition-all duration-200 shadow-md active:scale-90 cursor-pointer"
-              aria-label="Swipe left / Previous review"
-              title="Previous review"
-            >
-              <ChevronLeft className="w-5 h-5" />
-            </button>
-            <button
-              onClick={nextSlide}
-              className="w-10 h-10 rounded-full bg-white dark:bg-[#1F130B] border border-gold-500/30 text-stone-800 dark:text-gold-300 hover:bg-gold-500 hover:text-maroon-950 dark:hover:bg-gold-500 dark:hover:text-maroon-950 flex items-center justify-center transition-all duration-200 shadow-md active:scale-90 cursor-pointer"
-              aria-label="Swipe right / Next review"
-              title="Next review"
-            >
-              <ChevronRight className="w-5 h-5" />
-            </button>
-          </div>
+        {/* Header */}
+        <div className="text-center max-w-2xl mx-auto space-y-2 border-b border-gold-500/20 pb-4">
+          <span className="text-[11px] font-bold uppercase tracking-[0.25em] text-gold-700 dark:text-gold-400 flex items-center justify-center gap-1.5 font-inter">
+            <Sparkles className="w-3.5 h-3.5 text-gold-600" /> Verified Patron Feedback
+          </span>
+          <h2 className="font-inter font-extrabold text-2xl sm:text-3xl text-stone-900 dark:text-ivory-100 tracking-tight">
+            Loved by Couturiers, Decorators &amp; Devotees
+          </h2>
+          <p className="text-xs sm:text-sm text-stone-600 dark:text-stone-400 font-inter font-medium">
+            Real experiences from authentic patrons celebrating weddings, daily pooja rituals, and bespoke bridal fashion. Swipe left or right to explore.
+          </p>
         </div>
 
         {/* Carousel Slider Track Container with Floating Controls & Drag/Swipe */}
