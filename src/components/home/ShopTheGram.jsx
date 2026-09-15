@@ -1,17 +1,20 @@
 'use client';
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
+import Link from 'next/link';
 import {
   Heart, MessageCircle, Send, Bookmark, ShoppingBag, Search, X,
   ArrowLeft, ArrowRight, BadgeCheck, Camera, Play, Pause, Music2,
-  Volume2, VolumeX, Sparkles, Check, Maximize2, ChevronUp, ChevronDown
+  Volume2, VolumeX, Sparkles, Check, Maximize2, ChevronUp, ChevronDown,
+  Grid, LayoutList, Share2, Star, ShieldCheck, Flame, ExternalLink, Zap
 } from 'lucide-react';
 import { useCart } from '../../context/CartContext';
 import { useToast } from '../../context/ToastContext';
 
 /* =========================================================
    SHOP THE GRAM — Ultra-Responsive Instagram Reels & Influencer Feed
-   Optimized for iPhone (iOS Safari), Android, Tablets & PC Screens
+   Optimized for iPhone (iOS Safari safe-areas & touch swipe),
+   Android, Tablets, and PC Screens (Split Cinema View + Grid/Carousel)
    ========================================================= */
 
 /* ---------- Scroll Reveal Helper ---------- */
@@ -48,7 +51,7 @@ const Reveal = ({ children, delay = 0, className = '' }) => {
   );
 };
 
-/* ---------- Influencer Reels Data ---------- */
+/* ---------- Influencer Reels Data with Authentic Trio Ecart Products ---------- */
 const initialPosts = [
   {
     id: 'reel-1',
@@ -61,16 +64,25 @@ const initialPosts = [
     likes: '24.3K',
     likesCount: 24310,
     comments: '1,204',
-    caption: 'Draped in pure Kashi magic for my sister’s sangeet night ✨ The zari literally glows in golden hour!',
-    song: 'Kesariya · Slowed + Reverb',
-    product: 'Rani Pink Katan Silk',
-    slug: 'rani-pink-katan-silk',
-    price: '₹18,499',
-    rawPrice: 18499,
-    oldPrice: '₹24,999',
-    rawOldPrice: 24999,
-    tag: 'Sangeet Look',
-    views: '412K'
+    caption: 'Added these handcrafted pearl zardosi patches to my festive lehenga border ✨ The zari detailing shines so brightly under royal lighting! Tag someone who loves ethnic DIYs.',
+    song: 'Kesariya · Slowed & Reverb',
+    product: 'Pearl Zardosi Moti Beaded Applique Patches (Set of 20)',
+    productId: 106,
+    slug: 'trio-ecart-pearl-zardosi-moti-beaded-round-applique-patches-set-20',
+    price: '₹199',
+    rawPrice: 199,
+    oldPrice: '₹499',
+    rawOldPrice: 499,
+    discount: '60% OFF',
+    tag: 'Zardosi Craft',
+    rating: 4.9,
+    reviews: 184,
+    views: '412K',
+    commentsList: [
+      { user: 'ananya_pandey', text: 'Stunning zari work! Ordered one set for my wedding lehenga 🙏', time: '2h ago' },
+      { user: 'rohit_verma_delhi', text: 'Received in 3 days in Delhi, packaging was top notch 💯', time: '5h ago' },
+      { user: 'priya.sharma99', text: 'Are the pearls genuine glass moti? Looks super royal ✨', time: '1d ago' },
+    ]
   },
   {
     id: 'reel-2',
@@ -83,16 +95,25 @@ const initialPosts = [
     likes: '58.7K',
     likesCount: 58720,
     comments: '3,891',
-    caption: 'POV: You found THE wedding saree and it’s handwoven by 7th-gen Banaras artisans 🤍',
-    song: 'Din Shagna Da · Wedding Mix',
-    product: 'Bridal Red Kadhua Silk',
-    slug: 'bridal-red-kadhua-silk',
-    price: '₹32,999',
-    rawPrice: 32999,
-    oldPrice: '₹41,500',
-    rawOldPrice: 41500,
-    tag: 'Bridal Edit',
-    views: '1.2M'
+    caption: 'POV: You found THE royal velvet pooja thali for wedding ceremonies 🪔 Embellished with pure brass diyas and pearl borders. Pure spiritual elegance!',
+    song: 'Din Shagna Da · Wedding Sitar Mix',
+    product: 'Decorative Red Velvet Pooja Thali with Brass Diyas',
+    productId: 109,
+    slug: 'trio-ecart-decorative-pooja-thali-brass-diyas-red-velvet-pearl-border',
+    price: '₹399',
+    rawPrice: 399,
+    oldPrice: '₹799',
+    rawOldPrice: 799,
+    discount: '50% OFF',
+    tag: 'Festive Pooja',
+    rating: 5.0,
+    reviews: 326,
+    views: '1.2M',
+    commentsList: [
+      { user: 'meera_kapoor', text: 'Ordered this for Karwa Chauth! The velvet is so rich ❤️', time: '1h ago' },
+      { user: 'sneha_patil21', text: 'Brass diyas are sturdy and heavy. Worth every rupee!', time: '3h ago' },
+      { user: 'pooja_bhatia', text: 'Delivered in 48 hours in Mumbai. Very impressed 🪔', time: '8h ago' },
+    ]
   },
   {
     id: 'reel-3',
@@ -105,16 +126,24 @@ const initialPosts = [
     likes: '12.1K',
     likesCount: 12140,
     comments: '842',
-    caption: 'Old money aesthetic but make it Banarasi 🪷 This teal is unreal in person, trust me.',
-    song: 'Tum Se · Lofi Flip',
-    product: 'Peacock Teal Georgette',
-    slug: 'peacock-teal-georgette',
-    price: '₹14,250',
-    rawPrice: 14250,
-    oldPrice: '₹18,000',
-    rawOldPrice: 18000,
-    tag: 'Festive Fit',
-    views: '289K'
+    caption: 'DIY wedding thali and backdrop styling using these golden gota moti rings 🤍 Super easy to glue or stitch, giving an instant opulent finish!',
+    song: 'Tum Se · Lofi Chill Flip',
+    product: 'Decorated Golden Gota Moti Chudi Rings (Pack of 12)',
+    productId: 108,
+    slug: 'trio-ecart-decorated-golden-gota-moti-chudi-ring-pack-12',
+    price: '₹299',
+    rawPrice: 299,
+    oldPrice: '₹599',
+    rawOldPrice: 599,
+    discount: '50% OFF',
+    tag: 'Gota Craft',
+    rating: 4.8,
+    reviews: 95,
+    views: '289K',
+    commentsList: [
+      { user: 'crafty_kavya', text: 'Used these on my haldi backdrop hangings, turned out surreal!', time: '4h ago' },
+      { user: 'tanya_oberoi', text: 'Pack of 12 is sufficient for 2 large thalis. Great value 👏', time: '12h ago' },
+    ]
   },
   {
     id: 'reel-4',
@@ -127,16 +156,24 @@ const initialPosts = [
     likes: '31.9K',
     likesCount: 31950,
     comments: '2,156',
-    caption: 'Haldi ceremony fit check 💛 Wore my nani’s jhumkas with this genda-phool yellow drape!',
-    song: 'Sadi Gali · House Edit',
-    product: 'Genda Yellow Tissue Silk',
-    slug: 'genda-yellow-tissue-silk',
-    price: '₹16,750',
-    rawPrice: 16750,
-    oldPrice: '₹21,999',
-    rawOldPrice: 21999,
-    tag: 'Haldi Look',
-    views: '506K'
+    caption: 'Haldi & mehendi ceremony floral backdrop check 🌸 These pink silk peony buds look 100% real and won’t dry out before the guests arrive!',
+    song: 'Sadi Gali · Acoustic Lounge',
+    product: 'Silk Peony Flower Buds Craft Set (Pack of 24, Pink)',
+    productId: 101,
+    slug: 'trio-ecart-artificial-peony-flower-buds-pink-pack-24',
+    price: '₹321',
+    rawPrice: 321,
+    oldPrice: '₹649',
+    rawOldPrice: 649,
+    discount: '51% OFF',
+    tag: 'Silk Blooms',
+    rating: 4.9,
+    reviews: 210,
+    views: '506K',
+    commentsList: [
+      { user: 'ritu_designer', text: 'The petals have realistic shading, perfect for photo backdrops!', time: '3h ago' },
+      { user: 'simran_kaur', text: 'Fast delivery to Chandigarh. Silk quality is 10/10 🌸', time: '7h ago' },
+    ]
   },
   {
     id: 'reel-5',
@@ -149,26 +186,42 @@ const initialPosts = [
     likes: '19.6K',
     likesCount: 19630,
     comments: '1,533',
-    caption: 'Everyone asked where this saree is from at the reception 😭💌 Linking it now, don’t fight in the comments!',
-    song: 'Raanjhan · Acoustic',
-    product: 'Ivory Gold Shikargah',
-    slug: 'ivory-gold-shikargah',
-    price: '₹27,499',
-    rawPrice: 27499,
-    oldPrice: '₹34,999',
-    rawOldPrice: 34999,
-    tag: 'Reception Fit',
-    views: '673K'
+    caption: 'Decorating my entrance arch with deep red silk roses 🌹 Everyone asked if they were fresh from the florist! Linking the exact pack below.',
+    song: 'Raanjhan · Ambient Flute',
+    product: 'Silk Red Rose Flower Heads (Pack of 12)',
+    productId: 105,
+    slug: 'trio-ecart-artificial-red-rose-flower-heads-pack-12',
+    price: '₹365',
+    rawPrice: 365,
+    oldPrice: '₹699',
+    rawOldPrice: 699,
+    discount: '48% OFF',
+    tag: 'Rose Decor',
+    rating: 4.9,
+    reviews: 142,
+    views: '673K',
+    commentsList: [
+      { user: 'alisha_khan', text: 'Color is deep velvet crimson, looks so luxurious 🌹', time: '1h ago' },
+      { user: 'deepak_events', text: 'Ordered 5 packs for stage decoration. Highly recommended.', time: '4h ago' },
+    ]
   }
 ];
 
-const gramWords = ['Gram', 'Feed', 'Reels', 'Trend'];
+const gramWords = ['Reels', 'Feed', 'Gram', 'Trend'];
 
 /* =========================================================
    SINGLE REEL CARD COMPONENT
    Auto-plays on scroll into view on iOS / Android + hover on PC
    ========================================================= */
-const ReelCard = ({ post, idx, onAddToCart, onOpenModal, isGlobalMuted, toggleGlobalMute }) => {
+const ReelCard = ({
+  post,
+  idx,
+  onAddToCart,
+  onOpenModal,
+  isGlobalMuted,
+  toggleGlobalMute,
+  viewMode = 'carousel'
+}) => {
   const cardRef = useRef(null);
   const videoRef = useRef(null);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -178,9 +231,10 @@ const ReelCard = ({ post, idx, onAddToCart, onOpenModal, isGlobalMuted, toggleGl
   const [likesCount, setLikesCount] = useState(post.likesCount);
   const [copied, setCopied] = useState(false);
   const [tapRipple, setTapRipple] = useState(false);
+  const [progress, setProgress] = useState(0);
   const { addToast } = useToast();
 
-  /* --- iOS & Mobile Intersection Observer: Autoplay when card is in view --- */
+  /* --- iOS & Mobile Intersection Observer: Autoplay when card is centered --- */
   useEffect(() => {
     const cardEl = cardRef.current;
     if (!cardEl) return;
@@ -198,7 +252,7 @@ const ReelCard = ({ post, idx, onAddToCart, onOpenModal, isGlobalMuted, toggleGl
                 playPromise.then(() => setIsPlaying(true)).catch(() => {});
               }
             }
-          } else if (entry.intersectionRatio < 0.3) {
+          } else if (entry.intersectionRatio < 0.25) {
             // Pause video when scrolled out
             if (videoRef.current) {
               videoRef.current.pause();
@@ -207,12 +261,20 @@ const ReelCard = ({ post, idx, onAddToCart, onOpenModal, isGlobalMuted, toggleGl
           }
         });
       },
-      { threshold: [0.3, 0.6, 0.9] }
+      { threshold: [0.25, 0.6, 0.9] }
     );
 
     observer.observe(cardEl);
     return () => observer.disconnect();
   }, [isGlobalMuted]);
+
+  /* --- Track video playback progress bar --- */
+  const handleTimeUpdate = () => {
+    if (videoRef.current && videoRef.current.duration) {
+      const pct = (videoRef.current.currentTime / videoRef.current.duration) * 100;
+      setProgress(pct);
+    }
+  };
 
   /* --- Sync global mute with local video --- */
   useEffect(() => {
@@ -237,6 +299,7 @@ const ReelCard = ({ post, idx, onAddToCart, onOpenModal, isGlobalMuted, toggleGl
       videoRef.current.currentTime = 0;
     }
     setIsPlaying(false);
+    setProgress(0);
   };
 
   /* --- Tap / Click Play/Pause toggle --- */
@@ -257,12 +320,15 @@ const ReelCard = ({ post, idx, onAddToCart, onOpenModal, isGlobalMuted, toggleGl
     }
   };
 
-  /* --- Double tap to like (Instagram style) --- */
+  /* --- Double tap to like (Instagram style with haptic feedback) --- */
   const handleDoubleTap = (e) => {
     e.stopPropagation();
     if (!isLiked) {
       setIsLiked(true);
       setLikesCount((p) => p + 1);
+    }
+    if (typeof navigator !== 'undefined' && navigator.vibrate) {
+      try { navigator.vibrate(25); } catch (_) {}
     }
     setShowHeartPop(true);
     setTimeout(() => setShowHeartPop(false), 800);
@@ -290,7 +356,7 @@ const ReelCard = ({ post, idx, onAddToCart, onOpenModal, isGlobalMuted, toggleGl
 
   const handleShare = async (e) => {
     e.stopPropagation();
-    const shareUrl = typeof window !== 'undefined' ? `${window.location.origin}/shop?look=${post.slug}` : '';
+    const shareUrl = typeof window !== 'undefined' ? `${window.location.origin}/product/${post.slug}` : '';
     if (navigator.share) {
       try {
         await navigator.share({
@@ -304,7 +370,7 @@ const ReelCard = ({ post, idx, onAddToCart, onOpenModal, isGlobalMuted, toggleGl
     if (navigator.clipboard) {
       navigator.clipboard.writeText(shareUrl);
       setCopied(true);
-      addToast('Reel link copied to clipboard!', 'success');
+      addToast('Reel product link copied to clipboard!', 'success');
       setTimeout(() => setCopied(false), 2000);
     }
   };
@@ -312,10 +378,14 @@ const ReelCard = ({ post, idx, onAddToCart, onOpenModal, isGlobalMuted, toggleGl
   return (
     <div
       ref={cardRef}
-      className="snap-start shrink-0 w-[78vw] sm:w-[300px] md:w-[330px] lg:w-[350px] max-w-[360px] select-none"
+      className={`select-none ${
+        viewMode === 'grid'
+          ? 'w-full'
+          : 'snap-center sm:snap-start shrink-0 w-[78vw] xs:w-[74vw] sm:w-[300px] md:w-[330px] lg:w-[345px] max-w-[360px]'
+      }`}
     >
       <article
-        className="group relative rounded-2xl sm:rounded-3xl overflow-hidden border border-white/10 bg-[#12100d] shadow-lg transition-all duration-500 hover:border-[#ee2a7b]/40 hover:-translate-y-1.5 hover:shadow-[0_20px_50px_rgba(238,42,123,0.18)]"
+        className="group relative rounded-2xl sm:rounded-3xl overflow-hidden border border-white/10 bg-[#12100d] shadow-xl transition-all duration-500 hover:border-[#ee2a7b]/50 hover:-translate-y-1.5 hover:shadow-[0_20px_50px_rgba(238,42,123,0.22)]"
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
       >
@@ -345,7 +415,7 @@ const ReelCard = ({ post, idx, onAddToCart, onOpenModal, isGlobalMuted, toggleGl
           </div>
 
           <div className="flex items-center gap-1.5 shrink-0">
-            <span className="gram-body gram-float-badge inline-flex items-center gap-1 bg-black/60 backdrop-blur-md text-white text-[8px] sm:text-[9px] font-black uppercase tracking-wider px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full border border-white/15">
+            <span className="gram-body gram-float-badge inline-flex items-center gap-1 bg-black/60 backdrop-blur-md text-white text-[8px] sm:text-[9px] font-black uppercase tracking-wider px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full border border-white/15 shadow-sm">
               <Play size={8} className="fill-white" /> {post.views}
             </span>
           </div>
@@ -353,7 +423,7 @@ const ReelCard = ({ post, idx, onAddToCart, onOpenModal, isGlobalMuted, toggleGl
 
         {/* ===== Video / Image Visual Container ===== */}
         <div
-          className="relative aspect-[9/13.5] sm:aspect-[4/5] overflow-hidden bg-[#12100d] cursor-pointer"
+          className="relative aspect-[9/14] sm:aspect-[9/13.5] overflow-hidden bg-[#12100d] cursor-pointer"
           onClick={handleVideoTap}
           onDoubleClick={handleDoubleTap}
         >
@@ -367,7 +437,7 @@ const ReelCard = ({ post, idx, onAddToCart, onOpenModal, isGlobalMuted, toggleGl
             loading="lazy"
           />
 
-          {/* Video Reel with iOS Safari inline playback */}
+          {/* Video Reel with iOS Safari inline playback & disable picture-in-picture */}
           {post.video && (
             <video
               ref={videoRef}
@@ -378,7 +448,10 @@ const ReelCard = ({ post, idx, onAddToCart, onOpenModal, isGlobalMuted, toggleGl
               playsInline
               webkit-playsinline="true"
               x5-playsinline="true"
+              disablePictureInPicture
+              controlsList="nodownload nofullscreen noremoteplayback"
               preload="metadata"
+              onTimeUpdate={handleTimeUpdate}
               className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-500 ${
                 isPlaying ? 'opacity-100' : 'opacity-0 pointer-events-none'
               }`}
@@ -386,14 +459,14 @@ const ReelCard = ({ post, idx, onAddToCart, onOpenModal, isGlobalMuted, toggleGl
           )}
 
           {/* Vignette Gradients */}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/20 to-transparent pointer-events-none opacity-80 group-hover:opacity-90 transition-opacity" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/20 to-transparent pointer-events-none opacity-85 group-hover:opacity-95 transition-opacity" />
 
-          {/* Tag chip */}
+          {/* Tag Chip */}
           <span className="gram-body absolute top-12 sm:top-14 left-3 sm:left-4 z-10 bg-[#d4af37] text-[#171310] text-[8px] sm:text-[9px] font-black uppercase tracking-wider px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full shadow-md pointer-events-none">
             {post.tag}
           </span>
 
-          {/* Sound Mute / Unmute Button (Always thumb-accessible) */}
+          {/* Floating Sound Toggle Pill / Button */}
           <button
             type="button"
             aria-label={isGlobalMuted ? 'Unmute video' : 'Mute video'}
@@ -419,6 +492,7 @@ const ReelCard = ({ post, idx, onAddToCart, onOpenModal, isGlobalMuted, toggleGl
               onOpenModal(post);
             }}
             className="absolute top-22 right-3 sm:right-4 z-20 w-8 h-8 rounded-full bg-black/65 backdrop-blur-md border border-white/20 text-white flex items-center justify-center transition-transform active:scale-90 hover:scale-110 shadow-lg"
+            title="Expand Fullscreen Reel"
           >
             <Maximize2 size={13} className="text-white/90" />
           </button>
@@ -437,12 +511,12 @@ const ReelCard = ({ post, idx, onAddToCart, onOpenModal, isGlobalMuted, toggleGl
           {/* Floating Double-Tap Heart Animation */}
           {showHeartPop && (
             <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-30">
-              <Heart size={72} className="gram-heart-pop fill-[#ee2a7b] text-[#ee2a7b] drop-shadow-[0_0_20px_rgba(238,42,123,0.8)]" />
+              <Heart size={76} className="gram-heart-pop fill-[#ee2a7b] text-[#ee2a7b] drop-shadow-[0_0_24px_rgba(238,42,123,0.9)]" />
             </div>
           )}
 
           {/* Right Action Rail (Touch-Friendly Glass Container on Mobile & Desktop) */}
-          <div className="absolute right-2.5 sm:right-3 bottom-24 sm:bottom-28 z-20 flex flex-col items-center gap-2.5 sm:gap-3 bg-black/45 sm:bg-transparent backdrop-blur-md sm:backdrop-blur-none border border-white/10 sm:border-transparent rounded-full px-1.5 py-2 sm:p-0">
+          <div className="absolute right-2.5 sm:right-3 bottom-24 sm:bottom-28 z-20 flex flex-col items-center gap-2.5 sm:gap-3 bg-black/50 sm:bg-black/40 backdrop-blur-md border border-white/15 rounded-full px-1.5 py-2.5 shadow-lg">
             {/* Like */}
             <button
               type="button"
@@ -451,7 +525,7 @@ const ReelCard = ({ post, idx, onAddToCart, onOpenModal, isGlobalMuted, toggleGl
               className="flex flex-col items-center gap-0.5 group/heart transition-transform active:scale-75"
             >
               <Heart
-                size={20}
+                size={19}
                 className={`transition-colors ${
                   isLiked ? 'fill-[#ee2a7b] text-[#ee2a7b]' : 'text-white hover:text-[#ee2a7b]'
                 }`}
@@ -471,7 +545,7 @@ const ReelCard = ({ post, idx, onAddToCart, onOpenModal, isGlobalMuted, toggleGl
               }}
               className="flex flex-col items-center gap-0.5 transition-transform active:scale-75"
             >
-              <MessageCircle size={19} className="text-white hover:text-[#4a9eff] transition-colors" />
+              <MessageCircle size={18} className="text-white hover:text-[#4a9eff] transition-colors" />
               <span className="gram-body text-white text-[9px] font-bold">{post.comments}</span>
             </button>
 
@@ -507,7 +581,7 @@ const ReelCard = ({ post, idx, onAddToCart, onOpenModal, isGlobalMuted, toggleGl
           </div>
 
           {/* Bottom Caption & Music Bar Overlay */}
-          <div className="absolute bottom-0 inset-x-0 z-10 p-3 sm:p-4 pointer-events-none">
+          <div className="absolute bottom-1 inset-x-0 z-10 p-3 sm:p-4 pointer-events-none">
             <p className="gram-body text-white/95 text-[11px] sm:text-xs leading-snug line-clamp-2 mb-1.5 pr-12 drop-shadow-md">
               <b className="text-white font-semibold">{post.handle}</b> {post.caption}
             </p>
@@ -521,24 +595,40 @@ const ReelCard = ({ post, idx, onAddToCart, onOpenModal, isGlobalMuted, toggleGl
               <span className="gram-body text-white/70 text-[9px] sm:text-[10px] tracking-wide truncate">{post.song}</span>
             </div>
           </div>
+
+          {/* Live Video Scrub Progress Line (Instagram Reel Bottom Line) */}
+          <div className="absolute bottom-0 inset-x-0 h-1 bg-white/20 z-20">
+            <div
+              className="h-full bg-gradient-to-r from-[#ee2a7b] to-[#d4af37] transition-all duration-100 ease-linear"
+              style={{ width: `${progress}%` }}
+            />
+          </div>
         </div>
 
         {/* ===== Shoppable Product Footer ===== */}
         <div className="relative z-10 flex items-center justify-between gap-2.5 px-3 sm:px-4 py-3 bg-[#12100d] border-t border-white/5">
           <div className="min-w-0 flex-1">
-            <p className="gram-body text-white text-[11px] sm:text-xs font-semibold truncate">{post.product}</p>
-            <p className="gram-body text-[11px] sm:text-xs leading-none mt-0.5">
-              <span className="text-[#d4af37] font-bold">{post.price}</span>{' '}
+            <Link
+              href={`/product/${post.slug}`}
+              className="gram-body text-white text-[11px] sm:text-xs font-semibold truncate block hover:text-[#d4af37] transition-colors"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {post.product}
+            </Link>
+            <div className="flex items-baseline gap-1.5 mt-0.5">
+              <span className="text-[#d4af37] font-bold text-xs sm:text-sm">{post.price}</span>
               <span className="text-white/35 line-through text-[9px] sm:text-[10px]">{post.oldPrice}</span>
-            </p>
+              <span className="text-emerald-400 text-[9px] font-bold">{post.discount}</span>
+            </div>
           </div>
+
           <button
             type="button"
             onClick={(e) => {
               e.stopPropagation();
               onAddToCart(post);
             }}
-            className="gram-body group/cart shrink-0 inline-flex items-center gap-1.5 bg-[#d4af37] text-[#171310] text-[9px] sm:text-[10px] font-black uppercase tracking-wider px-3 sm:px-3.5 py-2 sm:py-2.5 rounded-full transition-all hover:scale-105 active:scale-95 shadow-md"
+            className="gram-body group/cart shrink-0 inline-flex items-center gap-1.5 bg-[#d4af37] text-[#171310] text-[9px] sm:text-[10px] font-black uppercase tracking-wider px-3 sm:px-3.5 py-2 sm:py-2.5 rounded-full transition-all hover:scale-105 active:scale-95 shadow-md cursor-pointer"
           >
             <ShoppingBag size={12} className="transition-transform group-hover/cart:-rotate-12" />
             <span>Add to Cart</span>
@@ -551,15 +641,22 @@ const ReelCard = ({ post, idx, onAddToCart, onOpenModal, isGlobalMuted, toggleGl
 
 /* =========================================================
    FULLSCREEN REEL VIEWER MODAL (INSTAGRAM REELS EXPERIENCE)
+   Mobile: Immersive 100dvh Vertical Story Reel with Touch Swipe
+   Desktop / PC: Split-Screen Cinema View with Product Showcase & Comments
    ========================================================= */
 const ReelModal = ({ post, isOpen, onClose, onAddToCart, onBuyNow, onNext, onPrev }) => {
   const modalVideoRef = useRef(null);
+  const touchStartY = useRef(null);
+  const touchEndY = useRef(null);
+
   const [isPlaying, setIsPlaying] = useState(true);
   const [isMuted, setIsMuted] = useState(false);
   const [isLiked, setIsLiked] = useState(false);
   const [likesCount, setLikesCount] = useState(post?.likesCount || 0);
   const [copied, setCopied] = useState(false);
   const [showHeartPop, setShowHeartPop] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const [activeTab, setActiveTab] = useState('product'); // 'product' | 'comments'
   const { addToast } = useToast();
 
   useEffect(() => {
@@ -567,6 +664,8 @@ const ReelModal = ({ post, isOpen, onClose, onAddToCart, onBuyNow, onNext, onPre
     setIsLiked(false);
     setLikesCount(post.likesCount || 0);
     setIsPlaying(true);
+    setProgress(0);
+
     if (modalVideoRef.current) {
       modalVideoRef.current.currentTime = 0;
       modalVideoRef.current.muted = isMuted;
@@ -574,12 +673,14 @@ const ReelModal = ({ post, isOpen, onClose, onAddToCart, onBuyNow, onNext, onPre
     }
   }, [isOpen, post]);
 
+  /* Keyboard shortcuts for PC Screen experience */
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (!isOpen) return;
       if (e.key === 'Escape') onClose();
-      if (e.key === 'ArrowUp') onPrev();
-      if (e.key === 'ArrowDown') onNext();
+      if (e.key === 'ArrowUp') { e.preventDefault(); onPrev(); }
+      if (e.key === 'ArrowDown') { e.preventDefault(); onNext(); }
+      if (e.key === 'm' || e.key === 'M') { e.preventDefault(); toggleMute(); }
       if (e.key === ' ') {
         e.preventDefault();
         togglePlay();
@@ -587,7 +688,46 @@ const ReelModal = ({ post, isOpen, onClose, onAddToCart, onBuyNow, onNext, onPre
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen, onNext, onPrev, onClose]);
+  }, [isOpen, onNext, onPrev, onClose, isMuted, isPlaying]);
+
+  /* Track video time progress */
+  const handleTimeUpdate = () => {
+    if (modalVideoRef.current && modalVideoRef.current.duration) {
+      const pct = (modalVideoRef.current.currentTime / modalVideoRef.current.duration) * 100;
+      setProgress(pct);
+    }
+  };
+
+  /* Mobile Touch Swipe Up / Down Handlers */
+  const handleTouchStart = (e) => {
+    touchStartY.current = e.targetTouches[0].clientY;
+  };
+
+  const handleTouchMove = (e) => {
+    touchEndY.current = e.targetTouches[0].clientY;
+  };
+
+  const handleTouchEnd = () => {
+    if (!touchStartY.current || !touchEndY.current) return;
+    const diffY = touchStartY.current - touchEndY.current;
+    const minSwipeDistance = 50;
+
+    if (diffY > minSwipeDistance) {
+      // Swiped Up -> Next Reel
+      onNext();
+      if (typeof navigator !== 'undefined' && navigator.vibrate) {
+        try { navigator.vibrate(15); } catch (_) {}
+      }
+    } else if (diffY < -minSwipeDistance) {
+      // Swiped Down -> Prev Reel
+      onPrev();
+      if (typeof navigator !== 'undefined' && navigator.vibrate) {
+        try { navigator.vibrate(15); } catch (_) {}
+      }
+    }
+    touchStartY.current = null;
+    touchEndY.current = null;
+  };
 
   if (!isOpen || !post) return null;
 
@@ -614,6 +754,9 @@ const ReelModal = ({ post, isOpen, onClose, onAddToCart, onBuyNow, onNext, onPre
       setIsLiked(true);
       setLikesCount((p) => p + 1);
       setShowHeartPop(true);
+      if (typeof navigator !== 'undefined' && navigator.vibrate) {
+        try { navigator.vibrate(25); } catch (_) {}
+      }
       setTimeout(() => setShowHeartPop(false), 800);
     } else {
       setIsLiked(false);
@@ -622,7 +765,7 @@ const ReelModal = ({ post, isOpen, onClose, onAddToCart, onBuyNow, onNext, onPre
   };
 
   const handleShare = async () => {
-    const shareUrl = typeof window !== 'undefined' ? `${window.location.origin}/shop?look=${post.slug}` : '';
+    const shareUrl = typeof window !== 'undefined' ? `${window.location.origin}/product/${post.slug}` : '';
     if (navigator.share) {
       try {
         await navigator.share({
@@ -636,167 +779,430 @@ const ReelModal = ({ post, isOpen, onClose, onAddToCart, onBuyNow, onNext, onPre
     if (navigator.clipboard) {
       navigator.clipboard.writeText(shareUrl);
       setCopied(true);
-      addToast('Link copied to clipboard!', 'success');
+      addToast('Product link copied to clipboard!', 'success');
       setTimeout(() => setCopied(false), 2000);
     }
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-xl p-0 sm:p-4">
-      {/* Close Backdrop */}
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/92 backdrop-blur-2xl p-0 sm:p-4 md:p-6 lg:p-8 overscroll-none"
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
+    >
+      {/* Background Overlay Backdrop */}
       <div className="absolute inset-0" onClick={onClose} />
 
-      {/* Close button (top-right) */}
+      {/* Floating Close Button */}
       <button
         type="button"
         aria-label="Close Reel Modal"
         onClick={onClose}
-        className="absolute top-4 right-4 z-50 w-11 h-11 rounded-full bg-black/60 backdrop-blur-md border border-white/20 text-white flex items-center justify-center hover:bg-white hover:text-black transition-all"
+        className="absolute top-3 sm:top-5 right-3 sm:right-6 z-50 w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-black/70 backdrop-blur-md border border-white/20 text-white flex items-center justify-center hover:bg-white hover:text-black transition-all shadow-2xl cursor-pointer"
       >
-        <X size={20} />
+        <X size={19} />
       </button>
 
-      {/* Up / Down Reel Nav (Desktop) */}
-      <div className="hidden lg:flex absolute right-8 top-1/2 -translate-y-1/2 flex-col gap-3 z-50">
+      {/* Vertical Navigation Pill on Desktop (Arrow Up/Down) */}
+      <div className="hidden lg:flex absolute left-8 top-1/2 -translate-y-1/2 flex-col items-center gap-3 z-50">
         <button
           type="button"
           aria-label="Previous Reel"
           onClick={onPrev}
-          className="w-12 h-12 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-white flex items-center justify-center hover:bg-[#d4af37] hover:text-black transition-all"
+          className="w-12 h-12 rounded-full bg-black/60 backdrop-blur-md border border-white/20 text-white flex items-center justify-center hover:bg-[#d4af37] hover:text-black transition-all shadow-xl active:scale-95 cursor-pointer"
+          title="Previous Reel (Up Arrow)"
         >
-          <ChevronUp size={24} />
+          <ChevronUp size={22} />
         </button>
+        <div className="text-[10px] font-mono text-white/50 tracking-widest uppercase writing-mode-vertical">
+          SWIPE
+        </div>
         <button
           type="button"
           aria-label="Next Reel"
           onClick={onNext}
-          className="w-12 h-12 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-white flex items-center justify-center hover:bg-[#d4af37] hover:text-black transition-all"
+          className="w-12 h-12 rounded-full bg-black/60 backdrop-blur-md border border-white/20 text-white flex items-center justify-center hover:bg-[#d4af37] hover:text-black transition-all shadow-xl active:scale-95 cursor-pointer"
+          title="Next Reel (Down Arrow)"
         >
-          <ChevronDown size={24} />
+          <ChevronDown size={22} />
         </button>
       </div>
 
-      {/* Main Reel Viewport: Vertical 9:16 aspect ratio */}
-      <div className="relative w-full h-full sm:h-[90vh] sm:max-w-[420px] sm:rounded-3xl overflow-hidden bg-black shadow-2xl flex flex-col justify-between z-10 border border-white/10">
-        {/* Top Header Bar */}
-        <div className="relative z-30 flex items-center justify-between p-4 bg-gradient-to-b from-black/90 to-transparent">
-          <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-full overflow-hidden border-2 border-[#ee2a7b]">
-              <img src={post.img} alt={post.name} className="w-full h-full object-cover" />
+      {/* ===== Main Reel Container =====
+          Mobile: Full viewport height (100dvh) with iPhone safe-area padding
+          PC: Split cinema layout (Left 9:16 Video + Right Shoppable Panel) */}
+      <div className="relative w-full h-[100dvh] sm:h-[92vh] sm:max-h-[860px] lg:max-w-[880px] xl:max-w-[920px] sm:rounded-3xl overflow-hidden bg-[#0d0b09] shadow-2xl flex flex-col lg:flex-row z-10 border border-white/15">
+        
+        {/* ====================================================
+            LEFT / MAIN: Vertical Cinema Video Player (9:16)
+            ==================================================== */}
+        <div className="relative flex-1 lg:max-w-[430px] h-full bg-black flex flex-col justify-between overflow-hidden">
+          
+          {/* Top Header Bar inside Video Container */}
+          <div className="relative z-30 flex items-center justify-between p-3.5 sm:p-4 bg-gradient-to-b from-black/90 via-black/40 to-transparent pt-[env(safe-area-inset-top,12px)]">
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full overflow-hidden border-2 border-[#ee2a7b]">
+                <img src={post.img} alt={post.name} className="w-full h-full object-cover" />
+              </div>
+              <div>
+                <span className="gram-body flex items-center gap-1 text-white text-xs font-bold">
+                  {post.handle}
+                  {post.verified && <BadgeCheck size={13} className="text-[#4a9eff]" />}
+                </span>
+                <span className="gram-body text-white/50 text-[10px]">{post.followers} followers</span>
+              </div>
             </div>
-            <div>
-              <span className="gram-body flex items-center gap-1 text-white text-xs font-bold">
-                {post.handle}
-                {post.verified && <BadgeCheck size={13} className="text-[#4a9eff]" />}
-              </span>
-              <span className="gram-body text-white/50 text-[10px]">{post.followers} followers</span>
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={toggleMute}
-              className="w-9 h-9 rounded-full bg-black/60 backdrop-blur-md border border-white/20 text-white flex items-center justify-center"
-            >
-              {isMuted ? <VolumeX size={16} /> : <Volume2 size={16} className="text-[#d4af37]" />}
-            </button>
-          </div>
-        </div>
 
-        {/* Video Area */}
-        <div
-          className="relative flex-1 bg-black flex items-center justify-center cursor-pointer"
-          onClick={togglePlay}
-          onDoubleClick={toggleLike}
-        >
-          <video
-            ref={modalVideoRef}
-            src={post.video}
-            poster={post.img}
-            muted={isMuted}
-            loop
-            playsInline
-            webkit-playsinline="true"
-            x5-playsinline="true"
-            className="w-full h-full object-cover"
-          />
-
-          {/* Heart pop */}
-          {showHeartPop && (
-            <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-30">
-              <Heart size={90} className="gram-heart-pop fill-[#ee2a7b] text-[#ee2a7b] drop-shadow-[0_0_30px_rgba(238,42,123,0.9)]" />
-            </div>
-          )}
-
-          {/* Play/pause icon indicator */}
-          {!isPlaying && (
-            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-              <span className="w-16 h-16 rounded-full bg-black/60 backdrop-blur-md border border-white/25 flex items-center justify-center text-white">
-                <Play size={26} className="fill-white ml-1" />
-              </span>
-            </div>
-          )}
-
-          {/* Right Action Rail */}
-          <div className="absolute right-3.5 bottom-28 z-30 flex flex-col items-center gap-4">
-            <button type="button" onClick={toggleLike} className="flex flex-col items-center gap-1">
-              <Heart
-                size={26}
-                className={`transition-all ${isLiked ? 'fill-[#ee2a7b] text-[#ee2a7b]' : 'text-white'}`}
-              />
-              <span className="gram-body text-white text-[10px] font-bold">
-                {likesCount >= 1000 ? `${(likesCount / 1000).toFixed(1)}K` : likesCount}
-              </span>
-            </button>
-
-            <button type="button" onClick={handleShare} className="flex flex-col items-center gap-1">
-              {copied ? <Check size={24} className="text-emerald-400" /> : <Send size={24} className="text-white" />}
-              <span className="gram-body text-white text-[10px] font-bold">Share</span>
-            </button>
-
-            <button type="button" onClick={toggleMute} className="flex flex-col items-center gap-1">
-              {isMuted ? <VolumeX size={24} className="text-white/80" /> : <Volume2 size={24} className="text-[#d4af37]" />}
-              <span className="gram-body text-white text-[10px] font-bold">{isMuted ? 'Muted' : 'Sound'}</span>
-            </button>
-          </div>
-
-          {/* Bottom Overlay Caption & Song */}
-          <div className="absolute bottom-20 inset-x-0 z-20 p-4 bg-gradient-to-t from-black/95 via-black/50 to-transparent pointer-events-none">
-            <p className="gram-body text-white/95 text-xs leading-relaxed line-clamp-3 pr-14 mb-2">
-              <b className="text-white">{post.handle}</b> {post.caption}
-            </p>
             <div className="flex items-center gap-2">
-              <Music2 size={12} className="text-white/70" />
-              <span className="gram-body text-white/70 text-[10px] truncate">{post.song}</span>
+              <button
+                type="button"
+                onClick={toggleMute}
+                className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-black/60 backdrop-blur-md border border-white/20 text-white flex items-center justify-center cursor-pointer hover:border-[#d4af37]"
+                title={isMuted ? 'Turn Sound On' : 'Turn Sound Off'}
+              >
+                {isMuted ? <VolumeX size={15} /> : <Volume2 size={15} className="text-[#d4af37]" />}
+              </button>
+            </div>
+          </div>
+
+          {/* Video Player Center */}
+          <div
+            className="relative flex-1 bg-black flex items-center justify-center cursor-pointer overflow-hidden"
+            onClick={togglePlay}
+            onDoubleClick={toggleLike}
+          >
+            <video
+              ref={modalVideoRef}
+              src={post.video}
+              poster={post.img}
+              muted={isMuted}
+              loop
+              playsInline
+              webkit-playsinline="true"
+              x5-playsinline="true"
+              disablePictureInPicture
+              controlsList="nodownload nofullscreen noremoteplayback"
+              onTimeUpdate={handleTimeUpdate}
+              className="w-full h-full object-cover"
+            />
+
+            {/* Floating Double-Tap Heart Animation */}
+            {showHeartPop && (
+              <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-30">
+                <Heart size={96} className="gram-heart-pop fill-[#ee2a7b] text-[#ee2a7b] drop-shadow-[0_0_35px_rgba(238,42,123,0.95)]" />
+              </div>
+            )}
+
+            {/* Play/Pause Center Indicator */}
+            {!isPlaying && (
+              <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                <span className="w-16 h-16 rounded-full bg-black/60 backdrop-blur-md border border-white/25 flex items-center justify-center text-white shadow-2xl">
+                  <Play size={24} className="fill-white ml-1" />
+                </span>
+              </div>
+            )}
+
+            {/* Action Rail on Mobile (Floating on the right) */}
+            <div className="lg:hidden absolute right-3 bottom-24 z-30 flex flex-col items-center gap-3.5 bg-black/50 backdrop-blur-md border border-white/15 rounded-full p-2 shadow-xl">
+              <button type="button" onClick={toggleLike} className="flex flex-col items-center gap-0.5">
+                <Heart
+                  size={24}
+                  className={`transition-all ${isLiked ? 'fill-[#ee2a7b] text-[#ee2a7b]' : 'text-white'}`}
+                />
+                <span className="gram-body text-white text-[9px] font-bold">
+                  {likesCount >= 1000 ? `${(likesCount / 1000).toFixed(1)}K` : likesCount}
+                </span>
+              </button>
+
+              <button type="button" onClick={handleShare} className="flex flex-col items-center gap-0.5">
+                {copied ? <Check size={22} className="text-emerald-400" /> : <Send size={22} className="text-white" />}
+                <span className="gram-body text-white text-[9px] font-bold">Share</span>
+              </button>
+
+              <button type="button" onClick={toggleMute} className="flex flex-col items-center gap-0.5">
+                {isMuted ? <VolumeX size={22} className="text-white/80" /> : <Volume2 size={22} className="text-[#d4af37]" />}
+                <span className="gram-body text-white text-[9px] font-bold">{isMuted ? 'Mute' : 'Audio'}</span>
+              </button>
+            </div>
+
+            {/* Caption & Music Bar on Mobile (Overlaid at bottom of video) */}
+            <div className="lg:hidden absolute bottom-16 inset-x-0 z-20 p-3.5 bg-gradient-to-t from-black/95 via-black/60 to-transparent pointer-events-none">
+              <p className="gram-body text-white/95 text-[11px] leading-snug line-clamp-2 pr-14 mb-1.5 drop-shadow-md">
+                <b className="text-white">{post.handle}</b> {post.caption}
+              </p>
+              <div className="flex items-center gap-2">
+                <Music2 size={11} className="text-white/70" />
+                <span className="gram-body text-white/70 text-[9px] truncate">{post.song}</span>
+              </div>
+            </div>
+
+            {/* Video Scrub Progress Line */}
+            <div className="absolute bottom-0 inset-x-0 h-1 bg-white/20 z-20">
+              <div
+                className="h-full bg-gradient-to-r from-[#ee2a7b] to-[#d4af37] transition-all duration-100 ease-linear"
+                style={{ width: `${progress}%` }}
+              />
+            </div>
+          </div>
+
+          {/* Shoppable Drawer on Mobile Screen (Fixed to bottom with iPhone safe-area) */}
+          <div className="lg:hidden relative z-30 p-3 bg-[#14110f] border-t border-white/10 flex items-center justify-between gap-2.5 pb-[env(safe-area-inset-bottom,12px)]">
+            <Link
+              href={`/product/${post.slug}`}
+              className="flex items-center gap-2 min-w-0 flex-1"
+              onClick={onClose}
+            >
+              <img src={post.img} alt={post.product} className="w-10 h-10 rounded-lg object-cover border border-white/10 shrink-0" />
+              <div className="min-w-0">
+                <p className="gram-body text-white text-xs font-bold truncate">{post.product}</p>
+                <div className="flex items-baseline gap-1.5">
+                  <span className="gram-body text-xs text-[#d4af37] font-bold">{post.price}</span>
+                  <span className="gram-body text-[10px] text-white/40 line-through">{post.oldPrice}</span>
+                </div>
+              </div>
+            </Link>
+
+            <div className="flex items-center gap-1.5 shrink-0">
+              <button
+                type="button"
+                onClick={() => onAddToCart(post)}
+                className="gram-body bg-white/10 hover:bg-white/20 text-white text-[9px] font-bold uppercase tracking-wider px-2.5 py-2 rounded-full transition-all active:scale-95 cursor-pointer"
+              >
+                Add
+              </button>
+              <button
+                type="button"
+                onClick={() => onBuyNow(post)}
+                className="gram-body bg-[#d4af37] text-black text-[9px] font-black uppercase tracking-wider px-3 py-2 rounded-full transition-all active:scale-95 shadow-md flex items-center gap-1 cursor-pointer"
+              >
+                <Zap size={11} className="fill-black" />
+                <span>Buy</span>
+              </button>
             </div>
           </div>
         </div>
 
-        {/* Bottom Shoppable Drawer */}
-        <div className="relative z-30 p-3 bg-[#171412] border-t border-white/10 flex items-center justify-between gap-3">
-          <div className="flex items-center gap-2.5 min-w-0 flex-1">
-            <img src={post.img} alt={post.product} className="w-11 h-11 rounded-lg object-cover border border-white/10 shrink-0" />
-            <div className="min-w-0">
-              <p className="gram-body text-white text-xs font-bold truncate">{post.product}</p>
-              <p className="gram-body text-xs text-[#d4af37] font-semibold">{post.price}</p>
+        {/* ====================================================
+            RIGHT PANEL: Desktop / PC Screen Shoppable Showcase
+            (Visible on large screens, replaces mobile overlay)
+            ==================================================== */}
+        <div className="hidden lg:flex flex-col flex-1 w-full max-w-[490px] h-full bg-[#12100d] border-l border-white/10 overflow-y-auto">
+          
+          {/* Creator Profile Card */}
+          <div className="p-5 border-b border-white/10 flex items-center justify-between gap-3">
+            <div className="flex items-center gap-3 min-w-0">
+              <div className="relative w-11 h-11 shrink-0">
+                <div className="gram-ig-ring absolute inset-0 rounded-full" />
+                <div className="absolute inset-[2.5px] rounded-full overflow-hidden bg-[#12100d]">
+                  <img src={post.img} alt={post.name} className="w-full h-full object-cover" />
+                </div>
+              </div>
+              <div className="min-w-0">
+                <div className="flex items-center gap-1.5">
+                  <span className="gram-body text-white font-bold text-sm truncate">{post.name}</span>
+                  {post.verified && <BadgeCheck size={14} className="text-[#4a9eff]" />}
+                </div>
+                <span className="gram-body text-white/50 text-xs">{post.handle} • {post.followers}</span>
+              </div>
+            </div>
+
+            <a
+              href="https://instagram.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="gram-body px-3.5 py-1.5 rounded-full bg-white/10 hover:bg-white/20 text-white text-xs font-bold transition-all"
+            >
+              Follow
+            </a>
+          </div>
+
+          {/* Caption & Music Bar */}
+          <div className="p-5 border-b border-white/10 space-y-3">
+            <p className="gram-body text-white/90 text-xs sm:text-sm leading-relaxed">
+              {post.caption}
+            </p>
+
+            <div className="flex items-center gap-2 p-2.5 rounded-xl bg-white/[0.04] border border-white/5">
+              <Music2 size={13} className="text-[#ee2a7b]" />
+              <span className="gram-body text-white/80 text-xs font-medium truncate">{post.song}</span>
+              <span className="ml-auto flex items-end gap-[2px] h-3 shrink-0">
+                <span className="gram-music-bar w-[2px] h-full bg-[#ee2a7b] rounded-full" />
+                <span className="gram-music-bar w-[2px] h-full bg-[#ee2a7b] rounded-full [animation-delay:0.2s]" />
+                <span className="gram-music-bar w-[2px] h-full bg-[#ee2a7b] rounded-full [animation-delay:0.4s]" />
+              </span>
             </div>
           </div>
 
-          <div className="flex items-center gap-2 shrink-0">
+          {/* Navigation Tabs: Shoppable Product vs Comments */}
+          <div className="flex border-b border-white/10">
             <button
               type="button"
-              onClick={() => onAddToCart(post)}
-              className="gram-body bg-white/10 hover:bg-white/20 text-white text-[10px] font-bold uppercase tracking-wider px-3 py-2.5 rounded-full transition-all active:scale-95"
+              onClick={() => setActiveTab('product')}
+              className={`flex-1 py-3 text-xs font-bold uppercase tracking-wider transition-colors flex items-center justify-center gap-1.5 cursor-pointer ${
+                activeTab === 'product'
+                  ? 'text-[#d4af37] border-b-2 border-[#d4af37] bg-white/[0.02]'
+                  : 'text-white/50 hover:text-white'
+              }`}
             >
-              Add to Cart
+              <ShoppingBag size={14} />
+              <span>Tagged Product</span>
             </button>
             <button
               type="button"
-              onClick={() => onBuyNow(post)}
-              className="gram-body bg-[#d4af37] text-black text-[10px] font-black uppercase tracking-wider px-3.5 py-2.5 rounded-full transition-all active:scale-95 shadow-md"
+              onClick={() => setActiveTab('comments')}
+              className={`flex-1 py-3 text-xs font-bold uppercase tracking-wider transition-colors flex items-center justify-center gap-1.5 cursor-pointer ${
+                activeTab === 'comments'
+                  ? 'text-[#d4af37] border-b-2 border-[#d4af37] bg-white/[0.02]'
+                  : 'text-white/50 hover:text-white'
+              }`}
             >
-              Buy Now
+              <MessageCircle size={14} />
+              <span>Community ({post.comments})</span>
             </button>
+          </div>
+
+          {/* Tab Content Container */}
+          <div className="flex-1 p-5 overflow-y-auto">
+            {activeTab === 'product' ? (
+              <div className="space-y-4">
+                {/* Shoppable Product Card Box */}
+                <div className="p-4 rounded-2xl bg-white/[0.03] border border-white/10 hover:border-[#d4af37]/40 transition-colors">
+                  <div className="flex gap-3.5">
+                    <img
+                      src={post.img}
+                      alt={post.product}
+                      className="w-20 h-20 rounded-xl object-cover border border-white/10 shrink-0"
+                    />
+                    <div className="min-w-0 flex-1 flex flex-col justify-between">
+                      <div>
+                        <div className="flex items-center gap-2 text-[10px] text-white/50 uppercase tracking-wider font-semibold">
+                          <span>{post.tag}</span>
+                          <span>•</span>
+                          <span className="text-emerald-400 font-bold">● In Stock</span>
+                        </div>
+                        <h4 className="gram-body text-white font-bold text-sm line-clamp-2 mt-0.5 leading-snug">
+                          {post.product}
+                        </h4>
+                      </div>
+
+                      <div className="flex items-baseline gap-2">
+                        <span className="text-[#d4af37] font-black text-lg">{post.price}</span>
+                        <span className="text-white/40 line-through text-xs">{post.oldPrice}</span>
+                        <span className="text-emerald-400 text-xs font-bold bg-emerald-950/60 border border-emerald-500/30 px-2 py-0.5 rounded-full">
+                          {post.discount}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Quality Assurance Badges */}
+                  <div className="mt-3 pt-3 border-t border-white/5 grid grid-cols-2 gap-2 text-[11px] text-white/60">
+                    <span className="flex items-center gap-1.5">
+                      <ShieldCheck size={13} className="text-[#d4af37]" /> Authentic Artisan Piece
+                    </span>
+                    <span className="flex items-center gap-1.5">
+                      <Star size={13} className="text-amber-400 fill-amber-400" /> {post.rating} ({post.reviews} reviews)
+                    </span>
+                  </div>
+
+                  {/* Action Buttons */}
+                  <div className="mt-4 flex gap-2">
+                    <button
+                      type="button"
+                      onClick={() => onAddToCart(post)}
+                      className="gram-body flex-1 py-2.5 px-3 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-bold uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 cursor-pointer active:scale-95"
+                    >
+                      <ShoppingBag size={14} /> Add to Cart
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => onBuyNow(post)}
+                      className="gram-body flex-1 py-2.5 px-3 rounded-xl bg-[#d4af37] hover:bg-[#c5a028] text-black text-xs font-black uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 cursor-pointer active:scale-95 shadow-lg"
+                    >
+                      <Zap size={14} className="fill-black" /> Buy Now
+                    </button>
+                  </div>
+
+                  {/* Link to Full Product Page */}
+                  <Link
+                    href={`/product/${post.slug}`}
+                    className="gram-body mt-2.5 text-center block text-[11px] text-[#d4af37] hover:underline font-semibold"
+                    onClick={onClose}
+                  >
+                    View Full Product Details &amp; Specifications →
+                  </Link>
+                </div>
+
+                {/* Keyboard controls helper pill */}
+                <div className="p-3 rounded-xl bg-black/40 border border-white/5 text-[10px] text-white/40 flex items-center justify-between font-mono">
+                  <span>KEYBOARD:</span>
+                  <span>↑ / ↓ : Navigate</span>
+                  <span>Space : Play/Pause</span>
+                  <span>Esc : Close</span>
+                </div>
+              </div>
+            ) : (
+              /* Simulated Community Comments Feed */
+              <div className="space-y-3.5">
+                {post.commentsList && post.commentsList.map((c, i) => (
+                  <div key={i} className="flex gap-2.5 text-xs">
+                    <div className="w-7 h-7 rounded-full bg-gradient-to-tr from-[#ee2a7b] to-[#d4af37] flex items-center justify-center text-white font-bold text-[10px] shrink-0">
+                      {c.user[0].toUpperCase()}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <span className="text-white font-bold text-[11px]">{c.user}</span>
+                        <span className="text-white/40 text-[9px]">{c.time}</span>
+                      </div>
+                      <p className="text-white/80 text-xs mt-0.5 leading-snug">{c.text}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Desktop Footer Actions */}
+          <div className="p-4 border-t border-white/10 bg-[#0e0c0a] flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <button
+                type="button"
+                onClick={toggleLike}
+                className="flex items-center gap-1.5 text-white hover:text-[#ee2a7b] transition-colors cursor-pointer"
+              >
+                <Heart size={20} className={isLiked ? 'fill-[#ee2a7b] text-[#ee2a7b]' : ''} />
+                <span className="gram-body text-xs font-bold">{likesCount}</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={handleShare}
+                className="flex items-center gap-1.5 text-white hover:text-[#d4af37] transition-colors cursor-pointer"
+              >
+                {copied ? <Check size={18} className="text-emerald-400" /> : <Send size={18} />}
+                <span className="gram-body text-xs font-bold">Share</span>
+              </button>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={onPrev}
+                className="p-1.5 rounded-lg border border-white/15 text-white/70 hover:text-white hover:border-[#d4af37] transition-colors cursor-pointer"
+                title="Previous Reel"
+              >
+                <ChevronUp size={16} />
+              </button>
+              <button
+                type="button"
+                onClick={onNext}
+                className="p-1.5 rounded-lg border border-white/15 text-white/70 hover:text-white hover:border-[#d4af37] transition-colors cursor-pointer"
+                title="Next Reel"
+              >
+                <ChevronDown size={16} />
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -816,6 +1222,7 @@ export default function ShopTheGram() {
   const [activeModalPost, setActiveModalPost] = useState(null);
   const [activePostIdx, setActivePostIdx] = useState(0);
   const [scrollProgress, setScrollProgress] = useState(0);
+  const [viewMode, setViewMode] = useState('carousel'); // 'carousel' | 'grid'
 
   const scrollerRef = useRef(null);
   const searchInputRef = useRef(null);
@@ -866,7 +1273,7 @@ export default function ShopTheGram() {
     el.scrollBy({ left: dir * (itemWidth + 20), behavior: 'smooth' });
   }, []);
 
-  /* Keyboard arrow navigation support */
+  /* Keyboard arrow navigation support on main page */
   useEffect(() => {
     const onKey = (e) => {
       if (activeModalPost) return;
@@ -885,15 +1292,15 @@ export default function ShopTheGram() {
 
   const handleAddToCart = (post) => {
     const productItem = {
-      id: post.id,
+      id: post.productId || post.id,
       name: post.product,
       slug: post.slug,
       price: post.rawPrice,
       originalPrice: post.rawOldPrice,
-      category: 'Sarees',
+      category: 'Decor & Crafts',
       images: [post.img],
       in_stock: true,
-      stock: 25,
+      stock: 50,
     };
     addToCart(productItem, 1);
   };
@@ -923,7 +1330,7 @@ export default function ShopTheGram() {
   };
 
   return (
-    <section className="relative py-16 sm:py-20 lg:py-24 bg-[#0d0b09] border-t border-white/5 overflow-hidden">
+    <section className="relative py-14 sm:py-20 lg:py-24 bg-[#0a0807] border-t border-white/5 overflow-hidden">
       {/* Self-contained Styles & Keyframes */}
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Jost:wght@300;400;500;600;700;800&display=swap');
@@ -965,20 +1372,20 @@ export default function ShopTheGram() {
       `}</style>
 
       {/* Ambient background glows */}
-      <div className="pointer-events-none absolute -top-32 -left-32 w-80 sm:w-96 h-80 sm:h-96 rounded-full bg-[#ee2a7b]/[0.06] blur-3xl" />
-      <div className="pointer-events-none absolute -bottom-32 -right-32 w-80 sm:w-96 h-80 sm:h-96 rounded-full bg-[#6228d7]/[0.07] blur-3xl" />
+      <div className="pointer-events-none absolute -top-32 -left-32 w-80 sm:w-96 h-80 sm:h-96 rounded-full bg-[#ee2a7b]/[0.07] blur-3xl" />
+      <div className="pointer-events-none absolute -bottom-32 -right-32 w-80 sm:w-96 h-80 sm:h-96 rounded-full bg-[#6228d7]/[0.08] blur-3xl" />
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
         {/* ===== Header: Responsive Profile Layout ===== */}
         <Reveal>
           <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6 sm:gap-8 mb-6 sm:mb-8">
             {/* Creator Profile Branding */}
-            <div className="flex items-center gap-4 sm:gap-6">
+            <div className="flex items-center gap-3.5 sm:gap-6">
               {/* Instagram Story Ring Avatar */}
-              <div className="relative w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 shrink-0">
+              <div className="relative w-14 h-14 sm:w-20 sm:h-20 md:w-24 md:h-24 shrink-0">
                 <div className="gram-ig-ring absolute inset-0 rounded-full" />
-                <div className="absolute inset-[2.5px] sm:inset-[3px] rounded-full bg-[#0d0b09] flex items-center justify-center">
-                  <Camera className="w-6 h-6 sm:w-8 sm:h-8 text-white/90" />
+                <div className="absolute inset-[2.5px] sm:inset-[3px] rounded-full bg-[#0a0807] flex items-center justify-center">
+                  <Camera className="w-5 h-5 sm:w-8 sm:h-8 text-white/90" />
                 </div>
                 <span className="gram-body absolute -bottom-1 left-1/2 -translate-x-1/2 bg-[#ee2a7b] text-white text-[7px] sm:text-[8px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full shadow-md">
                   LIVE
@@ -987,10 +1394,10 @@ export default function ShopTheGram() {
 
               <div>
                 <div className="flex items-center gap-1.5 mb-1">
-                  <span className="gram-body text-white/40 text-[9px] sm:text-[10px] font-bold uppercase tracking-[0.35em]">Community</span>
+                  <span className="gram-body text-white/40 text-[9px] sm:text-[10px] font-bold uppercase tracking-[0.35em]">Community Feed</span>
                   <BadgeCheck size={14} className="text-[#4a9eff]" />
                 </div>
-                <h2 className="gram-heading text-3xl sm:text-5xl md:text-6xl text-white font-semibold leading-tight">
+                <h2 className="gram-heading text-2xl xs:text-3xl sm:text-5xl md:text-6xl text-white font-semibold leading-tight">
                   Shop The{' '}
                   <span className="relative inline-block h-[1.15em] overflow-hidden align-bottom">
                     <span
@@ -1004,23 +1411,23 @@ export default function ShopTheGram() {
                 </h2>
 
                 {/* Profile Stats Row */}
-                <div className="gram-body flex items-center gap-3 sm:gap-5 mt-2 sm:mt-3 text-white/50 text-[11px] sm:text-xs tracking-wide flex-wrap">
+                <div className="gram-body flex items-center gap-3 sm:gap-5 mt-1.5 sm:mt-3 text-white/50 text-[11px] sm:text-xs tracking-wide flex-wrap">
                   <span><b className="text-white font-bold">1.4M</b> followers</span>
                   <span><b className="text-white font-bold">5</b> creators</span>
-                  <span className="hidden sm:inline"><b className="text-white font-bold">98%</b> shoppable</span>
+                  <span className="hidden sm:inline"><b className="text-white font-bold">100%</b> shoppable</span>
                 </div>
               </div>
             </div>
 
-            {/* Controls Row: Search + Arrows + Sound + View All */}
+            {/* Controls Row: Search + View Switcher + Sound + View All */}
             <div className="flex items-center gap-2 sm:gap-3 flex-wrap justify-between sm:justify-end">
               {/* Expanding Search Input */}
               <div
                 className={`flex items-center border rounded-full transition-all duration-300 overflow-hidden ${
                   searchOpen
-                    ? 'border-[#ee2a7b]/60 bg-white/[0.08] w-48 sm:w-60'
-                    : 'border-white/15 bg-white/[0.03] w-10 sm:w-11'
-                } h-10 sm:h-11`}
+                    ? 'border-[#ee2a7b]/60 bg-white/[0.08] w-44 sm:w-60'
+                    : 'border-white/15 bg-white/[0.03] w-9 sm:w-11'
+                } h-9 sm:h-11`}
               >
                 <button
                   type="button"
@@ -1029,7 +1436,7 @@ export default function ShopTheGram() {
                     setSearchOpen((o) => !o);
                     setQuery('');
                   }}
-                  className="w-10 sm:w-11 h-10 sm:h-11 shrink-0 flex items-center justify-center text-white/70 hover:text-white"
+                  className="w-9 sm:w-11 h-9 sm:h-11 shrink-0 flex items-center justify-center text-white/70 hover:text-white"
                 >
                   {searchOpen ? <X size={15} /> : <Search size={15} />}
                 </button>
@@ -1045,47 +1452,79 @@ export default function ShopTheGram() {
                 />
               </div>
 
+              {/* View Switcher: Carousel vs Grid (Desktop & Tablet) */}
+              <div className="hidden sm:flex items-center p-0.5 rounded-full border border-white/15 bg-white/[0.03]">
+                <button
+                  type="button"
+                  aria-label="Carousel view"
+                  onClick={() => setViewMode('carousel')}
+                  className={`p-2 rounded-full transition-all cursor-pointer ${
+                    viewMode === 'carousel'
+                      ? 'bg-[#d4af37] text-black shadow-sm'
+                      : 'text-white/60 hover:text-white'
+                  }`}
+                  title="Carousel Stream"
+                >
+                  <LayoutList size={14} />
+                </button>
+                <button
+                  type="button"
+                  aria-label="Grid view"
+                  onClick={() => setViewMode('grid')}
+                  className={`p-2 rounded-full transition-all cursor-pointer ${
+                    viewMode === 'grid'
+                      ? 'bg-[#d4af37] text-black shadow-sm'
+                      : 'text-white/60 hover:text-white'
+                  }`}
+                  title="Instagram Grid"
+                >
+                  <Grid size={14} />
+                </button>
+              </div>
+
               {/* Global Audio Toggle Button */}
               <button
                 type="button"
                 aria-label={isGlobalMuted ? 'Unmute reels audio' : 'Mute reels audio'}
                 onClick={toggleGlobalMute}
-                className="w-10 sm:w-11 h-10 sm:h-11 rounded-full border border-white/15 text-white/80 flex items-center justify-center hover:border-[#d4af37] hover:text-[#d4af37] active:scale-90 transition-all"
+                className="w-9 sm:w-11 h-9 sm:h-11 rounded-full border border-white/15 text-white/80 flex items-center justify-center hover:border-[#d4af37] hover:text-[#d4af37] active:scale-90 transition-all cursor-pointer"
                 title={isGlobalMuted ? 'Turn Sound On' : 'Turn Sound Off'}
               >
-                {isGlobalMuted ? <VolumeX size={16} /> : <Volume2 size={16} className="text-[#d4af37]" />}
+                {isGlobalMuted ? <VolumeX size={15} /> : <Volume2 size={15} className="text-[#d4af37]" />}
               </button>
 
-              {/* Nav Arrows (Desktop & Tablet) */}
-              <div className="hidden sm:flex items-center gap-2">
-                <button
-                  type="button"
-                  aria-label="Previous reel"
-                  onClick={() => scrollBy(-1)}
-                  className="w-10 sm:w-11 h-10 sm:h-11 rounded-full border border-white/15 text-white/70 flex items-center justify-center hover:border-[#ee2a7b] hover:text-[#ee2a7b] active:scale-90 transition-all"
-                >
-                  <ArrowLeft size={16} />
-                </button>
-                <button
-                  type="button"
-                  aria-label="Next reel"
-                  onClick={() => scrollBy(1)}
-                  className="w-10 sm:w-11 h-10 sm:h-11 rounded-full border border-white/15 text-white/70 flex items-center justify-center hover:border-[#ee2a7b] hover:text-[#ee2a7b] active:scale-90 transition-all"
-                >
-                  <ArrowRight size={16} />
-                </button>
-              </div>
+              {/* Nav Arrows (Carousel mode on Desktop) */}
+              {viewMode === 'carousel' && (
+                <div className="hidden sm:flex items-center gap-1.5">
+                  <button
+                    type="button"
+                    aria-label="Previous reel"
+                    onClick={() => scrollBy(-1)}
+                    className="w-9 sm:w-11 h-9 sm:h-11 rounded-full border border-white/15 text-white/70 flex items-center justify-center hover:border-[#ee2a7b] hover:text-[#ee2a7b] active:scale-90 transition-all cursor-pointer"
+                  >
+                    <ArrowLeft size={15} />
+                  </button>
+                  <button
+                    type="button"
+                    aria-label="Next reel"
+                    onClick={() => scrollBy(1)}
+                    className="w-9 sm:w-11 h-9 sm:h-11 rounded-full border border-white/15 text-white/70 flex items-center justify-center hover:border-[#ee2a7b] hover:text-[#ee2a7b] active:scale-90 transition-all cursor-pointer"
+                  >
+                    <ArrowRight size={15} />
+                  </button>
+                </div>
+              )}
 
               {/* View All Shop Link */}
-              <a
+              <Link
                 href="/shop"
-                className="gram-body group relative overflow-hidden border border-[#d4af37]/40 text-[#d4af37] text-[9px] sm:text-[10px] font-black uppercase tracking-widest px-4 sm:px-5 h-10 sm:h-11 rounded-full inline-flex items-center justify-center transition-all duration-300 hover:text-[#171310] hover:border-[#d4af37]"
+                className="gram-body group relative overflow-hidden border border-[#d4af37]/40 text-[#d4af37] text-[9px] sm:text-[10px] font-black uppercase tracking-widest px-3.5 sm:px-5 h-9 sm:h-11 rounded-full inline-flex items-center justify-center transition-all duration-300 hover:text-[#171310] hover:border-[#d4af37]"
               >
                 <span className="absolute inset-0 bg-[#d4af37] -translate-x-full group-hover:translate-x-0 transition-transform duration-300 ease-out" />
                 <span className="relative inline-flex items-center gap-1.5">
-                  <Camera size={13} /> View All
+                  <Camera size={12} /> View Catalog
                 </span>
-              </a>
+              </Link>
             </div>
           </div>
         </Reveal>
@@ -1093,53 +1532,74 @@ export default function ShopTheGram() {
         {/* Subtitle Description */}
         <Reveal delay={100}>
           <p className="gram-body text-white/50 text-xs sm:text-sm max-w-2xl leading-relaxed tracking-wide mb-6 sm:mb-8 text-pretty">
-            Real brides, viral fits, pure Banarasi handlooms. Tag <span className="text-[#ee2a7b] font-semibold">#DrapedInKashi</span> on Instagram
-            to get featured. Tap any card on your phone to watch with sound, double-tap to like, or add the exact saree directly to your cart!
+            Real creators, authentic festive styling, and pure handcrafted decor. Tag <span className="text-[#ee2a7b] font-semibold">#TrioEcart</span> on Instagram
+            to get featured. Tap any card on your phone to watch with sound, double-tap to like, or add the exact handcrafted piece directly to your cart!
           </p>
         </Reveal>
 
-        {/* ===== Horizontal Scroller Feed ===== */}
-        <div
-          ref={scrollerRef}
-          onScroll={handleScroll}
-          className="gram-scroller flex gap-3.5 sm:gap-5 overflow-x-auto snap-x snap-mandatory pb-4 -mx-4 px-4 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8 touch-pan-x"
-        >
-          {filtered.length === 0 && (
-            <p className="gram-body text-white/40 text-sm py-16 mx-auto text-center">
-              No reels found matching &ldquo;{query}&rdquo;.
-            </p>
-          )}
-
-          {filtered.map((post, idx) => (
-            <ReelCard
-              key={post.id}
-              post={post}
-              idx={idx}
-              onAddToCart={handleAddToCart}
-              onOpenModal={openModalForPost}
-              isGlobalMuted={isGlobalMuted}
-              toggleGlobalMute={toggleGlobalMute}
-            />
-          ))}
-
-          {/* Spacer so last card has proper padding */}
-          {filtered.length > 0 && <div className="shrink-0 w-2 sm:w-4" aria-hidden="true" />}
-        </div>
-
-        {/* ===== Mobile Swipe Progress Indicator ===== */}
-        <div className="mt-4 sm:mt-6 flex flex-col items-center gap-2">
-          {/* Progress bar track */}
-          <div className="w-36 sm:w-48 h-1 bg-white/10 rounded-full overflow-hidden">
-            <div
-              className="h-full bg-gradient-to-r from-[#ee2a7b] to-[#d4af37] rounded-full transition-all duration-150"
-              style={{ width: `${Math.max(15, scrollProgress)}%` }}
-            />
+        {/* ===== REELS DISPLAY (CAROUSEL OR GRID) ===== */}
+        {viewMode === 'grid' ? (
+          /* Grid View on Desktop */
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 sm:gap-5">
+            {filtered.map((post, idx) => (
+              <ReelCard
+                key={post.id}
+                post={post}
+                idx={idx}
+                onAddToCart={handleAddToCart}
+                onOpenModal={openModalForPost}
+                isGlobalMuted={isGlobalMuted}
+                toggleGlobalMute={toggleGlobalMute}
+                viewMode="grid"
+              />
+            ))}
           </div>
+        ) : (
+          /* Carousel Stream (Default on mobile & PC) */
+          <div>
+            <div
+              ref={scrollerRef}
+              onScroll={handleScroll}
+              className="gram-scroller flex gap-3.5 sm:gap-5 overflow-x-auto snap-x snap-mandatory pb-4 -mx-3 px-3 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8 touch-pan-x"
+            >
+              {filtered.length === 0 && (
+                <p className="gram-body text-white/40 text-sm py-16 mx-auto text-center">
+                  No reels found matching &ldquo;{query}&rdquo;.
+                </p>
+              )}
 
-          <p className="gram-body flex items-center justify-center gap-2 text-white/30 text-[9px] uppercase tracking-[0.25em]">
-            <ArrowLeft size={9} /> Swipe or use arrow keys to explore reels <ArrowRight size={9} />
-          </p>
-        </div>
+              {filtered.map((post, idx) => (
+                <ReelCard
+                  key={post.id}
+                  post={post}
+                  idx={idx}
+                  onAddToCart={handleAddToCart}
+                  onOpenModal={openModalForPost}
+                  isGlobalMuted={isGlobalMuted}
+                  toggleGlobalMute={toggleGlobalMute}
+                  viewMode="carousel"
+                />
+              ))}
+
+              {/* Spacer so last card has proper padding */}
+              {filtered.length > 0 && <div className="shrink-0 w-2 sm:w-4" aria-hidden="true" />}
+            </div>
+
+            {/* Mobile / PC Scroll Progress Indicator */}
+            <div className="mt-4 sm:mt-6 flex flex-col items-center gap-2">
+              <div className="w-32 sm:w-48 h-1 bg-white/10 rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-gradient-to-r from-[#ee2a7b] to-[#d4af37] rounded-full transition-all duration-150"
+                  style={{ width: `${Math.max(15, scrollProgress)}%` }}
+                />
+              </div>
+
+              <p className="gram-body flex items-center justify-center gap-2 text-white/30 text-[9px] uppercase tracking-[0.25em]">
+                <ArrowLeft size={9} /> Swipe or use arrows to explore reels <ArrowRight size={9} />
+              </p>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* ===== Infinite Bottom Marquee Strip ===== */}
@@ -1147,7 +1607,7 @@ export default function ShopTheGram() {
         <div className="gram-marquee flex whitespace-nowrap w-max">
           <div className="flex items-center" aria-hidden="false">
             <span className="gram-body inline-flex items-center gap-2.5 mx-4 sm:mx-6 text-white/40 text-[9px] sm:text-[10px] font-bold uppercase tracking-[0.3em]">
-              <Sparkles size={10} className="text-[#ee2a7b]" /> #DrapedInKashi
+              <Sparkles size={10} className="text-[#ee2a7b]" /> #TrioEcart
             </span>
             <span className="gram-body inline-flex items-center gap-2.5 mx-4 sm:mx-6 text-white/40 text-[9px] sm:text-[10px] font-bold uppercase tracking-[0.3em]">
               <Sparkles size={10} className="text-[#ee2a7b]" /> Tag Us To Get Featured
@@ -1156,15 +1616,15 @@ export default function ShopTheGram() {
               <Sparkles size={10} className="text-[#ee2a7b]" /> 1.4M Strong Community
             </span>
             <span className="gram-body inline-flex items-center gap-2.5 mx-4 sm:mx-6 text-white/40 text-[9px] sm:text-[10px] font-bold uppercase tracking-[0.3em]">
-              <Sparkles size={10} className="text-[#ee2a7b]" /> Every Look Shoppable
+              <Sparkles size={10} className="text-[#ee2a7b]" /> Handcrafted Artisan Decor
             </span>
             <span className="gram-body inline-flex items-center gap-2.5 mx-4 sm:mx-6 text-white/40 text-[9px] sm:text-[10px] font-bold uppercase tracking-[0.3em]">
-              <Sparkles size={10} className="text-[#ee2a7b]" /> Real Brides Real Reels
+              <Sparkles size={10} className="text-[#ee2a7b]" /> Every Look Shoppable
             </span>
           </div>
           <div className="flex items-center" aria-hidden="true">
             <span className="gram-body inline-flex items-center gap-2.5 mx-4 sm:mx-6 text-white/40 text-[9px] sm:text-[10px] font-bold uppercase tracking-[0.3em]">
-              <Sparkles size={10} className="text-[#ee2a7b]" /> #DrapedInKashi
+              <Sparkles size={10} className="text-[#ee2a7b]" /> #TrioEcart
             </span>
             <span className="gram-body inline-flex items-center gap-2.5 mx-4 sm:mx-6 text-white/40 text-[9px] sm:text-[10px] font-bold uppercase tracking-[0.3em]">
               <Sparkles size={10} className="text-[#ee2a7b]" /> Tag Us To Get Featured
@@ -1173,10 +1633,10 @@ export default function ShopTheGram() {
               <Sparkles size={10} className="text-[#ee2a7b]" /> 1.4M Strong Community
             </span>
             <span className="gram-body inline-flex items-center gap-2.5 mx-4 sm:mx-6 text-white/40 text-[9px] sm:text-[10px] font-bold uppercase tracking-[0.3em]">
-              <Sparkles size={10} className="text-[#ee2a7b]" /> Every Look Shoppable
+              <Sparkles size={10} className="text-[#ee2a7b]" /> Handcrafted Artisan Decor
             </span>
             <span className="gram-body inline-flex items-center gap-2.5 mx-4 sm:mx-6 text-white/40 text-[9px] sm:text-[10px] font-bold uppercase tracking-[0.3em]">
-              <Sparkles size={10} className="text-[#ee2a7b]" /> Real Brides Real Reels
+              <Sparkles size={10} className="text-[#ee2a7b]" /> Every Look Shoppable
             </span>
           </div>
         </div>
