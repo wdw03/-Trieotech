@@ -11,8 +11,11 @@ export const BlogPreview = () => {
   const [isPaused, setIsPaused] = useState(false);
   const [isTransitioning, setIsTransitioning] = useState(true);
   const [visibleCount, setVisibleCount] = useState(3);
-  const touchStartXRef = useRef(0);
-  const touchEndXRef = useRef(0);
+  
+  // Drag & Touch tracking refs
+  const isDraggingRef = useRef(false);
+  const dragStartXRef = useRef(0);
+  const dragDistanceRef = useRef(0);
 
   // Responsive visible card count detection
   useEffect(() => {
@@ -97,25 +100,64 @@ export const BlogPreview = () => {
     return () => clearInterval(interval);
   }, [isPaused, nextSlide, totalOriginal]);
 
-  // Touch gesture swipe support
+  // Touch handlers (Mobile swipe)
   const handleTouchStart = (e) => {
     setIsPaused(true);
-    touchStartXRef.current = e.touches[0].clientX;
-    touchEndXRef.current = e.touches[0].clientX;
+    isDraggingRef.current = true;
+    dragStartXRef.current = e.touches[0].clientX;
+    dragDistanceRef.current = 0;
   };
 
   const handleTouchMove = (e) => {
-    touchEndXRef.current = e.touches[0].clientX;
+    if (!isDraggingRef.current) return;
+    dragDistanceRef.current = e.touches[0].clientX - dragStartXRef.current;
   };
 
   const handleTouchEnd = () => {
+    if (!isDraggingRef.current) return;
+    isDraggingRef.current = false;
     setIsPaused(false);
-    const diff = touchStartXRef.current - touchEndXRef.current;
-    if (diff > 45) {
+    if (dragDistanceRef.current < -35) {
       nextSlide();
-    } else if (diff < -45) {
+    } else if (dragDistanceRef.current > 35) {
       prevSlide();
     }
+  };
+
+  // Mouse drag handlers (Desktop click-and-drag swipe)
+  const handleMouseDown = (e) => {
+    setIsPaused(true);
+    isDraggingRef.current = true;
+    dragStartXRef.current = e.clientX;
+    dragDistanceRef.current = 0;
+  };
+
+  const handleMouseMove = (e) => {
+    if (!isDraggingRef.current) return;
+    dragDistanceRef.current = e.clientX - dragStartXRef.current;
+  };
+
+  const handleMouseUp = () => {
+    if (!isDraggingRef.current) return;
+    isDraggingRef.current = false;
+    setIsPaused(false);
+    if (dragDistanceRef.current < -35) {
+      nextSlide();
+    } else if (dragDistanceRef.current > 35) {
+      prevSlide();
+    }
+  };
+
+  const handleMouseLeave = () => {
+    if (isDraggingRef.current) {
+      isDraggingRef.current = false;
+      if (dragDistanceRef.current < -35) {
+        nextSlide();
+      } else if (dragDistanceRef.current > 35) {
+        prevSlide();
+      }
+    }
+    setIsPaused(false);
   };
 
   // Active original item index for dots pagination
@@ -137,36 +179,36 @@ export const BlogPreview = () => {
         
         {/* Header with Title & Navigation Controls */}
         <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 border-b border-gold-500/20 pb-4">
-          <div className="space-y-1">
-            <span className="text-[11px] font-bold uppercase tracking-[0.25em] text-gold-700 dark:text-gold-400 flex items-center gap-1.5 font-inter">
+          <div className="space-y-1 text-center sm:text-left">
+            <span className="text-[11px] font-bold uppercase tracking-[0.25em] text-gold-700 dark:text-gold-400 flex items-center justify-center sm:justify-start gap-1.5 font-inter">
               <Sparkles className="w-3.5 h-3.5 text-gold-600" /> Artisan Dispatch
             </span>
             <h2 className="font-inter font-extrabold text-2xl sm:text-3xl text-stone-900 dark:text-ivory-100 tracking-tight">
               Craft Journal &amp; DIY Guides
             </h2>
             <p className="text-xs sm:text-sm text-stone-600 dark:text-stone-400 font-inter font-medium">
-              Deep dives into ancient textile histories, Ayurvedic rituals, and festive styling ideas.
+              Deep dives into ancient textile histories, Ayurvedic rituals, and festive styling ideas. Swipe left or right to read more.
             </p>
           </div>
 
-          <div className="flex items-center gap-3">
-            {/* Left / Right Carousel Arrow Buttons */}
+          <div className="flex items-center justify-center sm:justify-end gap-3">
+            {/* Header Left / Right Carousel Arrow Buttons */}
             <div className="flex items-center gap-1.5">
               <button
                 onClick={prevSlide}
-                className="w-9 h-9 rounded-full bg-white dark:bg-[#1F130B] border border-gold-500/30 text-stone-800 dark:text-gold-300 hover:bg-gold-500 hover:text-maroon-950 dark:hover:bg-gold-500 dark:hover:text-maroon-950 flex items-center justify-center transition-all duration-200 shadow-sm active:scale-95 cursor-pointer"
-                aria-label="Previous article slide"
+                className="w-10 h-10 rounded-full bg-white dark:bg-[#1F130B] border border-gold-500/30 text-stone-800 dark:text-gold-300 hover:bg-gold-500 hover:text-maroon-950 dark:hover:bg-gold-500 dark:hover:text-maroon-950 flex items-center justify-center transition-all duration-200 shadow-md active:scale-90 cursor-pointer"
+                aria-label="Swipe left / Previous article"
                 title="Previous articles"
               >
-                <ChevronLeft className="w-4 h-4" />
+                <ChevronLeft className="w-5 h-5" />
               </button>
               <button
                 onClick={nextSlide}
-                className="w-9 h-9 rounded-full bg-white dark:bg-[#1F130B] border border-gold-500/30 text-stone-800 dark:text-gold-300 hover:bg-gold-500 hover:text-maroon-950 dark:hover:bg-gold-500 dark:hover:text-maroon-950 flex items-center justify-center transition-all duration-200 shadow-sm active:scale-95 cursor-pointer"
-                aria-label="Next article slide"
+                className="w-10 h-10 rounded-full bg-white dark:bg-[#1F130B] border border-gold-500/30 text-stone-800 dark:text-gold-300 hover:bg-gold-500 hover:text-maroon-950 dark:hover:bg-gold-500 dark:hover:text-maroon-950 flex items-center justify-center transition-all duration-200 shadow-md active:scale-90 cursor-pointer"
+                aria-label="Swipe right / Next article"
                 title="Next articles"
               >
-                <ChevronRight className="w-4 h-4" />
+                <ChevronRight className="w-5 h-5" />
               </button>
             </div>
 
@@ -174,7 +216,7 @@ export const BlogPreview = () => {
 
             <Link
               href="/blog"
-              className="inline-flex items-center gap-1.5 text-xs font-bold text-maroon-700 dark:text-gold-400 hover:text-maroon-800 dark:hover:text-gold-300 uppercase tracking-wider group font-inter"
+              className="inline-flex items-center gap-1.5 text-xs font-bold text-maroon-700 dark:text-gold-400 hover:text-maroon-800 dark:hover:text-gold-300 uppercase tracking-wider group font-inter shrink-0"
             >
               <span>Read All</span>
               <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
@@ -182,82 +224,115 @@ export const BlogPreview = () => {
           </div>
         </div>
 
-        {/* Carousel Slider Track Container */}
-        <div
-          className="relative overflow-hidden w-full select-none"
-          onTouchStart={handleTouchStart}
-          onTouchMove={handleTouchMove}
-          onTouchEnd={handleTouchEnd}
-        >
-          <div
-            className={`flex ${isTransitioning ? 'transition-transform duration-500 ease-in-out' : 'transition-none'}`}
-            style={{
-              transform: `translateX(-${currentIndex * (100 / visibleCount)}%)`,
-            }}
-            onTransitionEnd={handleTransitionEnd}
+        {/* Carousel Slider Track Container with Floating Controls & Drag/Swipe */}
+        <div className="relative group/carousel">
+          
+          {/* Floating Left Button (Visible on hover / mobile) */}
+          <button
+            onClick={prevSlide}
+            className="absolute -left-2 sm:-left-4 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-[#1C120B]/90 text-gold-300 border border-gold-500/40 shadow-xl backdrop-blur-md flex items-center justify-center hover:bg-gold-500 hover:text-maroon-950 active:scale-90 transition-all opacity-80 group-hover/carousel:opacity-100 cursor-pointer"
+            aria-label="Swipe left"
           >
-            {displayItems.map((blog, idx) => (
-              <div
-                key={`${blog.id || blog.slug}-${idx}`}
-                className="shrink-0 px-2.5 sm:px-3"
-                style={{ width: `${100 / visibleCount}%` }}
-              >
-                <Link
-                  href={`/blog/${blog.slug}`}
-                  className="ethnic-card rounded-3xl overflow-hidden group flex flex-col justify-between hover:border-gold-500/60 transition-all duration-300 transform hover:-translate-y-1.5 h-full bg-white dark:bg-[#1A1009] border border-gold-500/25 shadow-md"
+            <ChevronLeft className="w-5 h-5" />
+          </button>
+
+          {/* Floating Right Button (Visible on hover / mobile) */}
+          <button
+            onClick={nextSlide}
+            className="absolute -right-2 sm:-right-4 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-[#1C120B]/90 text-gold-300 border border-gold-500/40 shadow-xl backdrop-blur-md flex items-center justify-center hover:bg-gold-500 hover:text-maroon-950 active:scale-90 transition-all opacity-80 group-hover/carousel:opacity-100 cursor-pointer"
+            aria-label="Swipe right"
+          >
+            <ChevronRight className="w-5 h-5" />
+          </button>
+
+          {/* Swipeable & Draggable Track */}
+          <div
+            className="relative overflow-hidden w-full select-none cursor-grab active:cursor-grabbing touch-pan-y"
+            onTouchStart={handleTouchStart}
+            onTouchMove={handleTouchMove}
+            onTouchEnd={handleTouchEnd}
+            onMouseDown={handleMouseDown}
+            onMouseMove={handleMouseMove}
+            onMouseUp={handleMouseUp}
+            onMouseLeave={handleMouseLeave}
+          >
+            <div
+              className={`flex ${isTransitioning ? 'transition-transform duration-500 ease-in-out' : 'transition-none'}`}
+              style={{
+                transform: `translateX(-${currentIndex * (100 / visibleCount)}%)`,
+              }}
+              onTransitionEnd={handleTransitionEnd}
+            >
+              {displayItems.map((blog, idx) => (
+                <div
+                  key={`${blog.id || blog.slug}-${idx}`}
+                  className="shrink-0 px-2.5 sm:px-3"
+                  style={{ width: `${100 / visibleCount}%` }}
                 >
-                  {/* Blog Image */}
-                  <div className="aspect-[16/10] w-full overflow-hidden bg-stone-100 dark:bg-stone-900 relative">
-                    <img
-                      src={blog.image || '/products/peacock-real-feathers-pair-1.jpg'}
-                      alt={blog.title}
-                      className="w-full h-full object-cover group-hover:scale-108 transition-transform duration-700 ease-out"
-                    />
-                    <div className="absolute top-3 left-3 bg-maroon-900/90 text-gold-300 text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full border border-gold-500/30 backdrop-blur-sm">
-                      {blog.category}
+                  <Link
+                    href={`/blog/${blog.slug}`}
+                    onClick={(e) => {
+                      if (Math.abs(dragDistanceRef.current) > 10) {
+                        e.preventDefault();
+                      }
+                    }}
+                    className="ethnic-card rounded-3xl overflow-hidden group flex flex-col justify-between hover:border-gold-500/60 transition-all duration-300 transform hover:-translate-y-1.5 h-full bg-white dark:bg-[#1A1009] border border-gold-500/25 shadow-md"
+                  >
+                    {/* Blog Image */}
+                    <div className="aspect-[16/10] w-full overflow-hidden bg-stone-100 dark:bg-stone-900 relative">
+                      <img
+                        src={blog.image || '/products/peacock-real-feathers-pair-1.jpg'}
+                        alt={blog.title}
+                        className="w-full h-full object-cover group-hover:scale-108 transition-transform duration-700 ease-out"
+                        draggable={false}
+                      />
+                      <div className="absolute top-3 left-3 bg-maroon-900/90 text-gold-300 text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full border border-gold-500/30 backdrop-blur-sm">
+                        {blog.category}
+                      </div>
                     </div>
-                  </div>
 
-                  {/* Blog Content */}
-                  <div className="p-5 flex-1 flex flex-col justify-between space-y-3 font-inter">
-                    <div className="space-y-2">
-                      <div className="flex items-center gap-3 text-[11px] text-slate-400 font-medium">
-                        <span className="flex items-center gap-1">
-                          <Clock className="w-3 h-3 text-gold-500" /> {blog.readTime || blog.read_time || '5 min read'}
-                        </span>
-                        <span>•</span>
-                        <span>{blog.date}</span>
+                    {/* Blog Content */}
+                    <div className="p-5 flex-1 flex flex-col justify-between space-y-3 font-inter">
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-3 text-[11px] text-slate-400 font-medium">
+                          <span className="flex items-center gap-1">
+                            <Clock className="w-3 h-3 text-gold-500" /> {blog.readTime || blog.read_time || '5 min read'}
+                          </span>
+                          <span>•</span>
+                          <span>{blog.date}</span>
+                        </div>
+
+                        <h3 className="font-inter font-bold text-sm sm:text-base text-slate-900 dark:text-slate-100 group-hover:text-maroon-700 dark:group-hover:text-gold-400 transition-colors leading-snug line-clamp-2">
+                          {blog.title}
+                        </h3>
+
+                        <p className="font-inter font-medium text-xs text-slate-600 dark:text-slate-300 line-clamp-2 leading-relaxed">
+                          {blog.excerpt}
+                        </p>
                       </div>
 
-                      <h3 className="font-inter font-bold text-sm sm:text-base text-slate-900 dark:text-slate-100 group-hover:text-maroon-700 dark:group-hover:text-gold-400 transition-colors leading-snug line-clamp-2">
-                        {blog.title}
-                      </h3>
-
-                      <p className="font-inter font-medium text-xs text-slate-600 dark:text-slate-300 line-clamp-2 leading-relaxed">
-                        {blog.excerpt}
-                      </p>
-                    </div>
-
-                    {/* Author Info */}
-                    <div className="pt-3 border-t border-gold-500/10 flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <img
-                          src={blog.authorImage || blog.author_image || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=120&auto=format&fit=crop&q=80'}
-                          alt={blog.author || 'Trio Author'}
-                          className="w-6 h-6 rounded-full object-cover border border-gold-500/30"
-                        />
-                        <span className="text-[11px] font-bold text-slate-900 dark:text-slate-100 truncate max-w-[130px]">
-                          {blog.author || 'Trio Editorial'}
+                      {/* Author Info */}
+                      <div className="pt-3 border-t border-gold-500/10 flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <img
+                            src={blog.authorImage || blog.author_image || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=120&auto=format&fit=crop&q=80'}
+                            alt={blog.author || 'Trio Author'}
+                            className="w-6 h-6 rounded-full object-cover border border-gold-500/30"
+                            draggable={false}
+                          />
+                          <span className="text-[11px] font-bold text-slate-900 dark:text-slate-100 truncate max-w-[130px]">
+                            {blog.author || 'Trio Editorial'}
+                          </span>
+                        </div>
+                        <span className="text-xs font-bold text-maroon-700 dark:text-gold-400 group-hover:translate-x-1 transition-transform inline-flex items-center gap-1 shrink-0">
+                          Read <ArrowRight className="w-3.5 h-3.5" />
                         </span>
                       </div>
-                      <span className="text-xs font-bold text-maroon-700 dark:text-gold-400 group-hover:translate-x-1 transition-transform inline-flex items-center gap-1 shrink-0">
-                        Read <ArrowRight className="w-3.5 h-3.5" />
-                      </span>
                     </div>
-                  </div>
-                </Link>
-              </div>
-            ))}
+                  </Link>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
 
@@ -271,7 +346,7 @@ export const BlogPreview = () => {
                 className={`transition-all duration-300 rounded-full h-2 ${
                   activeDotIndex === dotIdx
                     ? 'w-7 bg-gradient-to-r from-maroon-700 via-gold-500 to-maroon-700 shadow-gold-sm'
-                    : 'w-2 bg-stone-300 dark:bg-stone-700 hover:bg-gold-500/50'
+                    : 'w-2 bg-stone-300 dark:bg-stone-700 hover:bg-gold-500/50 cursor-pointer'
                 }`}
                 aria-label={`Go to slide ${dotIdx + 1}`}
               />

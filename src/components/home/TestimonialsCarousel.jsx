@@ -11,8 +11,11 @@ export const TestimonialsCarousel = () => {
   const [isPaused, setIsPaused] = useState(false);
   const [isTransitioning, setIsTransitioning] = useState(true);
   const [visibleCount, setVisibleCount] = useState(3);
-  const touchStartXRef = useRef(0);
-  const touchEndXRef = useRef(0);
+  
+  // Drag & Touch tracking refs
+  const isDraggingRef = useRef(false);
+  const dragStartXRef = useRef(0);
+  const dragDistanceRef = useRef(0);
 
   // Responsive visible card count detection
   useEffect(() => {
@@ -109,25 +112,64 @@ export const TestimonialsCarousel = () => {
     return () => clearInterval(interval);
   }, [isPaused, nextSlide, totalOriginal]);
 
-  // Touch gesture swipe support
+  // Touch handlers (Mobile swipe)
   const handleTouchStart = (e) => {
     setIsPaused(true);
-    touchStartXRef.current = e.touches[0].clientX;
-    touchEndXRef.current = e.touches[0].clientX;
+    isDraggingRef.current = true;
+    dragStartXRef.current = e.touches[0].clientX;
+    dragDistanceRef.current = 0;
   };
 
   const handleTouchMove = (e) => {
-    touchEndXRef.current = e.touches[0].clientX;
+    if (!isDraggingRef.current) return;
+    dragDistanceRef.current = e.touches[0].clientX - dragStartXRef.current;
   };
 
   const handleTouchEnd = () => {
+    if (!isDraggingRef.current) return;
+    isDraggingRef.current = false;
     setIsPaused(false);
-    const diff = touchStartXRef.current - touchEndXRef.current;
-    if (diff > 45) {
+    if (dragDistanceRef.current < -35) {
       nextSlide();
-    } else if (diff < -45) {
+    } else if (dragDistanceRef.current > 35) {
       prevSlide();
     }
+  };
+
+  // Mouse drag handlers (Desktop click-and-drag swipe)
+  const handleMouseDown = (e) => {
+    setIsPaused(true);
+    isDraggingRef.current = true;
+    dragStartXRef.current = e.clientX;
+    dragDistanceRef.current = 0;
+  };
+
+  const handleMouseMove = (e) => {
+    if (!isDraggingRef.current) return;
+    dragDistanceRef.current = e.clientX - dragStartXRef.current;
+  };
+
+  const handleMouseUp = () => {
+    if (!isDraggingRef.current) return;
+    isDraggingRef.current = false;
+    setIsPaused(false);
+    if (dragDistanceRef.current < -35) {
+      nextSlide();
+    } else if (dragDistanceRef.current > 35) {
+      prevSlide();
+    }
+  };
+
+  const handleMouseLeave = () => {
+    if (isDraggingRef.current) {
+      isDraggingRef.current = false;
+      if (dragDistanceRef.current < -35) {
+        nextSlide();
+      } else if (dragDistanceRef.current > 35) {
+        prevSlide();
+      }
+    }
+    setIsPaused(false);
   };
 
   // Active original item index for dots pagination
@@ -157,86 +199,112 @@ export const TestimonialsCarousel = () => {
               Loved by Couturiers, Decorators &amp; Devotees
             </h2>
             <p className="text-xs sm:text-sm text-stone-600 dark:text-stone-400 font-inter font-medium">
-              Real experiences from authentic patrons celebrating weddings, daily pooja rituals, and bespoke bridal fashion.
+              Real experiences from authentic patrons celebrating weddings, daily pooja rituals, and bespoke bridal fashion. Swipe left or right to explore.
             </p>
           </div>
 
-          {/* Left / Right Carousel Arrow Buttons */}
+          {/* Header Left / Right Carousel Arrow Buttons */}
           <div className="flex items-center justify-center sm:justify-end gap-2">
             <button
               onClick={prevSlide}
-              className="w-9 h-9 rounded-full bg-white dark:bg-[#1F130B] border border-gold-500/30 text-stone-800 dark:text-gold-300 hover:bg-gold-500 hover:text-maroon-950 dark:hover:bg-gold-500 dark:hover:text-maroon-950 flex items-center justify-center transition-all duration-200 shadow-sm active:scale-95 cursor-pointer"
-              aria-label="Previous review slide"
-              title="Previous reviews"
+              className="w-10 h-10 rounded-full bg-white dark:bg-[#1F130B] border border-gold-500/30 text-stone-800 dark:text-gold-300 hover:bg-gold-500 hover:text-maroon-950 dark:hover:bg-gold-500 dark:hover:text-maroon-950 flex items-center justify-center transition-all duration-200 shadow-md active:scale-90 cursor-pointer"
+              aria-label="Swipe left / Previous review"
+              title="Previous review"
             >
-              <ChevronLeft className="w-4 h-4" />
+              <ChevronLeft className="w-5 h-5" />
             </button>
             <button
               onClick={nextSlide}
-              className="w-9 h-9 rounded-full bg-white dark:bg-[#1F130B] border border-gold-500/30 text-stone-800 dark:text-gold-300 hover:bg-gold-500 hover:text-maroon-950 dark:hover:bg-gold-500 dark:hover:text-maroon-950 flex items-center justify-center transition-all duration-200 shadow-sm active:scale-95 cursor-pointer"
-              aria-label="Next review slide"
-              title="Next reviews"
+              className="w-10 h-10 rounded-full bg-white dark:bg-[#1F130B] border border-gold-500/30 text-stone-800 dark:text-gold-300 hover:bg-gold-500 hover:text-maroon-950 dark:hover:bg-gold-500 dark:hover:text-maroon-950 flex items-center justify-center transition-all duration-200 shadow-md active:scale-90 cursor-pointer"
+              aria-label="Swipe right / Next review"
+              title="Next review"
             >
-              <ChevronRight className="w-4 h-4" />
+              <ChevronRight className="w-5 h-5" />
             </button>
           </div>
         </div>
 
-        {/* Carousel Slider Track Container */}
-        <div
-          className="relative overflow-hidden w-full select-none"
-          onTouchStart={handleTouchStart}
-          onTouchMove={handleTouchMove}
-          onTouchEnd={handleTouchEnd}
-        >
-          <div
-            className={`flex ${isTransitioning ? 'transition-transform duration-500 ease-in-out' : 'transition-none'}`}
-            style={{
-              transform: `translateX(-${currentIndex * (100 / visibleCount)}%)`,
-            }}
-            onTransitionEnd={handleTransitionEnd}
+        {/* Carousel Slider Track Container with Floating Controls & Drag/Swipe */}
+        <div className="relative group/carousel">
+          
+          {/* Floating Left Button (Visible on hover / mobile) */}
+          <button
+            onClick={prevSlide}
+            className="absolute -left-2 sm:-left-4 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-[#1C120B]/90 text-gold-300 border border-gold-500/40 shadow-xl backdrop-blur-md flex items-center justify-center hover:bg-gold-500 hover:text-maroon-950 active:scale-90 transition-all opacity-80 group-hover/carousel:opacity-100 cursor-pointer"
+            aria-label="Swipe left"
           >
-            {displayItems.map((rev, idx) => (
-              <div
-                key={`${rev.id}-${idx}`}
-                className="shrink-0 px-2.5 sm:px-3"
-                style={{ width: `${100 / visibleCount}%` }}
-              >
-                <div className="ethnic-card p-6 rounded-3xl border border-gold-500/30 flex flex-col justify-between space-y-4 hover:border-gold-500/60 shadow-lg relative group h-full bg-white dark:bg-[#1A1009]">
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <RatingStars rating={rev.rating} size="sm" />
-                      <span className="text-[10px] font-bold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 px-2 py-0.5 rounded-full border border-emerald-500/30 flex items-center gap-1 font-inter">
-                        <CheckCircle2 className="w-3 h-3" /> Verified Buyer
-                      </span>
+            <ChevronLeft className="w-5 h-5" />
+          </button>
+
+          {/* Floating Right Button (Visible on hover / mobile) */}
+          <button
+            onClick={nextSlide}
+            className="absolute -right-2 sm:-right-4 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-[#1C120B]/90 text-gold-300 border border-gold-500/40 shadow-xl backdrop-blur-md flex items-center justify-center hover:bg-gold-500 hover:text-maroon-950 active:scale-90 transition-all opacity-80 group-hover/carousel:opacity-100 cursor-pointer"
+            aria-label="Swipe right"
+          >
+            <ChevronRight className="w-5 h-5" />
+          </button>
+
+          {/* Swipeable Track */}
+          <div
+            className="relative overflow-hidden w-full select-none cursor-grab active:cursor-grabbing touch-pan-y"
+            onTouchStart={handleTouchStart}
+            onTouchMove={handleTouchMove}
+            onTouchEnd={handleTouchEnd}
+            onMouseDown={handleMouseDown}
+            onMouseMove={handleMouseMove}
+            onMouseUp={handleMouseUp}
+            onMouseLeave={handleMouseLeave}
+          >
+            <div
+              className={`flex ${isTransitioning ? 'transition-transform duration-500 ease-in-out' : 'transition-none'}`}
+              style={{
+                transform: `translateX(-${currentIndex * (100 / visibleCount)}%)`,
+              }}
+              onTransitionEnd={handleTransitionEnd}
+            >
+              {displayItems.map((rev, idx) => (
+                <div
+                  key={`${rev.id}-${idx}`}
+                  className="shrink-0 px-2.5 sm:px-3"
+                  style={{ width: `${100 / visibleCount}%` }}
+                >
+                  <div className="ethnic-card p-6 rounded-3xl border border-gold-500/30 flex flex-col justify-between space-y-4 hover:border-gold-500/60 shadow-lg relative group h-full bg-white dark:bg-[#1A1009] transition-all duration-300">
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <RatingStars rating={rev.rating} size="sm" />
+                        <span className="text-[10px] font-bold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 px-2.5 py-0.5 rounded-full border border-emerald-500/30 flex items-center gap-1 font-inter">
+                          <CheckCircle2 className="w-3 h-3" /> Verified Buyer
+                        </span>
+                      </div>
+
+                      <h4 className="font-inter font-bold text-sm text-stone-900 dark:text-ivory-100 leading-snug">
+                        "{rev.title}"
+                      </h4>
+
+                      <p className="text-xs text-stone-600 dark:text-stone-300 leading-relaxed italic font-inter font-medium line-clamp-4">
+                        "{rev.comment}"
+                      </p>
                     </div>
 
-                    <h4 className="font-inter font-bold text-sm text-stone-900 dark:text-ivory-100 leading-snug">
-                      "{rev.title}"
-                    </h4>
-
-                    <p className="text-xs text-stone-600 dark:text-stone-300 leading-relaxed italic font-inter font-medium line-clamp-4">
-                      "{rev.comment}"
-                    </p>
-                  </div>
-
-                  {/* Author Info */}
-                  <div className="flex items-center gap-3 pt-3 border-t border-gold-500/20">
-                    <img
-                      src={rev.avatar}
-                      alt={rev.user}
-                      className="w-10 h-10 rounded-full object-cover border-2 border-gold-500/40 shrink-0"
-                    />
-                    <div className="min-w-0 font-inter">
-                      <h5 className="font-bold text-xs text-stone-900 dark:text-ivory-100 truncate">
-                        {rev.user}
-                      </h5>
-                      <p className="text-[10px] text-stone-400">{rev.location}</p>
+                    {/* Author Info */}
+                    <div className="flex items-center gap-3 pt-3 border-t border-gold-500/20">
+                      <img
+                        src={rev.avatar}
+                        alt={rev.user}
+                        className="w-10 h-10 rounded-full object-cover border-2 border-gold-500/40 shrink-0"
+                      />
+                      <div className="min-w-0 font-inter">
+                        <h5 className="font-bold text-xs text-stone-900 dark:text-ivory-100 truncate">
+                          {rev.user}
+                        </h5>
+                        <p className="text-[10px] text-stone-400 truncate">{rev.location}</p>
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
         </div>
 
@@ -250,7 +318,7 @@ export const TestimonialsCarousel = () => {
                 className={`transition-all duration-300 rounded-full h-2 ${
                   activeDotIndex === dotIdx
                     ? 'w-7 bg-gradient-to-r from-maroon-700 via-gold-500 to-maroon-700 shadow-gold-sm'
-                    : 'w-2 bg-stone-300 dark:bg-stone-700 hover:bg-gold-500/50'
+                    : 'w-2 bg-stone-300 dark:bg-stone-700 hover:bg-gold-500/50 cursor-pointer'
                 }`}
                 aria-label={`Go to review slide ${dotIdx + 1}`}
               />
