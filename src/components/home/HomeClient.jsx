@@ -7,6 +7,7 @@ import CategoryGrid from './CategoryGrid';
 import ProductCarousel from './ProductCarousel';
 import BrandStoryStrip from './BrandStoryStrip';
 import TestimonialsCarousel from './TestimonialsCarousel';
+import ShopTheGram from './ShopTheGram';
 import BlogPreview from './BlogPreview';
 import HomeContactSection from './HomeContactSection';
 import QuickViewModal from '../common/QuickViewModal';
@@ -163,7 +164,10 @@ export default function HomeClient() {
       {/* 8. Testimonials Section */}
       <TestimonialsCarousel />
 
-      {/* 9. Blog Preview Section */}
+      {/* 9. Shop The Gram / Instagram Video Reels Section */}
+      <ShopTheGram />
+
+      {/* 10. Blog Preview Section */}
       <BlogPreview />
 
       {/* 10. Artisan Support & Contact Section */}
