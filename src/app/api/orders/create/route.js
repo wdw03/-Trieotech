@@ -119,23 +119,24 @@ export async function POST(request) {
         }
 
         // Check for color-specific pricing & color-specific stock
-        if (item.color && product?.colors && Array.isArray(product.colors)) {
-          const matchedColor = product.colors.find((c) => c.name === item.color || c.hex === item.color);
+        const itemColor = item.color || item.selectedColor || item.selected_color;
+        if (itemColor && product?.colors && Array.isArray(product.colors)) {
+          const matchedColor = product.colors.find((c) => c.name?.toLowerCase() === itemColor?.toString().toLowerCase() || c.hex?.toLowerCase() === itemColor?.toString().toLowerCase());
           if (matchedColor) {
             if (matchedColor.price) {
               itemPrice = Number(matchedColor.price);
             }
-            if (matchedColor.stock !== undefined) {
+            if (matchedColor.stock !== undefined && matchedColor.stock !== null) {
               const variantStock = Number(matchedColor.stock);
               if (variantStock <= 0) {
                 return NextResponse.json(
-                  { error: `Color shade "${item.color}" for "${product.name}" is out of stock.` },
+                  { error: `Color shade "${itemColor}" for "${product.name}" is out of stock.` },
                   { status: 400 }
                 );
               }
               if (variantStock < itemQty) {
                 return NextResponse.json(
-                  { error: `Only ${variantStock} units available in "${item.color}" for "${product.name}". Please reduce quantity.` },
+                  { error: `Only ${variantStock} units available in "${itemColor}" for "${product.name}". Please reduce quantity.` },
                   { status: 400 }
                 );
               }
@@ -156,7 +157,7 @@ export async function POST(request) {
         price: itemPrice,
         original_price: product?.original_price || item.originalPrice || itemPrice,
         quantity: itemQty,
-        color: item.color || '',
+        color: item.color || item.selectedColor || item.selected_color || '',
         size: item.size || '',
       });
     }
@@ -303,8 +304,9 @@ export async function POST(request) {
             let updatedColors = prod.colors;
 
             if (item.color && Array.isArray(prod.colors) && prod.colors.length > 0) {
+              const targetColor = item.color.toString().toLowerCase();
               updatedColors = prod.colors.map((c) => {
-                if (c.name === item.color || c.hex === item.color) {
+                if (c.name?.toString().toLowerCase() === targetColor || c.hex?.toString().toLowerCase() === targetColor) {
                   const currentVariantStock = c.stock !== undefined ? Number(c.stock) : (Number(prod.stock) || 0);
                   return {
                     ...c,

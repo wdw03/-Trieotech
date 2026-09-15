@@ -75,7 +75,7 @@ export async function finalizePaidOrder({
             original_price: it.original_price || it.originalPrice || it.price,
             quantity: it.quantity || 1,
             size: it.size || '',
-            color: it.color || '',
+            color: it.color || it.selectedColor || it.selected_color || '',
             image: it.image || '',
           }));
           await supabaseAdmin.from('order_items').insert(itemsToInsert);
@@ -191,8 +191,9 @@ export async function finalizePaidOrder({
             let updatedColors = prod.colors;
 
             if (item.color && Array.isArray(prod.colors) && prod.colors.length > 0) {
+              const targetColor = item.color.toString().toLowerCase();
               updatedColors = prod.colors.map((c) => {
-                if (c.name === item.color || c.hex === item.color) {
+                if (c.name?.toString().toLowerCase() === targetColor || c.hex?.toString().toLowerCase() === targetColor) {
                   const currentVariantStock = c.stock !== undefined ? Number(c.stock) : (Number(prod.stock) || 0);
                   return {
                     ...c,

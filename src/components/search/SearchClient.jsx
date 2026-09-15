@@ -131,9 +131,10 @@ export default function SearchClient() {
 
   // Search Results
   const rawResults = useMemo(() => {
-    if (!queryFromUrl.trim()) return allProducts;
-    if (liveSearchResults !== null) return liveSearchResults;
-    return allProducts.filter(p =>
+    const visibleOnly = allProducts.filter(p => p.is_visible !== false && p.isVisible !== false);
+    if (!queryFromUrl.trim()) return visibleOnly;
+    if (liveSearchResults !== null) return liveSearchResults.filter(p => p.is_visible !== false && p.isVisible !== false);
+    return visibleOnly.filter(p =>
       p.name?.toLowerCase().includes(queryFromUrl.toLowerCase()) ||
       p.category?.toLowerCase().includes(queryFromUrl.toLowerCase()) ||
       p.subcategory?.toLowerCase().includes(queryFromUrl.toLowerCase())
@@ -161,7 +162,7 @@ export default function SearchClient() {
 
     // In Stock Only
     if (filters.inStockOnly) {
-      result = result.filter(p => Boolean(p.inStock ?? p.in_stock ?? true));
+      result = result.filter(p => Boolean(p.inStock ?? p.in_stock ?? true) && Number(p.stock ?? 1) > 0);
     }
 
     // Min Rating

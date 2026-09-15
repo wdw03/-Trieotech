@@ -207,6 +207,30 @@ async function handleUpdateProduct(request, { params }) {
   }
 }
 
+// GET: Get single product by id for admin
+export async function GET(request, { params }) {
+  try {
+    const { id } = await params;
+    const { data: product, error } = await supabaseAdmin
+      .from('products')
+      .select('*')
+      .eq('id', id)
+      .single();
+
+    if (error || !product) {
+      return NextResponse.json({ error: 'Product not found' }, { status: 404 });
+    }
+
+    return NextResponse.json({
+      success: true,
+      product: normalizeProduct(product),
+    });
+  } catch (err) {
+    console.error('Get product error:', err);
+    return NextResponse.json({ error: err.message }, { status: 500 });
+  }
+}
+
 // PUT: Update product
 export async function PUT(request, context) {
   return handleUpdateProduct(request, context);
@@ -235,3 +259,4 @@ export async function DELETE(request, { params }) {
     return NextResponse.json({ error: err.message }, { status: 500 });
   }
 }
+

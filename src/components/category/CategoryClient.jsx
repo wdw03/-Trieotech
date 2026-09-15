@@ -103,6 +103,8 @@ export default function CategoryClient({ initialSlug }) {
   const categoryProducts = useMemo(() => {
     if (!currentCategory) return [];
     return allProducts.filter(p => {
+      // Exclude hidden products
+      if (p.is_visible === false || p.isVisible === false) return false;
       const matchCat = p.category?.toLowerCase() === currentCategory.name?.toLowerCase() ||
         p.category?.toLowerCase().replace(/ \/ /g, '-').replace(/ /g, '-') === currentCategory.slug?.toLowerCase();
       return matchCat;
@@ -131,7 +133,7 @@ export default function CategoryClient({ initialSlug }) {
 
     // In Stock Only
     if (filters.inStockOnly) {
-      result = result.filter(p => Boolean(p.inStock ?? p.in_stock ?? true));
+      result = result.filter(p => Boolean(p.inStock ?? p.in_stock ?? true) && Number(p.stock ?? 1) > 0);
     }
 
     // Min Rating

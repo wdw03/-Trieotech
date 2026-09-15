@@ -64,7 +64,8 @@ export default function ShopClient() {
 
   // Filter and Sort Pipeline
   const filteredProducts = useMemo(() => {
-    let result = [...allProducts];
+    // Only show visible products on storefront
+    let result = allProducts.filter(p => p.is_visible !== false && p.isVisible !== false);
 
     // Category Filter
     if (filters.categories && filters.categories.length > 0) {
@@ -83,7 +84,7 @@ export default function ShopClient() {
 
     // In Stock Only
     if (filters.inStockOnly) {
-      result = result.filter(p => Boolean(p.inStock ?? p.in_stock ?? true));
+      result = result.filter(p => Boolean(p.inStock ?? p.in_stock ?? true) && Number(p.stock ?? 1) > 0);
     }
 
     // Min Rating

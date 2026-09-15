@@ -41,9 +41,8 @@ const Reveal = ({ children, delay = 0, className = '' }) => {
   return (
     <div
       ref={ref}
-      className={`transition-all duration-1000 ease-[cubic-bezier(0.16,1,0.3,1)] ${
-        visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'
-      } ${className}`}
+      className={`transition-all duration-1000 ease-[cubic-bezier(0.16,1,0.3,1)] ${visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'
+        } ${className}`}
       style={{ transitionDelay: `${delay}ms` }}
     >
       {children}
@@ -224,6 +223,9 @@ const ReelCard = ({
 }) => {
   const cardRef = useRef(null);
   const videoRef = useRef(null);
+  const progressBarRef = useRef(null);
+  const touchStartRef = useRef({ x: 0, y: 0 });
+  const touchMovedRef = useRef(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isLiked, setIsLiked] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
@@ -231,10 +233,28 @@ const ReelCard = ({
   const [likesCount, setLikesCount] = useState(post.likesCount);
   const [copied, setCopied] = useState(false);
   const [tapRipple, setTapRipple] = useState(false);
-  const [progress, setProgress] = useState(0);
   const { addToast } = useToast();
 
-  /* --- iOS & Mobile Intersection Observer: Autoplay when card is centered --- */
+  /* --- Mobile Touch Gesture Tracking: Distinguish between scrolling and a deliberate tap --- */
+  const handleTouchStart = (e) => {
+    if (e.touches && e.touches[0]) {
+      touchStartRef.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+      touchMovedRef.current = false;
+    }
+  };
+
+  const handleTouchMove = (e) => {
+    if (e.touches && e.touches[0]) {
+      const dx = Math.abs(e.touches[0].clientX - touchStartRef.current.x);
+      const dy = Math.abs(e.touches[0].clientY - touchStartRef.current.y);
+      // If the user drags more than 8px in either direction, it is a scroll, not a tap
+      if (dx > 8 || dy > 8) {
+        touchMovedRef.current = true;
+      }
+    }
+  };
+
+  /* --- Intersection Observer: Pause video when scrolled out of view (NO autoplay during scroll) --- */
   useEffect(() => {
     const cardEl = cardRef.current;
     if (!cardEl) return;
@@ -242,18 +262,9 @@ const ReelCard = ({
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
-          if (entry.isIntersecting && entry.intersectionRatio >= 0.6) {
-            // Play video on mobile when scrolled into view
-            if (videoRef.current) {
-              videoRef.current.defaultMuted = true;
-              videoRef.current.muted = isGlobalMuted;
-              const playPromise = videoRef.current.play();
-              if (playPromise !== undefined) {
-                playPromise.then(() => setIsPlaying(true)).catch(() => {});
-              }
-            }
-          } else if (entry.intersectionRatio < 0.25) {
-            // Pause video when scrolled out
+          // Never force autoplay when scrolling the page on mobile!
+          // Only pause if this reel was actively playing and moved out of view.
+          if (!entry.isIntersecting || entry.intersectionRatio < 0.2) {
             if (videoRef.current) {
               videoRef.current.pause();
               setIsPlaying(false);
@@ -261,18 +272,18 @@ const ReelCard = ({
           }
         });
       },
-      { threshold: [0.25, 0.6, 0.9] }
+      { threshold: [0.2] }
     );
 
     observer.observe(cardEl);
     return () => observer.disconnect();
-  }, [isGlobalMuted]);
+  }, []);
 
-  /* --- Track video playback progress bar --- */
+  /* --- Track video playback progress bar with 0 re-render overhead --- */
   const handleTimeUpdate = () => {
-    if (videoRef.current && videoRef.current.duration) {
+    if (videoRef.current && videoRef.current.duration && progressBarRef.current) {
       const pct = (videoRef.current.currentTime / videoRef.current.duration) * 100;
-      setProgress(pct);
+      progressBarRef.current.style.width = `${pct}%`;
     }
   };
 
@@ -283,28 +294,44 @@ const ReelCard = ({
     }
   }, [isGlobalMuted]);
 
-  /* --- Desktop Mouse Enter/Leave --- */
-  const handleMouseEnter = () => {
+  /* --- Desktop Mouse Enter/Leave (Strictly for real mouse, ignored on touchscreens) --- */
+  const handleMouseEnter = (e) => {
+    if (e && e.nativeEvent && (e.nativeEvent.pointerType === 'touch' || e.nativeEvent.sourceCapabilities?.firesTouchEvents)) {
+      return;
+    }
+    if (typeof window !== 'undefined' && window.matchMedia && !window.matchMedia('(hover: hover) and (pointer: fine)').matches) {
+      return;
+    }
     if (videoRef.current) {
       videoRef.current.muted = isGlobalMuted;
       videoRef.current.play().then(() => {
         setIsPlaying(true);
-      }).catch(() => {});
+      }).catch(() => { });
     }
   };
 
-  const handleMouseLeave = () => {
+  const handleMouseLeave = (e) => {
+    if (e && e.nativeEvent && (e.nativeEvent.pointerType === 'touch' || e.nativeEvent.sourceCapabilities?.firesTouchEvents)) {
+      return;
+    }
+    if (typeof window !== 'undefined' && window.matchMedia && !window.matchMedia('(hover: hover) and (pointer: fine)').matches) {
+      return;
+    }
     if (videoRef.current) {
       videoRef.current.pause();
       videoRef.current.currentTime = 0;
     }
+    if (progressBarRef.current) {
+      progressBarRef.current.style.width = '0%';
+    }
     setIsPlaying(false);
-    setProgress(0);
   };
 
-  /* --- Tap / Click Play/Pause toggle --- */
+  /* --- Tap / Click Play/Pause toggle (Only on genuine tap, never while scrolling) --- */
   const handleVideoTap = (e) => {
     e.stopPropagation();
+    if (touchMovedRef.current) return;
+
     if (videoRef.current) {
       if (isPlaying) {
         videoRef.current.pause();
@@ -313,7 +340,7 @@ const ReelCard = ({
         videoRef.current.muted = isGlobalMuted;
         videoRef.current.play().then(() => {
           setIsPlaying(true);
-        }).catch(() => {});
+        }).catch(() => { });
       }
       setTapRipple(true);
       setTimeout(() => setTapRipple(false), 500);
@@ -323,12 +350,14 @@ const ReelCard = ({
   /* --- Double tap to like (Instagram style with haptic feedback) --- */
   const handleDoubleTap = (e) => {
     e.stopPropagation();
+    if (touchMovedRef.current) return;
+
     if (!isLiked) {
       setIsLiked(true);
       setLikesCount((p) => p + 1);
     }
     if (typeof navigator !== 'undefined' && navigator.vibrate) {
-      try { navigator.vibrate(25); } catch (_) {}
+      try { navigator.vibrate(25); } catch (_) { }
     }
     setShowHeartPop(true);
     setTimeout(() => setShowHeartPop(false), 800);
@@ -365,7 +394,7 @@ const ReelCard = ({
           url: shareUrl,
         });
         return;
-      } catch (_) {}
+      } catch (_) { }
     }
     if (navigator.clipboard) {
       navigator.clipboard.writeText(shareUrl);
@@ -378,16 +407,17 @@ const ReelCard = ({
   return (
     <div
       ref={cardRef}
-      className={`select-none ${
-        viewMode === 'grid'
-          ? 'w-full'
-          : 'snap-center sm:snap-start shrink-0 w-[78vw] xs:w-[74vw] sm:w-[300px] md:w-[330px] lg:w-[345px] max-w-[360px]'
-      }`}
+      className={`${viewMode === 'grid'
+        ? 'w-full'
+        : 'shrink-0 w-[78vw] xs:w-[74vw] sm:w-[300px] md:w-[330px] lg:w-[345px] max-w-[360px]'
+        } touch-pan-x touch-pan-y`}
     >
       <article
-        className="group relative rounded-2xl sm:rounded-3xl overflow-hidden border border-white/10 bg-[#12100d] shadow-xl transition-all duration-500 hover:border-[#ee2a7b]/50 hover:-translate-y-1.5 hover:shadow-[0_20px_50px_rgba(238,42,123,0.22)]"
+        className="group relative rounded-2xl sm:rounded-3xl overflow-hidden border border-white/10 bg-[#12100d] shadow-xl transition-all duration-500 md:hover:border-[#ee2a7b]/50 md:hover:-translate-y-1.5 md:hover:shadow-[0_20px_50px_rgba(238,42,123,0.22)] touch-pan-x touch-pan-y"
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
       >
         {/* ===== Top Creator Info Bar ===== */}
         <div className="absolute top-0 inset-x-0 z-20 flex items-center justify-between px-3 sm:px-4 py-2.5 sm:py-3 bg-gradient-to-b from-black/85 via-black/40 to-transparent pointer-events-auto">
@@ -431,9 +461,8 @@ const ReelCard = ({
           <img
             src={post.img}
             alt={`${post.name} wearing ${post.product}`}
-            className={`w-full h-full object-cover transition-all duration-700 ease-out group-hover:scale-105 ${
-              isPlaying ? 'opacity-0' : 'opacity-95'
-            }`}
+            className={`w-full h-full object-cover transition-all duration-700 ease-out md:group-hover:scale-105 ${isPlaying ? 'opacity-0' : 'opacity-95'
+              }`}
             loading="lazy"
           />
 
@@ -452,14 +481,13 @@ const ReelCard = ({
               controlsList="nodownload nofullscreen noremoteplayback"
               preload="metadata"
               onTimeUpdate={handleTimeUpdate}
-              className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-500 ${
-                isPlaying ? 'opacity-100' : 'opacity-0 pointer-events-none'
-              }`}
+              className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-500 pointer-events-none ${isPlaying ? 'opacity-100' : 'opacity-0'
+                }`}
             />
           )}
 
           {/* Vignette Gradients */}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/20 to-transparent pointer-events-none opacity-85 group-hover:opacity-95 transition-opacity" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/20 to-transparent pointer-events-none opacity-85 md:group-hover:opacity-95 transition-opacity" />
 
           {/* Tag Chip */}
           <span className="gram-body absolute top-12 sm:top-14 left-3 sm:left-4 z-10 bg-[#d4af37] text-[#171310] text-[8px] sm:text-[9px] font-black uppercase tracking-wider px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full shadow-md pointer-events-none">
@@ -499,9 +527,8 @@ const ReelCard = ({
 
           {/* Center Play / Pause Indicator Ripple */}
           <div
-            className={`absolute inset-0 flex items-center justify-center pointer-events-none transition-all duration-300 ${
-              tapRipple || !isPlaying ? 'opacity-90 scale-100' : 'opacity-0 scale-75'
-            }`}
+            className={`absolute inset-0 flex items-center justify-center pointer-events-none transition-all duration-300 ${tapRipple || !isPlaying ? 'opacity-90 scale-100' : 'opacity-0 scale-75'
+              }`}
           >
             <span className="w-12 h-12 rounded-full bg-black/60 backdrop-blur-md border border-white/25 flex items-center justify-center text-white shadow-xl">
               {isPlaying ? <Pause size={18} className="fill-white" /> : <Play size={18} className="fill-white ml-0.5" />}
@@ -526,9 +553,8 @@ const ReelCard = ({
             >
               <Heart
                 size={19}
-                className={`transition-colors ${
-                  isLiked ? 'fill-[#ee2a7b] text-[#ee2a7b]' : 'text-white hover:text-[#ee2a7b]'
-                }`}
+                className={`transition-colors ${isLiked ? 'fill-[#ee2a7b] text-[#ee2a7b]' : 'text-white hover:text-[#ee2a7b]'
+                  }`}
               />
               <span className="gram-body text-white text-[9px] font-bold">
                 {likesCount >= 1000 ? `${(likesCount / 1000).toFixed(1)}K` : likesCount}
@@ -573,9 +599,8 @@ const ReelCard = ({
             >
               <Bookmark
                 size={18}
-                className={`transition-colors ${
-                  isSaved ? 'fill-[#d4af37] text-[#d4af37]' : 'text-white hover:text-[#d4af37]'
-                }`}
+                className={`transition-colors ${isSaved ? 'fill-[#d4af37] text-[#d4af37]' : 'text-white hover:text-[#d4af37]'
+                  }`}
               />
             </button>
           </div>
@@ -597,10 +622,11 @@ const ReelCard = ({
           </div>
 
           {/* Live Video Scrub Progress Line (Instagram Reel Bottom Line) */}
-          <div className="absolute bottom-0 inset-x-0 h-1 bg-white/20 z-20">
+          <div className="absolute bottom-0 inset-x-0 h-1 bg-white/20 z-20 pointer-events-none">
             <div
-              className="h-full bg-gradient-to-r from-[#ee2a7b] to-[#d4af37] transition-all duration-100 ease-linear"
-              style={{ width: `${progress}%` }}
+              ref={progressBarRef}
+              className="h-full bg-gradient-to-r from-[#ee2a7b] to-[#d4af37] transition-all duration-100 ease-linear pointer-events-none"
+              style={{ width: '0%' }}
             />
           </div>
         </div>
@@ -669,7 +695,7 @@ const ReelModal = ({ post, isOpen, onClose, onAddToCart, onBuyNow, onNext, onPre
     if (modalVideoRef.current) {
       modalVideoRef.current.currentTime = 0;
       modalVideoRef.current.muted = isMuted;
-      modalVideoRef.current.play().catch(() => {});
+      modalVideoRef.current.play().catch(() => { });
     }
   }, [isOpen, post]);
 
@@ -716,13 +742,13 @@ const ReelModal = ({ post, isOpen, onClose, onAddToCart, onBuyNow, onNext, onPre
       // Swiped Up -> Next Reel
       onNext();
       if (typeof navigator !== 'undefined' && navigator.vibrate) {
-        try { navigator.vibrate(15); } catch (_) {}
+        try { navigator.vibrate(15); } catch (_) { }
       }
     } else if (diffY < -minSwipeDistance) {
       // Swiped Down -> Prev Reel
       onPrev();
       if (typeof navigator !== 'undefined' && navigator.vibrate) {
-        try { navigator.vibrate(15); } catch (_) {}
+        try { navigator.vibrate(15); } catch (_) { }
       }
     }
     touchStartY.current = null;
@@ -737,7 +763,7 @@ const ReelModal = ({ post, isOpen, onClose, onAddToCart, onBuyNow, onNext, onPre
         modalVideoRef.current.pause();
         setIsPlaying(false);
       } else {
-        modalVideoRef.current.play().then(() => setIsPlaying(true)).catch(() => {});
+        modalVideoRef.current.play().then(() => setIsPlaying(true)).catch(() => { });
       }
     }
   };
@@ -755,7 +781,7 @@ const ReelModal = ({ post, isOpen, onClose, onAddToCart, onBuyNow, onNext, onPre
       setLikesCount((p) => p + 1);
       setShowHeartPop(true);
       if (typeof navigator !== 'undefined' && navigator.vibrate) {
-        try { navigator.vibrate(25); } catch (_) {}
+        try { navigator.vibrate(25); } catch (_) { }
       }
       setTimeout(() => setShowHeartPop(false), 800);
     } else {
@@ -774,7 +800,7 @@ const ReelModal = ({ post, isOpen, onClose, onAddToCart, onBuyNow, onNext, onPre
           url: shareUrl,
         });
         return;
-      } catch (_) {}
+      } catch (_) { }
     }
     if (navigator.clipboard) {
       navigator.clipboard.writeText(shareUrl);
@@ -833,12 +859,12 @@ const ReelModal = ({ post, isOpen, onClose, onAddToCart, onBuyNow, onNext, onPre
           Mobile: Full viewport height (100dvh) with iPhone safe-area padding
           PC: Split cinema layout (Left 9:16 Video + Right Shoppable Panel) */}
       <div className="relative w-full h-[100dvh] sm:h-[92vh] sm:max-h-[860px] lg:max-w-[880px] xl:max-w-[920px] sm:rounded-3xl overflow-hidden bg-[#0d0b09] shadow-2xl flex flex-col lg:flex-row z-10 border border-white/15">
-        
+
         {/* ====================================================
             LEFT / MAIN: Vertical Cinema Video Player (9:16)
             ==================================================== */}
         <div className="relative flex-1 lg:max-w-[430px] h-full bg-black flex flex-col justify-between overflow-hidden">
-          
+
           {/* Top Header Bar inside Video Container */}
           <div className="relative z-30 flex items-center justify-between p-3.5 sm:p-4 bg-gradient-to-b from-black/90 via-black/40 to-transparent pt-[env(safe-area-inset-top,12px)]">
             <div className="flex items-center gap-2.5">
@@ -953,7 +979,7 @@ const ReelModal = ({ post, isOpen, onClose, onAddToCart, onBuyNow, onNext, onPre
               className="flex items-center gap-2 min-w-0 flex-1"
               onClick={onClose}
             >
-              <img src={post.img} alt={post.product} className="w-10 h-10 rounded-lg object-cover border border-white/10 shrink-0" />
+              <img src={post.productImage || post.img} alt={post.product} className="w-10 h-10 rounded-lg object-cover border border-white/10 shrink-0" />
               <div className="min-w-0">
                 <p className="gram-body text-white text-xs font-bold truncate">{post.product}</p>
                 <div className="flex items-baseline gap-1.5">
@@ -988,7 +1014,7 @@ const ReelModal = ({ post, isOpen, onClose, onAddToCart, onBuyNow, onNext, onPre
             (Visible on large screens, replaces mobile overlay)
             ==================================================== */}
         <div className="hidden lg:flex flex-col flex-1 w-full max-w-[490px] h-full bg-[#12100d] border-l border-white/10 overflow-y-auto">
-          
+
           {/* Creator Profile Card */}
           <div className="p-5 border-b border-white/10 flex items-center justify-between gap-3">
             <div className="flex items-center gap-3 min-w-0">
@@ -1039,11 +1065,10 @@ const ReelModal = ({ post, isOpen, onClose, onAddToCart, onBuyNow, onNext, onPre
             <button
               type="button"
               onClick={() => setActiveTab('product')}
-              className={`flex-1 py-3 text-xs font-bold uppercase tracking-wider transition-colors flex items-center justify-center gap-1.5 cursor-pointer ${
-                activeTab === 'product'
-                  ? 'text-[#d4af37] border-b-2 border-[#d4af37] bg-white/[0.02]'
-                  : 'text-white/50 hover:text-white'
-              }`}
+              className={`flex-1 py-3 text-xs font-bold uppercase tracking-wider transition-colors flex items-center justify-center gap-1.5 cursor-pointer ${activeTab === 'product'
+                ? 'text-[#d4af37] border-b-2 border-[#d4af37] bg-white/[0.02]'
+                : 'text-white/50 hover:text-white'
+                }`}
             >
               <ShoppingBag size={14} />
               <span>Tagged Product</span>
@@ -1051,11 +1076,10 @@ const ReelModal = ({ post, isOpen, onClose, onAddToCart, onBuyNow, onNext, onPre
             <button
               type="button"
               onClick={() => setActiveTab('comments')}
-              className={`flex-1 py-3 text-xs font-bold uppercase tracking-wider transition-colors flex items-center justify-center gap-1.5 cursor-pointer ${
-                activeTab === 'comments'
-                  ? 'text-[#d4af37] border-b-2 border-[#d4af37] bg-white/[0.02]'
-                  : 'text-white/50 hover:text-white'
-              }`}
+              className={`flex-1 py-3 text-xs font-bold uppercase tracking-wider transition-colors flex items-center justify-center gap-1.5 cursor-pointer ${activeTab === 'comments'
+                ? 'text-[#d4af37] border-b-2 border-[#d4af37] bg-white/[0.02]'
+                : 'text-white/50 hover:text-white'
+                }`}
             >
               <MessageCircle size={14} />
               <span>Community ({post.comments})</span>
@@ -1070,7 +1094,7 @@ const ReelModal = ({ post, isOpen, onClose, onAddToCart, onBuyNow, onNext, onPre
                 <div className="p-4 rounded-2xl bg-white/[0.03] border border-white/10 hover:border-[#d4af37]/40 transition-colors">
                   <div className="flex gap-3.5">
                     <img
-                      src={post.img}
+                      src={post.productImage || post.img}
                       alt={post.product}
                       className="w-20 h-20 rounded-xl object-cover border border-white/10 shrink-0"
                     />
@@ -1210,10 +1234,21 @@ const ReelModal = ({ post, isOpen, onClose, onAddToCart, onBuyNow, onNext, onPre
   );
 };
 
+function parseNumericCount(val) {
+  if (!val) return 0;
+  if (typeof val === 'number') return val;
+  const str = String(val).trim().toUpperCase();
+  if (str.endsWith('M')) return Math.round(parseFloat(str) * 1000000);
+  if (str.endsWith('K')) return Math.round(parseFloat(str) * 1000);
+  const num = parseInt(str.replace(/,/g, ''), 10);
+  return isNaN(num) ? 0 : num;
+}
+
 /* =========================================================
    MAIN SHOP THE GRAM COMPONENT
    ========================================================= */
 export default function ShopTheGram() {
+  const [posts, setPosts] = useState(initialPosts);
   const [wordIdx, setWordIdx] = useState(0);
   const [wordChanging, setWordChanging] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
@@ -1223,6 +1258,65 @@ export default function ShopTheGram() {
   const [activePostIdx, setActivePostIdx] = useState(0);
   const [scrollProgress, setScrollProgress] = useState(0);
   const [viewMode, setViewMode] = useState('carousel'); // 'carousel' | 'grid'
+
+  // Fetch live reels from Supabase API on mount
+  useEffect(() => {
+    let isMounted = true;
+    async function loadReels() {
+      try {
+        const res = await fetch('/api/reels');
+        if (res.ok) {
+          const data = await res.json();
+          if (isMounted && Array.isArray(data) && data.length > 0) {
+            const mapped = data.map((r, i) => ({
+              id: r.id || `reel-${i}`,
+              img: r.influencer_avatar || r.thumbnail_url || '/assests/shopthelookinflcuernsgram10/Abida_Fatima.jpg',
+              video: r.video_url,
+              handle: r.influencer_username || '@trioenterprises',
+              name: r.influencer_name || 'Trio Influencer',
+              verified: true,
+              followers: '250K',
+              likes: r.likes_count || '15K',
+              likesCount: parseNumericCount(r.likes_count) || 15000,
+              comments: r.comments_count || '250',
+              caption: r.caption || '',
+              song: r.song_title || 'Original Audio · Trio Trends',
+              product: r.product_name || 'Handcrafted Artisan Decor',
+              productId: r.product_id || '',
+              slug: r.product_slug || '',
+              price: `₹${r.product_price || 0}`,
+              rawPrice: Number(r.product_price) || 0,
+              oldPrice: r.product_old_price ? `₹${r.product_old_price}` : '',
+              rawOldPrice: Number(r.product_old_price) || 0,
+              discount: r.product_discount || '',
+              productImage: r.product_image || '',
+              tag: 'Authentic Craft',
+              rating: 4.9,
+              reviews: 150,
+              views: r.views_count || '100K',
+              commentsList: [
+                { user: 'craft_lover', text: 'Stunning quality! Ordered for our family celebration ✨', time: '2h ago' },
+                { user: 'pooja_decor', text: 'Packaging was top notch, looks 100% royal 💯', time: '5h ago' }
+              ]
+            }));
+            setPosts(mapped);
+          }
+        }
+      } catch (err) {
+        console.warn('Could not load reels from /api/reels:', err.message);
+      }
+    }
+    loadReels();
+
+    // Auto-sync when switching back to storefront tab after making changes in admin panel
+    const onFocus = () => loadReels();
+    window.addEventListener('focus', onFocus);
+
+    return () => {
+      isMounted = false;
+      window.removeEventListener('focus', onFocus);
+    };
+  }, []);
 
   const scrollerRef = useRef(null);
   const searchInputRef = useRef(null);
@@ -1247,12 +1341,12 @@ export default function ShopTheGram() {
     }
   }, [searchOpen]);
 
-  const filtered = initialPosts.filter(
+  const filtered = posts.filter(
     (p) =>
       p.handle.toLowerCase().includes(query.toLowerCase()) ||
       p.name.toLowerCase().includes(query.toLowerCase()) ||
       p.product.toLowerCase().includes(query.toLowerCase()) ||
-      p.tag.toLowerCase().includes(query.toLowerCase())
+      (p.tag && p.tag.toLowerCase().includes(query.toLowerCase()))
   );
 
   /* Track horizontal scroll progress */
@@ -1264,6 +1358,37 @@ export default function ShopTheGram() {
       const pct = Math.min(100, Math.max(0, (el.scrollLeft / max) * 100));
       setScrollProgress(pct);
     }
+  };
+
+  /* Desktop mouse drag to scroll */
+  const [isMouseDown, setIsMouseDown] = useState(false);
+  const dragInfoRef = useRef({ isDown: false, startX: 0, scrollLeft: 0, moved: false });
+
+  const handleMouseDown = (e) => {
+    if (typeof window !== 'undefined' && window.matchMedia && !window.matchMedia('(hover: hover) and (pointer: fine)').matches) return;
+    if (e.button !== 0 || !scrollerRef.current) return;
+    dragInfoRef.current = {
+      isDown: true,
+      startX: e.pageX - scrollerRef.current.offsetLeft,
+      scrollLeft: scrollerRef.current.scrollLeft,
+      moved: false,
+    };
+    setIsMouseDown(true);
+  };
+
+  const handleMouseMove = (e) => {
+    if (!dragInfoRef.current.isDown || !scrollerRef.current) return;
+    const x = e.pageX - scrollerRef.current.offsetLeft;
+    const walk = (x - dragInfoRef.current.startX) * 1.35;
+    if (Math.abs(walk) > 4) {
+      dragInfoRef.current.moved = true;
+    }
+    scrollerRef.current.scrollLeft = dragInfoRef.current.scrollLeft - walk;
+  };
+
+  const handleMouseUp = () => {
+    dragInfoRef.current.isDown = false;
+    setIsMouseDown(false);
   };
 
   const scrollBy = useCallback((dir) => {
@@ -1284,6 +1409,27 @@ export default function ShopTheGram() {
     return () => window.removeEventListener('keydown', onKey);
   }, [scrollBy, activeModalPost]);
 
+  /* Unblock page vertical scrolling when mouse wheel is rolled over the reels scroller */
+  useEffect(() => {
+    const scroller = scrollerRef.current;
+    if (!scroller) return;
+
+    const onWheel = (e) => {
+      // If predominantly vertical scroll (mouse wheel up/down and not Shift+wheel)
+      if (Math.abs(e.deltaY) > Math.abs(e.deltaX) && !e.shiftKey) {
+        const canScrollDown = e.deltaY > 0 && (window.innerHeight + window.scrollY < document.documentElement.scrollHeight - 2);
+        const canScrollUp = e.deltaY < 0 && window.scrollY > 2;
+        if (canScrollDown || canScrollUp) {
+          e.preventDefault();
+          window.scrollBy({ top: e.deltaY, left: 0, behavior: 'auto' });
+        }
+      }
+    };
+
+    scroller.addEventListener('wheel', onWheel, { passive: false });
+    return () => scroller.removeEventListener('wheel', onWheel);
+  }, []);
+
   const toggleGlobalMute = () => {
     const nextMute = !isGlobalMuted;
     setIsGlobalMuted(nextMute);
@@ -1298,7 +1444,7 @@ export default function ShopTheGram() {
       price: post.rawPrice,
       originalPrice: post.rawOldPrice,
       category: 'Decor & Crafts',
-      images: [post.img],
+      images: [post.productImage || post.img],
       in_stock: true,
       stock: 50,
     };
@@ -1312,21 +1458,23 @@ export default function ShopTheGram() {
   };
 
   const openModalForPost = (post) => {
-    const idx = initialPosts.findIndex((p) => p.id === post.id);
+    const idx = posts.findIndex((p) => p.id === post.id);
     setActivePostIdx(idx >= 0 ? idx : 0);
     setActiveModalPost(post);
   };
 
   const nextModalPost = () => {
-    const nextIdx = (activePostIdx + 1) % initialPosts.length;
+    if (posts.length === 0) return;
+    const nextIdx = (activePostIdx + 1) % posts.length;
     setActivePostIdx(nextIdx);
-    setActiveModalPost(initialPosts[nextIdx]);
+    setActiveModalPost(posts[nextIdx]);
   };
 
   const prevModalPost = () => {
-    const prevIdx = (activePostIdx - 1 + initialPosts.length) % initialPosts.length;
+    if (posts.length === 0) return;
+    const prevIdx = (activePostIdx - 1 + posts.length) % posts.length;
     setActivePostIdx(prevIdx);
-    setActiveModalPost(initialPosts[prevIdx]);
+    setActiveModalPost(posts[prevIdx]);
   };
 
   return (
@@ -1362,7 +1510,9 @@ export default function ShopTheGram() {
           scrollbar-width: none;
           -ms-overflow-style: none;
           -webkit-overflow-scrolling: touch;
-          scroll-behavior: smooth;
+          overscroll-behavior-y: auto;
+          overscroll-behavior-x: contain;
+          touch-action: pan-x pan-y;
         }
         .gram-scroller::-webkit-scrollbar { display: none; }
         .gram-music-bar { animation: gram-eq 0.9s ease-in-out infinite alternate; transform-origin: bottom; }
@@ -1401,9 +1551,8 @@ export default function ShopTheGram() {
                   Shop The{' '}
                   <span className="relative inline-block h-[1.15em] overflow-hidden align-bottom">
                     <span
-                      className={`block italic gram-gold-text transition-all duration-450 ease-[cubic-bezier(0.16,1,0.3,1)] ${
-                        wordChanging ? 'translate-y-[-110%] opacity-0' : 'translate-y-0 opacity-100'
-                      }`}
+                      className={`block italic gram-gold-text transition-all duration-450 ease-[cubic-bezier(0.16,1,0.3,1)] ${wordChanging ? 'translate-y-[-110%] opacity-0' : 'translate-y-0 opacity-100'
+                        }`}
                     >
                       {gramWords[wordIdx]}
                     </span>
@@ -1423,11 +1572,10 @@ export default function ShopTheGram() {
             <div className="flex items-center gap-2 sm:gap-3 flex-wrap justify-between sm:justify-end">
               {/* Expanding Search Input */}
               <div
-                className={`flex items-center border rounded-full transition-all duration-300 overflow-hidden ${
-                  searchOpen
-                    ? 'border-[#ee2a7b]/60 bg-white/[0.08] w-44 sm:w-60'
-                    : 'border-white/15 bg-white/[0.03] w-9 sm:w-11'
-                } h-9 sm:h-11`}
+                className={`flex items-center border rounded-full transition-all duration-300 overflow-hidden ${searchOpen
+                  ? 'border-[#ee2a7b]/60 bg-white/[0.08] w-44 sm:w-60'
+                  : 'border-white/15 bg-white/[0.03] w-9 sm:w-11'
+                  } h-9 sm:h-11`}
               >
                 <button
                   type="button"
@@ -1446,9 +1594,8 @@ export default function ShopTheGram() {
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
                   placeholder="Search creator, look..."
-                  className={`gram-body bg-transparent text-white text-xs placeholder:text-white/35 outline-none flex-1 pr-3 ${
-                    searchOpen ? 'block' : 'hidden'
-                  }`}
+                  className={`gram-body bg-transparent text-white text-xs placeholder:text-white/35 outline-none flex-1 pr-3 ${searchOpen ? 'block' : 'hidden'
+                    }`}
                 />
               </div>
 
@@ -1458,11 +1605,10 @@ export default function ShopTheGram() {
                   type="button"
                   aria-label="Carousel view"
                   onClick={() => setViewMode('carousel')}
-                  className={`p-2 rounded-full transition-all cursor-pointer ${
-                    viewMode === 'carousel'
-                      ? 'bg-[#d4af37] text-black shadow-sm'
-                      : 'text-white/60 hover:text-white'
-                  }`}
+                  className={`p-2 rounded-full transition-all cursor-pointer ${viewMode === 'carousel'
+                    ? 'bg-[#d4af37] text-black shadow-sm'
+                    : 'text-white/60 hover:text-white'
+                    }`}
                   title="Carousel Stream"
                 >
                   <LayoutList size={14} />
@@ -1471,11 +1617,10 @@ export default function ShopTheGram() {
                   type="button"
                   aria-label="Grid view"
                   onClick={() => setViewMode('grid')}
-                  className={`p-2 rounded-full transition-all cursor-pointer ${
-                    viewMode === 'grid'
-                      ? 'bg-[#d4af37] text-black shadow-sm'
-                      : 'text-white/60 hover:text-white'
-                  }`}
+                  className={`p-2 rounded-full transition-all cursor-pointer ${viewMode === 'grid'
+                    ? 'bg-[#d4af37] text-black shadow-sm'
+                    : 'text-white/60 hover:text-white'
+                    }`}
                   title="Instagram Grid"
                 >
                   <Grid size={14} />
@@ -1560,7 +1705,12 @@ export default function ShopTheGram() {
             <div
               ref={scrollerRef}
               onScroll={handleScroll}
-              className="gram-scroller flex gap-3.5 sm:gap-5 overflow-x-auto snap-x snap-mandatory pb-4 -mx-3 px-3 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8 touch-pan-x"
+              onMouseDown={handleMouseDown}
+              onMouseMove={handleMouseMove}
+              onMouseUp={handleMouseUp}
+              onMouseLeave={handleMouseUp}
+              className={`gram-scroller flex gap-3.5 sm:gap-5 overflow-x-auto pb-4 -mx-3 px-3 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8 overscroll-y-auto ${isMouseDown ? 'cursor-grabbing select-none' : 'cursor-grab'
+                }`}
             >
               {filtered.length === 0 && (
                 <p className="gram-body text-white/40 text-sm py-16 mx-auto text-center">
