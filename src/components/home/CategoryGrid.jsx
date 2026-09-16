@@ -53,16 +53,22 @@ export const CategoryGrid = () => {
               href={`/category/${category.slug}`}
               className="group relative rounded-3xl overflow-hidden ethnic-card border border-gold-500/20 hover:border-gold-500/50 shadow-ethnic hover:shadow-ethnic-hover flex flex-col justify-end aspect-[4/3.8] transition-all duration-300 transform hover:-translate-y-1"
             >
-              {/* Image Background */}
-              <img
-                src={category.image || '/products/pearl-zardosi-patch-1.jpg'}
-                alt={category.name}
-                className="absolute inset-0 w-full h-full object-cover object-center group-hover:scale-110 transition-transform duration-700 ease-out"
-                loading="lazy"
-              />
+              {/* Image Presentation Container with Auto-Fitting & Ambient Glow */}
+              <div className="absolute inset-0 w-full h-full overflow-hidden bg-stone-950 flex items-center justify-center p-3 pb-16">
+                <div
+                  className="absolute inset-0 bg-cover bg-center filter blur-xl scale-125 opacity-45 pointer-events-none transition-all duration-700"
+                  style={{ backgroundImage: `url("${category.image || '/products/pearl-zardosi-patch-1.jpg'}")` }}
+                />
+                <img
+                  src={category.image || '/products/pearl-zardosi-patch-1.jpg'}
+                  alt={category.name}
+                  className="relative z-[1] max-w-full max-h-full w-auto h-auto object-contain object-center group-hover:scale-108 transition-transform duration-700 ease-out filter drop-shadow-[0_8px_20px_rgba(0,0,0,0.7)]"
+                  loading="lazy"
+                />
+              </div>
 
               {/* Dark Gradient Overlay for Legibility */}
-              <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent group-hover:from-black/95 transition-all duration-300" />
+              <div className="absolute inset-0 z-[2] bg-gradient-to-t from-black/95 via-black/40 to-black/10 group-hover:from-black transition-all duration-300 pointer-events-none" />
 
               {/* Content Box */}
               <div className="relative z-10 p-4 sm:p-5 flex flex-col justify-end">

@@ -118,15 +118,22 @@ export default function HomeClient() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 
             {/* Wedding Banner */}
-            <div className="relative rounded-3xl overflow-hidden border-2 border-gold-500/40 p-8 sm:p-10 flex flex-col justify-between min-h-[280px] bg-gradient-to-br from-[#3B0E1E] via-[#2A0815] to-[#16040A] text-white shadow-xl group">
-              <div className="absolute right-0 bottom-0 w-1/2 h-full opacity-30 group-hover:opacity-40 transition-opacity">
+            <div className="relative rounded-3xl overflow-hidden border-2 border-gold-500/40 p-6 sm:p-8 flex flex-col justify-between min-h-[300px] bg-gradient-to-br from-[#3B0E1E] via-[#2A0815] to-[#16040A] text-white shadow-xl group">
+              {/* Dedicated Visual Showcase on Right (Auto-Fit for any craft image size) */}
+              <div className="relative sm:absolute sm:right-6 sm:top-1/2 sm:-translate-y-1/2 w-full sm:w-48 md:w-56 h-48 sm:h-48 md:h-56 rounded-2xl overflow-hidden bg-black/40 border border-gold-500/30 shadow-2xl flex items-center justify-center p-3 my-3 sm:my-0 group-hover:scale-105 transition-transform duration-500">
+                <div
+                  className="absolute inset-0 bg-cover bg-center filter blur-xl scale-125 opacity-35 pointer-events-none"
+                  style={{ backgroundImage: `url("${sections.promotionalBanners?.weddingBanner?.image || "/products/peacock-real-feathers-pair-1.jpg"}")` }}
+                />
                 <img
                   src={sections.promotionalBanners?.weddingBanner?.image || "/products/peacock-real-feathers-pair-1.jpg"}
                   alt="Wedding"
-                  className="w-full h-full object-cover"
+                  className="relative z-10 max-w-full max-h-full w-auto h-auto object-contain filter drop-shadow-[0_8px_20px_rgba(0,0,0,0.6)]"
+                  loading="lazy"
                 />
               </div>
-              <div className="relative z-10 space-y-3 max-w-sm">
+
+              <div className="relative z-10 space-y-3 max-w-xs sm:max-w-sm">
                 <span className="badge-ribbon badge-wedding inline-flex items-center gap-1">
                   <Crown className="w-3 h-3" /> {sections.promotionalBanners?.weddingBanner?.badge || 'Royal Bridal Couture'}
                 </span>
@@ -149,15 +156,22 @@ export default function HomeClient() {
             </div>
 
             {/* Festive Banner */}
-            <div className="relative rounded-3xl overflow-hidden border-2 border-gold-500/40 p-8 sm:p-10 flex flex-col justify-between min-h-[280px] bg-gradient-to-br from-[#1C2818] via-[#121A0F] to-[#0A1008] text-white shadow-xl group">
-              <div className="absolute right-0 bottom-0 w-1/2 h-full opacity-30 group-hover:opacity-40 transition-opacity">
+            <div className="relative rounded-3xl overflow-hidden border-2 border-gold-500/40 p-6 sm:p-8 flex flex-col justify-between min-h-[300px] bg-gradient-to-br from-[#1C2818] via-[#121A0F] to-[#0A1008] text-white shadow-xl group">
+              {/* Dedicated Visual Showcase on Right (Auto-Fit for any craft image size) */}
+              <div className="relative sm:absolute sm:right-6 sm:top-1/2 sm:-translate-y-1/2 w-full sm:w-48 md:w-56 h-48 sm:h-48 md:h-56 rounded-2xl overflow-hidden bg-black/40 border border-gold-500/30 shadow-2xl flex items-center justify-center p-3 my-3 sm:my-0 group-hover:scale-105 transition-transform duration-500">
+                <div
+                  className="absolute inset-0 bg-cover bg-center filter blur-xl scale-125 opacity-35 pointer-events-none"
+                  style={{ backgroundImage: `url("${sections.promotionalBanners?.festiveBanner?.image || "/products/pooja-thali-brass-diya-1.jpg"}")` }}
+                />
                 <img
                   src={sections.promotionalBanners?.festiveBanner?.image || "/products/pooja-thali-brass-diya-1.jpg"}
                   alt="Festival"
-                  className="w-full h-full object-cover"
+                  className="relative z-10 max-w-full max-h-full w-auto h-auto object-contain filter drop-shadow-[0_8px_20px_rgba(0,0,0,0.6)]"
+                  loading="lazy"
                 />
               </div>
-              <div className="relative z-10 space-y-3 max-w-sm">
+
+              <div className="relative z-10 space-y-3 max-w-xs sm:max-w-sm">
                 <span className="badge-ribbon badge-festival inline-flex items-center gap-1">
                   <Sparkles className="w-3 h-3" /> {sections.promotionalBanners?.festiveBanner?.badge || 'Auspicious Festivities'}
                 </span>

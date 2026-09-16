@@ -80,13 +80,18 @@ export const ProductCard = ({ product, onQuickView = null, viewMode = 'grid' }) 
         onMouseLeave={() => setIsHovered(false)}
       >
         {/* Left Image */}
-        <div className="relative w-full sm:w-56 md:w-64 aspect-square sm:aspect-auto shrink-0 bg-ivory-200 dark:bg-stone-900 overflow-hidden">
-          <Link href={`/product/${product.slug}`} className="block w-full h-full min-h-[190px]">
+        <div className="relative w-full sm:w-56 md:w-64 aspect-square sm:aspect-auto shrink-0 bg-stone-100 dark:bg-stone-900 overflow-hidden flex items-center justify-center p-3">
+          {/* Ambient blurred backdrop so any image shape fills container smoothly */}
+          <div
+            className="absolute inset-0 bg-cover bg-center filter blur-xl scale-125 opacity-25 dark:opacity-20 pointer-events-none transition-all duration-700"
+            style={{ backgroundImage: `url("${isHovered && secondaryImage !== activeImage ? secondaryImage : activeImage}")` }}
+          />
+          <Link href={`/product/${product.slug}`} className="relative z-[2] w-full h-full flex items-center justify-center min-h-[190px]">
             <img
               src={isHovered && secondaryImage !== activeImage ? secondaryImage : activeImage}
               alt={product.name}
               onError={() => setImgError(true)}
-              className={`w-full h-full object-cover object-center transition-transform duration-700 ease-out group-hover:scale-105 ${
+              className={`max-w-full max-h-full w-auto h-auto object-contain object-center transition-transform duration-500 ease-out group-hover:scale-105 filter drop-shadow-[0_4px_12px_rgba(0,0,0,0.08)] dark:drop-shadow-[0_4px_14px_rgba(0,0,0,0.4)] ${
                 isOutOfStock ? 'filter grayscale contrast-125 opacity-70' : ''
               }`}
               loading="lazy"
@@ -118,12 +123,12 @@ export const ProductCard = ({ product, onQuickView = null, viewMode = 'grid' }) 
         <div className="p-4 sm:p-5 flex-1 flex flex-col justify-between gap-3 min-w-0">
           <div className="space-y-2">
             {/* Top row: Category, Rating & Icons */}
-            <div className="flex items-center justify-between gap-2 flex-wrap">
-              <span className="font-semibold uppercase tracking-wider text-[11px] text-gold-700 dark:text-gold-400 truncate">
+            <div className="flex items-center justify-between gap-2 text-xs text-stone-500 dark:text-stone-400">
+              <span className="font-semibold uppercase tracking-wider text-gold-700 dark:text-gold-400 truncate">
                 {product.category} {product.subcategory ? `• ${product.subcategory}` : ''}
               </span>
               <div className="flex items-center gap-2">
-                <RatingStars rating={product.rating || 4.8} reviewCount={product.reviewCount || 10} size="xs" />
+                <RatingStars rating={product.rating || 4.8} reviewCount={product.reviewCount || 12} size="xs" />
                 <button
                   onClick={handleWishlistClick}
                   className={`p-1.5 rounded-full transition-colors ml-1 ${
@@ -148,15 +153,13 @@ export const ProductCard = ({ product, onQuickView = null, viewMode = 'grid' }) 
             </div>
 
             {/* Product Title */}
-            <Link href={`/product/${product.slug}`} className="block">
-              <h3 className="font-serif font-bold text-base sm:text-lg text-stone-900 dark:text-ivory-100 group-hover:text-maroon-700 dark:group-hover:text-gold-400 transition-colors line-clamp-2">
-                {product.name}
-              </h3>
-            </Link>
+            <h3 className="font-serif font-bold text-base sm:text-lg text-stone-900 dark:text-ivory-100 group-hover:text-maroon-700 dark:group-hover:text-gold-300 transition-colors line-clamp-2 leading-snug">
+              <Link href={`/product/${product.slug}`}>{product.name}</Link>
+            </h3>
 
             {/* Description */}
-            <p className="text-xs text-stone-600 dark:text-stone-400 line-clamp-2 leading-relaxed">
-              {product.short_description || product.shortDescription || product.description || 'Authentic handcrafted piece crafted by master artisans.'}
+            <p className="text-xs text-stone-600 dark:text-stone-300 line-clamp-2 leading-relaxed">
+              {product.description || product.short_description || product.shortDescription || 'Handcrafted with traditional Indian artisan karigari.'}
             </p>
 
             {/* Variant Colors */}
@@ -231,14 +234,19 @@ export const ProductCard = ({ product, onQuickView = null, viewMode = 'grid' }) 
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      {/* Product Image Container */}
-      <div className="relative aspect-square w-full overflow-hidden bg-ivory-200 dark:bg-stone-900">
-        <Link href={`/product/${product.slug}`} className="block w-full h-full">
+      {/* Product Image Container with Auto-Adjusting Ambient Presentation */}
+      <div className="relative aspect-square w-full overflow-hidden bg-gradient-to-b from-stone-50 via-stone-100/80 to-stone-200/60 dark:from-stone-900/95 dark:via-stone-900/80 dark:to-stone-950 flex items-center justify-center p-3 sm:p-4">
+        {/* Ambient background glow for seamless aesthetic integration of any aspect ratio */}
+        <div
+          className="absolute inset-0 bg-cover bg-center filter blur-xl scale-125 opacity-30 dark:opacity-20 pointer-events-none transition-all duration-700"
+          style={{ backgroundImage: `url("${isHovered && secondaryImage !== activeImage ? secondaryImage : activeImage}")` }}
+        />
+        <Link href={`/product/${product.slug}`} className="relative z-[2] w-full h-full flex items-center justify-center">
           <img
             src={isHovered && secondaryImage !== activeImage ? secondaryImage : activeImage}
             alt={product.name}
             onError={() => setImgError(true)}
-            className={`w-full h-full object-cover object-center transition-transform duration-700 ease-out group-hover:scale-108 ${
+            className={`max-w-full max-h-full w-auto h-auto object-contain object-center transition-transform duration-500 ease-out group-hover:scale-108 filter drop-shadow-[0_4px_12px_rgba(0,0,0,0.06)] dark:drop-shadow-[0_6px_16px_rgba(0,0,0,0.4)] ${
               isOutOfStock ? 'filter grayscale contrast-125 opacity-70' : ''
             }`}
             loading="lazy"

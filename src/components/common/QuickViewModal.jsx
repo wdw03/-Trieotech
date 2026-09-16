@@ -66,16 +66,20 @@ export const QuickViewModal = ({ product, isOpen, onClose }) => {
           <X className="w-5 h-5" />
         </button>
 
-        {/* Product Image Section */}
-        <div className="w-full md:w-1/2 p-6 bg-ivory-200 dark:bg-stone-900 flex flex-col items-center justify-between">
-          <div className="relative aspect-square w-full rounded-2xl overflow-hidden border border-gold-500/20 shadow-inner bg-white dark:bg-stone-950">
+        {/* Product Image Section with Auto-Fitting & Ambient Glow */}
+        <div className="w-full md:w-1/2 p-6 bg-stone-100 dark:bg-stone-900/80 flex flex-col items-center justify-between">
+          <div className="relative aspect-square w-full rounded-2xl overflow-hidden border border-gold-500/20 shadow-inner bg-white dark:bg-stone-950 flex items-center justify-center p-4">
+            <div
+              className="absolute inset-0 bg-cover bg-center filter blur-xl scale-125 opacity-30 dark:opacity-20 pointer-events-none transition-all duration-700"
+              style={{ backgroundImage: `url("${selectedImage}")` }}
+            />
             <img
               src={selectedImage}
               alt={product.name}
-              className="w-full h-full object-cover object-center"
+              className="relative z-10 max-w-full max-h-full w-auto h-auto object-contain object-center filter drop-shadow-[0_6px_16px_rgba(0,0,0,0.08)] dark:drop-shadow-[0_6px_16px_rgba(0,0,0,0.4)]"
             />
             {product.badge && (
-              <div className="absolute top-3 left-3">
+              <div className="absolute top-3 left-3 z-20">
                 <Badge type={product.badge} />
               </div>
             )}
@@ -88,13 +92,13 @@ export const QuickViewModal = ({ product, isOpen, onClose }) => {
                 <button
                   key={idx}
                   onClick={() => setSelectedImage(img)}
-                  className={`relative w-12 h-12 rounded-xl overflow-hidden border-2 shrink-0 transition-all ${
+                  className={`relative w-12 h-12 rounded-xl overflow-hidden border-2 shrink-0 transition-all flex items-center justify-center bg-white dark:bg-stone-900 p-0.5 ${
                     selectedImage === img
                       ? 'border-maroon-700 ring-2 ring-gold-500/50 scale-105'
                       : 'border-stone-300 dark:border-stone-700 opacity-70 hover:opacity-100'
                   }`}
                 >
-                  <img src={img} alt="thumb" className="w-full h-full object-cover" />
+                  <img src={img} alt="thumb" className="max-w-full max-h-full w-auto h-auto object-contain" />
                 </button>
               ))}
             </div>
