@@ -57,8 +57,10 @@ const FALLBACK_SLIDES = [
   }
 ];
 
-export const HeroCarousel = () => {
-  const [slides, setSlides] = useState(FALLBACK_SLIDES);
+export const HeroCarousel = ({ initialSlides = [] }) => {
+  const [slides, setSlides] = useState(() => (
+    initialSlides && initialSlides.length > 0 ? initialSlides : FALLBACK_SLIDES
+  ));
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
 

@@ -5,8 +5,10 @@ import { categories as fallbackCategories } from '../../data/categories';
 import { fetchLiveCategories } from '../../lib/api/store';
 import { ArrowRight, Sparkles } from 'lucide-react';
 
-export const CategoryGrid = () => {
-  const [categoriesList, setCategoriesList] = useState(fallbackCategories);
+export const CategoryGrid = ({ initialCategories = [] }) => {
+  const [categoriesList, setCategoriesList] = useState(() => (
+    initialCategories && initialCategories.length > 0 ? initialCategories : fallbackCategories
+  ));
 
   useEffect(() => {
     let isMounted = true;

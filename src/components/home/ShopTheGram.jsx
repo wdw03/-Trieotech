@@ -1145,9 +1145,48 @@ function parseNumericCount(val) {
 /* =========================================================
    MAIN SHOP THE GRAM COMPONENT
    ========================================================= */
-export default function ShopTheGram() {
-  const [posts, setPosts] = useState([]);
-  const [loading, setLoading] = useState(true);
+function mapReelToPost(r, i) {
+  return {
+    id: r.id || `reel-${i}`,
+    avatar: r.influencer_avatar || r.thumbnail_url || 'https://gkskeljvgphslkzctjfp.supabase.co/storage/v1/object/public/reels/avatars/Abida_Fatima.jpg',
+    img: r.thumbnail_url || r.product_image || r.influencer_avatar || 'https://gkskeljvgphslkzctjfp.supabase.co/storage/v1/object/public/reels/avatars/Abida_Fatima.jpg',
+    video: r.video_url,
+    handle: r.influencer_username || '@trioenterprises',
+    name: r.influencer_name || 'Trio Influencer',
+    verified: true,
+    followers: r.followers || '250K',
+    likes: r.likes_count || '15K',
+    likesCount: parseNumericCount(r.likes_count) || 15000,
+    comments: r.comments_count || '250',
+    caption: r.caption || '',
+    song: r.song_title || 'Original Audio · Trio Trends',
+    product: r.product_name || 'Handcrafted Artisan Decor',
+    productId: r.product_id || '',
+    slug: r.product_slug || '',
+    price: `₹${r.product_price || 0}`,
+    rawPrice: Number(r.product_price) || 0,
+    oldPrice: r.product_old_price ? `₹${r.product_old_price}` : '',
+    rawOldPrice: Number(r.product_old_price) || 0,
+    discount: r.product_discount || '',
+    productImage: r.product_image || r.thumbnail_url || '',
+    tag: r.tags || 'Authentic Craft',
+    rating: 4.9,
+    reviews: 150,
+    views: r.views_count || '100K',
+    commentsList: [
+      { user: 'craft_lover', text: 'Stunning quality! Ordered for our family celebration ✨', time: '2h ago' },
+      { user: 'pooja_decor', text: 'Packaging was top notch, looks 100% royal 💯', time: '5h ago' }
+    ]
+  };
+}
+
+export default function ShopTheGram({ initialReels = [] }) {
+  const [posts, setPosts] = useState(() =>
+    initialReels && initialReels.length > 0
+      ? initialReels.filter((r) => r.is_active !== false).map(mapReelToPost)
+      : []
+  );
+  const [loading, setLoading] = useState(() => !(initialReels && initialReels.length > 0));
   const [wordIdx, setWordIdx] = useState(0);
   const [wordChanging, setWordChanging] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
@@ -1171,38 +1210,7 @@ export default function ShopTheGram() {
           const data = await res.json();
           if (isMounted && Array.isArray(data)) {
             const activeReels = data.filter((r) => r.is_active !== false);
-            const mapped = activeReels.map((r, i) => ({
-              id: r.id || `reel-${i}`,
-              avatar: r.influencer_avatar || r.thumbnail_url || 'https://gkskeljvgphslkzctjfp.supabase.co/storage/v1/object/public/reels/avatars/Abida_Fatima.jpg',
-              img: r.thumbnail_url || r.product_image || r.influencer_avatar || 'https://gkskeljvgphslkzctjfp.supabase.co/storage/v1/object/public/reels/avatars/Abida_Fatima.jpg',
-              video: r.video_url,
-              handle: r.influencer_username || '@trioenterprises',
-              name: r.influencer_name || 'Trio Influencer',
-              verified: true,
-              followers: r.followers || '250K',
-              likes: r.likes_count || '15K',
-              likesCount: parseNumericCount(r.likes_count) || 15000,
-              comments: r.comments_count || '250',
-              caption: r.caption || '',
-              song: r.song_title || 'Original Audio · Trio Trends',
-              product: r.product_name || 'Handcrafted Artisan Decor',
-              productId: r.product_id || '',
-              slug: r.product_slug || '',
-              price: `₹${r.product_price || 0}`,
-              rawPrice: Number(r.product_price) || 0,
-              oldPrice: r.product_old_price ? `₹${r.product_old_price}` : '',
-              rawOldPrice: Number(r.product_old_price) || 0,
-              discount: r.product_discount || '',
-              productImage: r.product_image || r.thumbnail_url || '',
-              tag: r.tags || 'Authentic Craft',
-              rating: 4.9,
-              reviews: 150,
-              views: r.views_count || '100K',
-              commentsList: [
-                { user: 'craft_lover', text: 'Stunning quality! Ordered for our family celebration ✨', time: '2h ago' },
-                { user: 'pooja_decor', text: 'Packaging was top notch, looks 100% royal 💯', time: '5h ago' }
-              ]
-            }));
+            const mapped = activeReels.map(mapReelToPost);
             setPosts(mapped);
           }
         }

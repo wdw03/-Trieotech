@@ -23,9 +23,19 @@ import {
 import { fetchLiveProducts, normalizeProduct } from '../../lib/api/store';
 import { Sparkles, ArrowRight, Crown } from 'lucide-react';
 
-export default function HomeClient() {
+export default function HomeClient({
+  initialSlides = [],
+  initialSections = null,
+  initialCategories = [],
+  initialProducts = [],
+  initialReels = [],
+}) {
   const [quickViewProduct, setQuickViewProduct] = useState(null);
-  const [allProducts, setAllProducts] = useState(() => fallbackProducts.map(normalizeProduct));
+  const [allProducts, setAllProducts] = useState(() =>
+    initialProducts && initialProducts.length > 0
+      ? initialProducts
+      : fallbackProducts.map(normalizeProduct)
+  );
 
   useEffect(() => {
     let isMounted = true;
@@ -56,7 +66,7 @@ export default function HomeClient() {
     return list.length > 0 ? list : allProducts.slice(20, 30);
   }, [allProducts]);
 
-  const [sections, setSections] = useState({
+  const [sections, setSections] = useState(() => ({
     heroCarousel: { isEnabled: true },
     categoryGrid: { isEnabled: true },
     bestSellers: { isEnabled: true },
@@ -65,7 +75,8 @@ export default function HomeClient() {
     brandStory: { isEnabled: true },
     blogPreview: { isEnabled: true },
     contactSection: { isEnabled: true },
-  });
+    ...(initialSections || {}),
+  }));
 
   useEffect(() => {
     let isMounted = true;
@@ -94,10 +105,14 @@ export default function HomeClient() {
   return (
     <div className="space-y-4">
       {/* 1. Hero Carousel */}
-      {sections.heroCarousel?.isEnabled !== false && <HeroCarousel />}
+      {sections.heroCarousel?.isEnabled !== false && (
+        <HeroCarousel initialSlides={initialSlides} />
+      )}
 
       {/* 2. Category Grid */}
-      {sections.categoryGrid?.isEnabled !== false && <CategoryGrid />}
+      {sections.categoryGrid?.isEnabled !== false && (
+        <CategoryGrid initialCategories={initialCategories} />
+      )}
 
       {/* 3. Best Sellers Section */}
       {sections.bestSellers?.isEnabled !== false && (
@@ -226,7 +241,7 @@ export default function HomeClient() {
       <TestimonialsCarousel />
 
       {/* 9. Shop The Gram / Instagram Video Reels Section */}
-      {sections.shopTheGram?.isEnabled !== false && <ShopTheGram />}
+      {sections.shopTheGram?.isEnabled !== false && <ShopTheGram initialReels={initialReels} />}
 
       {/* 10. Blog Preview Section */}
       {sections.blogPreview?.isEnabled !== false && <BlogPreview />}
