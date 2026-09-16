@@ -64,6 +64,14 @@ export async function POST(request) {
       );
     }
 
+    // Safety Guard: Cannot revoke Super Admin from primary owner
+    if (targetUserEmail === 'trioent19@gmail.com' && cleanRole !== 'super_admin') {
+      return NextResponse.json(
+        { error: 'Cannot revoke Super Admin role from the Primary Master Owner.' },
+        { status: 400 }
+      );
+    }
+
     // 3. Update profiles table
     const { error: profileUpdateErr } = await supabaseAdmin
       .from('profiles')
@@ -83,9 +91,13 @@ export async function POST(request) {
       console.warn('Auth metadata role update error:', authErr.message);
     }
 
+    const actionText = cleanRole === 'customer' 
+      ? 'Role removed. User access revoked back to Customer.' 
+      : `Role successfully updated to "${cleanRole}"`;
+
     return NextResponse.json({
       success: true,
-      message: `Role successfully updated to "${cleanRole}"`,
+      message: actionText,
       data: {
         userId: targetUserId,
         email: targetUserEmail,
