@@ -73,16 +73,22 @@ export async function POST(request) {
     }
 
     // 3. Update profiles table
-    const { error: profileUpdateErr } = await supabaseAdmin
-      .from('profiles')
-      .update({ role: cleanRole, updated_at: new Date().toISOString() })
-      .eq('id', targetUserId);
+    // PostgreSQL constraint 'profiles_role_check' expects 'admin' or 'customer'
+    const profileRole = cleanRole === 'customer' ? 'customer' : 'admin';
+    try {
+      const { error: profileUpdateErr } = await supabaseAdmin
+        .from('profiles')
+        .update({ role: profileRole, updated_at: new Date().toISOString() })
+        .eq('id', targetUserId);
 
-    if (profileUpdateErr) {
-      console.warn('Profile table role update error:', profileUpdateErr.message);
+      if (profileUpdateErr) {
+        console.warn('Profile table role update warning:', profileUpdateErr.message);
+      }
+    } catch (pErr) {
+      console.warn('Profile table update exception:', pErr.message);
     }
 
-    // 4. Update auth.users metadata if it's a valid auth user
+    // 4. Update auth.users metadata with exact role ('super_admin', 'seo_manager', or 'customer')
     try {
       await supabaseAdmin.auth.admin.updateUserById(targetUserId, {
         user_metadata: { role: cleanRole },

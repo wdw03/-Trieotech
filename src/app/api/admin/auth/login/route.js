@@ -68,7 +68,7 @@ export async function POST(request) {
       console.warn('Auth user lookup warning:', err.message);
     }
 
-    // Check in profiles table for role override
+    // Check in profiles table for profile name or fallback role
     if (targetUser) {
       const { data: profile } = await supabaseAdmin
         .from('profiles')
@@ -77,21 +77,8 @@ export async function POST(request) {
         .maybeSingle();
 
       if (profile) {
-        if (profile.role) userRole = profile.role;
+        if (!userRole && profile.role) userRole = profile.role;
         if (profile.full_name) userName = profile.full_name;
-      }
-    } else {
-      // Check profile by email
-      const { data: profile } = await supabaseAdmin
-        .from('profiles')
-        .select('*')
-        .ilike('email', email)
-        .maybeSingle();
-
-      if (profile) {
-        targetUser = profile;
-        userRole = profile.role;
-        userName = profile.full_name;
       }
     }
 
