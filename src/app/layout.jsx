@@ -1,5 +1,4 @@
 import './globals.css';
-import Script from 'next/script';
 import { Providers } from './providers';
 import StorefrontShell from '../components/layout/StorefrontShell';
 
@@ -83,7 +82,6 @@ export default function RootLayout({ children }) {
             {children}
           </StorefrontShell>
         </Providers>
-        <Script src="https://checkout.razorpay.com/v1/checkout.js" strategy="lazyOnload" />
       </body>
     </html>
   );

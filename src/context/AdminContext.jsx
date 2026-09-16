@@ -167,7 +167,7 @@ export const AdminProvider = ({ children }) => {
       try {
         localStorage.setItem('trio_superadmin_session', JSON.stringify(sessionData));
         setLocalSession(sessionData);
-      } catch (_) {}
+      } catch (_) { }
     }
   }, [authUser, authProfile, authIsAdmin, authRole]);
 
@@ -406,7 +406,7 @@ export const AdminProvider = ({ children }) => {
               date: o.updated_at ? o.updated_at.split('T')[0] : '2026-09-08',
             })));
         }
-                if (returnsRes?.status === 'fulfilled' && Array.isArray(returnsRes.value?.returns)) {
+        if (returnsRes?.status === 'fulfilled' && Array.isArray(returnsRes.value?.returns)) {
           setReturns(returnsRes.value.returns);
         }
         if (catsRes.status === 'fulfilled' && Array.isArray(catsRes.value?.categories)) {
@@ -474,13 +474,13 @@ export const AdminProvider = ({ children }) => {
     setIsRefreshing(true);
     try {
       const [prodsRes, ordersRes, catsRes, custsRes, blogsRes, couponsRes] = await Promise.allSettled([
-          adminApi.getProducts(),
-          adminApi.getOrders(),
-          adminApi.getCategories(),
-          adminApi.getCustomers(),
-          adminApi.getBlogs(),
-          adminApi.getCoupons(),
-        ]);
+        adminApi.getProducts(),
+        adminApi.getOrders(),
+        adminApi.getCategories(),
+        adminApi.getCustomers(),
+        adminApi.getBlogs(),
+        adminApi.getCoupons(),
+      ]);
 
       let syncCount = 0;
       if (prodsRes.status === 'fulfilled' && Array.isArray(prodsRes.value?.products)) {
@@ -1120,7 +1120,7 @@ export const AdminProvider = ({ children }) => {
     if (authLogout) {
       try {
         await authLogout();
-      } catch (_) {}
+      } catch (_) { }
     }
     showToast('Logged out of Super Admin Portal.', 'info');
     if (typeof window !== 'undefined') {

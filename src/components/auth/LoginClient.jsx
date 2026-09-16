@@ -9,7 +9,7 @@ import { Mail, Lock, ArrowRight, Sparkles, Loader2, Eye, EyeOff, ShoppingBag } f
 export default function LoginClient() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { login, user, profile, loading } = useAuth();
+  const { login, user, profile, loading, logout } = useAuth();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -55,7 +55,11 @@ export default function LoginClient() {
         const target = role === 'seo_manager' ? '/admin/cms/home' : (redirectParam && redirectParam.startsWith('/admin') ? redirectParam : '/admin');
         router.replace(target);
       } else {
-        router.replace(redirectTo);
+        // If the user came to /login?redirect=/admin, do NOT kick them to '/'!
+        // Allow them to stay on the page and sign in as Super Admin.
+        if (!redirectParam || !redirectParam.startsWith('/admin')) {
+          router.replace(redirectTo);
+        }
       }
     }
   }, [user, profile, loading, router, redirectTo, redirectParam]);
@@ -140,7 +144,28 @@ export default function LoginClient() {
           </div>
         )}
 
-        {user && (
+        {user && redirectParam.startsWith('/admin') ? (
+          <div className="p-3.5 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-xs text-stone-800 dark:text-amber-200 space-y-2 shadow-xs">
+            <div className="flex items-start justify-between gap-2">
+              <div>
+                <span className="font-bold block text-[12px] text-amber-900 dark:text-amber-300">Customer account active:</span>
+                <span className="text-[11px] opacity-90">{user.email}</span>
+              </div>
+              <button
+                type="button"
+                onClick={async () => {
+                  if (logout) await logout();
+                }}
+                className="text-[10px] font-bold px-2 py-1 bg-amber-500/20 hover:bg-amber-500/30 rounded-lg border border-amber-500/40 text-amber-950 dark:text-amber-200 transition-colors cursor-pointer"
+              >
+                Sign Out
+              </button>
+            </div>
+            <p className="text-[11px] leading-snug text-stone-600 dark:text-stone-400">
+              Sign in with your <strong>Super Admin credentials</strong> below to access the Admin Panel.
+            </p>
+          </div>
+        ) : user ? (
           <div className="p-3.5 rounded-2xl bg-gold-500/10 border border-gold-500/30 text-xs text-maroon-800 dark:text-gold-300 flex items-center justify-between gap-2 shadow-xs">
             <div className="min-w-0 flex-1">
               <span className="font-bold block">Currently signed in as:</span>
@@ -150,7 +175,7 @@ export default function LoginClient() {
               Go to Home Page
             </Link>
           </div>
-        )}
+        ) : null}
 
         {error && (
           <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 text-xs rounded-xl px-4 py-3 space-y-1.5">
