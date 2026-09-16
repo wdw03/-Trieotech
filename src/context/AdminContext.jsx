@@ -94,15 +94,20 @@ export const AdminProvider = ({ children }) => {
     effectiveRole: authRole
   } = useAuth();
 
-  const [localSession, setLocalSession] = useState(() => {
+  const [localSession, setLocalSession] = useState(null);
+
+  useEffect(() => {
     try {
-      if (typeof window === 'undefined') return null;
-      const session = localStorage.getItem('trio_superadmin_session') || sessionStorage.getItem('trio_superadmin_session');
-      return session ? JSON.parse(session) : null;
+      if (typeof window !== 'undefined') {
+        const session = localStorage.getItem('trio_superadmin_session') || sessionStorage.getItem('trio_superadmin_session');
+        if (session) {
+          setLocalSession(JSON.parse(session));
+        }
+      }
     } catch {
-      return null;
+      // ignore
     }
-  });
+  }, []);
 
   const isAuthenticated = Boolean(
     (!authLoading && authUser && authIsAdmin) ||
@@ -257,45 +262,26 @@ export const AdminProvider = ({ children }) => {
   // ═══════════════════════════════════════════════════════════════
   // CMS STATES (HERO SLIDES, HOME SECTIONS, BLOGS, PAGES)
   // ═══════════════════════════════════════════════════════════════
-  const [cmsHeroSlides, setCmsHeroSlides] = useState(() => {
-    try {
-      if (typeof window === 'undefined') return initialHeroSlides;
-      const saved = localStorage.getItem('trio_cms_hero_slides_v1');
-      return saved ? JSON.parse(saved) : initialHeroSlides;
-    } catch {
-      return initialHeroSlides;
-    }
-  });
+  const [cmsHeroSlides, setCmsHeroSlides] = useState(initialHeroSlides);
+  const [cmsHomeSections, setCmsHomeSections] = useState(initialHomeSections);
+  const [cmsBlogs, setCmsBlogs] = useState(initialCmsBlogs);
+  const [cmsPages, setCmsPages] = useState(initialCmsPages);
 
-  const [cmsHomeSections, setCmsHomeSections] = useState(() => {
+  // Sync CMS cached data from localStorage on client mount without causing hydration mismatch
+  useEffect(() => {
     try {
-      if (typeof window === 'undefined') return initialHomeSections;
-      const saved = localStorage.getItem('trio_cms_home_sections_v1');
-      return saved ? JSON.parse(saved) : initialHomeSections;
-    } catch {
-      return initialHomeSections;
-    }
-  });
-
-  const [cmsBlogs, setCmsBlogs] = useState(() => {
-    try {
-      if (typeof window === 'undefined') return initialCmsBlogs;
-      const saved = localStorage.getItem('trio_cms_blogs_v1');
-      return saved ? JSON.parse(saved) : initialCmsBlogs;
-    } catch {
-      return initialCmsBlogs;
-    }
-  });
-
-  const [cmsPages, setCmsPages] = useState(() => {
-    try {
-      if (typeof window === 'undefined') return initialCmsPages;
-      const saved = localStorage.getItem('trio_cms_pages_v1');
-      return saved ? JSON.parse(saved) : initialCmsPages;
-    } catch {
-      return initialCmsPages;
-    }
-  });
+      if (typeof window !== 'undefined') {
+        const savedSlides = localStorage.getItem('trio_cms_hero_slides_v1');
+        if (savedSlides) setCmsHeroSlides(JSON.parse(savedSlides));
+        const savedSections = localStorage.getItem('trio_cms_home_sections_v1');
+        if (savedSections) setCmsHomeSections(JSON.parse(savedSections));
+        const savedBlogs = localStorage.getItem('trio_cms_blogs_v1');
+        if (savedBlogs) setCmsBlogs(JSON.parse(savedBlogs));
+        const savedPages = localStorage.getItem('trio_cms_pages_v1');
+        if (savedPages) setCmsPages(JSON.parse(savedPages));
+      }
+    } catch (_) {}
+  }, []);
 
   // UI & Loading States
   const [isLoading, setIsLoading] = useState(true);

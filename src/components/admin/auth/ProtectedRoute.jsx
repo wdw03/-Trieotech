@@ -8,10 +8,15 @@ import { Loader2, ShieldAlert, Lock, Mail, Eye, EyeOff, ArrowRight, ArrowLeft } 
 import Link from 'next/link';
 
 export const ProtectedRoute = ({ children }) => {
+  const [mounted, setMounted] = useState(false);
   const { user, profile, loading: authLoading, login: authLogin } = useAuth();
   const { isAuthenticated, isAuthChecking, isSeoManager, canAccessRoute, login: adminLogin } = useAdmin();
   const router = useRouter();
   const pathname = usePathname() || '';
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // Direct inline admin login state
   const [adminEmail, setAdminEmail] = useState('trioenterprises10@gmail.com');
@@ -28,13 +33,13 @@ export const ProtectedRoute = ({ children }) => {
   const isChecking = authLoading && isAuthChecking;
 
   useEffect(() => {
-    if (isChecking) return;
+    if (!mounted || isChecking) return;
 
     // If logged in and has admin access -> redirect SEO manager to their workspace if at root
     if (hasAdminAccess && isSeoManager() && (pathname === '/admin' || pathname === '/admin/')) {
       router.replace('/admin/cms/home');
     }
-  }, [hasAdminAccess, isChecking, isSeoManager, pathname, router]);
+  }, [mounted, hasAdminAccess, isChecking, isSeoManager, pathname, router]);
 
   const handleAdminSignIn = async (e) => {
     e.preventDefault();
@@ -70,8 +75,8 @@ export const ProtectedRoute = ({ children }) => {
     }
   };
 
-  // Loading state
-  if (isChecking) {
+  // Loading / hydration safety guard
+  if (!mounted || isChecking) {
     return (
       <div className="min-h-screen bg-[#0B0F19] flex flex-col items-center justify-center gap-3 text-slate-400">
         <Loader2 className="w-8 h-8 animate-spin text-amber-500" />

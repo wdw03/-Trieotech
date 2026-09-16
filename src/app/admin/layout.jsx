@@ -7,12 +7,14 @@ import { Layout } from '../../components/admin/layout/Layout';
 
 export default function AdminRootLayout({ children }) {
   return (
-    <AdminProvider>
-      <ProtectedRoute>
-        <Layout>
-          {children}
-        </Layout>
-      </ProtectedRoute>
-    </AdminProvider>
+    <div suppressHydrationWarning className="min-h-screen w-full bg-[#0B0F19]">
+      <AdminProvider>
+        <ProtectedRoute>
+          <Layout>
+            {children}
+          </Layout>
+        </ProtectedRoute>
+      </AdminProvider>
+    </div>
   );
 }
