@@ -14,7 +14,10 @@ export const DeleteConfirmModal = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-sm select-none animate-fadeIn">
+    <div
+      className="admin-portal dark fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-sm select-none animate-fadeIn"
+      style={{ colorScheme: 'dark' }}
+    >
       <div className="bg-slate-900 border border-slate-700/80 rounded-2xl w-full max-w-md shadow-2xl p-6 space-y-4 animate-scaleIn">
         <div className="flex items-start justify-between gap-3">
           <div className="flex items-center gap-3">

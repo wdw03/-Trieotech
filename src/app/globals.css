@@ -139,6 +139,23 @@
   .badge-new {
     @apply bg-gradient-to-r from-blue-700 to-indigo-700 text-white font-bold border border-blue-300/40;
   }
+
+  /* Admin Form Controls & Cards */
+  .admin-input {
+    @apply bg-slate-900 text-slate-100 border border-slate-700 rounded-xl px-3.5 py-2 text-xs outline-none transition-all placeholder-slate-500;
+  }
+  .admin-input:focus {
+    @apply bg-slate-950 text-white border-indigo-500 ring-2 ring-indigo-500/20;
+  }
+  .admin-select {
+    @apply bg-slate-900 text-slate-100 border border-slate-700 rounded-xl px-3.5 py-2 text-xs outline-none transition-all cursor-pointer;
+  }
+  .admin-select:focus {
+    @apply bg-slate-950 text-white border-indigo-500 ring-2 ring-indigo-500/20;
+  }
+  .admin-card {
+    @apply bg-slate-900/85 border border-slate-700/70 rounded-2xl shadow-xl backdrop-blur-md text-slate-200;
+  }
 }
 
 /* Custom Scrollbar */
@@ -361,61 +378,110 @@
 
 /* ==========================================================================
    ADMIN PORTAL DARK THEME FORM CONTROLS & UTILITIES
-   Ensures all inputs, selects, textareas, and modals have high-contrast dark
-   slate backgrounds (#0F172A), clear white readable text (#F8FAFC), crisp
-   slate borders (#334155), and sleek indigo focus rings (#6366F1).
+   Ensures ALL inputs, selects, textareas, and modals across the entire Admin
+   Panel have high-contrast dark slate backgrounds (#0F172A), clear white
+   readable text (#F8FAFC), crisp slate borders (#334155), and sleek indigo
+   focus rings (#6366F1), completely preventing white backgrounds or light text.
    ========================================================================== */
 
-/* Admin Input styling */
-.admin-input {
+.admin-portal,
+.admin-portal *,
+.admin-input,
+.admin-select {
+  color-scheme: dark !important;
+}
+
+/* Base input styling for any element with .admin-input or inside .admin-portal */
+.admin-portal input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="submit"]):not([type="button"]):not([type="color"]):not([type="image"]),
+.admin-portal textarea,
+.admin-portal select,
+[class*="admin"] input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="submit"]):not([type="button"]):not([type="color"]):not([type="image"]),
+[class*="admin"] textarea,
+[class*="admin"] select,
+.admin-input,
+input.admin-input,
+textarea.admin-input,
+select.admin-input,
+.admin-select,
+select.admin-select {
   background-color: #0F172A !important;
   color: #F8FAFC !important;
+  -webkit-text-fill-color: #F8FAFC !important;
   border: 1px solid #334155 !important;
   border-radius: 0.75rem;
   padding: 0.5rem 0.875rem;
   outline: none !important;
+  color-scheme: dark !important;
   transition: all 0.15s ease-in-out;
 }
 
-.admin-input:focus {
+/* Explicit focus state */
+.admin-portal input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="submit"]):not([type="button"]):not([type="color"]):not([type="image"]):focus,
+.admin-portal textarea:focus,
+.admin-portal select:focus,
+[class*="admin"] input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="submit"]):not([type="button"]):not([type="color"]):not([type="image"]):focus,
+[class*="admin"] textarea:focus,
+[class*="admin"] select:focus,
+.admin-input:focus,
+input.admin-input:focus,
+textarea.admin-input:focus,
+select.admin-input:focus,
+.admin-select:focus,
+select.admin-select:focus {
   background-color: #0B1120 !important;
   color: #FFFFFF !important;
+  -webkit-text-fill-color: #FFFFFF !important;
   border-color: #6366F1 !important;
+  outline: none !important;
   box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.25) !important;
 }
 
-.admin-input::placeholder {
+/* Explicit placeholder state */
+.admin-portal input::placeholder,
+.admin-portal textarea::placeholder,
+[class*="admin"] input::placeholder,
+[class*="admin"] textarea::placeholder,
+.admin-input::placeholder,
+input.admin-input::placeholder,
+textarea.admin-input::placeholder {
   color: #64748B !important;
+  -webkit-text-fill-color: #64748B !important;
+  opacity: 1 !important;
 }
 
+/* Disabled state */
+.admin-portal input:disabled,
+.admin-portal textarea:disabled,
+.admin-portal select:disabled,
 .admin-input:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
+  opacity: 0.5 !important;
+  cursor: not-allowed !important;
   background-color: #1E293B !important;
 }
 
-/* Admin Select dropdown styling */
-.admin-select {
+/* Select options styling */
+select option,
+.admin-portal select option,
+.admin-select option,
+select.admin-input option {
   background-color: #0F172A !important;
   color: #F8FAFC !important;
-  border: 1px solid #334155 !important;
-  border-radius: 0.75rem;
-  padding: 0.5rem 0.875rem;
-  outline: none !important;
-  cursor: pointer;
-  transition: all 0.15s ease-in-out;
 }
 
-.admin-select:focus {
-  background-color: #0B1120 !important;
-  color: #FFFFFF !important;
-  border-color: #6366F1 !important;
-  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.25) !important;
-}
-
-.admin-select option {
-  background-color: #0F172A !important;
-  color: #F8FAFC !important;
+/* Browser Autofill styling for Admin Portal */
+.admin-portal input:-webkit-autofill,
+.admin-portal input:-webkit-autofill:hover, 
+.admin-portal input:-webkit-autofill:focus, 
+.admin-portal input:-webkit-autofill:active,
+[class*="admin"] input:-webkit-autofill,
+.admin-input:-webkit-autofill,
+.admin-input:-webkit-autofill:hover,
+.admin-input:-webkit-autofill:focus,
+.admin-input:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 1000px #0F172A inset !important;
+  -webkit-text-fill-color: #F8FAFC !important;
+  caret-color: #F8FAFC !important;
+  transition: background-color 5000s ease-in-out 0s;
 }
 
 /* Admin Card styling */
@@ -449,50 +515,6 @@
   background-color: #334155;
   color: #FFFFFF;
   border-color: #475569;
-}
-
-/* Scoped catch-all for any input, textarea, and select within the Admin Portal */
-.admin-portal input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="submit"]):not([type="button"]):not([type="color"]):not([type="image"]),
-.admin-portal textarea,
-.admin-portal select {
-  background-color: #0F172A;
-  color: #F8FAFC;
-  border-color: #334155;
-}
-
-.admin-portal input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="submit"]):not([type="button"]):not([type="color"]):not([type="image"]):focus,
-.admin-portal textarea:focus,
-.admin-portal select:focus {
-  background-color: #0B1120;
-  color: #FFFFFF;
-  border-color: #6366F1;
-  outline: none;
-  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.25);
-}
-
-.admin-portal input::placeholder,
-.admin-portal textarea::placeholder {
-  color: #64748B;
-}
-
-.admin-portal select option {
-  background-color: #0F172A;
-  color: #F8FAFC;
-}
-
-/* Browser Autofill styling for Admin Portal */
-.admin-portal input:-webkit-autofill,
-.admin-portal input:-webkit-autofill:hover, 
-.admin-portal input:-webkit-autofill:focus, 
-.admin-portal input:-webkit-autofill:active,
-.admin-input:-webkit-autofill,
-.admin-input:-webkit-autofill:hover,
-.admin-input:-webkit-autofill:focus,
-.admin-input:-webkit-autofill:active {
-  -webkit-box-shadow: 0 0 0 1000px #0F172A inset !important;
-  -webkit-text-fill-color: #F8FAFC !important;
-  caret-color: #F8FAFC !important;
-  transition: background-color 5000s ease-in-out 0s;
 }
 
 

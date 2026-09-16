@@ -180,8 +180,11 @@ export const SlideEditorModal = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/85 backdrop-blur-md overflow-y-auto animate-fadeIn">
-      <div className="bg-slate-900 border border-slate-700/80 rounded-2xl w-full max-w-4xl max-h-[92vh] flex flex-col shadow-2xl overflow-hidden animate-scaleIn">
+    <div
+      className="admin-portal dark fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/85 backdrop-blur-md overflow-y-auto animate-fadeIn"
+      style={{ colorScheme: 'dark' }}
+    >
+      <div className="bg-slate-900 border border-slate-700/80 rounded-2xl w-full max-w-4xl max-h-[92vh] flex flex-col shadow-2xl overflow-hidden animate-scaleIn text-slate-100">
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-slate-800 bg-slate-950/70 shrink-0">
           <div>
@@ -366,7 +369,7 @@ export const SlideEditorModal = ({
                         value={formData.desktopImage}
                         onChange={(e) => setFormData({ ...formData, desktopImage: e.target.value })}
                         placeholder="https://...supabase.co/storage/v1/object/public/banners/image.jpg"
-                        className="admin-input w-full text-xs font-mono"
+                        className="admin-input bg-slate-900 border border-slate-700 text-white placeholder-slate-500 focus:bg-slate-950 focus:border-indigo-500 w-full text-xs font-mono"
                         required
                       />
                     </div>
@@ -389,7 +392,7 @@ export const SlideEditorModal = ({
                     }));
                   }}
                   placeholder="e.g. Handcrafted Zardosi & Sacred Deity Patches"
-                  className="admin-input w-full text-xs font-semibold"
+                  className="admin-input bg-slate-900 border border-slate-700 text-white placeholder-slate-500 focus:bg-slate-950 focus:border-indigo-500 w-full text-xs font-semibold"
                   required
                 />
               </div>
@@ -408,7 +411,7 @@ export const SlideEditorModal = ({
                     }));
                   }}
                   placeholder="Detailed artisanal craft story shown on desktop screens..."
-                  className="admin-input w-full text-xs leading-relaxed"
+                  className="admin-input bg-slate-900 border border-slate-700 text-white placeholder-slate-500 focus:bg-slate-950 focus:border-indigo-500 w-full text-xs leading-relaxed"
                 />
               </div>
 
@@ -420,7 +423,7 @@ export const SlideEditorModal = ({
                     value={formData.desktopCtaText}
                     onChange={(e) => setFormData({ ...formData, desktopCtaText: e.target.value })}
                     placeholder="e.g. Explore Collection"
-                    className="admin-input w-full text-xs"
+                    className="admin-input bg-slate-900 border border-slate-700 text-white placeholder-slate-500 focus:bg-slate-950 focus:border-indigo-500 w-full text-xs"
                   />
                 </div>
                 <div>
@@ -430,7 +433,7 @@ export const SlideEditorModal = ({
                     value={formData.ctaLink}
                     onChange={(e) => setFormData({ ...formData, ctaLink: e.target.value })}
                     placeholder="e.g. /category/patches"
-                    className="admin-input w-full text-xs font-mono"
+                    className="admin-input bg-slate-900 border border-slate-700 text-white placeholder-slate-500 focus:bg-slate-950 focus:border-indigo-500 w-full text-xs font-mono"
                   />
                 </div>
               </div>
@@ -443,7 +446,7 @@ export const SlideEditorModal = ({
                     value={formData.secondaryCtaText}
                     onChange={(e) => setFormData({ ...formData, secondaryCtaText: e.target.value })}
                     placeholder="e.g. View Best Sellers"
-                    className="admin-input w-full text-xs"
+                    className="admin-input bg-slate-900 border border-slate-700 text-white placeholder-slate-500 focus:bg-slate-950 focus:border-indigo-500 w-full text-xs"
                   />
                 </div>
                 <div>
@@ -453,7 +456,7 @@ export const SlideEditorModal = ({
                     value={formData.secondaryCtaLink}
                     onChange={(e) => setFormData({ ...formData, secondaryCtaLink: e.target.value })}
                     placeholder="e.g. /shop"
-                    className="admin-input w-full text-xs font-mono"
+                    className="admin-input bg-slate-900 border border-slate-700 text-white placeholder-slate-500 focus:bg-slate-950 focus:border-indigo-500 w-full text-xs font-mono"
                   />
                 </div>
               </div>
@@ -559,7 +562,7 @@ export const SlideEditorModal = ({
                         value={formData.mobileImage}
                         onChange={(e) => setFormData({ ...formData, mobileImage: e.target.value })}
                         placeholder="https://...supabase.co/storage/v1/object/public/banners/mobile.jpg"
-                        className="admin-input w-full text-xs font-mono"
+                        className="admin-input bg-slate-900 border border-slate-700 text-white placeholder-slate-500 focus:bg-slate-950 focus:border-indigo-500 w-full text-xs font-mono"
                       />
                     </div>
                   </div>
@@ -574,7 +577,7 @@ export const SlideEditorModal = ({
                   value={formData.mobileTitle}
                   onChange={(e) => setFormData({ ...formData, mobileTitle: e.target.value })}
                   placeholder="e.g. Handcrafted Zardosi & Deity Patches"
-                  className="admin-input w-full text-xs font-semibold"
+                  className="admin-input bg-slate-900 border border-slate-700 text-white placeholder-slate-500 focus:bg-slate-950 focus:border-indigo-500 w-full text-xs font-semibold"
                 />
                 <span className="text-[10px] text-slate-500 mt-0.5 block">Defaults to Desktop Headline if left empty.</span>
               </div>
@@ -586,7 +589,7 @@ export const SlideEditorModal = ({
                   value={formData.mobileSubtitle}
                   onChange={(e) => setFormData({ ...formData, mobileSubtitle: e.target.value })}
                   placeholder="Shorter 1-sentence description for phone screens..."
-                  className="admin-input w-full text-xs"
+                  className="admin-input bg-slate-900 border border-slate-700 text-white placeholder-slate-500 focus:bg-slate-950 focus:border-indigo-500 w-full text-xs"
                 />
               </div>
 
@@ -597,7 +600,7 @@ export const SlideEditorModal = ({
                   value={formData.mobileCtaText}
                   onChange={(e) => setFormData({ ...formData, mobileCtaText: e.target.value })}
                   placeholder="e.g. Explore Patches"
-                  className="admin-input w-full text-xs"
+                  className="admin-input bg-slate-900 border border-slate-700 text-white placeholder-slate-500 focus:bg-slate-950 focus:border-indigo-500 w-full text-xs"
                 />
               </div>
 
@@ -627,7 +630,7 @@ export const SlideEditorModal = ({
                       value={formData.secondaryImage}
                       onChange={(e) => setFormData({ ...formData, secondaryImage: e.target.value })}
                       placeholder="e.g. /products/peacock-real-feathers-pair-1.jpg"
-                      className="admin-input flex-1 text-xs font-mono"
+                      className="admin-input bg-slate-900 border border-slate-700 text-white placeholder-slate-500 focus:bg-slate-950 focus:border-indigo-500 flex-1 text-xs font-mono"
                     />
                     <button
                       type="button"
@@ -667,7 +670,7 @@ export const SlideEditorModal = ({
                     value={formData.badge}
                     onChange={(e) => setFormData({ ...formData, badge: e.target.value })}
                     placeholder="e.g. Festive & Wedding 2026"
-                    className="admin-input w-full text-xs"
+                    className="admin-input bg-slate-900 border border-slate-700 text-white placeholder-slate-500 focus:bg-slate-950 focus:border-indigo-500 w-full text-xs"
                   />
                 </div>
                 <div>
@@ -677,7 +680,7 @@ export const SlideEditorModal = ({
                     value={formData.tag}
                     onChange={(e) => setFormData({ ...formData, tag: e.target.value })}
                     placeholder="e.g. Authentic Imperial Zari"
-                    className="admin-input w-full text-xs"
+                    className="admin-input bg-slate-900 border border-slate-700 text-white placeholder-slate-500 focus:bg-slate-950 focus:border-indigo-500 w-full text-xs"
                   />
                 </div>
               </div>
@@ -689,7 +692,7 @@ export const SlideEditorModal = ({
                   min="0"
                   value={formData.displayOrder}
                   onChange={(e) => setFormData({ ...formData, displayOrder: parseInt(e.target.value) || 0 })}
-                  className="admin-input w-32 text-xs font-mono"
+                  className="admin-input bg-slate-900 border border-slate-700 text-white placeholder-slate-500 focus:bg-slate-950 focus:border-indigo-500 w-32 text-xs font-mono"
                 />
               </div>
 

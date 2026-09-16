@@ -274,8 +274,11 @@ export const ReelEditorModal = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/85 backdrop-blur-md overflow-y-auto">
-      <div className="relative w-full max-w-4xl bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl overflow-hidden my-auto max-h-[92vh] flex flex-col">
+    <div
+      className="admin-portal dark fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/85 backdrop-blur-md overflow-y-auto"
+      style={{ colorScheme: 'dark' }}
+    >
+      <div className="relative w-full max-w-4xl bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl overflow-hidden my-auto max-h-[92vh] flex flex-col text-slate-100">
         
         {/* Modal Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-slate-800 bg-slate-950/60 shrink-0">
@@ -413,7 +416,7 @@ export const ReelEditorModal = ({
                     value={formData.video_url}
                     onChange={(e) => setFormData({ ...formData, video_url: e.target.value })}
                     placeholder="https://...supabase.co/storage/v1/object/public/reels/video.mp4"
-                    className="admin-input w-full text-xs font-mono"
+                    className="admin-input bg-slate-900 border border-slate-700 text-white placeholder-slate-500 focus:bg-slate-950 focus:border-indigo-500 w-full text-xs font-mono"
                   />
                 </div>
               </div>
@@ -442,7 +445,7 @@ export const ReelEditorModal = ({
                     min="0"
                     value={formData.display_order}
                     onChange={(e) => setFormData({ ...formData, display_order: parseInt(e.target.value) || 0 })}
-                    className="admin-input w-20 text-xs font-mono text-center"
+                    className="admin-input bg-slate-900 border border-slate-700 text-white placeholder-slate-500 focus:bg-slate-950 focus:border-indigo-500 w-20 text-xs font-mono text-center"
                   />
                 </div>
               </div>
@@ -467,7 +470,7 @@ export const ReelEditorModal = ({
                       value={formData.influencer_name}
                       onChange={(e) => setFormData({ ...formData, influencer_name: e.target.value })}
                       placeholder="e.g. Abida Fatima"
-                      className="admin-input w-full text-xs"
+                      className="admin-input bg-slate-900 border border-slate-700 text-white placeholder-slate-500 focus:bg-slate-950 focus:border-indigo-500 w-full text-xs"
                       required
                     />
                   </div>
@@ -481,7 +484,7 @@ export const ReelEditorModal = ({
                         value={formData.influencer_username.replace(/^@/, '')}
                         onChange={(e) => setFormData({ ...formData, influencer_username: '@' + e.target.value.replace(/^@/, '') })}
                         placeholder="abida.fatima_"
-                        className="admin-input w-full text-xs pl-7"
+                        className="admin-input bg-slate-900 border border-slate-700 text-white placeholder-slate-500 focus:bg-slate-950 focus:border-indigo-500 w-full text-xs pl-7"
                         required
                       />
                     </div>
@@ -511,7 +514,7 @@ export const ReelEditorModal = ({
                         value={formData.influencer_avatar}
                         onChange={(e) => setFormData({ ...formData, influencer_avatar: e.target.value })}
                         placeholder="Avatar image URL"
-                        className="admin-input flex-1 text-xs"
+                        className="admin-input bg-slate-900 border border-slate-700 text-white placeholder-slate-500 focus:bg-slate-950 focus:border-indigo-500 flex-1 text-xs"
                       />
                       <button
                         type="button"
@@ -548,7 +551,7 @@ export const ReelEditorModal = ({
                     value={formData.caption}
                     onChange={(e) => setFormData({ ...formData, caption: e.target.value })}
                     placeholder="e.g. Added these handcrafted pearl zardosi patches to my festive lehenga border ✨"
-                    className="admin-input w-full text-xs"
+                    className="admin-input bg-slate-900 border border-slate-700 text-white placeholder-slate-500 focus:bg-slate-950 focus:border-indigo-500 w-full text-xs"
                   />
                 </div>
 
@@ -562,7 +565,7 @@ export const ReelEditorModal = ({
                     value={formData.song_title}
                     onChange={(e) => setFormData({ ...formData, song_title: e.target.value })}
                     placeholder="e.g. Kesariya · Slowed & Reverb"
-                    className="admin-input w-full text-xs"
+                    className="admin-input bg-slate-900 border border-slate-700 text-white placeholder-slate-500 focus:bg-slate-950 focus:border-indigo-500 w-full text-xs"
                   />
                 </div>
 
@@ -578,7 +581,7 @@ export const ReelEditorModal = ({
                       value={formData.views_count}
                       onChange={(e) => setFormData({ ...formData, views_count: e.target.value })}
                       placeholder="e.g. 412K"
-                      className="admin-input w-full text-xs font-mono font-bold text-indigo-300"
+                      className="admin-input bg-slate-900 border border-slate-700 text-indigo-300 placeholder-slate-500 focus:bg-slate-950 focus:border-indigo-500 w-full text-xs font-mono font-bold"
                     />
                   </div>
 
@@ -592,7 +595,7 @@ export const ReelEditorModal = ({
                       value={formData.likes_count}
                       onChange={(e) => setFormData({ ...formData, likes_count: e.target.value })}
                       placeholder="e.g. 24.3K"
-                      className="admin-input w-full text-xs font-mono font-bold text-[#ee2a7b]"
+                      className="admin-input bg-slate-900 border border-slate-700 text-[#ee2a7b] placeholder-slate-500 focus:bg-slate-950 focus:border-indigo-500 w-full text-xs font-mono font-bold"
                     />
                   </div>
 
@@ -606,7 +609,7 @@ export const ReelEditorModal = ({
                       value={formData.comments_count}
                       onChange={(e) => setFormData({ ...formData, comments_count: e.target.value })}
                       placeholder="e.g. 1,204"
-                      className="admin-input w-full text-xs font-mono font-bold text-emerald-300"
+                      className="admin-input bg-slate-900 border border-slate-700 text-emerald-300 placeholder-slate-500 focus:bg-slate-950 focus:border-indigo-500 w-full text-xs font-mono font-bold"
                     />
                   </div>
                 </div>
@@ -725,7 +728,7 @@ export const ReelEditorModal = ({
                       }}
                       onFocus={() => setProductDropdownOpen(true)}
                       placeholder="Search any product across whole store by title, category, ID, or SKU..."
-                      className="admin-input w-full text-xs pl-8 pr-8"
+                      className="admin-input bg-slate-900 border border-slate-700 text-white placeholder-slate-500 focus:bg-slate-950 focus:border-indigo-500 w-full text-xs pl-8 pr-8"
                     />
                     {productSearch && (
                       <button

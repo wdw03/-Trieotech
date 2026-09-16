@@ -338,7 +338,10 @@ export const BlogEditorModal = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/80 backdrop-blur-md overflow-y-auto animate-fadeIn">
+    <div
+      className="admin-portal dark fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/85 backdrop-blur-md overflow-y-auto animate-fadeIn"
+      style={{ colorScheme: 'dark' }}
+    >
       <div className="bg-slate-900 border border-slate-800 rounded-3xl w-full max-w-4xl max-h-[92vh] flex flex-col shadow-2xl overflow-hidden my-auto">
         
         {/* MODAL HEADER */}
@@ -972,7 +975,10 @@ export const BlogEditorModal = ({
       {/* POPUP MODAL: UPLOAD & INSERT INLINE IMAGE WITH ALT TAG */}
       {/* ============================================================ */}
       {insertImageModalOpen && (
-        <div className="fixed inset-0 z-60 flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-md animate-fadeIn">
+        <div
+          className="admin-portal dark fixed inset-0 z-60 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md animate-fadeIn"
+          style={{ colorScheme: 'dark' }}
+        >
           <div className="bg-slate-900 border border-slate-700 rounded-3xl w-full max-w-md p-5 space-y-4 shadow-2xl">
             <div className="flex items-center justify-between pb-3 border-b border-slate-800">
               <div className="flex items-center gap-2">
