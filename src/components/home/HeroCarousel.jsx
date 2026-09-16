@@ -244,24 +244,31 @@ export const HeroCarousel = () => {
 
           {/* Right Visual Product Card */}
           <div className="lg:col-span-5 relative mt-0.5 sm:mt-0">
-            <div className="relative mx-auto max-w-[280px] xs:max-w-[320px] sm:max-w-md">
+            <div className="relative mx-auto max-w-[320px] sm:max-w-md w-full">
 
-              {/* Main Visual Card with Responsive Picture (Mobile Photo vs Desktop Photo) */}
-              <div className="relative aspect-[4/3.4] sm:aspect-[4/4.5] rounded-2xl sm:rounded-3xl overflow-hidden border-2 border-gold-500/40 shadow-xl sm:shadow-2xl bg-[#1C0F0F] group">
-                <picture className="w-full h-full block">
+              {/* Main Visual Card with Auto-Fitting Picture (Pura image show hoga bina crop hue) */}
+              <div className="relative aspect-square sm:aspect-[4/4.5] rounded-2xl sm:rounded-3xl overflow-hidden border-2 border-gold-500/40 shadow-xl sm:shadow-2xl bg-[#1C0F0F] group flex items-center justify-center p-3 sm:p-5">
+                {/* Ambient dynamic background reflection */}
+                <div
+                  className="absolute inset-0 bg-cover bg-center filter blur-2xl scale-125 opacity-35 pointer-events-none transition-all duration-700"
+                  style={{ backgroundImage: `url("${slide.mobile_image || slide.desktop_image || slide.image || '/products/shreenathji-statement-patch-1.jpg'}")` }}
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/20 to-black/55 pointer-events-none" />
+
+                <picture className="relative z-10 w-full h-full flex items-center justify-center">
                   {(slide.mobile_image || slide.mobileImage) && (
                     <source media="(max-width: 768px)" srcSet={slide.mobile_image || slide.mobileImage} />
                   )}
                   <img
                     src={slide.desktop_image || slide.image || slide.desktopImage || '/products/shreenathji-statement-patch-1.jpg'}
                     alt={slide.title}
-                    className="w-full h-full object-cover object-center transform group-hover:scale-105 transition-transform duration-700"
+                    className="w-full h-full object-contain object-center transform group-hover:scale-105 transition-transform duration-700 filter drop-shadow-[0_10px_25px_rgba(0,0,0,0.6)]"
                     loading="eager"
                   />
                 </picture>
 
                 {/* Floating Tag */}
-                <div className="absolute top-2.5 left-2.5 sm:top-4 sm:left-4 bg-maroon-900/90 backdrop-blur-md border border-gold-500/40 text-gold-300 text-[9px] sm:text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 sm:px-3 sm:py-1 rounded-full shadow-lg">
+                <div className="absolute top-2.5 left-2.5 sm:top-4 sm:left-4 z-20 bg-maroon-900/90 backdrop-blur-md border border-gold-500/40 text-gold-300 text-[9px] sm:text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 sm:px-3 sm:py-1 rounded-full shadow-lg">
                   {slide.tag || 'Authentic Craft'}
                 </div>
 
@@ -269,11 +276,15 @@ export const HeroCarousel = () => {
 
               {/* Floating Secondary Mini Card (Desktop/Tablet Only) */}
               {(slide.secondary_image || slide.secondaryImage) && (
-                <div className="absolute -bottom-6 -left-6 hidden sm:block w-32 h-32 rounded-2xl overflow-hidden border-2 border-gold-500/60 shadow-xl bg-black">
+                <div className="absolute -bottom-6 -left-6 hidden sm:flex w-32 h-32 rounded-2xl overflow-hidden border-2 border-gold-500/60 shadow-xl bg-black items-center justify-center p-2 z-20">
+                  <div
+                    className="absolute inset-0 bg-cover bg-center filter blur-lg scale-125 opacity-40 pointer-events-none"
+                    style={{ backgroundImage: `url("${slide.secondary_image || slide.secondaryImage}")` }}
+                  />
                   <img
                     src={slide.secondary_image || slide.secondaryImage}
                     alt="Secondary preview"
-                    className="w-full h-full object-cover"
+                    className="relative z-10 w-full h-full object-contain object-center filter drop-shadow-md"
                     loading="lazy"
                   />
                 </div>
@@ -292,8 +303,8 @@ export const HeroCarousel = () => {
                 key={idx}
                 onClick={() => setCurrentSlide(idx)}
                 className={`h-1.5 sm:h-2 rounded-full transition-all duration-300 ${activeIndex === idx
-                    ? 'w-6 sm:w-8 bg-gold-400'
-                    : 'w-1.5 sm:w-2 bg-stone-600 hover:bg-stone-400'
+                  ? 'w-6 sm:w-8 bg-gold-400'
+                  : 'w-1.5 sm:w-2 bg-stone-600 hover:bg-stone-400'
                   }`}
                 aria-label={`Go to slide ${idx + 1}`}
               />
