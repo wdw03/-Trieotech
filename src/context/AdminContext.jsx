@@ -85,10 +85,20 @@ export const AdminProvider = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(() => {
     try {
       if (typeof window === 'undefined') return false;
-      const session = localStorage.getItem('trio_superadmin_session');
+      const session = localStorage.getItem('trio_superadmin_session') || sessionStorage.getItem('trio_superadmin_session');
       return session ? JSON.parse(session)?.active === true : false;
     } catch {
       return false;
+    }
+  });
+
+  const [isAuthChecking, setIsAuthChecking] = useState(() => {
+    try {
+      if (typeof window === 'undefined') return true;
+      const session = localStorage.getItem('trio_superadmin_session') || sessionStorage.getItem('trio_superadmin_session');
+      return session ? !JSON.parse(session)?.active : true;
+    } catch {
+      return true;
     }
   });
 
@@ -103,7 +113,7 @@ export const AdminProvider = ({ children }) => {
           lastLogin: null
         };
       }
-      const session = localStorage.getItem('trio_superadmin_session');
+      const session = localStorage.getItem('trio_superadmin_session') || sessionStorage.getItem('trio_superadmin_session');
       return session ? JSON.parse(session)?.user : {
         name: 'Trio Super Admin',
         email: 'trioenterprises10@gmail.com',
@@ -121,6 +131,86 @@ export const AdminProvider = ({ children }) => {
       };
     }
   });
+
+  // Verify and sync authentication state from Supabase Auth & LocalStorage
+  useEffect(() => {
+    let isCancelled = false;
+    const verifyAuth = async () => {
+      try {
+        if (typeof window === 'undefined') return;
+
+        // 1. Check local session
+        const raw = localStorage.getItem('trio_superadmin_session') || sessionStorage.getItem('trio_superadmin_session');
+        if (raw) {
+          try {
+            const parsed = JSON.parse(raw);
+            if (parsed?.active) {
+              if (!isCancelled) {
+                setIsAuthenticated(true);
+                if (parsed.user) setAdminUser(parsed.user);
+                setIsAuthChecking(false);
+              }
+              return;
+            }
+          } catch (_) {}
+        }
+
+        // 2. Check Supabase Auth session
+        if (supabase) {
+          const { data: { user: sbUser } } = await supabase.auth.getUser();
+          if (sbUser) {
+            const userEmail = (sbUser.email || '').toLowerCase();
+            const isMaster = userEmail === 'trioenterprises10@gmail.com';
+            const metaRole = (sbUser.user_metadata?.role || '').toLowerCase();
+
+            let dbRole = '';
+            try {
+              const { data: prof } = await supabase.from('profiles').select('role, full_name').eq('id', sbUser.id).single();
+              if (prof?.role) dbRole = (prof.role || '').toLowerCase();
+            } catch (_) {}
+
+            const effectiveRole = isMaster ? 'super_admin' : (dbRole || metaRole);
+            if (isMaster || ['super_admin', 'admin', 'seo_manager'].includes(effectiveRole)) {
+              const formattedRole = isMaster ? 'Super Admin' : (effectiveRole === 'seo_manager' ? 'SEO Manager' : 'Admin');
+              const sessionData = {
+                active: true,
+                user: {
+                  id: sbUser.id,
+                  name: isMaster ? 'Trio Super Admin' : (sbUser.user_metadata?.full_name || 'Admin'),
+                  email: userEmail,
+                  role: formattedRole,
+                  avatar: 'SA',
+                  lastLogin: new Date().toISOString()
+                },
+                token: `trio_auth_${Date.now()}`
+              };
+              localStorage.setItem('trio_superadmin_session', JSON.stringify(sessionData));
+              if (!isCancelled) {
+                setIsAuthenticated(true);
+                setAdminUser(sessionData.user);
+                setIsAuthChecking(false);
+              }
+              return;
+            }
+          }
+        }
+
+        if (!isCancelled) {
+          setIsAuthenticated(false);
+          setIsAuthChecking(false);
+        }
+      } catch (err) {
+        console.warn('Admin auth verification error:', err);
+        if (!isCancelled) {
+          setIsAuthenticated(false);
+          setIsAuthChecking(false);
+        }
+      }
+    };
+
+    verifyAuth();
+    return () => { isCancelled = true; };
+  }, [supabase]);
 
   // ═══════════════════════════════════════════════════════════════
   // ROLE-BASED ACCESS CONTROL (RBAC) HELPERS & STAFF USERS
@@ -273,7 +363,17 @@ export const AdminProvider = ({ children }) => {
   // ═══════════════════════════════════════════════════════════════
   useEffect(() => {
     let isMounted = true;
+    if (!isAuthenticated) {
+      setIsLoading(false);
+      return;
+    }
+
     const loadInitialData = async () => {
+      // Safety timer so loading state never hangs
+      const safetyTimer = setTimeout(() => {
+        if (isMounted) setIsLoading(false);
+      }, 2500);
+
       try {
         setIsLoading(true);
         const [prodsRes, heroSlidesRes, ordersRes, catsRes, custsRes, blogsRes, couponsRes, returnsRes] = await Promise.allSettled([
@@ -286,6 +386,7 @@ export const AdminProvider = ({ children }) => {
           adminApi.getCoupons(),
           adminApi.getReturns(),
         ]);
+        clearTimeout(safetyTimer);
 
         if (!isMounted) return;
         if (heroSlidesRes.status === 'fulfilled' && Array.isArray(heroSlidesRes.value) && heroSlidesRes.value.length > 0) {
@@ -374,7 +475,7 @@ export const AdminProvider = ({ children }) => {
 
     loadInitialData();
     return () => { isMounted = false; };
-  }, []);
+  }, [isAuthenticated]);
 
   // ── Realtime subscription for live admin order & shipment updates ──
   useEffect(() => {
@@ -1063,6 +1164,7 @@ export const AdminProvider = ({ children }) => {
       value={{
         // Authentication & Session
         isAuthenticated,
+        isAuthChecking,
         adminUser,
         login,
         logout,

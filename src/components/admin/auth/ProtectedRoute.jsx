@@ -6,19 +6,19 @@ import { useAdmin } from '../../../context/AdminContext';
 import { Loader2, ShieldAlert } from 'lucide-react';
 
 export const ProtectedRoute = ({ children }) => {
-  const { isAuthenticated, isSeoManager, canAccessRoute, isLoading } = useAdmin();
+  const { isAuthenticated, isSeoManager, canAccessRoute, isAuthChecking } = useAdmin();
   const router = useRouter();
   const pathname = usePathname() || '';
 
   useEffect(() => {
-    if (!isLoading && !isAuthenticated) {
+    if (!isAuthChecking && !isAuthenticated) {
       router.replace(`/login?redirect=${encodeURIComponent(pathname)}`);
-    } else if (!isLoading && isAuthenticated && isSeoManager() && (pathname === '/admin' || pathname === '/admin/')) {
+    } else if (!isAuthChecking && isAuthenticated && isSeoManager() && (pathname === '/admin' || pathname === '/admin/')) {
       router.replace('/admin/cms/home');
     }
-  }, [isAuthenticated, isLoading, isSeoManager, pathname, router]);
+  }, [isAuthenticated, isAuthChecking, isSeoManager, pathname, router]);
 
-  if (isLoading) {
+  if (isAuthChecking) {
     return (
       <div className="min-h-screen bg-[#0B0F19] flex flex-col items-center justify-center gap-3 text-slate-400">
         <Loader2 className="w-8 h-8 animate-spin text-amber-500" />
@@ -28,7 +28,12 @@ export const ProtectedRoute = ({ children }) => {
   }
 
   if (!isAuthenticated) {
-    return null;
+    return (
+      <div className="min-h-screen bg-[#0B0F19] flex flex-col items-center justify-center gap-3 text-slate-400">
+        <Loader2 className="w-8 h-8 animate-spin text-amber-500" />
+        <span className="text-xs font-mono tracking-wider">Redirecting to Secure Login...</span>
+      </div>
+    );
   }
 
   // Check route permission for role (e.g. SEO manager restricted from ecommerce orders/payments)
