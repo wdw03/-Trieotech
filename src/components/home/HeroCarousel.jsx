@@ -57,10 +57,8 @@ const FALLBACK_SLIDES = [
   }
 ];
 
-export const HeroCarousel = ({ initialSlides = [] }) => {
-  const [slides, setSlides] = useState(() => (
-    initialSlides && initialSlides.length > 0 ? initialSlides : FALLBACK_SLIDES
-  ));
+export const HeroCarousel = () => {
+  const [slides, setSlides] = useState(FALLBACK_SLIDES);
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
 
@@ -87,7 +85,7 @@ export const HeroCarousel = ({ initialSlides = [] }) => {
             setSlides(activeSlides);
           }
         }
-      } catch (_) {}
+      } catch (_) { }
     };
 
     fetchSlides();
@@ -187,145 +185,104 @@ export const HeroCarousel = ({ initialSlides = [] }) => {
       <div className="absolute -top-32 -left-32 w-96 h-96 rounded-full bg-maroon-600/20 blur-3xl pointer-events-none" />
       <div className="absolute -bottom-32 -right-32 w-96 h-96 rounded-full bg-gold-600/15 blur-3xl pointer-events-none" />
 
-      <div className="max-w-7xl mx-auto px-3 sm:px-6 relative z-10">
-        {/* Full-Bleed Hero Banner Mode (For Custom Uploaded Banners) */}
-        {Boolean(
-          (slide.desktop_image && (slide.desktop_image.includes('supabase.co') || slide.desktop_image.includes('/banners/'))) ||
-          (slide.mobile_image && (slide.mobile_image.includes('supabase.co') || slide.mobile_image.includes('/banners/'))) ||
-          (slide.mobile_image && slide.desktop_image && slide.mobile_image !== slide.desktop_image)
-        ) ? (
-          <div className="relative w-full">
-            <Link
-              href={slide.cta_link || slide.ctaLink || '/shop'}
-              className="block group relative w-full rounded-2xl sm:rounded-3xl overflow-hidden shadow-2xl border border-gold-500/30 bg-[#120505]"
-            >
-              {/* Responsive Picture: Dynamically serves portrait mobile banner on phones and wide banner on desktop */}
-              <picture className="w-full block">
-                {(slide.mobile_image || slide.mobileImage) && (
-                  <source
-                    media="(max-width: 768px)"
-                    srcSet={slide.mobile_image || slide.mobileImage}
-                  />
-                )}
-                <img
-                  src={slide.desktop_image || slide.image || slide.desktopImage || '/products/shreenathji-statement-patch-1.jpg'}
-                  alt={slide.title || 'Hero Banner'}
-                  className="w-full h-auto object-contain block mx-auto md:max-h-[600px] group-hover:scale-[1.01] transition-transform duration-700"
-                  loading="eager"
-                  fetchPriority="high"
-                />
-              </picture>
+      <div className="max-w-7xl mx-auto px-3.5 sm:px-6 relative z-10">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-3.5 sm:gap-6 lg:gap-12 items-center">
 
-              {/* Subtle Gold Inset Ring */}
-              <div className="absolute inset-0 rounded-2xl sm:rounded-3xl pointer-events-none ring-1 ring-inset ring-gold-500/30" />
-            </Link>
-          </div>
-        ) : (
-          /* Standard 2-Column Mode (For Typography + Product Shot) */
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-3.5 sm:gap-6 lg:gap-12 items-center">
-            
-            {/* Left Hero Content */}
-            <div className="lg:col-span-7 space-y-2 sm:space-y-4 lg:space-y-6 text-center lg:text-left">
-              
-              {/* Top Tag */}
-              <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 sm:px-3.5 sm:py-1.5 rounded-full bg-gold-500/20 border border-gold-500/40 text-gold-300 text-[10px] sm:text-xs font-bold uppercase tracking-wider shadow-inner">
-                <Sparkles className="w-3 h-3 text-gold-400 shrink-0" />
-                <span className="truncate">{slide.badge || 'Festive Special'}</span>
-              </div>
+          {/* Left Hero Content */}
+          <div className="lg:col-span-7 space-y-2 sm:space-y-4 lg:space-y-6 text-center lg:text-left">
 
-              {/* Main Headline - Compact on Mobile, Full on Desktop */}
-              <h1 className="font-serif font-extrabold text-xl sm:text-3xl md:text-5xl lg:text-6xl text-ivory-100 leading-snug sm:leading-tight tracking-tight">
-                <span className="block sm:hidden">{slide.mobile_title || slide.mobileTitle || slide.title}</span>
-                <span className="hidden sm:block">{slide.title}</span>
-              </h1>
-
-              {/* Subtitle - Concise on Mobile, Detailed on Desktop */}
-              <p className="text-stone-300 text-xs sm:text-base leading-relaxed max-w-2xl mx-auto lg:mx-0 font-normal">
-                <span className="block sm:hidden text-stone-300/90">{slide.mobile_subtitle || slide.mobileSubtitle || slide.subtitle}</span>
-                <span className="hidden sm:block">{slide.subtitle}</span>
-              </p>
-
-              {/* CTAs */}
-              <div className="flex items-center justify-center lg:justify-start gap-2.5 pt-1 sm:pt-2">
-                <Link
-                  href={slide.cta_link || slide.ctaLink || '/shop'}
-                  className="btn-gold py-2 px-5 sm:py-3.5 sm:px-8 text-xs sm:text-sm font-bold uppercase tracking-wider flex items-center justify-center gap-1.5 shadow-gold-sm sm:shadow-gold-md shrink-0"
-                >
-                  <span className="block sm:hidden">{slide.mobile_cta_text || slide.cta_text || slide.ctaText || 'Shop Now'}</span>
-                  <span className="hidden sm:block">{slide.desktop_cta_text || slide.desktopCtaText || slide.cta_text || slide.ctaText || 'Explore Collection'}</span>
-                  <ArrowRight className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                </Link>
-                
-                <Link
-                  href={slide.secondary_cta_link || slide.secondaryCtaLink || '/blog'}
-                  className="hidden sm:inline-flex px-6 py-3.5 rounded-xl border-2 border-gold-500/40 text-gold-200 hover:bg-gold-500/10 hover:text-white transition-all text-xs sm:text-sm font-bold uppercase tracking-wider items-center justify-center"
-                >
-                  {slide.secondary_cta_text || slide.secondaryCtaText || 'Learn More'}
-                </Link>
-              </div>
-
-              {/* Trust Highlights Strip */}
-              <div className="hidden sm:flex pt-3 items-center justify-center lg:justify-start gap-6 text-[11px] sm:text-xs text-stone-400">
-                <div className="flex items-center gap-1.5">
-                  <Award className="w-4 h-4 text-gold-400" />
-                  <span>100% Genuine Handcrafted</span>
-                </div>
-                <div className="flex items-center gap-1.5">
-                  <ShieldCheck className="w-4 h-4 text-gold-400" />
-                  <span>Ayurvedic &amp; Sacred Purity</span>
-                </div>
-              </div>
-
+            {/* Top Tag */}
+            <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 sm:px-3.5 sm:py-1.5 rounded-full bg-gold-500/20 border border-gold-500/40 text-gold-300 text-[10px] sm:text-xs font-bold uppercase tracking-wider shadow-inner">
+              <Sparkles className="w-3 h-3 text-gold-400 shrink-0" />
+              <span className="truncate">{slide.badge || 'Festive Special'}</span>
             </div>
 
-            {/* Right Visual Product Card */}
-            <div className="lg:col-span-5 relative mt-2 sm:mt-0">
-              <div className="relative mx-auto max-w-[320px] sm:max-w-md">
-                
-                {/* Main Visual Card with Ambient Presentation */}
-                <div className="relative aspect-square sm:aspect-[4/4.5] rounded-2xl sm:rounded-3xl overflow-hidden border-2 border-gold-500/40 shadow-xl sm:shadow-2xl bg-[#1C0F0F] group flex items-center justify-center p-4 sm:p-6">
-                  {/* Ambient dynamic background reflection */}
-                  <div
-                    className="absolute inset-0 bg-cover bg-center filter blur-2xl scale-125 opacity-35 pointer-events-none transition-all duration-700"
-                    style={{ backgroundImage: `url("${slide.desktop_image || slide.image || slide.desktopImage || '/products/shreenathji-statement-patch-1.jpg'}")` }}
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/25 to-black/55 pointer-events-none" />
+            {/* Main Headline - Compact on Mobile, Full on Desktop */}
+            <h1 className="font-serif font-extrabold text-xl sm:text-3xl md:text-5xl lg:text-6xl text-ivory-100 leading-snug sm:leading-tight tracking-tight">
+              <span className="block sm:hidden">{slide.mobile_title || slide.mobileTitle || slide.title}</span>
+              <span className="hidden sm:block">{slide.title}</span>
+            </h1>
 
+            {/* Subtitle - Concise on Mobile, Detailed on Desktop */}
+            <p className="text-stone-300 text-xs sm:text-base leading-relaxed max-w-2xl mx-auto lg:mx-0 font-normal">
+              <span className="block sm:hidden text-stone-300/90">{slide.mobile_subtitle || slide.mobileSubtitle || slide.subtitle}</span>
+              <span className="hidden sm:block">{slide.subtitle}</span>
+            </p>
+
+            {/* CTAs */}
+            <div className="flex items-center justify-center lg:justify-start gap-2.5 pt-1 sm:pt-2">
+              <Link
+                href={slide.cta_link || slide.ctaLink || '/shop'}
+                className="btn-gold py-2 px-5 sm:py-3.5 sm:px-8 text-xs sm:text-sm font-bold uppercase tracking-wider flex items-center justify-center gap-1.5 shadow-gold-sm sm:shadow-gold-md shrink-0"
+              >
+                <span className="block sm:hidden">{slide.mobile_cta_text || slide.cta_text || slide.ctaText || 'Shop Now'}</span>
+                <span className="hidden sm:block">{slide.desktop_cta_text || slide.desktopCtaText || slide.cta_text || slide.ctaText || 'Explore Collection'}</span>
+                <ArrowRight className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+              </Link>
+
+              <Link
+                href={slide.secondary_cta_link || slide.secondaryCtaLink || '/blog'}
+                className="hidden sm:inline-flex px-6 py-3.5 rounded-xl border-2 border-gold-500/40 text-gold-200 hover:bg-gold-500/10 hover:text-white transition-all text-xs sm:text-sm font-bold uppercase tracking-wider items-center justify-center"
+              >
+                {slide.secondary_cta_text || slide.secondaryCtaText || 'Learn More'}
+              </Link>
+            </div>
+
+            {/* Trust Highlights Strip (Desktop Only to preserve Mobile fold) */}
+            <div className="hidden sm:flex pt-3 items-center justify-center lg:justify-start gap-6 text-[11px] sm:text-xs text-stone-400">
+              <div className="flex items-center gap-1.5">
+                <Award className="w-4 h-4 text-gold-400" />
+                <span>100% Genuine Handcrafted</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <ShieldCheck className="w-4 h-4 text-gold-400" />
+                <span>Ayurvedic &amp; Sacred Purity</span>
+              </div>
+            </div>
+
+          </div>
+
+          {/* Right Visual Product Card */}
+          <div className="lg:col-span-5 relative mt-0.5 sm:mt-0">
+            <div className="relative mx-auto max-w-[280px] xs:max-w-[320px] sm:max-w-md">
+
+              {/* Main Visual Card with Responsive Picture (Mobile Photo vs Desktop Photo) */}
+              <div className="relative aspect-[4/3.4] sm:aspect-[4/4.5] rounded-2xl sm:rounded-3xl overflow-hidden border-2 border-gold-500/40 shadow-xl sm:shadow-2xl bg-[#1C0F0F] group">
+                <picture className="w-full h-full block">
+                  {(slide.mobile_image || slide.mobileImage) && (
+                    <source media="(max-width: 768px)" srcSet={slide.mobile_image || slide.mobileImage} />
+                  )}
                   <img
                     src={slide.desktop_image || slide.image || slide.desktopImage || '/products/shreenathji-statement-patch-1.jpg'}
                     alt={slide.title}
-                    className="relative z-10 w-full h-full object-contain object-center transform group-hover:scale-105 transition-transform duration-700 filter drop-shadow-[0_12px_28px_rgba(0,0,0,0.6)]"
+                    className="w-full h-full object-cover object-center transform group-hover:scale-105 transition-transform duration-700"
                     loading="eager"
                   />
-                  
-                  {/* Floating Tag */}
-                  <div className="absolute top-2.5 left-2.5 sm:top-4 sm:left-4 z-20 bg-maroon-900/90 backdrop-blur-md border border-gold-500/40 text-gold-300 text-[9px] sm:text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 sm:px-3 sm:py-1 rounded-full shadow-lg">
-                    {slide.tag || 'Authentic Craft'}
-                  </div>
+                </picture>
 
+                {/* Floating Tag */}
+                <div className="absolute top-2.5 left-2.5 sm:top-4 sm:left-4 bg-maroon-900/90 backdrop-blur-md border border-gold-500/40 text-gold-300 text-[9px] sm:text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 sm:px-3 sm:py-1 rounded-full shadow-lg">
+                  {slide.tag || 'Authentic Craft'}
                 </div>
 
-                {/* Floating Secondary Mini Card */}
-                {(slide.secondary_image || slide.secondaryImage) && (
-                  <div className="absolute -bottom-6 -left-6 hidden sm:flex w-32 h-32 rounded-2xl overflow-hidden border-2 border-gold-500/60 shadow-xl bg-black items-center justify-center p-2.5 z-20">
-                    <div
-                      className="absolute inset-0 bg-cover bg-center filter blur-lg scale-125 opacity-40 pointer-events-none"
-                      style={{ backgroundImage: `url("${slide.secondary_image || slide.secondaryImage}")` }}
-                    />
-                    <img
-                      src={slide.secondary_image || slide.secondaryImage}
-                      alt="Secondary preview"
-                      className="relative z-10 w-full h-full object-contain object-center filter drop-shadow-md"
-                      loading="lazy"
-                    />
-                  </div>
-                )}
-
               </div>
-            </div>
 
+              {/* Floating Secondary Mini Card (Desktop/Tablet Only) */}
+              {(slide.secondary_image || slide.secondaryImage) && (
+                <div className="absolute -bottom-6 -left-6 hidden sm:block w-32 h-32 rounded-2xl overflow-hidden border-2 border-gold-500/60 shadow-xl bg-black">
+                  <img
+                    src={slide.secondary_image || slide.secondaryImage}
+                    alt="Secondary preview"
+                    className="w-full h-full object-cover"
+                    loading="lazy"
+                  />
+                </div>
+              )}
+
+            </div>
           </div>
-        )}
+
+        </div>
 
         {/* Carousel Navigation Arrows & Dots */}
         <div className="flex items-center justify-between pt-3 mt-2.5 sm:pt-6 sm:mt-6 border-t border-gold-500/20">
@@ -334,11 +291,10 @@ export const HeroCarousel = ({ initialSlides = [] }) => {
               <button
                 key={idx}
                 onClick={() => setCurrentSlide(idx)}
-                className={`h-1.5 sm:h-2 rounded-full transition-all duration-300 ${
-                  activeIndex === idx
+                className={`h-1.5 sm:h-2 rounded-full transition-all duration-300 ${activeIndex === idx
                     ? 'w-6 sm:w-8 bg-gold-400'
                     : 'w-1.5 sm:w-2 bg-stone-600 hover:bg-stone-400'
-                }`}
+                  }`}
                 aria-label={`Go to slide ${idx + 1}`}
               />
             ))}

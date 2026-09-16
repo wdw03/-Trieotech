@@ -10,60 +10,39 @@ export const BrandStoryStrip = () => {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 relative z-10">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-14 items-center">
-          
+
           {/* Left Visual Collage */}
-          {/* Left Visual Collage with Auto-Adjusting Craft Displays */}
           <div className="lg:col-span-5 grid grid-cols-2 gap-3.5 sm:gap-4">
             <div className="space-y-3.5 sm:space-y-4">
-              <div className="aspect-[4/5] rounded-3xl overflow-hidden border-2 border-gold-500/30 shadow-2xl bg-black relative flex items-center justify-center p-3 sm:p-4 group">
-                <div
-                  className="absolute inset-0 bg-cover bg-center filter blur-xl scale-125 opacity-30 pointer-events-none"
-                  style={{ backgroundImage: 'url("/products/peacock-real-feathers-pair-1.jpg")' }}
-                />
+              <div className="aspect-[4/5] rounded-3xl overflow-hidden border-2 border-gold-500/30 shadow-2xl bg-black">
                 <img
                   src="/products/peacock-real-feathers-pair-1.jpg"
                   alt="Peacock Zardosi Craftsmanship"
-                  className="relative z-10 w-full h-full object-contain object-center drop-shadow-xl group-hover:scale-105 transition-transform duration-500"
-                  loading="lazy"
+                  className="w-full h-full object-cover"
                 />
               </div>
-              <div className="aspect-square rounded-3xl overflow-hidden border-2 border-gold-500/30 shadow-2xl bg-black relative flex items-center justify-center p-3 sm:p-4 group">
-                <div
-                  className="absolute inset-0 bg-cover bg-center filter blur-xl scale-125 opacity-30 pointer-events-none"
-                  style={{ backgroundImage: 'url("/products/lotus-kamal-aasan-1.jpg")' }}
-                />
+              <div className="aspect-square rounded-3xl overflow-hidden border-2 border-gold-500/30 shadow-2xl bg-black">
                 <img
                   src="/products/lotus-kamal-aasan-1.jpg"
                   alt="Velvet Lotus Aasan"
-                  className="relative z-10 w-full h-full object-contain object-center drop-shadow-xl group-hover:scale-105 transition-transform duration-500"
-                  loading="lazy"
+                  className="w-full h-full object-cover"
                 />
               </div>
             </div>
 
             <div className="space-y-3.5 sm:space-y-4 pt-6">
-              <div className="aspect-square rounded-3xl overflow-hidden border-2 border-gold-500/30 shadow-2xl bg-black relative flex items-center justify-center p-3 sm:p-4 group">
-                <div
-                  className="absolute inset-0 bg-cover bg-center filter blur-xl scale-125 opacity-30 pointer-events-none"
-                  style={{ backgroundImage: 'url("/products/hammered-copper-bottle-1.jpg")' }}
-                />
+              <div className="aspect-square rounded-3xl overflow-hidden border-2 border-gold-500/30 shadow-2xl bg-black">
                 <img
                   src="/products/hammered-copper-bottle-1.jpg"
                   alt="Hand hammered copper bottle"
-                  className="relative z-10 w-full h-full object-contain object-center drop-shadow-xl group-hover:scale-105 transition-transform duration-500"
-                  loading="lazy"
+                  className="w-full h-full object-cover"
                 />
               </div>
-              <div className="aspect-[4/5] rounded-3xl overflow-hidden border-2 border-gold-500/30 shadow-2xl bg-black relative flex items-center justify-center p-3 sm:p-4 group">
-                <div
-                  className="absolute inset-0 bg-cover bg-center filter blur-xl scale-125 opacity-30 pointer-events-none"
-                  style={{ backgroundImage: 'url("/products/gold-clear-cup-chain-10m-1.jpg")' }}
-                />
+              <div className="aspect-[4/5] rounded-3xl overflow-hidden border-2 border-gold-500/30 shadow-2xl bg-black">
                 <img
                   src="/products/gold-clear-cup-chain-10m-1.jpg"
                   alt="Zarkan stone cup chain"
-                  className="relative z-10 w-full h-full object-contain object-center drop-shadow-xl group-hover:scale-105 transition-transform duration-500"
-                  loading="lazy"
+                  className="w-full h-full object-cover"
                 />
               </div>
             </div>

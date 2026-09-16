@@ -339,22 +339,14 @@ const ReelCard = ({
           onClick={handleVideoTap}
           onDoubleClick={handleDoubleTap}
         >
-          {/* Static poster image with Auto-Fitting & Ambient Glow */}
-          <div className={`absolute inset-0 transition-opacity duration-500 ${isPlaying ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
-            <div
-              className="absolute inset-0 bg-cover bg-center filter blur-xl scale-125 opacity-40"
-              style={{ backgroundImage: `url("${post.img}")` }}
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/25 to-black/60" />
-            <div className="relative z-10 w-full h-full flex items-center justify-center p-2 sm:p-4">
-              <img
-                src={post.img}
-                alt={`${post.name} wearing ${post.product}`}
-                className="w-full h-full object-contain object-center transition-transform duration-700 ease-out md:group-hover:scale-105 filter drop-shadow-[0_8px_24px_rgba(0,0,0,0.7)]"
-                loading="lazy"
-              />
-            </div>
-          </div>
+          {/* Static poster image */}
+          <img
+            src={post.img}
+            alt={`${post.name} wearing ${post.product}`}
+            className={`w-full h-full object-cover transition-all duration-700 ease-out md:group-hover:scale-105 ${isPlaying ? 'opacity-0' : 'opacity-95'
+              }`}
+            loading="lazy"
+          />
 
           {/* Video Reel with iOS Safari inline playback & disable picture-in-picture */}
           {post.video && (
@@ -869,9 +861,7 @@ const ReelModal = ({ post, isOpen, onClose, onAddToCart, onBuyNow, onNext, onPre
               className="flex items-center gap-2 min-w-0 flex-1"
               onClick={onClose}
             >
-              <div className="w-10 h-10 rounded-lg overflow-hidden bg-white/5 border border-white/10 shrink-0 flex items-center justify-center p-0.5">
-                <img src={post.productImage || post.img} alt={post.product} className="max-w-full max-h-full w-auto h-auto object-contain" />
-              </div>
+              <img src={post.productImage || post.img} alt={post.product} className="w-10 h-10 rounded-lg object-cover border border-white/10 shrink-0" />
               <div className="min-w-0">
                 <p className="gram-body text-white text-xs font-bold truncate">{post.product}</p>
                 <div className="flex items-baseline gap-1.5">
@@ -985,17 +975,11 @@ const ReelModal = ({ post, isOpen, onClose, onAddToCart, onBuyNow, onNext, onPre
                 {/* Shoppable Product Card Box */}
                 <div className="p-4 rounded-2xl bg-white/[0.03] border border-white/10 hover:border-[#d4af37]/40 transition-colors">
                   <div className="flex gap-3.5">
-                    <div className="w-20 h-20 rounded-xl overflow-hidden bg-black/40 border border-white/10 shrink-0 flex items-center justify-center p-1 relative">
-                      <div
-                        className="absolute inset-0 bg-cover bg-center filter blur-md scale-125 opacity-30 pointer-events-none"
-                        style={{ backgroundImage: `url("${post.productImage || post.img}")` }}
-                      />
-                      <img
-                        src={post.productImage || post.img}
-                        alt={post.product}
-                        className="relative z-10 max-w-full max-h-full w-auto h-auto object-contain"
-                      />
-                    </div>
+                    <img
+                      src={post.productImage || post.img}
+                      alt={post.product}
+                      className="w-20 h-20 rounded-xl object-cover border border-white/10 shrink-0"
+                    />
                     <div className="min-w-0 flex-1 flex flex-col justify-between">
                       <div>
                         <div className="flex items-center gap-2 text-[10px] text-white/50 uppercase tracking-wider font-semibold">
@@ -1145,48 +1129,9 @@ function parseNumericCount(val) {
 /* =========================================================
    MAIN SHOP THE GRAM COMPONENT
    ========================================================= */
-function mapReelToPost(r, i) {
-  return {
-    id: r.id || `reel-${i}`,
-    avatar: r.influencer_avatar || r.thumbnail_url || 'https://gkskeljvgphslkzctjfp.supabase.co/storage/v1/object/public/reels/avatars/Abida_Fatima.jpg',
-    img: r.thumbnail_url || r.product_image || r.influencer_avatar || 'https://gkskeljvgphslkzctjfp.supabase.co/storage/v1/object/public/reels/avatars/Abida_Fatima.jpg',
-    video: r.video_url,
-    handle: r.influencer_username || '@trioenterprises',
-    name: r.influencer_name || 'Trio Influencer',
-    verified: true,
-    followers: r.followers || '250K',
-    likes: r.likes_count || '15K',
-    likesCount: parseNumericCount(r.likes_count) || 15000,
-    comments: r.comments_count || '250',
-    caption: r.caption || '',
-    song: r.song_title || 'Original Audio · Trio Trends',
-    product: r.product_name || 'Handcrafted Artisan Decor',
-    productId: r.product_id || '',
-    slug: r.product_slug || '',
-    price: `₹${r.product_price || 0}`,
-    rawPrice: Number(r.product_price) || 0,
-    oldPrice: r.product_old_price ? `₹${r.product_old_price}` : '',
-    rawOldPrice: Number(r.product_old_price) || 0,
-    discount: r.product_discount || '',
-    productImage: r.product_image || r.thumbnail_url || '',
-    tag: r.tags || 'Authentic Craft',
-    rating: 4.9,
-    reviews: 150,
-    views: r.views_count || '100K',
-    commentsList: [
-      { user: 'craft_lover', text: 'Stunning quality! Ordered for our family celebration ✨', time: '2h ago' },
-      { user: 'pooja_decor', text: 'Packaging was top notch, looks 100% royal 💯', time: '5h ago' }
-    ]
-  };
-}
-
-export default function ShopTheGram({ initialReels = [] }) {
-  const [posts, setPosts] = useState(() =>
-    initialReels && initialReels.length > 0
-      ? initialReels.filter((r) => r.is_active !== false).map(mapReelToPost)
-      : []
-  );
-  const [loading, setLoading] = useState(() => !(initialReels && initialReels.length > 0));
+export default function ShopTheGram() {
+  const [posts, setPosts] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [wordIdx, setWordIdx] = useState(0);
   const [wordChanging, setWordChanging] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
@@ -1210,7 +1155,38 @@ export default function ShopTheGram({ initialReels = [] }) {
           const data = await res.json();
           if (isMounted && Array.isArray(data)) {
             const activeReels = data.filter((r) => r.is_active !== false);
-            const mapped = activeReels.map(mapReelToPost);
+            const mapped = activeReels.map((r, i) => ({
+              id: r.id || `reel-${i}`,
+              avatar: r.influencer_avatar || r.thumbnail_url || 'https://gkskeljvgphslkzctjfp.supabase.co/storage/v1/object/public/reels/avatars/Abida_Fatima.jpg',
+              img: r.thumbnail_url || r.product_image || r.influencer_avatar || 'https://gkskeljvgphslkzctjfp.supabase.co/storage/v1/object/public/reels/avatars/Abida_Fatima.jpg',
+              video: r.video_url,
+              handle: r.influencer_username || '@trioenterprises',
+              name: r.influencer_name || 'Trio Influencer',
+              verified: true,
+              followers: r.followers || '250K',
+              likes: r.likes_count || '15K',
+              likesCount: parseNumericCount(r.likes_count) || 15000,
+              comments: r.comments_count || '250',
+              caption: r.caption || '',
+              song: r.song_title || 'Original Audio · Trio Trends',
+              product: r.product_name || 'Handcrafted Artisan Decor',
+              productId: r.product_id || '',
+              slug: r.product_slug || '',
+              price: `₹${r.product_price || 0}`,
+              rawPrice: Number(r.product_price) || 0,
+              oldPrice: r.product_old_price ? `₹${r.product_old_price}` : '',
+              rawOldPrice: Number(r.product_old_price) || 0,
+              discount: r.product_discount || '',
+              productImage: r.product_image || r.thumbnail_url || '',
+              tag: r.tags || 'Authentic Craft',
+              rating: 4.9,
+              reviews: 150,
+              views: r.views_count || '100K',
+              commentsList: [
+                { user: 'craft_lover', text: 'Stunning quality! Ordered for our family celebration ✨', time: '2h ago' },
+                { user: 'pooja_decor', text: 'Packaging was top notch, looks 100% royal 💯', time: '5h ago' }
+              ]
+            }));
             setPosts(mapped);
           }
         }

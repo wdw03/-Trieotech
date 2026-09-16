@@ -66,20 +66,16 @@ export const QuickViewModal = ({ product, isOpen, onClose }) => {
           <X className="w-5 h-5" />
         </button>
 
-        {/* Product Image Section with Auto-Fitting & Ambient Glow */}
-        <div className="w-full md:w-1/2 p-6 bg-stone-100 dark:bg-stone-900/80 flex flex-col items-center justify-between">
-          <div className="relative aspect-square w-full rounded-2xl overflow-hidden border border-gold-500/20 shadow-inner bg-white dark:bg-stone-950 flex items-center justify-center p-4">
-            <div
-              className="absolute inset-0 bg-cover bg-center filter blur-xl scale-125 opacity-30 dark:opacity-20 pointer-events-none transition-all duration-700"
-              style={{ backgroundImage: `url("${selectedImage}")` }}
-            />
+        {/* Product Image Section */}
+        <div className="w-full md:w-1/2 p-6 bg-ivory-200 dark:bg-stone-900 flex flex-col items-center justify-between">
+          <div className="relative aspect-square w-full rounded-2xl overflow-hidden border border-gold-500/20 shadow-inner bg-white dark:bg-stone-950">
             <img
               src={selectedImage}
               alt={product.name}
-              className="relative z-10 max-w-full max-h-full w-auto h-auto object-contain object-center filter drop-shadow-[0_6px_16px_rgba(0,0,0,0.08)] dark:drop-shadow-[0_6px_16px_rgba(0,0,0,0.4)]"
+              className="w-full h-full object-cover object-center"
             />
             {product.badge && (
-              <div className="absolute top-3 left-3 z-20">
+              <div className="absolute top-3 left-3">
                 <Badge type={product.badge} />
               </div>
             )}
@@ -92,13 +88,12 @@ export const QuickViewModal = ({ product, isOpen, onClose }) => {
                 <button
                   key={idx}
                   onClick={() => setSelectedImage(img)}
-                  className={`relative w-12 h-12 rounded-xl overflow-hidden border-2 shrink-0 transition-all flex items-center justify-center bg-white dark:bg-stone-900 p-0.5 ${
-                    selectedImage === img
+                  className={`relative w-12 h-12 rounded-xl overflow-hidden border-2 shrink-0 transition-all ${selectedImage === img
                       ? 'border-maroon-700 ring-2 ring-gold-500/50 scale-105'
                       : 'border-stone-300 dark:border-stone-700 opacity-70 hover:opacity-100'
-                  }`}
+                    }`}
                 >
-                  <img src={img} alt="thumb" className="max-w-full max-h-full w-auto h-auto object-contain" />
+                  <img src={img} alt="thumb" className="w-full h-full object-cover" />
                 </button>
               ))}
             </div>
@@ -154,11 +149,10 @@ export const QuickViewModal = ({ product, isOpen, onClose }) => {
                     <button
                       key={idx}
                       onClick={() => handleColorSelect(col)}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-medium border flex items-center gap-1.5 transition-all ${
-                        selectedColor?.name === col.name
+                      className={`px-3 py-1.5 rounded-lg text-xs font-medium border flex items-center gap-1.5 transition-all ${selectedColor?.name === col.name
                           ? 'border-maroon-700 bg-maroon-50 text-maroon-900 dark:bg-maroon-950/40 dark:border-gold-500 dark:text-gold-300 shadow-xs'
                           : 'border-stone-200 dark:border-stone-700 text-stone-600 dark:text-stone-300 hover:border-gold-500'
-                      }`}
+                        }`}
                     >
                       <span className="w-3 h-3 rounded-full border" style={{ backgroundColor: col.hex }} />
                       <span>{col.name}</span>
@@ -179,11 +173,10 @@ export const QuickViewModal = ({ product, isOpen, onClose }) => {
                     <button
                       key={idx}
                       onClick={() => setSelectedSize(s)}
-                      className={`px-3 py-1 rounded-lg text-[11px] font-medium border transition-all ${
-                        selectedSize === s
+                      className={`px-3 py-1 rounded-lg text-[11px] font-medium border transition-all ${selectedSize === s
                           ? 'border-maroon-700 bg-maroon-700 text-white'
                           : 'border-stone-200 dark:border-stone-700 text-stone-600 dark:text-stone-300 hover:border-maroon-500'
-                      }`}
+                        }`}
                     >
                       {s}
                     </button>
@@ -235,11 +228,10 @@ export const QuickViewModal = ({ product, isOpen, onClose }) => {
 
               <button
                 onClick={() => toggleWishlist(product)}
-                className={`p-3 rounded-xl border transition-all ${
-                  isWishlisted
+                className={`p-3 rounded-xl border transition-all ${isWishlisted
                     ? 'bg-maroon-700 text-white border-maroon-700'
                     : 'border-stone-300 dark:border-stone-700 text-stone-700 dark:text-stone-300 hover:border-maroon-700 hover:text-maroon-700'
-                }`}
+                  }`}
                 aria-label="Wishlist"
               >
                 <Heart className={`w-5 h-5 ${isWishlisted ? 'fill-current' : ''}`} />
