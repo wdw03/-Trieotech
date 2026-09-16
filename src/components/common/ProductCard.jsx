@@ -80,7 +80,7 @@ export const ProductCard = ({ product, onQuickView = null, viewMode = 'grid' }) 
         onMouseLeave={() => setIsHovered(false)}
       >
         {/* Left Image */}
-        <div className="relative w-full sm:w-56 md:w-64 aspect-square sm:aspect-auto shrink-0 bg-stone-100 dark:bg-stone-900 overflow-hidden flex items-center justify-center p-3">
+        <div className="relative w-full sm:w-56 md:w-64 aspect-square sm:aspect-auto shrink-0 bg-stone-100 dark:bg-stone-900 overflow-hidden flex items-center justify-center p-2.5 sm:p-3">
           {/* Ambient blurred backdrop so any image shape fills container smoothly */}
           <div
             className="absolute inset-0 bg-cover bg-center filter blur-xl scale-125 opacity-25 dark:opacity-20 pointer-events-none transition-all duration-700"
@@ -91,7 +91,7 @@ export const ProductCard = ({ product, onQuickView = null, viewMode = 'grid' }) 
               src={isHovered && secondaryImage !== activeImage ? secondaryImage : activeImage}
               alt={product.name}
               onError={() => setImgError(true)}
-              className={`max-w-full max-h-full w-auto h-auto object-contain object-center transition-transform duration-500 ease-out group-hover:scale-105 filter drop-shadow-[0_4px_12px_rgba(0,0,0,0.08)] dark:drop-shadow-[0_4px_14px_rgba(0,0,0,0.4)] ${
+              className={`w-full h-full object-contain object-center transition-transform duration-500 ease-out group-hover:scale-105 filter drop-shadow-[0_4px_12px_rgba(0,0,0,0.08)] dark:drop-shadow-[0_4px_14px_rgba(0,0,0,0.4)] ${
                 isOutOfStock ? 'filter grayscale contrast-125 opacity-70' : ''
               }`}
               loading="lazy"
@@ -235,7 +235,7 @@ export const ProductCard = ({ product, onQuickView = null, viewMode = 'grid' }) 
       onMouseLeave={() => setIsHovered(false)}
     >
       {/* Product Image Container with Auto-Adjusting Ambient Presentation */}
-      <div className="relative aspect-square w-full overflow-hidden bg-gradient-to-b from-stone-50 via-stone-100/80 to-stone-200/60 dark:from-stone-900/95 dark:via-stone-900/80 dark:to-stone-950 flex items-center justify-center p-3 sm:p-4">
+      <div className="relative aspect-square w-full overflow-hidden bg-gradient-to-b from-stone-50 via-stone-100/80 to-stone-200/60 dark:from-stone-900/95 dark:via-stone-900/80 dark:to-stone-950 flex items-center justify-center p-2.5 sm:p-3.5">
         {/* Ambient background glow for seamless aesthetic integration of any aspect ratio */}
         <div
           className="absolute inset-0 bg-cover bg-center filter blur-xl scale-125 opacity-30 dark:opacity-20 pointer-events-none transition-all duration-700"
@@ -246,7 +246,7 @@ export const ProductCard = ({ product, onQuickView = null, viewMode = 'grid' }) 
             src={isHovered && secondaryImage !== activeImage ? secondaryImage : activeImage}
             alt={product.name}
             onError={() => setImgError(true)}
-            className={`max-w-full max-h-full w-auto h-auto object-contain object-center transition-transform duration-500 ease-out group-hover:scale-108 filter drop-shadow-[0_4px_12px_rgba(0,0,0,0.06)] dark:drop-shadow-[0_6px_16px_rgba(0,0,0,0.4)] ${
+            className={`w-full h-full object-contain object-center transition-transform duration-500 ease-out group-hover:scale-108 filter drop-shadow-[0_4px_12px_rgba(0,0,0,0.06)] dark:drop-shadow-[0_6px_16px_rgba(0,0,0,0.4)] ${
               isOutOfStock ? 'filter grayscale contrast-125 opacity-70' : ''
             }`}
             loading="lazy"

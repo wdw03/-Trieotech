@@ -23,7 +23,7 @@ export const BrandStoryStrip = () => {
                 <img
                   src="/products/peacock-real-feathers-pair-1.jpg"
                   alt="Peacock Zardosi Craftsmanship"
-                  className="relative z-10 max-w-full max-h-full w-auto h-auto object-contain drop-shadow-xl group-hover:scale-105 transition-transform duration-500"
+                  className="relative z-10 w-full h-full object-contain object-center drop-shadow-xl group-hover:scale-105 transition-transform duration-500"
                   loading="lazy"
                 />
               </div>
@@ -35,7 +35,7 @@ export const BrandStoryStrip = () => {
                 <img
                   src="/products/lotus-kamal-aasan-1.jpg"
                   alt="Velvet Lotus Aasan"
-                  className="relative z-10 max-w-full max-h-full w-auto h-auto object-contain drop-shadow-xl group-hover:scale-105 transition-transform duration-500"
+                  className="relative z-10 w-full h-full object-contain object-center drop-shadow-xl group-hover:scale-105 transition-transform duration-500"
                   loading="lazy"
                 />
               </div>
@@ -50,7 +50,7 @@ export const BrandStoryStrip = () => {
                 <img
                   src="/products/hammered-copper-bottle-1.jpg"
                   alt="Hand hammered copper bottle"
-                  className="relative z-10 max-w-full max-h-full w-auto h-auto object-contain drop-shadow-xl group-hover:scale-105 transition-transform duration-500"
+                  className="relative z-10 w-full h-full object-contain object-center drop-shadow-xl group-hover:scale-105 transition-transform duration-500"
                   loading="lazy"
                 />
               </div>
@@ -62,7 +62,7 @@ export const BrandStoryStrip = () => {
                 <img
                   src="/products/gold-clear-cup-chain-10m-1.jpg"
                   alt="Zarkan stone cup chain"
-                  className="relative z-10 max-w-full max-h-full w-auto h-auto object-contain drop-shadow-xl group-hover:scale-105 transition-transform duration-500"
+                  className="relative z-10 w-full h-full object-contain object-center drop-shadow-xl group-hover:scale-105 transition-transform duration-500"
                   loading="lazy"
                 />
               </div>

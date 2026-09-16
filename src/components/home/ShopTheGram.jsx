@@ -346,11 +346,11 @@ const ReelCard = ({
               style={{ backgroundImage: `url("${post.img}")` }}
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/25 to-black/60" />
-            <div className="relative z-10 w-full h-full flex items-center justify-center p-4 sm:p-6">
+            <div className="relative z-10 w-full h-full flex items-center justify-center p-2 sm:p-4">
               <img
                 src={post.img}
                 alt={`${post.name} wearing ${post.product}`}
-                className="max-w-full max-h-full w-auto h-auto object-contain transition-transform duration-700 ease-out md:group-hover:scale-105 filter drop-shadow-[0_8px_24px_rgba(0,0,0,0.7)]"
+                className="w-full h-full object-contain object-center transition-transform duration-700 ease-out md:group-hover:scale-105 filter drop-shadow-[0_8px_24px_rgba(0,0,0,0.7)]"
                 loading="lazy"
               />
             </div>

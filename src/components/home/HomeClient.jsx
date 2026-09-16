@@ -128,7 +128,7 @@ export default function HomeClient() {
                 <img
                   src={sections.promotionalBanners?.weddingBanner?.image || "/products/peacock-real-feathers-pair-1.jpg"}
                   alt="Wedding"
-                  className="relative z-10 max-w-full max-h-full w-auto h-auto object-contain filter drop-shadow-[0_8px_20px_rgba(0,0,0,0.6)]"
+                  className="relative z-10 w-full h-full object-contain object-center filter drop-shadow-[0_8px_20px_rgba(0,0,0,0.6)]"
                   loading="lazy"
                 />
               </div>
@@ -166,7 +166,7 @@ export default function HomeClient() {
                 <img
                   src={sections.promotionalBanners?.festiveBanner?.image || "/products/pooja-thali-brass-diya-1.jpg"}
                   alt="Festival"
-                  className="relative z-10 max-w-full max-h-full w-auto h-auto object-contain filter drop-shadow-[0_8px_20px_rgba(0,0,0,0.6)]"
+                  className="relative z-10 w-full h-full object-contain object-center filter drop-shadow-[0_8px_20px_rgba(0,0,0,0.6)]"
                   loading="lazy"
                 />
               </div>
