@@ -53,9 +53,9 @@ const Reveal = ({ children, delay = 0, className = '' }) => {
 /* ---------- Influencer Reels Data with Authentic Trio Ecart Products ---------- */
 const initialPosts = [
   {
-    id: 'reel-1',
-    img: '/assests/shopthelookinflcuernsgram10/Abida_Fatima.jpg',
-    video: '/assests/watchandbuy4/tn_22511f6c-00ca-4a91-840f-0adce0910551.mp4',
+    id: 'f6750212-5761-4c2c-bec8-0e649d455c94',
+    img: 'https://gkskeljvgphslkzctjfp.supabase.co/storage/v1/object/public/reels/avatars/Abida_Fatima.jpg',
+    video: 'https://gkskeljvgphslkzctjfp.supabase.co/storage/v1/object/public/reels/videos/pearl_zardosi_craft_reel.mp4',
     handle: '@abida.fatima_',
     name: 'Abida Fatima',
     verified: true,
@@ -84,9 +84,9 @@ const initialPosts = [
     ]
   },
   {
-    id: 'reel-2',
-    img: '/assests/shopthelookinflcuernsgram10/Agrani_SINGH.jpg',
-    video: '/assests/watchandbuy4/tn_5335df7b-7e0e-4cc3-900b-69e2f2296380.mp4',
+    id: '6bf36e38-2e3f-4db5-86e8-75c1dd4a8e17',
+    img: 'https://gkskeljvgphslkzctjfp.supabase.co/storage/v1/object/public/reels/avatars/Agrani_SINGH.jpg',
+    video: 'https://gkskeljvgphslkzctjfp.supabase.co/storage/v1/object/public/reels/videos/pooja_thali_brass_diya_reel.mp4',
     handle: '@agranisingh.official',
     name: 'Agrani Singh',
     verified: true,
@@ -115,9 +115,9 @@ const initialPosts = [
     ]
   },
   {
-    id: 'reel-3',
-    img: '/assests/shopthelookinflcuernsgram10/Dezy_Jariwala.jpg',
-    video: '/assests/watchandbuy4/tn_69d79dfd-fccf-4e56-8387-e7c612fa1c55.mp4',
+    id: 'd5f985ae-05ea-40d8-8672-e34c3332f992',
+    img: 'https://gkskeljvgphslkzctjfp.supabase.co/storage/v1/object/public/reels/avatars/Dezy_Jariwala.jpg',
+    video: 'https://gkskeljvgphslkzctjfp.supabase.co/storage/v1/object/public/reels/videos/golden_gota_moti_chudi_reel.mp4',
     handle: '@dezyjariwala',
     name: 'Dezy Jariwala',
     verified: false,
@@ -145,9 +145,9 @@ const initialPosts = [
     ]
   },
   {
-    id: 'reel-4',
-    img: '/assests/shopthelookinflcuernsgram10/Natasha_Prajapati.jpg',
-    video: '/assests/watchandbuy4/tn_e387e430-ffcc-4044-9e82-974f490f93d1.mp4',
+    id: 'dec02b29-0fd5-4772-9d72-dbde74308598',
+    img: 'https://gkskeljvgphslkzctjfp.supabase.co/storage/v1/object/public/reels/avatars/Natasha_Prajapati.jpg',
+    video: 'https://gkskeljvgphslkzctjfp.supabase.co/storage/v1/object/public/reels/videos/silk_peony_flower_buds_reel.mp4',
     handle: '@natasha.prajapati',
     name: 'Natasha Prajapati',
     verified: true,
@@ -175,9 +175,9 @@ const initialPosts = [
     ]
   },
   {
-    id: 'reel-5',
-    img: '/assests/shopthelookinflcuernsgram10/Samiksha_2211.jpg',
-    video: '/assests/watchandbuy4/tn_22511f6c-00ca-4a91-840f-0adce0910551.mp4',
+    id: '294230fb-c77a-4bc5-bc35-4cc97571cea5',
+    img: 'https://gkskeljvgphslkzctjfp.supabase.co/storage/v1/object/public/reels/avatars/Samiksha_2211.jpg',
+    video: 'https://gkskeljvgphslkzctjfp.supabase.co/storage/v1/object/public/reels/videos/silk_red_rose_garland_reel.mp4',
     handle: '@samiksha_2211',
     name: 'Samiksha Rao',
     verified: false,
@@ -1287,7 +1287,7 @@ export default function ShopTheGram() {
             if (activeReels.length > 0) {
               const mapped = activeReels.map((r, i) => ({
                 id: r.id || `reel-${i}`,
-                img: r.influencer_avatar || r.thumbnail_url || '/assests/shopthelookinflcuernsgram10/Abida_Fatima.jpg',
+                img: r.influencer_avatar || r.thumbnail_url || 'https://gkskeljvgphslkzctjfp.supabase.co/storage/v1/object/public/reels/avatars/Abida_Fatima.jpg',
                 video: r.video_url,
                 handle: r.influencer_username || '@trioenterprises',
                 name: r.influencer_name || 'Trio Influencer',
