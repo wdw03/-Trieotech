@@ -186,7 +186,7 @@ export const Sidebar = () => {
       {/* Sidebar Container */}
       <aside
         className={`
-          fixed top-0 bottom-0 left-0 z-40 flex flex-col
+          fixed lg:static top-0 bottom-0 left-0 z-40 flex flex-col shrink-0 h-screen lg:h-full
           bg-[#0B0F19]/95 backdrop-blur-xl border-r border-slate-800/80
           transition-all duration-300 ease-in-out
           ${sidebarCollapsed ? 'w-20' : 'w-64'}
