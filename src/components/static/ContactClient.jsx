@@ -4,15 +4,7 @@ import Breadcrumb from '../../components/common/Breadcrumb';
 import { Mail, Phone, MapPin, Send, MessageCircle, Clock, Sparkles, CheckCircle2, Loader2 } from 'lucide-react';
 import { useToast } from '../../context/ToastContext';
 import { getApiBase } from '../../lib/api/store';
-
-const INQUIRY_TOPICS = [
-  'Custom Bridal Patch Order',
-  'Wholesale / Bulk Gifting',
-  'Order & Delivery Status',
-  'Copper Drinkware Query',
-  'Pooja Essentials Inquiry',
-  'General Question',
-];
+import InquiryTopicDropdown, { INQUIRY_TOPICS } from '../common/InquiryTopicDropdown';
 
 export default function ContactClient() {
   const { addToast } = useToast();
@@ -21,6 +13,7 @@ export default function ContactClient() {
     email: '',
     phone: '',
     subject: 'Custom Bridal Patch Order',
+    orderRef: '',
     message: '',
   });
 
@@ -38,11 +31,21 @@ export default function ContactClient() {
     setIsSubmitting(true);
 
     try {
+      const payload = {
+        name: form.name.trim(),
+        email: form.email.trim(),
+        phone: form.phone.trim(),
+        subject: form.orderRef?.trim()
+          ? `${form.subject} [Ref: ${form.orderRef.trim()}]`
+          : form.subject,
+        message: form.message.trim(),
+      };
+
       // 1. Try local API first
       let res = await fetch('/api/contact', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(form),
+        body: JSON.stringify(payload),
       });
 
       // 2. If local fails or 404, try external backend
@@ -52,7 +55,7 @@ export default function ContactClient() {
           res = await fetch(`${apiBase}/contact`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(form),
+            body: JSON.stringify(payload),
           });
         }
       }
@@ -67,6 +70,7 @@ export default function ContactClient() {
           email: '',
           phone: '',
           subject: 'Custom Bridal Patch Order',
+          orderRef: '',
           message: '',
         });
       } else {
@@ -195,31 +199,24 @@ export default function ContactClient() {
                   Send an Inquiry or Custom Request
                 </h2>
                 <p className="text-xs text-stone-500 dark:text-stone-400 mt-1">
-                  Fill in your details below and our team will get back to you promptly.
+                  Select your inquiry category below and our artisan desk will respond with tailored guidance.
                 </p>
               </div>
 
-              {/* Quick Topic Pills */}
+              {/* Inquiry Topic Dropdown - Best UI */}
               <div className="space-y-1.5">
-                <label className="font-bold text-[11px] text-stone-700 dark:text-stone-300 block">
-                  Select Inquiry Topic:
+                <label className="font-bold text-xs text-stone-700 dark:text-stone-300 flex items-center justify-between">
+                  <span className="flex items-center gap-1.5">
+                    Choose Inquiry Topic <span className="text-maroon-600 dark:text-rose-400">*</span>
+                  </span>
+                  <span className="text-[11px] font-normal text-gold-700 dark:text-gold-400">
+                    5 Specialized Services
+                  </span>
                 </label>
-                <div className="flex flex-wrap gap-1.5">
-                  {INQUIRY_TOPICS.map((topic) => (
-                    <button
-                      key={topic}
-                      type="button"
-                      onClick={() => setForm({ ...form, subject: topic })}
-                      className={`text-[11px] px-3 py-1 rounded-full border transition-all ${
-                        form.subject === topic
-                          ? 'bg-maroon-700 text-white border-maroon-700 font-bold shadow-xs'
-                          : 'bg-ivory-100 dark:bg-stone-900 border-gold-500/30 text-stone-700 dark:text-stone-300 hover:border-gold-500'
-                      }`}
-                    >
-                      {topic}
-                    </button>
-                  ))}
-                </div>
+                <InquiryTopicDropdown
+                  value={form.subject}
+                  onChange={(topicLabel) => setForm((prev) => ({ ...prev, subject: topicLabel }))}
+                />
               </div>
 
               <form onSubmit={handleSubmit} className="space-y-4 text-xs">
@@ -262,13 +259,12 @@ export default function ContactClient() {
                   </div>
 
                   <div className="space-y-1">
-                    <label className="font-bold text-stone-700 dark:text-stone-300">Subject *</label>
+                    <label className="font-bold text-stone-700 dark:text-stone-300">Order ID or Custom Note (Optional)</label>
                     <input
                       type="text"
-                      required
-                      placeholder="e.g. Custom Bridal Patch Order"
-                      value={form.subject}
-                      onChange={(e) => setForm({ ...form, subject: e.target.value })}
+                      placeholder="e.g. Order # or specific dimension"
+                      value={form.orderRef}
+                      onChange={(e) => setForm({ ...form, orderRef: e.target.value })}
                       className="w-full px-3.5 py-2.5 rounded-xl bg-ivory-100 dark:bg-stone-900 border border-gold-500/30 text-stone-900 dark:text-ivory-100 outline-none focus:border-gold-500 transition-colors"
                     />
                   </div>

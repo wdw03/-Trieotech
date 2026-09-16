@@ -17,14 +17,7 @@ import {
 } from 'lucide-react';
 import { useToast } from '../../context/ToastContext';
 import { getApiBase } from '../../lib/api/store';
-
-const QUICK_TOPICS = [
-  'Custom Bridal Patch Order',
-  'Wholesale / Bulk Gifting',
-  'Order & Delivery Status',
-  'Pooja Essentials Inquiry',
-  'General Question'
-];
+import InquiryTopicDropdown, { INQUIRY_TOPICS } from '../common/InquiryTopicDropdown';
 
 export default function HomeContactSection() {
   const { addToast } = useToast();
@@ -33,6 +26,7 @@ export default function HomeContactSection() {
     email: '',
     phone: '',
     subject: 'Custom Bridal Patch Order',
+    orderRef: '',
     message: '',
   });
 
@@ -50,11 +44,21 @@ export default function HomeContactSection() {
     setIsSubmitting(true);
 
     try {
+      const payload = {
+        name: form.name.trim(),
+        email: form.email.trim(),
+        phone: form.phone.trim(),
+        subject: form.orderRef?.trim()
+          ? `${form.subject} [Ref: ${form.orderRef.trim()}]`
+          : form.subject,
+        message: form.message.trim(),
+      };
+
       // 1. Try local storefront API route
       let res = await fetch('/api/contact', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(form),
+        body: JSON.stringify(payload),
       });
 
       // 2. Fallback to external backend if needed
@@ -64,7 +68,7 @@ export default function HomeContactSection() {
           res = await fetch(`${apiBase}/contact`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(form),
+            body: JSON.stringify(payload),
           });
         }
       }
@@ -79,6 +83,7 @@ export default function HomeContactSection() {
           email: '',
           phone: '',
           subject: 'Custom Bridal Patch Order',
+          orderRef: '',
           message: '',
         });
       } else {
@@ -228,27 +233,21 @@ export default function HomeContactSection() {
                   </p>
                 </div>
 
-                {/* Quick Topic Selection */}
+                {/* Inquiry Topic Dropdown - Best UI */}
                 <div className="space-y-1.5">
-                  <label className="font-bold text-[11px] text-gold-300 block uppercase tracking-wider">
-                    Inquiry Topic:
+                  <label className="font-bold text-xs text-gold-300 flex items-center justify-between uppercase tracking-wider">
+                    <span className="flex items-center gap-1.5">
+                      Choose Inquiry Topic <span className="text-rose-400">*</span>
+                    </span>
+                    <span className="text-[11px] font-normal text-gold-400 lowercase tracking-normal">
+                      5 specialized options
+                    </span>
                   </label>
-                  <div className="flex flex-wrap gap-1.5">
-                    {QUICK_TOPICS.map((topic) => (
-                      <button
-                        key={topic}
-                        type="button"
-                        onClick={() => setForm({ ...form, subject: topic })}
-                        className={`text-[11px] px-3 py-1.5 rounded-xl border transition-all ${
-                          form.subject === topic
-                            ? 'bg-maroon-700 text-white border-gold-500 font-bold shadow-sm'
-                            : 'bg-stone-900/80 border-gold-500/20 text-stone-300 hover:border-gold-500/50'
-                        }`}
-                      >
-                        {topic}
-                      </button>
-                    ))}
-                  </div>
+                  <InquiryTopicDropdown
+                    value={form.subject}
+                    onChange={(topicLabel) => setForm((prev) => ({ ...prev, subject: topicLabel }))}
+                    theme="dark"
+                  />
                 </div>
 
                 {/* Main Form Fields */}
@@ -292,13 +291,12 @@ export default function HomeContactSection() {
                     </div>
 
                     <div className="space-y-1">
-                      <label className="font-semibold text-stone-300">Subject *</label>
+                      <label className="font-semibold text-stone-300">Order ID or Custom Note (Optional)</label>
                       <input
                         type="text"
-                        required
-                        placeholder="e.g. Custom Bridal Patch Order"
-                        value={form.subject}
-                        onChange={(e) => setForm({ ...form, subject: e.target.value })}
+                        placeholder="e.g. Order # or specific dimension"
+                        value={form.orderRef}
+                        onChange={(e) => setForm({ ...form, orderRef: e.target.value })}
                         className="w-full px-3.5 py-2.5 rounded-xl bg-stone-900/90 border border-gold-500/30 text-white placeholder:text-stone-500 outline-none focus:border-gold-400 transition-colors"
                       />
                     </div>
