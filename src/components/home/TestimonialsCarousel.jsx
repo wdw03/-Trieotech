@@ -4,6 +4,7 @@ import { reviews as fallbackReviews } from '../../data/reviews';
 import { Sparkles, CheckCircle2, ChevronLeft, ChevronRight } from 'lucide-react';
 import RatingStars from '../common/RatingStars';
 import { getApiBase } from '../../lib/api/store';
+import AmazonMarketplaceBanner from './AmazonMarketplaceBanner';
 
 export const TestimonialsCarousel = () => {
   const [reviewsList, setReviewsList] = useState(fallbackReviews);
@@ -189,6 +190,9 @@ export const TestimonialsCarousel = () => {
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 space-y-8 sm:space-y-10">
         
+        {/* Official Amazon Store Banner */}
+        <AmazonMarketplaceBanner />
+
         {/* Header */}
         <div className="text-center max-w-2xl mx-auto space-y-2 border-b border-gold-500/20 pb-4">
           <span className="text-[11px] font-bold uppercase tracking-[0.25em] text-gold-700 dark:text-gold-400 flex items-center justify-center gap-1.5 font-inter">
