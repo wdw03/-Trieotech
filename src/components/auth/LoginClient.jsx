@@ -9,7 +9,7 @@ import { Mail, Lock, ArrowRight, Sparkles, Loader2, Eye, EyeOff, ShoppingBag } f
 export default function LoginClient() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { login, user } = useAuth();
+  const { login, user, profile } = useAuth();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -19,15 +19,41 @@ export default function LoginClient() {
 
   const redirectParam = searchParams.get('redirect') || searchParams.get('next');
   const action = searchParams.get('action') || '';
-  // Redirect directly to main home page '/' on login completion
+  // Default customer redirect to main home page '/' on login completion
   const redirectTo = (redirectParam && redirectParam !== '/profile') ? redirectParam : '/';
 
-  // If already logged in, redirect to main page
+  // If already logged in, redirect based on administrative privileges vs customer
   useEffect(() => {
     if (user) {
-      router.push(redirectTo);
+      const userEmail = (user.email || '').toLowerCase();
+      const isMasterAdmin = userEmail === 'trioenterprises10@gmail.com';
+      const role = (profile?.role || user.user_metadata?.role || '').toLowerCase();
+      const isAdminUser = isMasterAdmin || ['super_admin', 'admin', 'seo_manager'].includes(role);
+
+      if (isAdminUser) {
+        // Sync admin session to localStorage for AdminContext
+        if (typeof window !== 'undefined') {
+          const adminRole = isMasterAdmin ? 'Super Admin' : (role === 'seo_manager' ? 'SEO Manager' : 'Admin');
+          const sessionData = {
+            active: true,
+            user: {
+              id: user.id || 'admin-super',
+              name: profile?.full_name || (isMasterAdmin ? 'Trio Super Admin' : 'Administrator'),
+              email: userEmail,
+              role: adminRole,
+              avatar: 'SA',
+              lastLogin: new Date().toISOString()
+            },
+            token: `trio_auth_${Date.now()}`
+          };
+          localStorage.setItem('trio_superadmin_session', JSON.stringify(sessionData));
+        }
+        router.push(role === 'seo_manager' ? '/admin/cms/home' : '/admin');
+      } else {
+        router.push(redirectTo);
+      }
     }
-  }, [user, router, redirectTo]);
+  }, [user, profile, router, redirectTo]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -39,7 +65,32 @@ export default function LoginClient() {
       const cleanPassword = password ? password.trim() : '';
       const result = await login(cleanEmail, cleanPassword);
       if (result.success) {
-        // Direct redirect to main page
+        const isMasterAdmin = cleanEmail === 'trioenterprises10@gmail.com';
+        const role = (result.profile?.role || result.user?.user_metadata?.role || '').toLowerCase();
+        const isAdminUser = isMasterAdmin || ['super_admin', 'admin', 'seo_manager'].includes(role);
+
+        if (isAdminUser) {
+          if (typeof window !== 'undefined') {
+            const adminRole = isMasterAdmin ? 'Super Admin' : (role === 'seo_manager' ? 'SEO Manager' : 'Admin');
+            const sessionData = {
+              active: true,
+              user: {
+                id: result.user?.id || 'admin-super',
+                name: result.profile?.full_name || (isMasterAdmin ? 'Trio Super Admin' : 'Administrator'),
+                email: cleanEmail,
+                role: adminRole,
+                avatar: 'SA',
+                lastLogin: new Date().toISOString()
+              },
+              token: `trio_auth_${Date.now()}`
+            };
+            localStorage.setItem('trio_superadmin_session', JSON.stringify(sessionData));
+            window.location.href = role === 'seo_manager' ? '/admin/cms/home' : '/admin';
+            return;
+          }
+        }
+
+        // Customer Login: Redirect to storefront
         if (typeof window !== 'undefined') {
           window.location.href = redirectTo;
         } else {
@@ -96,10 +147,10 @@ export default function LoginClient() {
             <p className="text-[11px] opacity-90">
               Forgot password or need to reset?{' '}
               <Link
-                href={`/register${email ? `?email=${encodeURIComponent(email.trim().toLowerCase())}` : ''}`}
+                href={`/forgot-password${email ? `?email=${encodeURIComponent(email.trim().toLowerCase())}` : ''}`}
                 className="font-bold underline text-maroon-800 dark:text-gold-300 hover:opacity-80"
               >
-                Sign In / Reset with Email OTP &rarr;
+                Reset via Email OTP &rarr;
               </Link>
             </p>
           </div>

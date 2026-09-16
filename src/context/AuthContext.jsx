@@ -225,14 +225,15 @@ export const AuthProvider = ({ children }) => {
         return { success: false, error: error.message };
       }
 
+      let prof = null;
       if (data?.user) {
         setUser(data.user);
-        await fetchProfile(data.user.id);
+        prof = await fetchProfile(data.user.id);
         await fetchOrders(data.user.id);
       }
 
       addToast('Welcome back to Trio Ecart!', 'success');
-      return { success: true };
+      return { success: true, user: data?.user, profile: prof };
     } catch (err) {
       addToast('Something went wrong', 'error');
       return { success: false, error: err.message };

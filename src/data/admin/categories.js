@@ -1,0 +1,133 @@
+const categories = [
+  {
+    id: 1,
+    name: "Patches",
+    slug: "patches",
+    image: "/products/peacock-real-feathers-pair-1.jpg",
+    banner: "/products/shreenathji-statement-patch-1.jpg",
+    description: "Exquisite handmade embroidery patches, lotus appliques, zardozi peacock motifs, Shreenathji devotions & pearl embellishments for sarees, lehengas & craft DIY.",
+    productCount: 15,
+    subcategories: [
+      { name: "Lotus Flower Patches", slug: "lotus-flower-patches" },
+      { name: "Pearl Beaded Patches", slug: "pearl-beaded-patches" },
+      { name: "Embroidery Patches", slug: "embroidery-patches" },
+      { name: "Zari Decorative Patches", slug: "zari-decorative-patches" },
+      { name: "Fabric Decoration Appliques", slug: "fabric-decoration-appliques" },
+    ],
+  },
+  {
+    id: 2,
+    name: "Flower Bunch",
+    slug: "flower-bunch",
+    image: "/products/trio-ecart-peony-buds-pink.jpg",
+    banner: "/products/red-rose-1.jpg",
+    description: "Lifelike silk peony flower buds, red velvet mandir roses & golden pollen craft flowers for wedding jewelry, Haldi ceremony, hair accessories & pooja thalis.",
+    productCount: 7,
+    subcategories: [
+      { name: "Artificial Flower Bunches", slug: "artificial-flower-bunches" },
+      { name: "Wedding Decoration Flowers", slug: "wedding-decoration-flowers" },
+      { name: "Puja & Ritual Flower Heads", slug: "puja-ritual-flower-heads" },
+      { name: "Festival Decoration Flowers", slug: "festival-decoration-flowers" },
+      { name: "Handmade Flower Hangings", slug: "handmade-flower-hangings" },
+    ],
+  },
+  {
+    id: 3,
+    name: "Bottle",
+    slug: "bottle",
+    image: "/products/hammered-copper-bottle-1.jpg",
+    banner: "/products/copper-bottle-bag-set-1.jpg",
+    description: "100% pure handcrafted Ayurvedic copper water bottles (plain, hammered & brushed matte 1000ml) with protective ethnic printed felt carry bags.",
+    productCount: 4,
+    subcategories: [
+      { name: "Pure Copper Bottles", slug: "pure-copper-bottles" },
+      { name: "Hammered Ayurvedic Bottles", slug: "hammered-ayurvedic-bottles" },
+      { name: "Bottles with Carry Bag", slug: "bottles-with-carry-bag" },
+    ],
+  },
+  {
+    id: 4,
+    name: "Towel / Gamcha",
+    slug: "towel-gamcha",
+    image: "/products/pure-cotton-gamcha-red-1.jpg",
+    banner: "/products/pure-cotton-gamcha-white-1.jpg",
+    description: "Authentic 100% pure soft cotton full 2-metre traditional Gamchas (Red, White, Saffron Kesari & Auspicious Green) for daily pooja bath, sweat absorption & rituals.",
+    productCount: 4,
+    subcategories: [
+      { name: "Traditional Cotton Gamcha", slug: "traditional-cotton-gamcha" },
+    ],
+  },
+  {
+    id: 5,
+    name: "Cup Chain",
+    slug: "cup-chain",
+    image: "/products/gold-clear-cup-chain-10m-1.jpg",
+    banner: "/products/pearl-emerald-cup-chain-5m-1.jpg",
+    description: "2mm brilliant rhinestone crystal brass catcher cup chains (Clear 10m roll, Pink & Gold 10m, Iridescent AB 5m, Cream Pearl & Emerald 5m, 3-Colour Red/Green/Gold 15m & Pink/Blue/Gold 15m).",
+    productCount: 6,
+    subcategories: [
+      { name: "Rhinestone Cup Chains", slug: "rhinestone-cup-chains" },
+      { name: "Golden Stone Trims", slug: "golden-stone-trims" },
+      { name: "Festival Decoration Chains", slug: "festival-decoration-chains" },
+      { name: "Bridal Zari Trims", slug: "bridal-zari-trims" },
+    ],
+  },
+  {
+    id: 6,
+    name: "Paranda",
+    slug: "paranda",
+    image: "/products/pearl-paranda-bunch-1.jpg",
+    banner: "/products/pearl-paranda-bunch-2.jpg",
+    description: "Handcrafted bridal pearl white Punjabi paranda hair accessory and latkan bunch (Pack of 10) with cascading teardrop pearls and golden rhinestone spacer rings.",
+    productCount: 1,
+    subcategories: [
+      { name: "Bridal Hair Accessories", slug: "bridal-hair-accessories" },
+      { name: "Traditional Punjabi Paranda", slug: "traditional-punjabi-paranda" },
+    ],
+  },
+  {
+    id: 7,
+    name: "Aasan",
+    slug: "aasan",
+    image: "/products/lotus-kamal-aasan-1.jpg",
+    banner: "/products/lotus-kamal-aasan-3.jpg",
+    description: "Handcrafted velvet Lotus Kamal Aasan (Padma Asana) with layered satin petals and shining golden jari designer lace for Laddu Gopal, Ganesh, Lakshmi idols & pooja chowki.",
+    productCount: 1,
+    subcategories: [
+      { name: "Velvet Pooja Aasan", slug: "velvet-pooja-aasan" },
+      { name: "Chowki & Mandir Mats", slug: "chowki-mandir-mats" },
+    ],
+  },
+  {
+    id: 8,
+    name: "Chudi Ring",
+    slug: "chudi-ring",
+    image: "/products/gota-chudi-ring-1.jpg",
+    banner: "/products/gota-chudi-ring-2.jpg",
+    description: "Decorated Golden Gota Moti Chudi Rings (Set of 12) with radial golden fan pattern and pearl border for pooja thalis, shagun platters, saree borders & craft DIY.",
+    productCount: 1,
+    subcategories: [
+      { name: "Golden Gota Moti Rings", slug: "golden-gota-moti-rings" },
+      { name: "Thali Decoration Rings", slug: "thali-decoration-rings" },
+    ],
+  },
+  {
+    id: 9,
+    name: "More Products",
+    slug: "more-products",
+    image: "/products/hanuman-chalisa-book-1.jpg",
+    banner: "/products/brass-pooja-thali-set-1.jpg",
+    description: "Spiritual car dashboard Wooden Hanuman Chalisa books, solid brass Laddu Gopal 5-piece bhog set, velvet pooja aarti thalis with brass diyas & wire brush tool attachments.",
+    productCount: 4,
+    subcategories: [
+      { name: "Door Torans & Hangings", slug: "door-torans-hangings" },
+      { name: "Diya & Thali Decorations", slug: "diya-thali-decorations" },
+      { name: "Craft Tools & Accessories", slug: "craft-tools-accessories" },
+    ],
+  },
+];
+
+export default categories;
+
+export const getCategoryBySlug = (slug) => categories.find(c => c.slug === slug);
+export const getCategoryByName = (name) => categories.find(c => c.name.toLowerCase() === name.toLowerCase());

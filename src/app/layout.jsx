@@ -1,12 +1,7 @@
 import './globals.css';
 import Script from 'next/script';
 import { Providers } from './providers';
-import Navbar from '../components/layout/Navbar';
-import Footer from '../components/layout/Footer';
-import MobileNav from '../components/layout/MobileNav';
-import CartDrawer from '../components/cart/CartDrawer';
-import AuthRequiredModal from '../components/auth/AuthRequiredModal';
-import WhatsAppFloatingButton from '../components/common/WhatsAppFloatingButton';
+import StorefrontShell from '../components/layout/StorefrontShell';
 
 export const metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || 'https://trioenterprises.in'),
@@ -84,17 +79,9 @@ export default function RootLayout({ children }) {
       </head>
       <body className="bg-ivory-100 text-stone-900 dark:bg-ethnic-dark dark:text-ethnic-text font-sans antialiased selection:bg-gold-500 selection:text-maroon-950 transition-colors duration-200" suppressHydrationWarning>
         <Providers>
-          <div className="min-h-screen flex flex-col w-full max-w-full overflow-x-clip">
-            <Navbar />
-            <main className="flex-1 w-full max-w-full overflow-x-clip">
-              {children}
-            </main>
-            <Footer />
-            <MobileNav />
-            <CartDrawer />
-            <AuthRequiredModal />
-            <WhatsAppFloatingButton />
-          </div>
+          <StorefrontShell>
+            {children}
+          </StorefrontShell>
         </Providers>
         <Script src="https://checkout.razorpay.com/v1/checkout.js" strategy="lazyOnload" />
       </body>
