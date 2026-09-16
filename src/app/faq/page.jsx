@@ -35,7 +35,7 @@ const DEFAULT_FAQS = [
   },
   {
     question: "What is your return and replacement policy?",
-    answer: "We offer a 7-day doorstep replacement guarantee on all items. If an item arrives transit-damaged or differs from your expectations, contact our WhatsApp support at +91 98765 43210 for an instant replacement or full refund."
+    answer: "We offer a 7-day doorstep replacement guarantee on all items. If an item arrives transit-damaged or differs from your expectations, contact our WhatsApp support at +91 7065120322 for an instant replacement or full refund."
   },
   {
     question: "Do you offer Cash on Delivery (COD)?",

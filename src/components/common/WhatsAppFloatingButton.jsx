@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 
 export default function WhatsAppFloatingButton() {
   const [isHovered, setIsHovered] = useState(false);
-  const phoneNumber = '919876543210';
+  const phoneNumber = '917065120322';
   const defaultMessage = encodeURIComponent('Namaste! I would like to know more about your handcrafted products.');
 
   return (

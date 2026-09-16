@@ -229,7 +229,7 @@ export async function createOrderAndAssignAWB(orderParams) {
  * Get available shipping rates for a delivery from Shiprocket
  */
 export async function getShippingRates({
-  pickupPincode = '121005', // Faridabad pickup default
+  pickupPincode = '121001', // Faridabad NIT pickup default
   deliveryPincode,
   weight = 0.5,
   length = 15,
@@ -239,7 +239,7 @@ export async function getShippingRates({
 }) {
   const cleanPin = String(deliveryPincode || '').trim().replace(/\D/g, '').slice(0, 6);
   const params = new URLSearchParams({
-    pickup_postcode: String(pickupPincode || '121005'),
+    pickup_postcode: String(pickupPincode || '121001'),
     delivery_postcode: cleanPin,
     weight: String(weight || 0.5),
     length: String(length || 15),
@@ -643,14 +643,14 @@ export async function createReturnOrder({
     pickup_pincode: pickupPincode,
     pickup_phone: pickupPhone?.replace(/[^0-9]/g, '').slice(-10) || '',
     pickup_is_primary: 0,
-    shipping_customer_name: 'Trio Enterprises',
+    shipping_customer_name: 'Trio Enterprises (Attn: Kashyap ji)',
     shipping_last_name: '',
-    shipping_address: 'House 731, Jawahar Colony',
+    shipping_address: 'UNIT NO. 16, first floor, E-43, Nehru ground, N.I.T Faridabad, Near R.B.A COLLEGE',
     shipping_city: 'Faridabad',
-    shipping_pincode: '121005',
+    shipping_pincode: '121001',
     shipping_state: 'Haryana',
     shipping_country: 'India',
-    shipping_phone: '9999999999',
+    shipping_phone: '7065120322',
     order_items: items.map((item) => ({
       name: (item.name || 'Handicraft Item').trim(),
       sku: item.sku || `TRIO-${item.product_id || item.productId || 'GEN'}`,

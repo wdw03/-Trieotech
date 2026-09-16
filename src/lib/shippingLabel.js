@@ -176,16 +176,19 @@ export function generateShippingLabelHTML(order, shipment = {}) {
             <strong style="text-transform:uppercase;font-size:10px;color:#333;display:block;margin-bottom:3px">Shipped By (Pickup):</strong>
             <strong>Trio Enterprises</strong><br>
             Attn: Kashyap ji<br>
-            House 731, Jawahar Colony<br>
-            Faridabad, Haryana - 121005
+            UNIT NO. 16, First Floor, E-43, Nehru Ground<br>
+            N.I.T Faridabad, Near R.B.A COLLEGE<br>
+            Faridabad, Haryana - 121001<br>
+            📞 Helpline: 7065120322
           </td>
           <td style="padding:8px 12px;vertical-align:top">
             <strong style="text-transform:uppercase;font-size:10px;color:#991b1b;display:block;margin-bottom:3px">If Undelivered, Return To (RTO):</strong>
             <strong>Trio Enterprises</strong><br>
             Attn: Kashyap ji<br>
-            House 731, Jawahar Colony<br>
-            Faridabad, Haryana - 121005<br>
-            📞 Helpline: 9999999999
+            UNIT NO. 16, First Floor, E-43, Nehru Ground<br>
+            N.I.T Faridabad, Near R.B.A COLLEGE<br>
+            Faridabad, Haryana - 121001<br>
+            📞 Helpline: 7065120322
           </td>
         </tr>
       </table>

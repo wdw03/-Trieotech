@@ -118,9 +118,10 @@ export function generateInvoiceHTML(order) {
             <h1 style="font-size:24px;color:#7f1d1d;font-weight:900;letter-spacing:1px;margin-bottom:4px">TRIO ENTERPRISES</h1>
             <p style="font-size:12px;font-weight:700;color:#d4af37;text-transform:uppercase;letter-spacing:1.5px;margin-bottom:8px">Authentic Indian Ethnic Handicrafts</p>
             <p style="font-size:11px;color:#57534e;line-height:1.5">
-              Jaipur Handicraft Cluster &amp; Surat Textile Hub<br>
-              Rajasthan - 302001, India<br>
-              Email: care@trioenterprises.com | Web: trioenterprises.com
+              <strong>Attn: Kashyap ji</strong><br>
+              UNIT NO. 16, First Floor, E-43, Nehru Ground, N.I.T Faridabad<br>
+              Near R.B.A COLLEGE, Faridabad, Haryana - 121001, India<br>
+              Phone: +91 7065120322 | Email: care@trioenterprises.com
             </p>
           </td>
           <td style="vertical-align:top;text-align:right">
@@ -233,8 +234,8 @@ export function generateInvoiceHTML(order) {
 
       <!-- Footer & Tax Disclaimers -->
       <div style="border-top:1px solid #e7dfd5;padding-top:20px;text-align:center;color:#78716c;font-size:11px;line-height:1.6">
-        <p><strong>Trio Enterprises</strong> • Handcrafted with love in Jaipur, India 🇮🇳</p>
-        <p>This is an electronically generated authentic commercial invoice. For any inquiries, write to <strong>care@trioenterprises.com</strong> or call <strong>+91 98765 43210</strong>.</p>
+        <p><strong>Trio Enterprises</strong> • Attn: Kashyap ji • UNIT NO. 16, First Floor, E-43, Nehru Ground, N.I.T Faridabad, 121001 🇮🇳</p>
+        <p>This is an electronically generated authentic commercial invoice. For any inquiries, write to <strong>care@trioenterprises.com</strong> or call <strong>+91 7065120322</strong>.</p>
       </div>
 
     </div>

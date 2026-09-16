@@ -32,7 +32,7 @@ const FALLBACK_FAQS = [
   {
     id: 5,
     question: "What is your return and replacement policy?",
-    answer: "We offer a 7-day doorstep replacement guarantee on all items. If an item arrives transit-damaged or differs from your expectations, contact our WhatsApp support at +91 98765 43210 for an instant replacement or full refund.",
+    answer: "We offer a 7-day doorstep replacement guarantee on all items. If an item arrives transit-damaged or differs from your expectations, contact our WhatsApp support at +91 7065120322 for an instant replacement or full refund.",
     category: "Orders & Returns"
   },
   {
@@ -262,7 +262,7 @@ export default function FAQClient({ initialFaqs = [] }) {
         </div>
 
         <a
-          href="https://wa.me/919876543210?text=Namaste!%20I%20have%20a%20question%20regarding%20Trio%20Enterprises%20products."
+          href="https://wa.me/917065120322?text=Namaste!%20I%20have%20a%20question%20regarding%20Trio%20Enterprises%20products."
           target="_blank"
           rel="noopener noreferrer"
           className="btn-primary py-3 px-6 text-xs sm:text-sm font-bold flex items-center gap-2.5 shrink-0 bg-emerald-600 hover:bg-emerald-700 border-emerald-500/40 text-white shadow-lg shadow-emerald-900/30 hover:scale-105 transition-all"

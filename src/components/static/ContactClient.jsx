@@ -105,7 +105,7 @@ export default function ContactClient() {
 
           <div className="space-y-3 pt-2">
             <a
-              href="https://wa.me/919876543210"
+              href="https://wa.me/917065120322"
               target="_blank"
               rel="noopener noreferrer"
               className="ethnic-card p-4 rounded-2xl flex items-center gap-3.5 hover:border-gold-500/50 transition-all group"
@@ -115,7 +115,7 @@ export default function ContactClient() {
               </div>
               <div className="text-xs min-w-0">
                 <span className="font-bold text-stone-900 dark:text-ivory-100 block">WhatsApp Chat Desk</span>
-                <p className="text-stone-500 dark:text-stone-400">+91 98765 43210 (Instant Reply)</p>
+                <p className="text-stone-500 dark:text-stone-400">+91 7065120322 (Instant Reply)</p>
               </div>
             </a>
 
@@ -125,7 +125,9 @@ export default function ContactClient() {
               </div>
               <div className="text-xs min-w-0">
                 <span className="font-bold text-stone-900 dark:text-ivory-100 block">Phone Support</span>
-                <p className="text-stone-500 dark:text-stone-400">+91 98765 43210</p>
+                <p className="text-stone-500 dark:text-stone-400">
+                  <a href="tel:+917065120322" className="hover:text-gold-600 dark:hover:text-gold-400 font-semibold">+91 7065120322</a>
+                </p>
               </div>
             </div>
 
@@ -144,8 +146,11 @@ export default function ContactClient() {
                 <MapPin className="w-5 h-5" />
               </div>
               <div className="text-xs min-w-0">
-                <span className="font-bold text-stone-900 dark:text-ivory-100 block">Workshop &amp; Studio</span>
-                <p className="text-stone-500 dark:text-stone-400">Johari Bazaar Craft Quarter, Jaipur 302003, Rajasthan</p>
+                <span className="font-bold text-stone-900 dark:text-ivory-100 block">Office &amp; Headquarters (Trio Enterprises)</span>
+                <p className="text-stone-600 dark:text-stone-300 font-medium leading-relaxed">
+                  Attn: Kashyap ji<br />
+                  UNIT NO. 16, First Floor, E-43, Nehru Ground, N.I.T Faridabad, Near R.B.A COLLEGE, 121001
+                </p>
               </div>
             </div>
 
@@ -164,17 +169,19 @@ export default function ContactClient() {
         {/* Right Column: Contact Message Form */}
         <div className="md:col-span-7 ethnic-card p-6 sm:p-8 rounded-3xl shadow-xl space-y-5">
           {submitted ? (
-            <div className="text-center py-10 space-y-4 animate-fadeIn">
-              <div className="w-14 h-14 mx-auto rounded-full bg-emerald-500/20 text-emerald-600 flex items-center justify-center">
-                <CheckCircle2 className="w-8 h-8" />
+            <div className="py-12 text-center space-y-4 animate-fadeIn">
+              <div className="w-14 h-14 mx-auto rounded-2xl bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
+                <CheckCircle2 className="w-7 h-7" />
               </div>
-              <h2 className="font-serif font-bold text-xl sm:text-2xl text-stone-900 dark:text-ivory-100">
-                Inquiry Received!
-              </h2>
-              <p className="text-xs text-stone-500 dark:text-stone-400 max-w-md mx-auto leading-relaxed">
-                Your message has been directly recorded in our coordination desk and forwarded to our artisan team. We typically respond within 2 to 4 business hours.
-              </p>
-              <div className="pt-4 flex flex-wrap items-center justify-center gap-3">
+              <div className="space-y-1">
+                <h3 className="font-serif font-bold text-xl text-stone-900 dark:text-ivory-100">
+                  Inquiry Received with Gratitude!
+                </h3>
+                <p className="text-xs text-stone-500 max-w-sm mx-auto leading-relaxed">
+                  Thank you for writing to Trio Enterprises. Our team will review your message and connect within 2 to 4 business hours.
+                </p>
+              </div>
+              <div className="pt-2 flex flex-wrap items-center justify-center gap-3">
                 <button
                   type="button"
                   onClick={() => setSubmitted(false)}
@@ -183,7 +190,7 @@ export default function ContactClient() {
                   Send Another Message
                 </button>
                 <a
-                  href="https://wa.me/919876543210"
+                  href="https://wa.me/917065120322"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="btn-primary py-2.5 px-5 text-xs font-bold flex items-center gap-2"

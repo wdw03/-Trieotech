@@ -113,7 +113,7 @@ export const Footer = () => {
       <div className="lg:hidden px-4 sm:px-6 pt-6">
         <div className="grid grid-cols-2 gap-2.5">
           <a
-            href="https://wa.me/919876543210?text=Hi%20Trio%20Enterprises%2C%20I%20have%20an%20inquiry%20about%20your%20handcrafted%20products."
+            href="https://wa.me/917065120322?text=Hi%20Trio%20Enterprises%2C%20I%20have%20an%20inquiry%20about%20your%20handcrafted%20products."
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl bg-[#0F2416] border border-emerald-500/30 text-emerald-300 text-xs font-semibold hover:bg-emerald-950/60 transition-colors"
@@ -146,11 +146,13 @@ export const Footer = () => {
             <div className="space-y-2 text-xs text-stone-300 pt-1 font-medium">
               <div className="flex items-start gap-2">
                 <MapPin className="w-4 h-4 text-gold-400 shrink-0 mt-0.5" />
-                <span className="text-stone-400">Jaipur Handicrafts Hub &amp; Surat Textile Cluster, India</span>
+                <span className="text-stone-400 leading-snug">
+                  UNIT NO. 16, First Floor, E-43, Nehru Ground, N.I.T Faridabad, Near R.B.A COLLEGE, 121001 (Attn: Kashyap ji)
+                </span>
               </div>
               <div className="flex items-center gap-2">
                 <Phone className="w-4 h-4 text-gold-400 shrink-0" />
-                <a href="tel:+919876543210" className="hover:text-gold-300 transition-colors">+91 98765 43210 (Mon-Sat, 10 AM - 7 PM)</a>
+                <a href="tel:+917065120322" className="hover:text-gold-300 transition-colors">+91 7065120322 (Mon-Sat, 10 AM - 7 PM)</a>
               </div>
               <div className="flex items-center gap-2">
                 <Mail className="w-4 h-4 text-gold-400 shrink-0" />
@@ -291,7 +293,7 @@ export const Footer = () => {
               </span>
               <div className="flex items-center gap-2">
                 <a
-                  href="https://wa.me/919876543210"
+                  href="https://wa.me/917065120322"
                   target="_blank"
                   rel="noreferrer"
                   className="w-8 h-8 rounded-lg bg-[#1C120B] border border-emerald-500/30 flex items-center justify-center hover:bg-emerald-500/20 hover:scale-105 transition-all"

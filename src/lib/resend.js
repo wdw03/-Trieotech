@@ -355,8 +355,8 @@ export async function sendOrderConfirmation({
 
         <!-- Royal Dark Footer -->
         <div class="footer">
-          <strong>TRIO ENTERPRISES</strong> — Jaipur Handicraft Cluster &amp; Surat Textile Hub, India 🇮🇳<br>
-          For patron assistance: <a href="mailto:care@trioenterprises.com">care@trioenterprises.com</a> | WhatsApp / Phone: <strong>+91 98765 43210</strong><br>
+          <strong>TRIO ENTERPRISES</strong> (Attn: Kashyap ji) — UNIT NO. 16, First Floor, E-43, Nehru Ground, N.I.T Faridabad, 121001 🇮🇳<br>
+          For patron assistance: <a href="mailto:care@trioenterprises.com">care@trioenterprises.com</a> | WhatsApp / Phone: <strong>+91 7065120322</strong><br>
           <span style="font-size: 10px; color: #78716c; margin-top: 6px; display: block;">This is an authentic electronically generated invoice issued by Trio Enterprises.</span>
         </div>
       </div>
@@ -685,14 +685,14 @@ export async function sendOrderCancellation({
           <p style="font-size: 12px; color: #78716c; text-align: center; margin: 0; line-height: 1.6;">
             Need help? Contact our support team at 
             <a href="mailto:care@trioenterprises.com" style="color: #7f1d1d; font-weight: 700;">care@trioenterprises.com</a>
-            or call us at <strong>+91 98765 43210</strong>.
+            or call us at <strong>+91 7065120322</strong>.
           </p>
         </div>
 
         <!-- Footer -->
         <div class="footer">
-          <strong>TRIO ENTERPRISES</strong> — Jaipur Handicraft Cluster &amp; Surat Textile Hub, India 🇮🇳<br>
-          For patron assistance: <a href="mailto:care@trioenterprises.com">care@trioenterprises.com</a> | WhatsApp / Phone: <strong>+91 98765 43210</strong><br>
+          <strong>TRIO ENTERPRISES</strong> (Attn: Kashyap ji) — UNIT NO. 16, First Floor, E-43, Nehru Ground, N.I.T Faridabad, 121001 🇮🇳<br>
+          For patron assistance: <a href="mailto:care@trioenterprises.com">care@trioenterprises.com</a> | WhatsApp / Phone: <strong>+91 7065120322</strong><br>
           <span style="font-size: 10px; color: #78716c; margin-top: 6px; display: block;">This is an automatically generated notification from Trio Enterprises.</span>
         </div>
       </div>

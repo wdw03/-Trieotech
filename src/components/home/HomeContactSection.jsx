@@ -126,7 +126,7 @@ export default function HomeContactSection() {
             {/* Quick Contact Badges */}
             <div className="space-y-3">
               <a
-                href="https://wa.me/919876543210"
+                href="https://wa.me/917065120322"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center gap-3.5 p-3.5 rounded-2xl bg-white/5 border border-gold-500/20 hover:border-gold-500/60 hover:bg-gold-500/10 transition-all group cursor-pointer"
@@ -141,7 +141,7 @@ export default function HomeContactSection() {
                       Instant Reply
                     </span>
                   </div>
-                  <p className="text-stone-400">+91 98765 43210 (Click to chat now)</p>
+                  <p className="text-stone-400">+91 7065120322 (Click to chat now)</p>
                 </div>
               </a>
 
@@ -151,7 +151,9 @@ export default function HomeContactSection() {
                 </div>
                 <div className="text-xs min-w-0">
                   <span className="font-bold text-white block">Phone Support</span>
-                  <p className="text-stone-400">+91 98765 43210 (Mon - Sat, 10 AM - 7 PM)</p>
+                  <p className="text-stone-400">
+                    <a href="tel:+917065120322" className="hover:text-gold-400 font-semibold">+91 7065120322 (Mon - Sat, 10 AM - 7 PM)</a>
+                  </p>
                 </div>
               </div>
 
@@ -170,8 +172,11 @@ export default function HomeContactSection() {
                   <MapPin className="w-5 h-5" />
                 </div>
                 <div className="text-xs min-w-0">
-                  <span className="font-bold text-white block">Artisan Workshop Hub</span>
-                  <p className="text-stone-400">Johari Bazaar Craft Quarter, Jaipur 302003, Rajasthan</p>
+                  <span className="font-bold text-white block">Office &amp; Headquarters (Trio Enterprises)</span>
+                  <p className="text-stone-300 font-medium leading-relaxed">
+                    Attn: Kashyap ji<br />
+                    UNIT NO. 16, First Floor, E-43, Nehru Ground, N.I.T Faridabad, Near R.B.A COLLEGE, 121001
+                  </p>
                 </div>
               </div>
             </div>
@@ -213,7 +218,7 @@ export default function HomeContactSection() {
                     Send Another Inquiry
                   </button>
                   <a
-                    href="https://wa.me/919876543210"
+                    href="https://wa.me/917065120322"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="btn-primary py-2.5 px-5 text-xs font-bold flex items-center gap-2"
