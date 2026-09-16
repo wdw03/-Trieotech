@@ -54,7 +54,8 @@ const Reveal = ({ children, delay = 0, className = '' }) => {
 const initialPosts = [
   {
     id: 'f6750212-5761-4c2c-bec8-0e649d455c94',
-    img: 'https://gkskeljvgphslkzctjfp.supabase.co/storage/v1/object/public/reels/avatars/Abida_Fatima.jpg',
+    avatar: 'https://gkskeljvgphslkzctjfp.supabase.co/storage/v1/object/public/reels/avatars/Abida_Fatima.jpg',
+    img: 'https://gkskeljvgphslkzctjfp.supabase.co/storage/v1/object/public/products/pearl-zardosi-patch-1.jpg',
     video: 'https://gkskeljvgphslkzctjfp.supabase.co/storage/v1/object/public/reels/videos/pearl_zardosi_craft_reel.mp4',
     handle: '@abida.fatima_',
     name: 'Abida Fatima',
@@ -73,6 +74,7 @@ const initialPosts = [
     oldPrice: '₹499',
     rawOldPrice: 499,
     discount: '60% OFF',
+    productImage: 'https://gkskeljvgphslkzctjfp.supabase.co/storage/v1/object/public/products/pearl-zardosi-patch-1.jpg',
     tag: 'Zardosi Craft',
     rating: 4.9,
     reviews: 184,
@@ -85,7 +87,8 @@ const initialPosts = [
   },
   {
     id: '6bf36e38-2e3f-4db5-86e8-75c1dd4a8e17',
-    img: 'https://gkskeljvgphslkzctjfp.supabase.co/storage/v1/object/public/reels/avatars/Agrani_SINGH.jpg',
+    avatar: 'https://gkskeljvgphslkzctjfp.supabase.co/storage/v1/object/public/reels/avatars/Agrani_SINGH.jpg',
+    img: 'https://gkskeljvgphslkzctjfp.supabase.co/storage/v1/object/public/products/pooja-thali-brass-diya-1.jpg',
     video: 'https://gkskeljvgphslkzctjfp.supabase.co/storage/v1/object/public/reels/videos/pooja_thali_brass_diya_reel.mp4',
     handle: '@agranisingh.official',
     name: 'Agrani Singh',
@@ -104,6 +107,7 @@ const initialPosts = [
     oldPrice: '₹799',
     rawOldPrice: 799,
     discount: '50% OFF',
+    productImage: 'https://gkskeljvgphslkzctjfp.supabase.co/storage/v1/object/public/products/pooja-thali-brass-diya-1.jpg',
     tag: 'Festive Pooja',
     rating: 5.0,
     reviews: 326,
@@ -116,7 +120,8 @@ const initialPosts = [
   },
   {
     id: 'd5f985ae-05ea-40d8-8672-e34c3332f992',
-    img: 'https://gkskeljvgphslkzctjfp.supabase.co/storage/v1/object/public/reels/avatars/Dezy_Jariwala.jpg',
+    avatar: 'https://gkskeljvgphslkzctjfp.supabase.co/storage/v1/object/public/reels/avatars/Dezy_Jariwala.jpg',
+    img: 'https://gkskeljvgphslkzctjfp.supabase.co/storage/v1/object/public/products/gota-chudi-ring-1.jpg',
     video: 'https://gkskeljvgphslkzctjfp.supabase.co/storage/v1/object/public/reels/videos/golden_gota_moti_chudi_reel.mp4',
     handle: '@dezyjariwala',
     name: 'Dezy Jariwala',
@@ -135,6 +140,7 @@ const initialPosts = [
     oldPrice: '₹599',
     rawOldPrice: 599,
     discount: '50% OFF',
+    productImage: 'https://gkskeljvgphslkzctjfp.supabase.co/storage/v1/object/public/products/gota-chudi-ring-1.jpg',
     tag: 'Gota Craft',
     rating: 4.8,
     reviews: 95,
@@ -146,7 +152,8 @@ const initialPosts = [
   },
   {
     id: 'dec02b29-0fd5-4772-9d72-dbde74308598',
-    img: 'https://gkskeljvgphslkzctjfp.supabase.co/storage/v1/object/public/reels/avatars/Natasha_Prajapati.jpg',
+    avatar: 'https://gkskeljvgphslkzctjfp.supabase.co/storage/v1/object/public/reels/avatars/Natasha_Prajapati.jpg',
+    img: 'https://gkskeljvgphslkzctjfp.supabase.co/storage/v1/object/public/products/peony-pink.jpg',
     video: 'https://gkskeljvgphslkzctjfp.supabase.co/storage/v1/object/public/reels/videos/silk_peony_flower_buds_reel.mp4',
     handle: '@natasha.prajapati',
     name: 'Natasha Prajapati',
@@ -165,6 +172,7 @@ const initialPosts = [
     oldPrice: '₹649',
     rawOldPrice: 649,
     discount: '51% OFF',
+    productImage: 'https://gkskeljvgphslkzctjfp.supabase.co/storage/v1/object/public/products/peony-pink.jpg',
     tag: 'Silk Blooms',
     rating: 4.9,
     reviews: 210,
@@ -176,7 +184,8 @@ const initialPosts = [
   },
   {
     id: '294230fb-c77a-4bc5-bc35-4cc97571cea5',
-    img: 'https://gkskeljvgphslkzctjfp.supabase.co/storage/v1/object/public/reels/avatars/Samiksha_2211.jpg',
+    avatar: 'https://gkskeljvgphslkzctjfp.supabase.co/storage/v1/object/public/reels/avatars/Samiksha_2211.jpg',
+    img: 'https://gkskeljvgphslkzctjfp.supabase.co/storage/v1/object/public/products/red-rose-1.jpg',
     video: 'https://gkskeljvgphslkzctjfp.supabase.co/storage/v1/object/public/reels/videos/silk_red_rose_garland_reel.mp4',
     handle: '@samiksha_2211',
     name: 'Samiksha Rao',
@@ -195,13 +204,14 @@ const initialPosts = [
     oldPrice: '₹699',
     rawOldPrice: 699,
     discount: '48% OFF',
-    tag: 'Rose Decor',
+    productImage: 'https://gkskeljvgphslkzctjfp.supabase.co/storage/v1/object/public/products/red-rose-1.jpg',
+    tag: 'Red Roses',
     rating: 4.9,
-    reviews: 142,
-    views: '673K',
+    reviews: 165,
+    views: '380K',
     commentsList: [
-      { user: 'alisha_khan', text: 'Color is deep velvet crimson, looks so luxurious 🌹', time: '1h ago' },
-      { user: 'deepak_events', text: 'Ordered 5 packs for stage decoration. Highly recommended.', time: '4h ago' },
+      { user: 'varun_mehta', text: 'Used for backdrop photobooth decoration, looks extraordinarily real!', time: '2h ago' },
+      { user: 'tanvi_artistry', text: 'Reusable for multiple festival seasons. Fantastic buy ✨', time: '6h ago' },
     ]
   }
 ];
@@ -438,7 +448,7 @@ const ReelCard = ({
               <div className="gram-ig-ring absolute inset-0 rounded-full" />
               <div className="absolute inset-[2px] rounded-full overflow-hidden bg-[#12100d]">
                 <img
-                  src={post.img}
+                  src={post.avatar || post.img}
                   alt={post.name}
                   className="w-full h-full object-cover"
                   loading="lazy"
@@ -881,7 +891,7 @@ const ReelModal = ({ post, isOpen, onClose, onAddToCart, onBuyNow, onNext, onPre
           <div className="relative z-30 flex items-center justify-between p-3.5 sm:p-4 bg-gradient-to-b from-black/90 via-black/40 to-transparent pt-[env(safe-area-inset-top,12px)]">
             <div className="flex items-center gap-2.5">
               <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full overflow-hidden border-2 border-[#ee2a7b]">
-                <img src={post.img} alt={post.name} className="w-full h-full object-cover" />
+                <img src={post.avatar || post.img} alt={post.name} className="w-full h-full object-cover" />
               </div>
               <div>
                 <span className="gram-body flex items-center gap-1 text-white text-xs font-bold">
@@ -1033,7 +1043,7 @@ const ReelModal = ({ post, isOpen, onClose, onAddToCart, onBuyNow, onNext, onPre
               <div className="relative w-11 h-11 shrink-0">
                 <div className="gram-ig-ring absolute inset-0 rounded-full" />
                 <div className="absolute inset-[2.5px] rounded-full overflow-hidden bg-[#12100d]">
-                  <img src={post.img} alt={post.name} className="w-full h-full object-cover" />
+                  <img src={post.avatar || post.img} alt={post.name} className="w-full h-full object-cover" />
                 </div>
               </div>
               <div className="min-w-0">
@@ -1287,12 +1297,13 @@ export default function ShopTheGram() {
             if (activeReels.length > 0) {
               const mapped = activeReels.map((r, i) => ({
                 id: r.id || `reel-${i}`,
-                img: r.influencer_avatar || r.thumbnail_url || 'https://gkskeljvgphslkzctjfp.supabase.co/storage/v1/object/public/reels/avatars/Abida_Fatima.jpg',
+                avatar: r.influencer_avatar || 'https://gkskeljvgphslkzctjfp.supabase.co/storage/v1/object/public/reels/avatars/Abida_Fatima.jpg',
+                img: r.thumbnail_url || r.product_image || r.influencer_avatar || 'https://gkskeljvgphslkzctjfp.supabase.co/storage/v1/object/public/reels/avatars/Abida_Fatima.jpg',
                 video: r.video_url,
                 handle: r.influencer_username || '@trioenterprises',
                 name: r.influencer_name || 'Trio Influencer',
                 verified: true,
-                followers: '250K',
+                followers: r.followers || '250K',
                 likes: r.likes_count || '15K',
                 likesCount: parseNumericCount(r.likes_count) || 15000,
                 comments: r.comments_count || '250',
@@ -1306,8 +1317,8 @@ export default function ShopTheGram() {
                 oldPrice: r.product_old_price ? `₹${r.product_old_price}` : '',
                 rawOldPrice: Number(r.product_old_price) || 0,
                 discount: r.product_discount || '',
-                productImage: r.product_image || '',
-                tag: 'Authentic Craft',
+                productImage: r.product_image || r.thumbnail_url || '',
+                tag: r.tags || 'Authentic Craft',
                 rating: 4.9,
                 reviews: 150,
                 views: r.views_count || '100K',
