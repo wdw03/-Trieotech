@@ -320,8 +320,10 @@ export const HomePageCms = () => {
               </div>
 
               <div>
-                <label className="text-slate-400 block mb-1">Headline</label>
+                <label htmlFor="cms_wedding_banner_title" className="text-slate-400 block mb-1">Headline</label>
                 <input
+                  id="cms_wedding_banner_title"
+                  name="wedding_banner_title"
                   type="text"
                   value={cmsHomeSections.promotionalBanners?.weddingBanner?.title || ''}
                   onChange={(e) => {
@@ -336,8 +338,10 @@ export const HomePageCms = () => {
               </div>
 
               <div>
-                <label className="text-slate-400 block mb-1">Description Copy</label>
+                <label htmlFor="cms_wedding_banner_description" className="text-slate-400 block mb-1">Description Copy</label>
                 <textarea
+                  id="cms_wedding_banner_description"
+                  name="wedding_banner_description"
                   rows={2}
                   value={cmsHomeSections.promotionalBanners?.weddingBanner?.description || ''}
                   onChange={(e) => {
@@ -353,8 +357,10 @@ export const HomePageCms = () => {
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-slate-400 block mb-1">Button Text</label>
+                  <label htmlFor="cms_wedding_banner_btn_text" className="text-slate-400 block mb-1">Button Text</label>
                   <input
+                    id="cms_wedding_banner_btn_text"
+                    name="wedding_banner_button_text"
                     type="text"
                     value={cmsHomeSections.promotionalBanners?.weddingBanner?.buttonText || ''}
                     onChange={(e) => {
@@ -368,8 +374,10 @@ export const HomePageCms = () => {
                   />
                 </div>
                 <div>
-                  <label className="text-slate-400 block mb-1">Button Link</label>
+                  <label htmlFor="cms_wedding_banner_btn_link" className="text-slate-400 block mb-1">Button Link</label>
                   <input
+                    id="cms_wedding_banner_btn_link"
+                    name="wedding_banner_button_link"
                     type="text"
                     value={cmsHomeSections.promotionalBanners?.weddingBanner?.buttonLink || ''}
                     onChange={(e) => {
@@ -393,8 +401,10 @@ export const HomePageCms = () => {
               </div>
 
               <div>
-                <label className="text-slate-400 block mb-1">Headline</label>
+                <label htmlFor="cms_festival_banner_title" className="text-slate-400 block mb-1">Headline</label>
                 <input
+                  id="cms_festival_banner_title"
+                  name="festival_banner_title"
                   type="text"
                   value={cmsHomeSections.promotionalBanners?.festivalBanner?.title || ''}
                   onChange={(e) => {
@@ -409,8 +419,10 @@ export const HomePageCms = () => {
               </div>
 
               <div>
-                <label className="text-slate-400 block mb-1">Description Copy</label>
+                <label htmlFor="cms_festival_banner_description" className="text-slate-400 block mb-1">Description Copy</label>
                 <textarea
+                  id="cms_festival_banner_description"
+                  name="festival_banner_description"
                   rows={2}
                   value={cmsHomeSections.promotionalBanners?.festivalBanner?.description || ''}
                   onChange={(e) => {
@@ -426,8 +438,10 @@ export const HomePageCms = () => {
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-slate-400 block mb-1">Button Text</label>
+                  <label htmlFor="cms_festival_banner_btn_text" className="text-slate-400 block mb-1">Button Text</label>
                   <input
+                    id="cms_festival_banner_btn_text"
+                    name="festival_banner_button_text"
                     type="text"
                     value={cmsHomeSections.promotionalBanners?.festivalBanner?.buttonText || ''}
                     onChange={(e) => {
@@ -441,8 +455,10 @@ export const HomePageCms = () => {
                   />
                 </div>
                 <div>
-                  <label className="text-slate-400 block mb-1">Button Link</label>
+                  <label htmlFor="cms_festival_banner_btn_link" className="text-slate-400 block mb-1">Button Link</label>
                   <input
+                    id="cms_festival_banner_btn_link"
+                    name="festival_banner_button_link"
                     type="text"
                     value={cmsHomeSections.promotionalBanners?.festivalBanner?.buttonLink || ''}
                     onChange={(e) => {
@@ -473,8 +489,10 @@ export const HomePageCms = () => {
               </div>
             </div>
 
-            <label className="flex items-center gap-2 cursor-pointer text-xs">
+            <label htmlFor="cms_best_sellers_enabled" className="flex items-center gap-2 cursor-pointer text-xs">
               <input
+                id="cms_best_sellers_enabled"
+                name="best_sellers_enabled"
                 type="checkbox"
                 checked={cmsHomeSections.bestSellers?.isEnabled ?? true}
                 onChange={() => toggleSectionVisibility('bestSellers')}
@@ -488,8 +506,10 @@ export const HomePageCms = () => {
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
             <div>
-              <label className="text-slate-400 block mb-1">Section Title</label>
+              <label htmlFor="cms_best_sellers_title" className="text-slate-400 block mb-1">Section Title</label>
               <input
+                id="cms_best_sellers_title"
+                name="best_sellers_title"
                 type="text"
                 value={cmsHomeSections.bestSellers?.title || ''}
                 onChange={(e) => updateHomeSection('bestSellers', { title: e.target.value })}
@@ -497,8 +517,10 @@ export const HomePageCms = () => {
               />
             </div>
             <div>
-              <label className="text-slate-400 block mb-1">Section Badge Pill</label>
+              <label htmlFor="cms_best_sellers_badge" className="text-slate-400 block mb-1">Section Badge Pill</label>
               <input
+                id="cms_best_sellers_badge"
+                name="best_sellers_badge"
                 type="text"
                 value={cmsHomeSections.bestSellers?.badge || ''}
                 onChange={(e) => updateHomeSection('bestSellers', { badge: e.target.value })}
@@ -506,8 +528,10 @@ export const HomePageCms = () => {
               />
             </div>
             <div>
-              <label className="text-slate-400 block mb-1">Max Products Displayed</label>
+              <label htmlFor="cms_best_sellers_limit" className="text-slate-400 block mb-1">Max Products Displayed</label>
               <input
+                id="cms_best_sellers_limit"
+                name="best_sellers_product_limit"
                 type="number"
                 value={cmsHomeSections.bestSellers?.productLimit || 4}
                 onChange={(e) => updateHomeSection('bestSellers', { productLimit: Number(e.target.value) })}
@@ -530,8 +554,10 @@ export const HomePageCms = () => {
               </div>
             </div>
 
-            <label className="flex items-center gap-2 cursor-pointer text-xs">
+            <label htmlFor="cms_brand_story_enabled" className="flex items-center gap-2 cursor-pointer text-xs">
               <input
+                id="cms_brand_story_enabled"
+                name="brand_story_enabled"
                 type="checkbox"
                 checked={cmsHomeSections.brandStory?.isEnabled ?? true}
                 onChange={() => toggleSectionVisibility('brandStory')}
@@ -545,8 +571,10 @@ export const HomePageCms = () => {
 
           <div className="space-y-3 text-xs">
             <div>
-              <label className="text-slate-400 block mb-1">Story Headline</label>
+              <label htmlFor="cms_brand_story_title" className="text-slate-400 block mb-1">Story Headline</label>
               <input
+                id="cms_brand_story_title"
+                name="brand_story_title"
                 type="text"
                 value={cmsHomeSections.brandStory?.title || ''}
                 onChange={(e) => updateHomeSection('brandStory', { title: e.target.value })}
@@ -555,8 +583,10 @@ export const HomePageCms = () => {
             </div>
 
             <div>
-              <label className="text-slate-400 block mb-1">Mission Description</label>
+              <label htmlFor="cms_brand_story_desc" className="text-slate-400 block mb-1">Mission Description</label>
               <textarea
+                id="cms_brand_story_desc"
+                name="brand_story_description"
                 rows={2}
                 value={cmsHomeSections.brandStory?.description || ''}
                 onChange={(e) => updateHomeSection('brandStory', { description: e.target.value })}
@@ -566,14 +596,18 @@ export const HomePageCms = () => {
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <div className="p-2.5 bg-slate-950 rounded-xl border border-slate-800">
-                <label className="text-[10px] text-slate-500 block mb-0.5">Stat 1</label>
+                <label htmlFor="cms_stat1_num" className="text-[10px] text-slate-500 block mb-0.5">Stat 1</label>
                 <input
+                  id="cms_stat1_num"
+                  name="brand_story_stat1_num"
                   type="text"
                   value={cmsHomeSections.brandStory?.stat1Number || ''}
                   onChange={(e) => updateHomeSection('brandStory', { stat1Number: e.target.value })}
                   className="admin-input w-full text-xs font-bold mb-1"
                 />
                 <input
+                  id="cms_stat1_lbl"
+                  name="brand_story_stat1_lbl"
                   type="text"
                   value={cmsHomeSections.brandStory?.stat1Label || ''}
                   onChange={(e) => updateHomeSection('brandStory', { stat1Label: e.target.value })}
@@ -582,14 +616,18 @@ export const HomePageCms = () => {
               </div>
 
               <div className="p-2.5 bg-slate-950 rounded-xl border border-slate-800">
-                <label className="text-[10px] text-slate-500 block mb-0.5">Stat 2</label>
+                <label htmlFor="cms_stat2_num" className="text-[10px] text-slate-500 block mb-0.5">Stat 2</label>
                 <input
+                  id="cms_stat2_num"
+                  name="brand_story_stat2_num"
                   type="text"
                   value={cmsHomeSections.brandStory?.stat2Number || ''}
                   onChange={(e) => updateHomeSection('brandStory', { stat2Number: e.target.value })}
                   className="admin-input w-full text-xs font-bold mb-1"
                 />
                 <input
+                  id="cms_stat2_lbl"
+                  name="brand_story_stat2_lbl"
                   type="text"
                   value={cmsHomeSections.brandStory?.stat2Label || ''}
                   onChange={(e) => updateHomeSection('brandStory', { stat2Label: e.target.value })}
@@ -598,14 +636,18 @@ export const HomePageCms = () => {
               </div>
 
               <div className="p-2.5 bg-slate-950 rounded-xl border border-slate-800">
-                <label className="text-[10px] text-slate-500 block mb-0.5">Stat 3</label>
+                <label htmlFor="cms_stat3_num" className="text-[10px] text-slate-500 block mb-0.5">Stat 3</label>
                 <input
+                  id="cms_stat3_num"
+                  name="brand_story_stat3_num"
                   type="text"
                   value={cmsHomeSections.brandStory?.stat3Number || ''}
                   onChange={(e) => updateHomeSection('brandStory', { stat3Number: e.target.value })}
                   className="admin-input w-full text-xs font-bold mb-1"
                 />
                 <input
+                  id="cms_stat3_lbl"
+                  name="brand_story_stat3_lbl"
                   type="text"
                   value={cmsHomeSections.brandStory?.stat3Label || ''}
                   onChange={(e) => updateHomeSection('brandStory', { stat3Label: e.target.value })}
@@ -632,8 +674,10 @@ export const HomePageCms = () => {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
             <div>
-              <label className="text-slate-400 block mb-1">Footer Tagline</label>
+              <label htmlFor="cms_footer_tagline" className="text-slate-400 block mb-1">Footer Tagline</label>
               <input
+                id="cms_footer_tagline"
+                name="footer_tagline"
                 type="text"
                 value={cmsHomeSections.footer?.tagline || ''}
                 onChange={(e) => updateHomeSection('footer', { tagline: e.target.value })}
@@ -641,8 +685,10 @@ export const HomePageCms = () => {
               />
             </div>
             <div>
-              <label className="text-slate-400 block mb-1">Copyright Notice</label>
+              <label htmlFor="cms_footer_copyright" className="text-slate-400 block mb-1">Copyright Notice</label>
               <input
+                id="cms_footer_copyright"
+                name="footer_copyright_notice"
                 type="text"
                 value={cmsHomeSections.footer?.copyrightText || ''}
                 onChange={(e) => updateHomeSection('footer', { copyrightText: e.target.value })}

@@ -168,7 +168,10 @@ export const Footer = () => {
               </span>
               <form onSubmit={handleNewsletterSubmit} className="flex max-w-sm gap-2">
                 <input
+                  id="footer_newsletter_email"
+                  name="newsletter_email"
                   type="email"
+                  autoComplete="email"
                   required
                   placeholder="Enter your email address"
                   value={newsletterEmail}

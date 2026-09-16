@@ -356,6 +356,8 @@ export const SlideEditorModal = ({
 
                     <input
                       ref={desktopFileInputRef}
+                      id="slide_desktop_file"
+                      name="slide_desktop_file"
                       type="file"
                       accept="image/jpeg,image/png,image/webp,image/gif"
                       onChange={handleUploadDesktop}
@@ -363,8 +365,10 @@ export const SlideEditorModal = ({
                     />
 
                     <div>
-                      <span className="text-[11px] text-slate-400 block mb-1">Or direct Image URL / CDN Link:</span>
+                      <label htmlFor="slide_desktop_image" className="text-[11px] text-slate-400 block mb-1">Or direct Image URL / CDN Link:</label>
                       <input
+                        id="slide_desktop_image"
+                        name="desktop_image"
                         type="text"
                         value={formData.desktopImage}
                         onChange={(e) => setFormData({ ...formData, desktopImage: e.target.value })}
@@ -379,8 +383,10 @@ export const SlideEditorModal = ({
 
               {/* Desktop Text Fields */}
               <div>
-                <label className="font-semibold text-slate-300 block mb-1">Desktop Main Headline *</label>
+                <label htmlFor="slide_desktop_title" className="font-semibold text-slate-300 block mb-1">Desktop Main Headline *</label>
                 <input
+                  id="slide_desktop_title"
+                  name="slide_title"
                   type="text"
                   value={formData.title}
                   onChange={(e) => {
@@ -398,8 +404,10 @@ export const SlideEditorModal = ({
               </div>
 
               <div>
-                <label className="font-semibold text-slate-300 block mb-1">Desktop Subtitle / Story Description</label>
+                <label htmlFor="slide_desktop_subtitle" className="font-semibold text-slate-300 block mb-1">Desktop Subtitle / Story Description</label>
                 <textarea
+                  id="slide_desktop_subtitle"
+                  name="slide_subtitle"
                   rows={2}
                   value={formData.subtitle}
                   onChange={(e) => {
@@ -417,8 +425,10 @@ export const SlideEditorModal = ({
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="font-semibold text-slate-300 block mb-1">Primary CTA Button Text</label>
+                  <label htmlFor="slide_desktop_cta_text" className="font-semibold text-slate-300 block mb-1">Primary CTA Button Text</label>
                   <input
+                    id="slide_desktop_cta_text"
+                    name="desktop_cta_text"
                     type="text"
                     value={formData.desktopCtaText}
                     onChange={(e) => setFormData({ ...formData, desktopCtaText: e.target.value })}
@@ -427,8 +437,10 @@ export const SlideEditorModal = ({
                   />
                 </div>
                 <div>
-                  <label className="font-semibold text-slate-300 block mb-1">Primary CTA Button Link</label>
+                  <label htmlFor="slide_desktop_cta_link" className="font-semibold text-slate-300 block mb-1">Primary CTA Button Link</label>
                   <input
+                    id="slide_desktop_cta_link"
+                    name="cta_link"
                     type="text"
                     value={formData.ctaLink}
                     onChange={(e) => setFormData({ ...formData, ctaLink: e.target.value })}
@@ -440,8 +452,10 @@ export const SlideEditorModal = ({
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="font-semibold text-slate-300 block mb-1">Secondary Button Text (Desktop Only)</label>
+                  <label htmlFor="slide_secondary_cta_text" className="font-semibold text-slate-300 block mb-1">Secondary Button Text (Desktop Only)</label>
                   <input
+                    id="slide_secondary_cta_text"
+                    name="secondary_cta_text"
                     type="text"
                     value={formData.secondaryCtaText}
                     onChange={(e) => setFormData({ ...formData, secondaryCtaText: e.target.value })}
@@ -450,8 +464,10 @@ export const SlideEditorModal = ({
                   />
                 </div>
                 <div>
-                  <label className="font-semibold text-slate-300 block mb-1">Secondary Button Link</label>
+                  <label htmlFor="slide_secondary_cta_link" className="font-semibold text-slate-300 block mb-1">Secondary Button Link</label>
                   <input
+                    id="slide_secondary_cta_link"
+                    name="secondary_cta_link"
                     type="text"
                     value={formData.secondaryCtaLink}
                     onChange={(e) => setFormData({ ...formData, secondaryCtaLink: e.target.value })}
@@ -549,6 +565,8 @@ export const SlideEditorModal = ({
 
                     <input
                       ref={mobileFileInputRef}
+                      id="slide_mobile_file"
+                      name="slide_mobile_file"
                       type="file"
                       accept="image/jpeg,image/png,image/webp,image/gif"
                       onChange={handleUploadMobile}
@@ -556,8 +574,10 @@ export const SlideEditorModal = ({
                     />
 
                     <div>
-                      <span className="text-[11px] text-slate-400 block mb-1">Or direct Mobile Image URL:</span>
+                      <label htmlFor="slide_mobile_image" className="text-[11px] text-slate-400 block mb-1">Or direct Mobile Image URL:</label>
                       <input
+                        id="slide_mobile_image"
+                        name="mobile_image"
                         type="text"
                         value={formData.mobileImage}
                         onChange={(e) => setFormData({ ...formData, mobileImage: e.target.value })}
@@ -571,8 +591,10 @@ export const SlideEditorModal = ({
 
               {/* Mobile Text Fields */}
               <div>
-                <label className="font-semibold text-slate-300 block mb-1">Mobile Concise Headline</label>
+                <label htmlFor="slide_mobile_title" className="font-semibold text-slate-300 block mb-1">Mobile Concise Headline</label>
                 <input
+                  id="slide_mobile_title"
+                  name="mobile_title"
                   type="text"
                   value={formData.mobileTitle}
                   onChange={(e) => setFormData({ ...formData, mobileTitle: e.target.value })}
@@ -583,8 +605,10 @@ export const SlideEditorModal = ({
               </div>
 
               <div>
-                <label className="font-semibold text-slate-300 block mb-1">Mobile Short Description</label>
+                <label htmlFor="slide_mobile_subtitle" className="font-semibold text-slate-300 block mb-1">Mobile Short Description</label>
                 <textarea
+                  id="slide_mobile_subtitle"
+                  name="mobile_subtitle"
                   rows={2}
                   value={formData.mobileSubtitle}
                   onChange={(e) => setFormData({ ...formData, mobileSubtitle: e.target.value })}
@@ -594,8 +618,10 @@ export const SlideEditorModal = ({
               </div>
 
               <div>
-                <label className="font-semibold text-slate-300 block mb-1">Mobile Button Label</label>
+                <label htmlFor="slide_mobile_cta_text" className="font-semibold text-slate-300 block mb-1">Mobile Button Label</label>
                 <input
+                  id="slide_mobile_cta_text"
+                  name="mobile_cta_text"
                   type="text"
                   value={formData.mobileCtaText}
                   onChange={(e) => setFormData({ ...formData, mobileCtaText: e.target.value })}
@@ -613,7 +639,7 @@ export const SlideEditorModal = ({
               
               {/* Secondary Visual Card */}
               <div className="p-4 rounded-xl bg-slate-950/50 border border-slate-800 space-y-3">
-                <label className="font-semibold text-slate-300 block mb-1">
+                <label htmlFor="slide_secondary_image" className="font-semibold text-slate-300 block mb-1">
                   Secondary Corner Mini Preview (Desktop Card)
                 </label>
                 <div className="flex items-center gap-3">
@@ -626,6 +652,8 @@ export const SlideEditorModal = ({
                   </div>
                   <div className="flex-1 flex gap-2">
                     <input
+                      id="slide_secondary_image"
+                      name="secondary_image"
                       type="text"
                       value={formData.secondaryImage}
                       onChange={(e) => setFormData({ ...formData, secondaryImage: e.target.value })}
@@ -654,6 +682,8 @@ export const SlideEditorModal = ({
                   </div>
                   <input
                     ref={secondaryFileInputRef}
+                    id="slide_secondary_file"
+                    name="slide_secondary_file"
                     type="file"
                     accept="image/*"
                     onChange={handleUploadSecondary}
@@ -664,8 +694,10 @@ export const SlideEditorModal = ({
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="font-semibold text-slate-300 block mb-1">Top Pill Badge Text</label>
+                  <label htmlFor="slide_badge" className="font-semibold text-slate-300 block mb-1">Top Pill Badge Text</label>
                   <input
+                    id="slide_badge"
+                    name="badge"
                     type="text"
                     value={formData.badge}
                     onChange={(e) => setFormData({ ...formData, badge: e.target.value })}
@@ -674,8 +706,10 @@ export const SlideEditorModal = ({
                   />
                 </div>
                 <div>
-                  <label className="font-semibold text-slate-300 block mb-1">Corner Ribbon Tag</label>
+                  <label htmlFor="slide_tag" className="font-semibold text-slate-300 block mb-1">Corner Ribbon Tag</label>
                   <input
+                    id="slide_tag"
+                    name="tag"
                     type="text"
                     value={formData.tag}
                     onChange={(e) => setFormData({ ...formData, tag: e.target.value })}
@@ -686,8 +720,10 @@ export const SlideEditorModal = ({
               </div>
 
               <div>
-                <label className="font-semibold text-slate-300 block mb-1">Display Order</label>
+                <label htmlFor="slide_display_order" className="font-semibold text-slate-300 block mb-1">Display Order</label>
                 <input
+                  id="slide_display_order"
+                  name="display_order"
                   type="number"
                   min="0"
                   value={formData.displayOrder}

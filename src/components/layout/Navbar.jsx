@@ -206,6 +206,8 @@ export const Navbar = () => {
           <div ref={searchContainerRef} className="hidden md:block flex-1 max-w-xl mx-4 relative z-40 min-w-0">
             <form onSubmit={handleSearchSubmit} className="relative">
               <input
+                id="navbar_search_desktop"
+                name="search_query"
                 type="text"
                 placeholder="Search embroidery patches, copper bottles, pooja aasans, gamchas..."
                 value={searchQuery}
@@ -415,6 +417,8 @@ export const Navbar = () => {
         <div ref={mobileSearchContainerRef} className="md:hidden mt-2.5 pt-2.5 border-t border-gold-500/10 w-full relative z-40">
           <form onSubmit={handleSearchSubmit} className="relative w-full">
             <input
+              id="navbar_search_mobile"
+              name="search_query"
               type="text"
               placeholder="Search patches, copper bottles, pooja items..."
               value={searchQuery}

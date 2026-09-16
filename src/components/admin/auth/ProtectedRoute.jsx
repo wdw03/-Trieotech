@@ -127,10 +127,13 @@ export const ProtectedRoute = ({ children }) => {
 
           <form onSubmit={handleAdminSignIn} className="space-y-4">
             <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-slate-300">Admin Email</label>
+              <label htmlFor="admin_login_email" className="text-xs font-semibold text-slate-300">Admin Email</label>
               <div className="relative">
                 <input
+                  id="admin_login_email"
+                  name="email"
                   type="email"
+                  autoComplete="email"
                   required
                   value={adminEmail}
                   onChange={(e) => setAdminEmail(e.target.value)}
@@ -142,10 +145,13 @@ export const ProtectedRoute = ({ children }) => {
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-slate-300">Admin Password</label>
+              <label htmlFor="admin_login_password" className="text-xs font-semibold text-slate-300">Admin Password</label>
               <div className="relative">
                 <input
+                  id="admin_login_password"
+                  name="password"
                   type={showPassword ? 'text' : 'password'}
+                  autoComplete="current-password"
                   required
                   value={adminPassword}
                   onChange={(e) => setAdminPassword(e.target.value)}

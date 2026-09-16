@@ -395,6 +395,8 @@ export const StaticPagesCms = () => {
               <div className="relative w-full sm:w-64">
                 <Search className="w-3.5 h-3.5 absolute left-3 top-2.5 text-slate-400" />
                 <input
+                  id="admin_static_inquiries_search"
+                  name="inquiries_search"
                   type="text"
                   placeholder="Search by name, email, query..."
                   value={searchQuery}
@@ -555,8 +557,10 @@ export const StaticPagesCms = () => {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="font-semibold text-slate-300 block mb-1">Support Email</label>
+                <label htmlFor="cms_contact_support_email" className="font-semibold text-slate-300 block mb-1">Support Email</label>
                 <input
+                  id="cms_contact_support_email"
+                  name="support_email"
                   type="email"
                   value={contactData.supportEmail || ''}
                   onChange={(e) => setContactData({ ...contactData, supportEmail: e.target.value })}
@@ -565,8 +569,10 @@ export const StaticPagesCms = () => {
                 />
               </div>
               <div>
-                <label className="font-semibold text-slate-300 block mb-1">Support Phone / WhatsApp</label>
+                <label htmlFor="cms_contact_support_phone" className="font-semibold text-slate-300 block mb-1">Support Phone / WhatsApp</label>
                 <input
+                  id="cms_contact_support_phone"
+                  name="support_phone"
                   type="text"
                   value={contactData.supportPhone || ''}
                   onChange={(e) => setContactData({ ...contactData, supportPhone: e.target.value })}
@@ -577,8 +583,10 @@ export const StaticPagesCms = () => {
             </div>
 
             <div>
-              <label className="font-semibold text-slate-300 block mb-1">Registered Warehouse &amp; Workshop Address</label>
+              <label htmlFor="cms_contact_warehouse_address" className="font-semibold text-slate-300 block mb-1">Registered Warehouse &amp; Workshop Address</label>
               <input
+                id="cms_contact_warehouse_address"
+                name="warehouse_address"
                 type="text"
                 value={contactData.warehouseAddress || ''}
                 onChange={(e) => setContactData({ ...contactData, warehouseAddress: e.target.value })}
@@ -589,8 +597,10 @@ export const StaticPagesCms = () => {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="font-semibold text-slate-300 block mb-1">Business Hours</label>
+                <label htmlFor="cms_contact_business_hours" className="font-semibold text-slate-300 block mb-1">Business Hours</label>
                 <input
+                  id="cms_contact_business_hours"
+                  name="business_hours"
                   type="text"
                   value={contactData.businessHours || ''}
                   onChange={(e) => setContactData({ ...contactData, businessHours: e.target.value })}
@@ -599,8 +609,10 @@ export const StaticPagesCms = () => {
                 />
               </div>
               <div>
-                <label className="font-semibold text-slate-300 block mb-1">Response Guarantee Notice</label>
+                <label htmlFor="cms_contact_faq_notice" className="font-semibold text-slate-300 block mb-1">Response Guarantee Notice</label>
                 <input
+                  id="cms_contact_faq_notice"
+                  name="faq_notice"
                   type="text"
                   value={contactData.faqNotice || ''}
                   onChange={(e) => setContactData({ ...contactData, faqNotice: e.target.value })}
@@ -704,8 +716,10 @@ export const StaticPagesCms = () => {
 
               {/* Reply Box */}
               <div className="space-y-2 pt-2 border-t border-slate-800">
-                <label className="font-bold text-slate-300 block">Log Internal Reply or Notes:</label>
+                <label htmlFor="cms_inquiry_reply_text" className="font-bold text-slate-300 block">Log Internal Reply or Notes:</label>
                 <textarea
+                  id="cms_inquiry_reply_text"
+                  name="inquiry_reply_text"
                   rows={3}
                   value={replyText}
                   onChange={(e) => setReplyText(e.target.value)}
@@ -755,8 +769,10 @@ export const StaticPagesCms = () => {
           </div>
 
           <div>
-            <label className="font-semibold text-slate-300 block mb-1">Story Heading</label>
+            <label htmlFor="cms_about_heading" className="font-semibold text-slate-300 block mb-1">Story Heading</label>
             <input
+              id="cms_about_heading"
+              name="about_heading"
               type="text"
               value={aboutData.heading || ''}
               onChange={(e) => setAboutData({ ...aboutData, heading: e.target.value })}
@@ -765,8 +781,10 @@ export const StaticPagesCms = () => {
           </div>
 
           <div>
-            <label className="font-semibold text-slate-300 block mb-1">Our Heritage &amp; Artisanal Story</label>
+            <label htmlFor="cms_about_story" className="font-semibold text-slate-300 block mb-1">Our Heritage &amp; Artisanal Story</label>
             <textarea
+              id="cms_about_story"
+              name="about_story"
               rows={4}
               value={aboutData.story || ''}
               onChange={(e) => setAboutData({ ...aboutData, story: e.target.value })}
@@ -775,8 +793,10 @@ export const StaticPagesCms = () => {
           </div>
 
           <div>
-            <label className="font-semibold text-slate-300 block mb-1">Mission Statement</label>
+            <label htmlFor="cms_about_mission" className="font-semibold text-slate-300 block mb-1">Mission Statement</label>
             <textarea
+              id="cms_about_mission"
+              name="about_mission"
               rows={3}
               value={aboutData.mission || ''}
               onChange={(e) => setAboutData({ ...aboutData, mission: e.target.value })}
@@ -832,6 +852,8 @@ export const StaticPagesCms = () => {
               <div className="relative flex-1 sm:max-w-xs">
                 <Search className="w-3.5 h-3.5 absolute left-3 top-2.5 text-slate-400" />
                 <input
+                  id="cms_faq_search"
+                  name="faq_search"
                   type="text"
                   placeholder="Search FAQ questions or answers..."
                   value={faqSearch}
@@ -842,6 +864,8 @@ export const StaticPagesCms = () => {
 
               {/* Category Filter */}
               <select
+                id="cms_faq_category_filter"
+                name="faq_category_filter"
                 value={faqCategoryFilter}
                 onChange={(e) => setFaqCategoryFilter(e.target.value)}
                 className="admin-input py-1.5 px-3 text-xs w-auto"
@@ -912,8 +936,10 @@ export const StaticPagesCms = () => {
 
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div className="sm:col-span-2">
-                  <label className="font-semibold text-slate-300 block mb-1">Question Text *</label>
+                  <label htmlFor="cms_faq_question" className="font-semibold text-slate-300 block mb-1">Question Text *</label>
                   <input
+                    id="cms_faq_question"
+                    name="faq_question"
                     type="text"
                     value={faqForm.question}
                     onChange={(e) => setFaqForm({ ...faqForm, question: e.target.value })}
@@ -924,8 +950,10 @@ export const StaticPagesCms = () => {
                 </div>
 
                 <div>
-                  <label className="font-semibold text-slate-300 block mb-1">Category</label>
+                  <label htmlFor="cms_faq_category" className="font-semibold text-slate-300 block mb-1">Category</label>
                   <select
+                    id="cms_faq_category"
+                    name="faq_category"
                     value={faqForm.category}
                     onChange={(e) => setFaqForm({ ...faqForm, category: e.target.value })}
                     className="admin-input w-full text-xs"
@@ -941,8 +969,10 @@ export const StaticPagesCms = () => {
               </div>
 
               <div>
-                <label className="font-semibold text-slate-300 block mb-1">Detailed Answer *</label>
+                <label htmlFor="cms_faq_answer" className="font-semibold text-slate-300 block mb-1">Detailed Answer *</label>
                 <textarea
+                  id="cms_faq_answer"
+                  name="faq_answer"
                   rows={4}
                   value={faqForm.answer}
                   onChange={(e) => setFaqForm({ ...faqForm, answer: e.target.value })}
@@ -954,8 +984,10 @@ export const StaticPagesCms = () => {
 
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-2 border-t border-slate-800/80">
                 <div className="flex items-center gap-4">
-                  <label className="flex items-center gap-2 cursor-pointer text-slate-300">
+                  <label htmlFor="cms_faq_is_visible" className="flex items-center gap-2 cursor-pointer text-slate-300">
                     <input
+                      id="cms_faq_is_visible"
+                      name="faq_is_visible"
                       type="checkbox"
                       checked={faqForm.is_visible}
                       onChange={(e) => setFaqForm({ ...faqForm, is_visible: e.target.checked })}
@@ -965,8 +997,10 @@ export const StaticPagesCms = () => {
                   </label>
 
                   <div className="flex items-center gap-1.5 text-slate-400">
-                    <span>Sort Order:</span>
+                    <label htmlFor="cms_faq_sort_order">Sort Order:</label>
                     <input
+                      id="cms_faq_sort_order"
+                      name="faq_sort_order"
                       type="number"
                       value={faqForm.sort_order}
                       onChange={(e) => setFaqForm({ ...faqForm, sort_order: parseInt(e.target.value, 10) || 0 })}

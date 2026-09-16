@@ -72,8 +72,10 @@ export const Settings = () => {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="font-semibold text-slate-300 block mb-1">Store Legal Name</label>
+              <label htmlFor="settings_store_name" className="font-semibold text-slate-300 block mb-1">Store Legal Name</label>
               <input
+                id="settings_store_name"
+                name="store_name"
                 type="text"
                 value={storeSettings.storeName}
                 onChange={(e) => setStoreSettings({ ...storeSettings, storeName: e.target.value })}
@@ -82,8 +84,10 @@ export const Settings = () => {
             </div>
 
             <div>
-              <label className="font-semibold text-slate-300 block mb-1">GSTIN Number</label>
+              <label htmlFor="settings_gstin" className="font-semibold text-slate-300 block mb-1">GSTIN Number</label>
               <input
+                id="settings_gstin"
+                name="gstin"
                 type="text"
                 value={storeSettings.gstin}
                 onChange={(e) => setStoreSettings({ ...storeSettings, gstin: e.target.value })}
@@ -93,8 +97,10 @@ export const Settings = () => {
           </div>
 
           <div>
-            <label className="font-semibold text-slate-300 block mb-1">Store Slogan / Tagline</label>
+            <label htmlFor="settings_tagline" className="font-semibold text-slate-300 block mb-1">Store Slogan / Tagline</label>
             <input
+              id="settings_tagline"
+              name="tagline"
               type="text"
               value={storeSettings.tagline}
               onChange={(e) => setStoreSettings({ ...storeSettings, tagline: e.target.value })}
@@ -104,8 +110,10 @@ export const Settings = () => {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="font-semibold text-slate-300 block mb-1">Customer Support Email</label>
+              <label htmlFor="settings_support_email" className="font-semibold text-slate-300 block mb-1">Customer Support Email</label>
               <input
+                id="settings_support_email"
+                name="support_email"
                 type="email"
                 value={storeSettings.supportEmail}
                 onChange={(e) => setStoreSettings({ ...storeSettings, supportEmail: e.target.value })}
@@ -114,8 +122,10 @@ export const Settings = () => {
             </div>
 
             <div>
-              <label className="font-semibold text-slate-300 block mb-1">Customer Support Phone</label>
+              <label htmlFor="settings_support_phone" className="font-semibold text-slate-300 block mb-1">Customer Support Phone</label>
               <input
+                id="settings_support_phone"
+                name="support_phone"
                 type="text"
                 value={storeSettings.supportPhone}
                 onChange={(e) => setStoreSettings({ ...storeSettings, supportPhone: e.target.value })}
@@ -125,8 +135,10 @@ export const Settings = () => {
           </div>
 
           <div>
-            <label className="font-semibold text-slate-300 block mb-1">Registered Warehouse Address</label>
+            <label htmlFor="settings_address" className="font-semibold text-slate-300 block mb-1">Registered Warehouse Address</label>
             <input
+              id="settings_address"
+              name="address"
               type="text"
               value={storeSettings.address}
               onChange={(e) => setStoreSettings({ ...storeSettings, address: e.target.value })}
@@ -144,8 +156,10 @@ export const Settings = () => {
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div>
-              <label className="font-semibold text-slate-300 block mb-1">Free Shipping on Orders Above (₹)</label>
+              <label htmlFor="settings_free_shipping_threshold" className="font-semibold text-slate-300 block mb-1">Free Shipping on Orders Above (₹)</label>
               <input
+                id="settings_free_shipping_threshold"
+                name="free_shipping_threshold"
                 type="number"
                 value={storeSettings.freeShippingThreshold}
                 onChange={(e) => setStoreSettings({ ...storeSettings, freeShippingThreshold: Number(e.target.value) })}
@@ -154,8 +168,10 @@ export const Settings = () => {
             </div>
 
             <div>
-              <label className="font-semibold text-slate-300 block mb-1">Standard Shipping Charge (₹)</label>
+              <label htmlFor="settings_default_shipping_charge" className="font-semibold text-slate-300 block mb-1">Standard Shipping Charge (₹)</label>
               <input
+                id="settings_default_shipping_charge"
+                name="default_shipping_charge"
                 type="number"
                 value={storeSettings.defaultShippingCharge}
                 onChange={(e) => setStoreSettings({ ...storeSettings, defaultShippingCharge: Number(e.target.value) })}
@@ -164,8 +180,10 @@ export const Settings = () => {
             </div>
 
             <div>
-              <label className="font-semibold text-slate-300 block mb-1">Customer Return Window (Days)</label>
+              <label htmlFor="settings_return_window_days" className="font-semibold text-slate-300 block mb-1">Customer Return Window (Days)</label>
               <input
+                id="settings_return_window_days"
+                name="return_window_days"
                 type="number"
                 value={storeSettings.returnWindowDays}
                 onChange={(e) => setStoreSettings({ ...storeSettings, returnWindowDays: Number(e.target.value) })}
@@ -175,8 +193,10 @@ export const Settings = () => {
           </div>
 
           <div className="space-y-2 pt-2">
-            <label className="flex items-center gap-2 cursor-pointer">
+            <label htmlFor="settings_cod_enabled" className="flex items-center gap-2 cursor-pointer">
               <input
+                id="settings_cod_enabled"
+                name="cod_enabled"
                 type="checkbox"
                 checked={storeSettings.codEnabled}
                 onChange={(e) => setStoreSettings({ ...storeSettings, codEnabled: e.target.checked })}
@@ -185,8 +205,10 @@ export const Settings = () => {
               <span className="font-semibold text-slate-200">Enable Cash on Delivery (COD) for Indian Pincodes</span>
             </label>
 
-            <label className="flex items-center gap-2 cursor-pointer">
+            <label htmlFor="settings_auto_accept_orders" className="flex items-center gap-2 cursor-pointer">
               <input
+                id="settings_auto_accept_orders"
+                name="auto_accept_orders"
                 type="checkbox"
                 checked={storeSettings.autoAcceptOrders}
                 onChange={(e) => setStoreSettings({ ...storeSettings, autoAcceptOrders: e.target.checked })}
@@ -206,8 +228,10 @@ export const Settings = () => {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="font-semibold text-slate-300 block mb-1">Low-Stock Alert Threshold (Units)</label>
+              <label htmlFor="settings_low_stock_threshold" className="font-semibold text-slate-300 block mb-1">Low-Stock Alert Threshold (Units)</label>
               <input
+                id="settings_low_stock_threshold"
+                name="low_stock_threshold"
                 type="number"
                 value={storeSettings.lowStockThreshold}
                 onChange={(e) => setStoreSettings({ ...storeSettings, lowStockThreshold: Number(e.target.value) })}
@@ -217,8 +241,10 @@ export const Settings = () => {
             </div>
 
             <div>
-              <label className="font-semibold text-slate-300 block mb-1">Default GST Rate (%)</label>
+              <label htmlFor="settings_tax_rate" className="font-semibold text-slate-300 block mb-1">Default GST Rate (%)</label>
               <input
+                id="settings_tax_rate"
+                name="tax_rate"
                 type="number"
                 value={storeSettings.taxRate}
                 onChange={(e) => setStoreSettings({ ...storeSettings, taxRate: Number(e.target.value) })}

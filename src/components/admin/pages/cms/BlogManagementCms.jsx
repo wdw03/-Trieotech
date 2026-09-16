@@ -154,6 +154,8 @@ export const BlogManagementCms = () => {
         <div className="relative w-full sm:w-80">
           <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
           <input
+            id="admin_blog_search"
+            name="blog_search"
             type="text"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
@@ -164,6 +166,8 @@ export const BlogManagementCms = () => {
 
         <div className="flex items-center gap-2.5 w-full sm:w-auto">
           <select
+            id="admin_blog_filter_category"
+            name="blog_filter_category"
             value={selectedCategory}
             onChange={(e) => setSelectedCategory(e.target.value)}
             className="admin-select py-1.5 text-xs"
@@ -174,6 +178,8 @@ export const BlogManagementCms = () => {
           </select>
 
           <select
+            id="admin_blog_filter_status"
+            name="blog_filter_status"
             value={selectedStatus}
             onChange={(e) => setSelectedStatus(e.target.value)}
             className="admin-select py-1.5 text-xs"

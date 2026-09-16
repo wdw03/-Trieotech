@@ -381,6 +381,8 @@ export const ReelEditorModal = ({
               {/* Hidden file input for video */}
               <input
                 ref={videoInputRef}
+                id="reel_video_file"
+                name="reel_video_file"
                 type="file"
                 accept="video/mp4,video/webm,video/quicktime"
                 onChange={handleVideoFileChange}
@@ -410,8 +412,10 @@ export const ReelEditorModal = ({
 
                 {/* External Video URL input */}
                 <div>
-                  <label className="text-[11px] text-slate-400 block mb-1">Or direct Video URL (Supabase CDN / MP4)</label>
+                  <label htmlFor="reel_video_url" className="text-[11px] text-slate-400 block mb-1">Or direct Video URL (Supabase CDN / MP4)</label>
                   <input
+                    id="reel_video_url"
+                    name="video_url"
                     type="url"
                     value={formData.video_url}
                     onChange={(e) => setFormData({ ...formData, video_url: e.target.value })}
@@ -439,8 +443,10 @@ export const ReelEditorModal = ({
                 </div>
 
                 <div className="flex items-center justify-between pt-2 border-t border-slate-800/80">
-                  <label className="text-xs font-semibold text-slate-400">Display Order</label>
+                  <label htmlFor="reel_display_order" className="text-xs font-semibold text-slate-400">Display Order</label>
                   <input
+                    id="reel_display_order"
+                    name="display_order"
                     type="number"
                     min="0"
                     value={formData.display_order}
@@ -464,8 +470,10 @@ export const ReelEditorModal = ({
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
-                    <label className="text-[11px] font-semibold text-slate-300 block mb-1">Influencer Full Name *</label>
+                    <label htmlFor="reel_influencer_name" className="text-[11px] font-semibold text-slate-300 block mb-1">Influencer Full Name *</label>
                     <input
+                      id="reel_influencer_name"
+                      name="influencer_name"
                       type="text"
                       value={formData.influencer_name}
                       onChange={(e) => setFormData({ ...formData, influencer_name: e.target.value })}
@@ -476,10 +484,12 @@ export const ReelEditorModal = ({
                   </div>
 
                   <div>
-                    <label className="text-[11px] font-semibold text-slate-300 block mb-1">Username / Handle *</label>
+                    <label htmlFor="reel_influencer_username" className="text-[11px] font-semibold text-slate-300 block mb-1">Username / Handle *</label>
                     <div className="relative">
                       <span className="absolute left-3 top-2.5 text-slate-500 text-xs">@</span>
                       <input
+                        id="reel_influencer_username"
+                        name="influencer_username"
                         type="text"
                         value={formData.influencer_username.replace(/^@/, '')}
                         onChange={(e) => setFormData({ ...formData, influencer_username: '@' + e.target.value.replace(/^@/, '') })}
@@ -493,7 +503,7 @@ export const ReelEditorModal = ({
 
                 {/* Profile Picture / Avatar */}
                 <div>
-                  <label className="text-[11px] font-semibold text-slate-300 block mb-1.5">Influencer Profile Photo (Avatar)</label>
+                  <label htmlFor="reel_influencer_avatar" className="text-[11px] font-semibold text-slate-300 block mb-1.5">Influencer Profile Photo (Avatar)</label>
                   <div className="flex items-center gap-3">
                     <div className="relative w-11 h-11 rounded-full overflow-hidden border border-slate-700 bg-slate-800 shrink-0">
                       {formData.influencer_avatar ? (
@@ -510,6 +520,8 @@ export const ReelEditorModal = ({
                     </div>
                     <div className="flex-1 flex gap-2">
                       <input
+                        id="reel_influencer_avatar"
+                        name="influencer_avatar"
                         type="text"
                         value={formData.influencer_avatar}
                         onChange={(e) => setFormData({ ...formData, influencer_avatar: e.target.value })}
@@ -529,6 +541,8 @@ export const ReelEditorModal = ({
                   </div>
                   <input
                     ref={avatarInputRef}
+                    id="reel_avatar_file"
+                    name="reel_avatar_file"
                     type="file"
                     accept="image/*"
                     onChange={handleAvatarFileChange}
@@ -545,8 +559,10 @@ export const ReelEditorModal = ({
                 </div>
 
                 <div>
-                  <label className="text-[11px] font-semibold text-slate-300 block mb-1">Caption / Description</label>
+                  <label htmlFor="reel_caption" className="text-[11px] font-semibold text-slate-300 block mb-1">Caption / Description</label>
                   <textarea
+                    id="reel_caption"
+                    name="caption"
                     rows={2}
                     value={formData.caption}
                     onChange={(e) => setFormData({ ...formData, caption: e.target.value })}
@@ -556,11 +572,13 @@ export const ReelEditorModal = ({
                 </div>
 
                 <div>
-                  <label className="text-[11px] font-semibold text-slate-300 block mb-1 flex items-center gap-1">
+                  <label htmlFor="reel_song_title" className="text-[11px] font-semibold text-slate-300 block mb-1 flex items-center gap-1">
                     <Music2 className="w-3 h-3 text-[#ee2a7b]" />
                     Background Music / Audio Title
                   </label>
                   <input
+                    id="reel_song_title"
+                    name="song_title"
                     type="text"
                     value={formData.song_title}
                     onChange={(e) => setFormData({ ...formData, song_title: e.target.value })}
@@ -572,11 +590,13 @@ export const ReelEditorModal = ({
                 {/* Social Counters */}
                 <div className="grid grid-cols-3 gap-3 pt-1">
                   <div>
-                    <label className="text-[10px] font-bold text-slate-400 block mb-1 flex items-center gap-1">
+                    <label htmlFor="reel_views_count" className="text-[10px] font-bold text-slate-400 block mb-1 flex items-center gap-1">
                       <Eye className="w-3 h-3 text-indigo-400" />
                       Views Count
                     </label>
                     <input
+                      id="reel_views_count"
+                      name="views_count"
                       type="text"
                       value={formData.views_count}
                       onChange={(e) => setFormData({ ...formData, views_count: e.target.value })}
@@ -586,11 +606,13 @@ export const ReelEditorModal = ({
                   </div>
 
                   <div>
-                    <label className="text-[10px] font-bold text-slate-400 block mb-1 flex items-center gap-1">
+                    <label htmlFor="reel_likes_count" className="text-[10px] font-bold text-slate-400 block mb-1 flex items-center gap-1">
                       <Heart className="w-3 h-3 text-[#ee2a7b]" />
                       Likes Count
                     </label>
                     <input
+                      id="reel_likes_count"
+                      name="likes_count"
                       type="text"
                       value={formData.likes_count}
                       onChange={(e) => setFormData({ ...formData, likes_count: e.target.value })}
@@ -600,11 +622,13 @@ export const ReelEditorModal = ({
                   </div>
 
                   <div>
-                    <label className="text-[10px] font-bold text-slate-400 block mb-1 flex items-center gap-1">
+                    <label htmlFor="reel_comments_count" className="text-[10px] font-bold text-slate-400 block mb-1 flex items-center gap-1">
                       <MessageCircle className="w-3 h-3 text-emerald-400" />
                       Comments
                     </label>
                     <input
+                      id="reel_comments_count"
+                      name="comments_count"
                       type="text"
                       value={formData.comments_count}
                       onChange={(e) => setFormData({ ...formData, comments_count: e.target.value })}
@@ -720,6 +744,8 @@ export const ReelEditorModal = ({
                   <div className="relative">
                     <Search className="w-3.5 h-3.5 text-slate-500 absolute left-3 top-3" />
                     <input
+                      id="reel_product_search"
+                      name="product_search"
                       type="text"
                       value={productSearch}
                       onChange={(e) => {

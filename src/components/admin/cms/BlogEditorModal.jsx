@@ -413,8 +413,10 @@ export const BlogEditorModal = ({
           {activeTab === 'content' && (
             <div className="space-y-4 animate-fadeIn">
               <div>
-                <label className="font-semibold text-slate-300 block mb-1">Article Headline / Title *</label>
+                <label htmlFor="blog_article_title" className="font-semibold text-slate-300 block mb-1">Article Headline / Title *</label>
                 <input
+                  id="blog_article_title"
+                  name="blog_title"
                   type="text"
                   value={formData.title}
                   onChange={handleTitleChange}
@@ -426,10 +428,12 @@ export const BlogEditorModal = ({
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="font-semibold text-slate-300 block mb-1">URL Slug (Auto-generated)</label>
+                  <label htmlFor="blog_article_slug" className="font-semibold text-slate-300 block mb-1">URL Slug (Auto-generated)</label>
                   <div className="flex items-center gap-1.5">
                     <span className="text-xs text-slate-500 font-mono">/blog/</span>
                     <input
+                      id="blog_article_slug"
+                      name="blog_slug"
                       type="text"
                       value={formData.slug}
                       onChange={(e) => setFormData({ ...formData, slug: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '-') })}
@@ -440,8 +444,10 @@ export const BlogEditorModal = ({
                 </div>
 
                 <div>
-                  <label className="font-semibold text-slate-300 block mb-1">Publication Status</label>
+                  <label htmlFor="blog_publication_status" className="font-semibold text-slate-300 block mb-1">Publication Status</label>
                   <select
+                    id="blog_publication_status"
+                    name="blog_status"
                     value={formData.status}
                     onChange={(e) => setFormData({ ...formData, status: e.target.value })}
                     className="admin-input w-full text-xs font-bold"
@@ -453,8 +459,10 @@ export const BlogEditorModal = ({
               </div>
 
               <div>
-                <label className="font-semibold text-slate-300 block mb-1">Summary / Excerpt (Lead Paragraph) *</label>
+                <label htmlFor="blog_excerpt" className="font-semibold text-slate-300 block mb-1">Summary / Excerpt (Lead Paragraph) *</label>
                 <textarea
+                  id="blog_excerpt"
+                  name="blog_excerpt"
                   rows={2}
                   value={formData.excerpt}
                   onChange={(e) => setFormData({ ...formData, excerpt: e.target.value })}
@@ -523,6 +531,8 @@ export const BlogEditorModal = ({
                 ) : (
                   <textarea
                     ref={contentRef}
+                    id="blog_article_content"
+                    name="blog_content"
                     rows={12}
                     value={formData.content}
                     onChange={(e) => setFormData({ ...formData, content: e.target.value })}
@@ -590,9 +600,13 @@ export const BlogEditorModal = ({
                           </div>
                         </>
                       ) : (
-                        <div className="w-full h-full flex flex-col items-center justify-center p-4 text-center text-slate-500">
-                          <ImageIcon className="w-8 h-8 mb-1 text-slate-600" />
-                          <span className="text-xs">No cover image uploaded</span>
+                        <div
+                          onClick={() => !uploadingCover && coverFileRef.current?.click()}
+                          className="w-full h-full flex flex-col items-center justify-center cursor-pointer p-4 text-center hover:bg-slate-800/40 transition-colors"
+                        >
+                          <ImageIcon className="w-8 h-8 text-slate-500 mb-2" />
+                          <span className="font-bold text-white text-xs">No Cover Image</span>
+                          <span className="text-[10px] text-slate-400 mt-0.5">Click Browse to Upload</span>
                         </div>
                       )}
                     </div>
@@ -605,6 +619,8 @@ export const BlogEditorModal = ({
                     <div>
                       <input
                         ref={coverFileRef}
+                        id="blog_cover_file"
+                        name="blog_cover_file"
                         type="file"
                         accept="image/*"
                         onChange={handleCoverUpload}
@@ -650,11 +666,13 @@ export const BlogEditorModal = ({
 
                     {/* MANDATORY IMAGE ALT TAG */}
                     <div className="p-3 bg-slate-950 rounded-xl border border-slate-800 space-y-1">
-                      <label className="font-bold text-xs text-slate-200 flex items-center gap-1.5">
+                      <label htmlFor="blog_cover_image_alt" className="font-bold text-xs text-slate-200 flex items-center gap-1.5">
                         <Tag className="w-3.5 h-3.5 text-indigo-400" />
                         Cover Image Alt Tag (for Google SEO & Accessibility) *
                       </label>
                       <input
+                        id="blog_cover_image_alt"
+                        name="blog_cover_image_alt"
                         type="text"
                         value={formData.imageAlt}
                         onChange={(e) => setFormData({ ...formData, imageAlt: e.target.value })}
@@ -687,6 +705,8 @@ export const BlogEditorModal = ({
                       {showAdvancedUrl && (
                         <div className="mt-1.5 space-y-1 animate-fadeIn">
                           <input
+                            id="blog_cover_image_url"
+                            name="blog_cover_image_url"
                             type="text"
                             value={formData.image}
                             onChange={(e) => setFormData({ ...formData, image: e.target.value })}
@@ -714,6 +734,8 @@ export const BlogEditorModal = ({
                   <div className="sm:col-span-4 flex items-center gap-3 p-3 rounded-2xl bg-slate-950 border border-slate-800">
                     <input
                       ref={authorFileRef}
+                      id="blog_author_file"
+                      name="blog_author_file"
                       type="file"
                       accept="image/*"
                       onChange={handleAuthorPhotoUpload}
@@ -743,8 +765,10 @@ export const BlogEditorModal = ({
                   </div>
 
                   <div className="sm:col-span-4">
-                    <label className="font-semibold text-slate-300 block mb-1 text-xs">Author Full Name</label>
+                    <label htmlFor="blog_author_name" className="font-semibold text-slate-300 block mb-1 text-xs">Author Full Name</label>
                     <input
+                      id="blog_author_name"
+                      name="blog_author_name"
                       type="text"
                       value={formData.author}
                       onChange={(e) => setFormData({ ...formData, author: e.target.value })}
@@ -754,8 +778,10 @@ export const BlogEditorModal = ({
                   </div>
 
                   <div className="sm:col-span-4">
-                    <label className="font-semibold text-slate-300 block mb-1 text-xs">Author Designation / Role</label>
+                    <label htmlFor="blog_author_role" className="font-semibold text-slate-300 block mb-1 text-xs">Author Designation / Role</label>
                     <input
+                      id="blog_author_role"
+                      name="blog_author_role"
                       type="text"
                       value={formData.authorRole}
                       onChange={(e) => setFormData({ ...formData, authorRole: e.target.value })}
@@ -767,8 +793,10 @@ export const BlogEditorModal = ({
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
                   <div>
-                    <label className="font-semibold text-slate-300 block mb-1 text-xs">Publication Date</label>
+                    <label htmlFor="blog_publish_date" className="font-semibold text-slate-300 block mb-1 text-xs">Publication Date</label>
                     <input
+                      id="blog_publish_date"
+                      name="blog_publish_date"
                       type="text"
                       value={formData.date}
                       onChange={(e) => setFormData({ ...formData, date: e.target.value })}
@@ -778,8 +806,10 @@ export const BlogEditorModal = ({
                   </div>
 
                   <div>
-                    <label className="font-semibold text-slate-300 block mb-1 text-xs">Estimated Reading Time</label>
+                    <label htmlFor="blog_read_time" className="font-semibold text-slate-300 block mb-1 text-xs">Estimated Reading Time</label>
                     <input
+                      id="blog_read_time"
+                      name="blog_read_time"
                       type="text"
                       value={formData.readTime}
                       onChange={(e) => setFormData({ ...formData, readTime: e.target.value })}
@@ -797,10 +827,12 @@ export const BlogEditorModal = ({
           {activeTab === 'tags' && (
             <div className="space-y-4 animate-fadeIn">
               <div>
-                <label className="font-semibold text-slate-300 block mb-1">Article Category *</label>
+                <label htmlFor="blog_category" className="font-semibold text-slate-300 block mb-1">Article Category *</label>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
                     <select
+                      id="blog_category"
+                      name="blog_category"
                       value={formData.category}
                       onChange={(e) => setFormData({ ...formData, category: e.target.value })}
                       className="admin-input w-full text-xs font-bold"
@@ -813,6 +845,8 @@ export const BlogEditorModal = ({
 
                   <div>
                     <input
+                      id="blog_custom_category"
+                      name="blog_custom_category"
                       type="text"
                       value={customCategory}
                       onChange={(e) => setCustomCategory(e.target.value)}
@@ -831,9 +865,11 @@ export const BlogEditorModal = ({
               </div>
 
               <div>
-                <label className="font-semibold text-slate-300 block mb-1">Article Tags (Topics & Themes)</label>
+                <label htmlFor="blog_tag_input" className="font-semibold text-slate-300 block mb-1">Article Tags (Topics & Themes)</label>
                 <div className="flex gap-2 mb-2">
                   <input
+                    id="blog_tag_input"
+                    name="blog_tag_input"
                     type="text"
                     value={tagInput}
                     onChange={(e) => setTagInput(e.target.value)}
@@ -894,12 +930,14 @@ export const BlogEditorModal = ({
 
               <div>
                 <div className="flex justify-between items-center mb-1">
-                  <label className="font-semibold text-slate-300 text-xs">SEO Meta Title (Title Tag)</label>
+                  <label htmlFor="blog_seo_title" className="font-semibold text-slate-300 text-xs">SEO Meta Title (Title Tag)</label>
                   <span className={`text-[10px] ${formData.seoTitle.length > 60 ? 'text-amber-400 font-bold' : 'text-slate-500'}`}>
                     {formData.seoTitle.length} / 60 characters
                   </span>
                 </div>
                 <input
+                  id="blog_seo_title"
+                  name="blog_seo_title"
                   type="text"
                   value={formData.seoTitle}
                   onChange={(e) => setFormData({ ...formData, seoTitle: e.target.value })}
@@ -910,12 +948,14 @@ export const BlogEditorModal = ({
 
               <div>
                 <div className="flex justify-between items-center mb-1">
-                  <label className="font-semibold text-slate-300 text-xs">SEO Meta Description</label>
+                  <label htmlFor="blog_seo_description" className="font-semibold text-slate-300 text-xs">SEO Meta Description</label>
                   <span className={`text-[10px] ${formData.seoDescription.length > 160 ? 'text-amber-400 font-bold' : 'text-slate-500'}`}>
                     {formData.seoDescription.length} / 160 characters
                   </span>
                 </div>
                 <textarea
+                  id="blog_seo_description"
+                  name="blog_seo_description"
                   rows={3}
                   value={formData.seoDescription}
                   onChange={(e) => setFormData({ ...formData, seoDescription: e.target.value })}
@@ -1001,6 +1041,8 @@ export const BlogEditorModal = ({
 
             <form onSubmit={handleInsertInlineImageSubmit} className="space-y-3.5 text-xs">
               <input
+                id="blog_inline_image_file"
+                name="blog_inline_image_file"
                 ref={inlineDialogFileRef}
                 type="file"
                 accept="image/*"
@@ -1010,7 +1052,7 @@ export const BlogEditorModal = ({
 
               {/* File Selector */}
               <div>
-                <label className="font-semibold text-slate-300 block mb-1">Choose Image File *</label>
+                <label htmlFor="blog_inline_image_file" className="font-semibold text-slate-300 block mb-1 cursor-pointer">Choose Image File *</label>
                 {inlineFilePreview ? (
                   <div className="relative aspect-video rounded-xl overflow-hidden bg-slate-950 border border-slate-700 group">
                     <img src={inlineFilePreview} alt="Selected preview" className="w-full h-full object-contain" />
@@ -1038,11 +1080,13 @@ export const BlogEditorModal = ({
 
               {/* ALT TAG INPUT (MANDATORY) */}
               <div>
-                <label className="font-bold text-slate-200 block mb-1 flex items-center gap-1.5">
+                <label htmlFor="blog_inline_alt_text" className="font-bold text-slate-200 block mb-1 flex items-center gap-1.5">
                   <Tag className="w-3.5 h-3.5 text-indigo-400" />
                   Image Alt Tag (for Google SEO & Accessibility) *
                 </label>
                 <input
+                  id="blog_inline_alt_text"
+                  name="blog_inline_alt_text"
                   type="text"
                   value={inlineAltText}
                   onChange={(e) => setInlineAltText(e.target.value)}
@@ -1057,8 +1101,10 @@ export const BlogEditorModal = ({
 
               {/* CAPTION (OPTIONAL) */}
               <div>
-                <label className="font-semibold text-slate-300 block mb-1">Caption Text (Optional)</label>
+                <label htmlFor="blog_inline_caption" className="font-semibold text-slate-300 block mb-1">Caption Text (Optional)</label>
                 <input
+                  id="blog_inline_caption"
+                  name="blog_inline_caption"
                   type="text"
                   value={inlineCaption}
                   onChange={(e) => setInlineCaption(e.target.value)}

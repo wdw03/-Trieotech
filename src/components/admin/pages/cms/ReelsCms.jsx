@@ -254,6 +254,8 @@ export const ReelsCms = () => {
         <div className="relative flex-1 max-w-md">
           <Search className="w-4 h-4 text-slate-500 absolute left-3 top-2.5" />
           <input
+            id="admin_reels_search"
+            name="reels_search"
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
