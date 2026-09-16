@@ -64,10 +64,10 @@ export async function POST(request) {
       );
     }
 
-    // Safety Guard: Cannot revoke Super Admin from primary owner
-    if (targetUserEmail === 'trioent19@gmail.com' && cleanRole !== 'super_admin') {
+    // Safety Guard: Cannot revoke Super Admin from primary master owner
+    if (targetUserEmail === 'trioenterprises10@gmail.com' && cleanRole !== 'super_admin') {
       return NextResponse.json(
-        { error: 'Cannot revoke Super Admin role from the Primary Master Owner.' },
+        { error: 'Cannot revoke Super Admin role from the Primary Master Owner (trioenterprises10@gmail.com).' },
         { status: 400 }
       );
     }

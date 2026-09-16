@@ -41,7 +41,7 @@ export async function GET(request) {
     // Helper to format role and role_label
     const resolveRoleInfo = (rawRole, email) => {
       const clean = String(rawRole || '').trim().toLowerCase();
-      if (clean === 'super_admin' || clean === 'superadmin' || clean === 'admin' || email === 'trioent19@gmail.com') {
+      if (clean === 'super_admin' || clean === 'superadmin' || clean === 'admin' || email === 'trioenterprises10@gmail.com') {
         return {
           role: 'super_admin',
           role_label: 'Super Admin',
@@ -78,7 +78,7 @@ export async function GET(request) {
       const rawRole =
         authUser.user_metadata?.role ||
         p.role ||
-        (email === 'trioent19@gmail.com' ? 'super_admin' : 'customer');
+        (email === 'trioenterprises10@gmail.com' ? 'super_admin' : 'customer');
 
       const roleInfo = resolveRoleInfo(rawRole, email);
 

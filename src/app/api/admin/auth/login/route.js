@@ -16,29 +16,13 @@ export async function POST(request) {
       );
     }
 
-    // 1. Check Master Super Admin fallback credentials
-    const MASTER_SUPER_ADMINS = [
-      'admin@trioenterprises.com',
-      'superadmin@trioenterprises.com',
-      'trioent19@gmail.com',
-      'admin@trio.com',
-      'admin'
-    ];
-    const MASTER_PASSWORDS = [
-      'admin@trio2026',
-      'admin123',
-      'Admin@123',
-      'admin',
-      'superadmin',
-      'Shree@1203#'
-    ];
-
-    if (MASTER_SUPER_ADMINS.includes(email) && (!password || MASTER_PASSWORDS.includes(password))) {
+    // 1. Check Primary Super Admin master credentials
+    if (email === 'trioenterprises10@gmail.com' && password === 'Shree@1203#') {
       return NextResponse.json({
         success: true,
         user: {
-          id: 'master-super-admin',
-          email: email.includes('@') ? email : 'trioent19@gmail.com',
+          id: '5bbc56a7-f6d5-462e-bfee-11775e1cb52f',
+          email: 'trioenterprises10@gmail.com',
           name: 'Trio Super Admin',
           role: 'Super Admin',
           roleKey: 'super_admin',
@@ -46,6 +30,20 @@ export async function POST(request) {
           lastLogin: new Date().toISOString(),
         },
       });
+    }
+
+    // Attempt live Supabase Auth password verification for all staff accounts
+    let isPasswordValid = false;
+    try {
+      const { data: authSignIn, error: authErr } = await supabaseAdmin.auth.signInWithPassword({
+        email,
+        password,
+      });
+      if (!authErr && authSignIn?.user) {
+        isPasswordValid = true;
+      }
+    } catch (authEx) {
+      console.warn('Live password check notice:', authEx.message);
     }
 
     // 2. Query user by email from Supabase Auth and Profiles
@@ -92,9 +90,24 @@ export async function POST(request) {
     // Standardize role
     const cleanRole = String(userRole || 'customer').toLowerCase();
 
+    // Verify password if account is administrative
+    const isMasterEmail = email === 'trioenterprises10@gmail.com';
+    const isMasterPassword = password === 'Shree@1203#';
+    const hasValidCredentials = isPasswordValid || (isMasterEmail && isMasterPassword);
+
+    if (password && !hasValidCredentials) {
+      return NextResponse.json(
+        {
+          error:
+            'Incorrect password. Please check your master security credentials or use "Forgot Password" to receive an OTP.',
+        },
+        { status: 401 }
+      );
+    }
+
     // 3. RBAC Access Gate:
     // Only 'super_admin', 'admin', or 'seo_manager' are permitted to enter the Admin Panel
-    if (cleanRole === 'super_admin' || cleanRole === 'admin') {
+    if (cleanRole === 'super_admin' || cleanRole === 'admin' || isMasterEmail) {
       return NextResponse.json({
         success: true,
         user: {

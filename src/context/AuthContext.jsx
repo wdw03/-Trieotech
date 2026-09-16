@@ -578,7 +578,7 @@ export const AuthProvider = ({ children }) => {
         email: user.email,
         phone: profile?.phone || user.user_metadata?.phone || '',
         avatar: profile?.avatar_url || user.user_metadata?.avatar_url || 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=160&auto=format&fit=crop&q=80',
-        role: profile?.role || user.user_metadata?.role || (user.email === 'trioent19@gmail.com' ? 'admin' : 'customer'),
+        role: profile?.role || user.user_metadata?.role || (user.email === 'trioenterprises10@gmail.com' ? 'admin' : 'customer'),
         addresses: addresses.map((a) => ({
           id: a.id,
           name: a.name,

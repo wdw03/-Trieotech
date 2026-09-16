@@ -38,7 +38,7 @@ export async function GET(request, { params }) {
 
     // Authorization check: if authenticated user is present and order belongs to a user, check matching ID (unless admin)
     if (order.user_id && user) {
-      const isAdmin = user.email === 'trioent19@gmail.com' || user.user_metadata?.role === 'admin';
+      const isAdmin = user.email === 'trioenterprises10@gmail.com' || user.user_metadata?.role === 'admin' || user.user_metadata?.role === 'super_admin';
       if (!isAdmin && order.user_id !== user.id) {
         return NextResponse.json({ error: 'Unauthorized to view this invoice' }, { status: 403 });
       }
