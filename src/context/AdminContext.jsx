@@ -1,5 +1,6 @@
 'use client';
 import React, { createContext, useContext, useState, useEffect, useMemo } from 'react';
+import { useAuth } from './AuthContext';
 import initialProductsList from '../data/admin/products.js';
 import initialCategoriesList from '../data/admin/categories.js';
 import { calculateOrderTotal } from '../data/admin/orders.js';
@@ -80,137 +81,95 @@ export const AdminProvider = ({ children }) => {
   const [returns, setReturns] = useState([]);
 
   // ═══════════════════════════════════════════════════════════════
-  // SUPER ADMIN AUTHENTICATION STATE
+  // UNIFIED ADMIN AUTHENTICATION (Synced directly with AuthContext)
   // ═══════════════════════════════════════════════════════════════
-  const [isAuthenticated, setIsAuthenticated] = useState(() => {
+  const {
+    user: authUser,
+    profile: authProfile,
+    loading: authLoading,
+    logout: authLogout,
+    isAdmin: authIsAdmin,
+    isSuperAdmin: authIsSuperAdmin,
+    isSeoManager: authIsSeoManager,
+    effectiveRole: authRole
+  } = useAuth();
+
+  const [localSession, setLocalSession] = useState(() => {
     try {
-      if (typeof window === 'undefined') return false;
+      if (typeof window === 'undefined') return null;
       const session = localStorage.getItem('trio_superadmin_session') || sessionStorage.getItem('trio_superadmin_session');
-      return session ? JSON.parse(session)?.active === true : false;
+      return session ? JSON.parse(session) : null;
     } catch {
-      return false;
+      return null;
     }
   });
 
-  const [isAuthChecking, setIsAuthChecking] = useState(() => {
-    try {
-      if (typeof window === 'undefined') return true;
-      const session = localStorage.getItem('trio_superadmin_session') || sessionStorage.getItem('trio_superadmin_session');
-      return session ? !JSON.parse(session)?.active : true;
-    } catch {
-      return true;
-    }
-  });
+  const isAuthenticated = Boolean(
+    (!authLoading && authUser && authIsAdmin) ||
+    (localSession?.active === true)
+  );
 
-  const [adminUser, setAdminUser] = useState(() => {
-    try {
-      if (typeof window === 'undefined') {
-        return {
-          name: 'Trio Super Admin',
-          email: 'trioenterprises10@gmail.com',
-          role: 'Super Admin',
-          avatar: 'SA',
-          lastLogin: null
-        };
-      }
-      const session = localStorage.getItem('trio_superadmin_session') || sessionStorage.getItem('trio_superadmin_session');
-      return session ? JSON.parse(session)?.user : {
-        name: 'Trio Super Admin',
-        email: 'trioenterprises10@gmail.com',
-        role: 'Super Admin',
-        avatar: 'SA',
-        lastLogin: new Date().toISOString()
-      };
-    } catch {
+  const isAuthChecking = Boolean(
+    authLoading && !localSession?.active
+  );
+
+  const adminUser = useMemo(() => {
+    if (authUser && authIsAdmin) {
+      const email = (authUser.email || '').toLowerCase();
+      const isMaster = email === 'trioenterprises10@gmail.com';
+      const roleDisplay = isMaster
+        ? 'Super Admin'
+        : (authRole === 'seo_manager' ? 'SEO Manager' : (authRole === 'super_admin' ? 'Super Admin' : 'Admin'));
       return {
-        name: 'Trio Super Admin',
-        email: 'trioenterprises10@gmail.com',
-        role: 'Super Admin',
+        id: authUser.id,
+        name: authProfile?.full_name || authUser.name || (isMaster ? 'Trio Super Admin' : 'Administrator'),
+        email,
+        role: roleDisplay,
+        roleKey: authRole,
         avatar: 'SA',
         lastLogin: new Date().toISOString()
       };
     }
-  });
-
-  // Verify and sync authentication state from Supabase Auth & LocalStorage
-  useEffect(() => {
-    let isCancelled = false;
-    const verifyAuth = async () => {
-      try {
-        if (typeof window === 'undefined') return;
-
-        // 1. Check local session
-        const raw = localStorage.getItem('trio_superadmin_session') || sessionStorage.getItem('trio_superadmin_session');
-        if (raw) {
-          try {
-            const parsed = JSON.parse(raw);
-            if (parsed?.active) {
-              if (!isCancelled) {
-                setIsAuthenticated(true);
-                if (parsed.user) setAdminUser(parsed.user);
-                setIsAuthChecking(false);
-              }
-              return;
-            }
-          } catch (_) {}
-        }
-
-        // 2. Check Supabase Auth session
-        if (supabase) {
-          const { data: { user: sbUser } } = await supabase.auth.getUser();
-          if (sbUser) {
-            const userEmail = (sbUser.email || '').toLowerCase();
-            const isMaster = userEmail === 'trioenterprises10@gmail.com';
-            const metaRole = (sbUser.user_metadata?.role || '').toLowerCase();
-
-            let dbRole = '';
-            try {
-              const { data: prof } = await supabase.from('profiles').select('role, full_name').eq('id', sbUser.id).single();
-              if (prof?.role) dbRole = (prof.role || '').toLowerCase();
-            } catch (_) {}
-
-            const effectiveRole = isMaster ? 'super_admin' : (dbRole || metaRole);
-            if (isMaster || ['super_admin', 'admin', 'seo_manager'].includes(effectiveRole)) {
-              const formattedRole = isMaster ? 'Super Admin' : (effectiveRole === 'seo_manager' ? 'SEO Manager' : 'Admin');
-              const sessionData = {
-                active: true,
-                user: {
-                  id: sbUser.id,
-                  name: isMaster ? 'Trio Super Admin' : (sbUser.user_metadata?.full_name || 'Admin'),
-                  email: userEmail,
-                  role: formattedRole,
-                  avatar: 'SA',
-                  lastLogin: new Date().toISOString()
-                },
-                token: `trio_auth_${Date.now()}`
-              };
-              localStorage.setItem('trio_superadmin_session', JSON.stringify(sessionData));
-              if (!isCancelled) {
-                setIsAuthenticated(true);
-                setAdminUser(sessionData.user);
-                setIsAuthChecking(false);
-              }
-              return;
-            }
-          }
-        }
-
-        if (!isCancelled) {
-          setIsAuthenticated(false);
-          setIsAuthChecking(false);
-        }
-      } catch (err) {
-        console.warn('Admin auth verification error:', err);
-        if (!isCancelled) {
-          setIsAuthenticated(false);
-          setIsAuthChecking(false);
-        }
-      }
+    if (localSession?.user) {
+      return localSession.user;
+    }
+    return {
+      name: 'Trio Super Admin',
+      email: 'trioenterprises10@gmail.com',
+      role: 'Super Admin',
+      roleKey: 'super_admin',
+      avatar: 'SA',
+      lastLogin: null
     };
+  }, [authUser, authProfile, authIsAdmin, authRole, localSession]);
 
-    verifyAuth();
-    return () => { isCancelled = true; };
-  }, [supabase]);
+  // Keep localStorage session synced with current authenticated admin
+  useEffect(() => {
+    if (authUser && authIsAdmin) {
+      const email = (authUser.email || '').toLowerCase();
+      const isMaster = email === 'trioenterprises10@gmail.com';
+      const roleDisplay = isMaster
+        ? 'Super Admin'
+        : (authRole === 'seo_manager' ? 'SEO Manager' : (authRole === 'super_admin' ? 'Super Admin' : 'Admin'));
+      const sessionData = {
+        active: true,
+        user: {
+          id: authUser.id,
+          name: authProfile?.full_name || authUser.name || (isMaster ? 'Trio Super Admin' : 'Administrator'),
+          email,
+          role: roleDisplay,
+          roleKey: authRole,
+          avatar: 'SA',
+          lastLogin: new Date().toISOString()
+        },
+        token: `trio_auth_${Date.now()}`
+      };
+      try {
+        localStorage.setItem('trio_superadmin_session', JSON.stringify(sessionData));
+        setLocalSession(sessionData);
+      } catch (_) {}
+    }
+  }, [authUser, authProfile, authIsAdmin, authRole]);
 
   // ═══════════════════════════════════════════════════════════════
   // ROLE-BASED ACCESS CONTROL (RBAC) HELPERS & STAFF USERS
@@ -219,13 +178,15 @@ export const AdminProvider = ({ children }) => {
   const [isLoadingUsers, setIsLoadingUsers] = useState(false);
 
   const isSuperAdmin = () => {
+    if (authIsSuperAdmin) return true;
     const role = (adminUser?.role || '').toLowerCase();
     const roleKey = (adminUser?.roleKey || '').toLowerCase();
     const email = (adminUser?.email || '').toLowerCase();
-    return role.includes('super') || roleKey === 'super_admin' || email === 'trioenterprises10@gmail.com' || email === 'admin@trioenterprises.com';
+    return role.includes('super') || roleKey === 'super_admin' || roleKey === 'admin' || email === 'trioenterprises10@gmail.com' || email === 'admin@trioenterprises.com';
   };
 
   const isSeoManager = () => {
+    if (authIsSeoManager) return true;
     const role = (adminUser?.role || '').toLowerCase();
     const roleKey = (adminUser?.roleKey || '').toLowerCase();
     return role.includes('seo') || roleKey === 'seo_manager';
@@ -479,6 +440,7 @@ export const AdminProvider = ({ children }) => {
 
   // ── Realtime subscription for live admin order & shipment updates ──
   useEffect(() => {
+    if (!supabase) return;
     const channel = supabase
       .channel('admin-live-orders')
       .on(
@@ -500,7 +462,9 @@ export const AdminProvider = ({ children }) => {
       .subscribe();
 
     return () => {
-      supabase.removeChannel(channel);
+      if (supabase && channel) {
+        supabase.removeChannel(channel);
+      }
     };
   }, []);
 
@@ -1063,67 +1027,65 @@ export const AdminProvider = ({ children }) => {
     const cleanEmail = (email || '').trim().toLowerCase();
     const cleanPass = (password || '').trim();
 
-    // 1. Try Live Backend Role Verification API
+    // 1. Try Supabase Auth
     try {
-      const res = await adminApi.verifyAdminLogin(cleanEmail, cleanPass);
-      if (res?.success && res?.user) {
-        const userData = {
-          name: res.user.name || cleanEmail.split('@')[0],
-          email: res.user.email || cleanEmail,
-          role: res.user.role || 'Super Admin',
-          roleKey: res.user.roleKey || (res.user.role.includes('SEO') ? 'seo_manager' : 'super_admin'),
-          avatar: res.user.avatar || cleanEmail.slice(0, 2).toUpperCase(),
-          lastLogin: new Date().toISOString()
-        };
+      if (supabase) {
+        const { data, error } = await supabase.auth.signInWithPassword({
+          email: cleanEmail,
+          password: cleanPass
+        });
 
-        const sessionData = {
-          active: true,
-          user: userData,
-          token: `trio_auth_${Date.now()}`
-        };
+        if (!error && data?.user) {
+          const isMaster = cleanEmail === 'trioenterprises10@gmail.com';
+          const metaRole = (data.user.user_metadata?.role || '').toLowerCase();
+          const effectiveRole = isMaster ? 'super_admin' : (metaRole || 'admin');
 
-        if (remember) {
-          localStorage.setItem('trio_superadmin_session', JSON.stringify(sessionData));
-        } else {
-          sessionStorage.setItem('trio_superadmin_session', JSON.stringify(sessionData));
-          localStorage.setItem('trio_superadmin_session', JSON.stringify(sessionData));
+          const formattedRole = isMaster
+            ? 'Super Admin'
+            : (effectiveRole === 'seo_manager' ? 'SEO Manager' : (effectiveRole === 'super_admin' ? 'Super Admin' : 'Admin'));
+
+          const sessionData = {
+            active: true,
+            user: {
+              id: data.user.id,
+              name: isMaster ? 'Trio Super Admin' : (data.user.user_metadata?.full_name || 'Administrator'),
+              email: cleanEmail,
+              role: formattedRole,
+              roleKey: effectiveRole,
+              avatar: 'SA',
+              lastLogin: new Date().toISOString()
+            },
+            token: `trio_auth_${Date.now()}`
+          };
+
+          if (remember) {
+            localStorage.setItem('trio_superadmin_session', JSON.stringify(sessionData));
+          } else {
+            sessionStorage.setItem('trio_superadmin_session', JSON.stringify(sessionData));
+            localStorage.setItem('trio_superadmin_session', JSON.stringify(sessionData));
+          }
+
+          setLocalSession(sessionData);
+          showToast(`Welcome back, ${sessionData.user.name}! Access granted.`, 'success');
+          return { success: true, user: sessionData.user };
         }
-
-        setAdminUser(userData);
-        setIsAuthenticated(true);
-        showToast(`Welcome ${userData.name}! Logged in as ${userData.role}.`, 'success');
-        return { success: true, user: userData };
       }
     } catch (apiErr) {
-      if (apiErr.message?.includes('Access Denied')) {
-        showToast(apiErr.message, 'error');
-        return { success: false, error: apiErr.message };
-      }
-      console.warn('Live admin login API unreachable, checking fallback:', apiErr.message);
+      console.warn('Supabase auth sign in error:', apiErr?.message);
     }
-    // Authorized Super Admin Fallback Logins
-    const validEmails = [
-      'trioenterprises10@gmail.com'
-    ];
-    const validPasswords = [
-      'Shree@1203#'
-    ];
 
-    const isEmailValid = validEmails.includes(cleanEmail);
-    const isPasswordValid = validPasswords.includes(cleanPass);
-
-    if (isEmailValid && isPasswordValid) {
-      const userData = {
-        name: 'Trio Super Admin',
-        email: cleanEmail.includes('@') ? cleanEmail : 'trioenterprises10@gmail.com',
-        role: 'Super Admin',
-        avatar: 'SA',
-        lastLogin: new Date().toISOString()
-      };
-
+    // 2. Authorized Super Admin Fallback Credentials
+    if (cleanEmail === 'trioenterprises10@gmail.com' && cleanPass === 'Shree@1203#') {
       const sessionData = {
         active: true,
-        user: userData,
+        user: {
+          name: 'Trio Super Admin',
+          email: cleanEmail,
+          role: 'Super Admin',
+          roleKey: 'super_admin',
+          avatar: 'SA',
+          lastLogin: new Date().toISOString()
+        },
         token: `trio_sa_${Date.now()}`
       };
 
@@ -1134,29 +1096,36 @@ export const AdminProvider = ({ children }) => {
         localStorage.setItem('trio_superadmin_session', JSON.stringify(sessionData));
       }
 
-      setAdminUser(userData);
-      setIsAuthenticated(true);
+      setLocalSession(sessionData);
       showToast('Welcome back, Super Admin! Access granted.', 'success');
-      return { success: true };
-    } else {
-      showToast('Access Denied: Invalid Super Admin credentials.', 'error');
-      return {
-        success: false,
-        error: 'Invalid credentials. Only authorized Super Admin can access.'
-      };
+      return { success: true, user: sessionData.user };
     }
+
+    showToast('Access Denied: Invalid Super Admin credentials.', 'error');
+    return {
+      success: false,
+      error: 'Invalid credentials. Only authorized Super Admin can access.'
+    };
   };
 
   // Super Admin Logout Handler
-  const logout = () => {
+  const logout = async () => {
     try {
       localStorage.removeItem('trio_superadmin_session');
       sessionStorage.removeItem('trio_superadmin_session');
     } catch (e) {
       console.error(e);
     }
-    setIsAuthenticated(false);
+    setLocalSession(null);
+    if (authLogout) {
+      try {
+        await authLogout();
+      } catch (_) {}
+    }
     showToast('Logged out of Super Admin Portal.', 'info');
+    if (typeof window !== 'undefined') {
+      window.location.href = '/login?redirect=%2Fadmin';
+    }
   };
 
   return (

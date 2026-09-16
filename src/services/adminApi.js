@@ -2,6 +2,7 @@ import { supabase } from './adminSupabase.js';
 // Centralized API Client for Trio Ecart Admin Dashboard
 // Direct live production backend fallback for Vercel deployments
 const API_BASE = '/api';
+const TRIOTECH_FALLBACK = 'https://trieotech.vercel.app/api';
 
 async function request(endpoint, options = {}) {
   const url = `${API_BASE}${endpoint.startsWith('/') ? endpoint : `/${endpoint}`}`;

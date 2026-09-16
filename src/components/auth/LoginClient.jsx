@@ -9,7 +9,7 @@ import { Mail, Lock, ArrowRight, Sparkles, Loader2, Eye, EyeOff, ShoppingBag } f
 export default function LoginClient() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { login, user, profile } = useAuth();
+  const { login, user, profile, loading } = useAuth();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -17,17 +17,18 @@ export default function LoginClient() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
 
-  const redirectParam = searchParams.get('redirect') || searchParams.get('next');
+  const redirectParam = searchParams.get('redirect') || searchParams.get('next') || '';
   const action = searchParams.get('action') || '';
-  // Default customer redirect to main home page '/' on login completion
-  const redirectTo = (redirectParam && redirectParam !== '/profile') ? redirectParam : '/';
+  // Default customer redirect to main home page '/' on login completion (never /admin for customer)
+  const redirectTo = (redirectParam && redirectParam !== '/profile' && !redirectParam.startsWith('/admin')) ? redirectParam : '/';
 
   // If already logged in, redirect based on administrative privileges vs customer
   useEffect(() => {
+    if (loading) return; // Wait until AuthContext finishes initializing session
     if (user) {
       const userEmail = (user.email || '').toLowerCase();
       const isMasterAdmin = userEmail === 'trioenterprises10@gmail.com';
-      const role = (profile?.role || user.user_metadata?.role || '').toLowerCase();
+      const role = (profile?.role || user.user_metadata?.role || user.role || '').toLowerCase();
       const isAdminUser = isMasterAdmin || ['super_admin', 'admin', 'seo_manager'].includes(role);
 
       if (isAdminUser) {
@@ -38,22 +39,26 @@ export default function LoginClient() {
             active: true,
             user: {
               id: user.id || 'admin-super',
-              name: profile?.full_name || (isMasterAdmin ? 'Trio Super Admin' : 'Administrator'),
+              name: profile?.full_name || user.name || (isMasterAdmin ? 'Trio Super Admin' : 'Administrator'),
               email: userEmail,
               role: adminRole,
+              roleKey: isMasterAdmin ? 'super_admin' : (role || 'admin'),
               avatar: 'SA',
               lastLogin: new Date().toISOString()
             },
             token: `trio_auth_${Date.now()}`
           };
-          localStorage.setItem('trio_superadmin_session', JSON.stringify(sessionData));
+          try {
+            localStorage.setItem('trio_superadmin_session', JSON.stringify(sessionData));
+          } catch (_) {}
         }
-        router.push(role === 'seo_manager' ? '/admin/cms/home' : '/admin');
+        const target = role === 'seo_manager' ? '/admin/cms/home' : (redirectParam && redirectParam.startsWith('/admin') ? redirectParam : '/admin');
+        router.replace(target);
       } else {
-        router.push(redirectTo);
+        router.replace(redirectTo);
       }
     }
-  }, [user, profile, router, redirectTo]);
+  }, [user, profile, loading, router, redirectTo, redirectParam]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -65,7 +70,8 @@ export default function LoginClient() {
       const cleanPassword = password ? password.trim() : '';
       const result = await login(cleanEmail, cleanPassword);
       if (result.success) {
-        const isMasterAdmin = cleanEmail === 'trioenterprises10@gmail.com';
+        const userEmail = (cleanEmail || result.user?.email || '').toLowerCase();
+        const isMasterAdmin = userEmail === 'trioenterprises10@gmail.com';
         const role = (result.profile?.role || result.user?.user_metadata?.role || '').toLowerCase();
         const isAdminUser = isMasterAdmin || ['super_admin', 'admin', 'seo_manager'].includes(role);
 
@@ -77,24 +83,29 @@ export default function LoginClient() {
               user: {
                 id: result.user?.id || 'admin-super',
                 name: result.profile?.full_name || (isMasterAdmin ? 'Trio Super Admin' : 'Administrator'),
-                email: cleanEmail,
+                email: userEmail,
                 role: adminRole,
+                roleKey: isMasterAdmin ? 'super_admin' : (role || 'admin'),
                 avatar: 'SA',
                 lastLogin: new Date().toISOString()
               },
               token: `trio_auth_${Date.now()}`
             };
-            localStorage.setItem('trio_superadmin_session', JSON.stringify(sessionData));
-            window.location.href = role === 'seo_manager' ? '/admin/cms/home' : '/admin';
+            try {
+              localStorage.setItem('trio_superadmin_session', JSON.stringify(sessionData));
+            } catch (_) {}
+            const target = role === 'seo_manager' ? '/admin/cms/home' : (redirectParam && redirectParam.startsWith('/admin') ? redirectParam : '/admin');
+            window.location.href = target;
             return;
           }
         }
 
-        // Customer Login: Redirect to storefront
+        // Customer Login: Redirect to storefront (never /admin)
+        const safeTarget = (redirectParam && !redirectParam.startsWith('/admin')) ? redirectParam : '/';
         if (typeof window !== 'undefined') {
-          window.location.href = redirectTo;
+          window.location.href = safeTarget;
         } else {
-          router.push(redirectTo);
+          router.replace(safeTarget);
         }
       } else {
         setError(result.error || 'Invalid email or password');

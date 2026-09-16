@@ -571,15 +571,24 @@ export const AuthProvider = ({ children }) => {
     }
   }, [user?.id, fetchOrders]);
 
+  const userEmail = (user?.email || '').toLowerCase();
+  const isMasterAdmin = userEmail === 'trioenterprises10@gmail.com';
+  const roleFromDb = (profile?.role || '').toLowerCase();
+  const roleFromMeta = (user?.user_metadata?.role || '').toLowerCase();
+  const effectiveRole = isMasterAdmin ? 'super_admin' : (roleFromDb || roleFromMeta || 'customer');
+  const isAdmin = isMasterAdmin || ['super_admin', 'admin', 'seo_manager'].includes(effectiveRole);
+  const isSuperAdmin = isMasterAdmin || ['super_admin', 'admin'].includes(effectiveRole);
+  const isSeoManager = effectiveRole === 'seo_manager';
+
   // ── Computed user object for backward compatibility ──
   const compatUser = user
     ? {
         id: user.id,
-        name: profile?.full_name || user.user_metadata?.full_name || user.email?.split('@')[0] || 'Artisan Patron',
+        name: profile?.full_name || user.user_metadata?.full_name || user.email?.split('@')[0] || (isMasterAdmin ? 'Trio Super Admin' : 'Artisan Patron'),
         email: user.email,
         phone: profile?.phone || user.user_metadata?.phone || '',
         avatar: profile?.avatar_url || user.user_metadata?.avatar_url || 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=160&auto=format&fit=crop&q=80',
-        role: profile?.role || user.user_metadata?.role || (user.email === 'trioenterprises10@gmail.com' ? 'admin' : 'customer'),
+        role: effectiveRole,
         addresses: addresses.map((a) => ({
           id: a.id,
           name: a.name,
@@ -604,6 +613,10 @@ export const AuthProvider = ({ children }) => {
         isAuthenticated: !!user,
         loading,
         userOrders,
+        isAdmin,
+        isSuperAdmin,
+        isSeoManager,
+        effectiveRole,
         login,
         register,
         sendSignupOtp,

@@ -35,7 +35,7 @@ export const Sidebar = () => {
   const navigate = (path) => router.push(path.startsWith('/admin') ? path : `/admin${path === '/' ? '' : path}`);
 
   const commerceNav = [
-    { name: 'Dashboard', path: '/admin/admin', icon: LayoutDashboard },
+    { name: 'Dashboard', path: '/admin', icon: LayoutDashboard },
     {
       name: 'Orders',
       path: '/admin/orders',
@@ -121,7 +121,7 @@ export const Sidebar = () => {
   const systemNav = [
     {
       name: 'User Roles & Staff',
-      path: '/admin/roles',
+      path: '/admin/users',
       icon: Users,
       badge: 'Super Admin',
       badgeColor: 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 font-bold'
