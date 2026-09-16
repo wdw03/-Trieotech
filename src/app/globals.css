@@ -359,3 +359,140 @@
   box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.08);
 }
 
+/* ==========================================================================
+   ADMIN PORTAL DARK THEME FORM CONTROLS & UTILITIES
+   Ensures all inputs, selects, textareas, and modals have high-contrast dark
+   slate backgrounds (#0F172A), clear white readable text (#F8FAFC), crisp
+   slate borders (#334155), and sleek indigo focus rings (#6366F1).
+   ========================================================================== */
+
+/* Admin Input styling */
+.admin-input {
+  background-color: #0F172A !important;
+  color: #F8FAFC !important;
+  border: 1px solid #334155 !important;
+  border-radius: 0.75rem;
+  padding: 0.5rem 0.875rem;
+  outline: none !important;
+  transition: all 0.15s ease-in-out;
+}
+
+.admin-input:focus {
+  background-color: #0B1120 !important;
+  color: #FFFFFF !important;
+  border-color: #6366F1 !important;
+  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.25) !important;
+}
+
+.admin-input::placeholder {
+  color: #64748B !important;
+}
+
+.admin-input:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background-color: #1E293B !important;
+}
+
+/* Admin Select dropdown styling */
+.admin-select {
+  background-color: #0F172A !important;
+  color: #F8FAFC !important;
+  border: 1px solid #334155 !important;
+  border-radius: 0.75rem;
+  padding: 0.5rem 0.875rem;
+  outline: none !important;
+  cursor: pointer;
+  transition: all 0.15s ease-in-out;
+}
+
+.admin-select:focus {
+  background-color: #0B1120 !important;
+  color: #FFFFFF !important;
+  border-color: #6366F1 !important;
+  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.25) !important;
+}
+
+.admin-select option {
+  background-color: #0F172A !important;
+  color: #F8FAFC !important;
+}
+
+/* Admin Card styling */
+.admin-card {
+  background-color: rgba(15, 23, 42, 0.85);
+  border: 1px solid rgba(51, 65, 85, 0.7);
+  border-radius: 1rem;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3), 0 8px 10px -6px rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(12px);
+  color: #E2E8F0;
+}
+
+/* Secondary Action Button in Admin */
+.btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  border-radius: 0.75rem;
+  background-color: #1E293B;
+  color: #E2E8F0;
+  border: 1px solid #334155;
+  font-weight: 500;
+  font-size: 0.875rem;
+  transition: all 0.15s ease-in-out;
+  cursor: pointer;
+}
+
+.btn-secondary:hover {
+  background-color: #334155;
+  color: #FFFFFF;
+  border-color: #475569;
+}
+
+/* Scoped catch-all for any input, textarea, and select within the Admin Portal */
+.admin-portal input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="submit"]):not([type="button"]):not([type="color"]):not([type="image"]),
+.admin-portal textarea,
+.admin-portal select {
+  background-color: #0F172A;
+  color: #F8FAFC;
+  border-color: #334155;
+}
+
+.admin-portal input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="submit"]):not([type="button"]):not([type="color"]):not([type="image"]):focus,
+.admin-portal textarea:focus,
+.admin-portal select:focus {
+  background-color: #0B1120;
+  color: #FFFFFF;
+  border-color: #6366F1;
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.25);
+}
+
+.admin-portal input::placeholder,
+.admin-portal textarea::placeholder {
+  color: #64748B;
+}
+
+.admin-portal select option {
+  background-color: #0F172A;
+  color: #F8FAFC;
+}
+
+/* Browser Autofill styling for Admin Portal */
+.admin-portal input:-webkit-autofill,
+.admin-portal input:-webkit-autofill:hover, 
+.admin-portal input:-webkit-autofill:focus, 
+.admin-portal input:-webkit-autofill:active,
+.admin-input:-webkit-autofill,
+.admin-input:-webkit-autofill:hover,
+.admin-input:-webkit-autofill:focus,
+.admin-input:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 1000px #0F172A inset !important;
+  -webkit-text-fill-color: #F8FAFC !important;
+  caret-color: #F8FAFC !important;
+  transition: background-color 5000s ease-in-out 0s;
+}
+
+

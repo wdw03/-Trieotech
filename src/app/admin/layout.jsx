@@ -7,7 +7,7 @@ import { Layout } from '../../components/admin/layout/Layout';
 
 export default function AdminRootLayout({ children }) {
   return (
-    <div suppressHydrationWarning className="min-h-screen w-full bg-[#0B0F19]">
+    <div suppressHydrationWarning className="admin-portal min-h-screen w-full bg-[#0B0F19] text-slate-100">
       <AdminProvider>
         <ProtectedRoute>
           <Layout>
