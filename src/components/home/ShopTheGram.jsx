@@ -50,171 +50,30 @@ const Reveal = ({ children, delay = 0, className = '' }) => {
   );
 };
 
-/* ---------- Influencer Reels Data with Authentic Trio Ecart Products ---------- */
-const initialPosts = [
-  {
-    id: 'f6750212-5761-4c2c-bec8-0e649d455c94',
-    avatar: 'https://gkskeljvgphslkzctjfp.supabase.co/storage/v1/object/public/reels/avatars/Abida_Fatima.jpg',
-    img: 'https://gkskeljvgphslkzctjfp.supabase.co/storage/v1/object/public/products/pearl-zardosi-patch-1.jpg',
-    video: 'https://gkskeljvgphslkzctjfp.supabase.co/storage/v1/object/public/reels/videos/pearl_zardosi_craft_reel.mp4',
-    handle: '@abida.fatima_',
-    name: 'Abida Fatima',
-    verified: true,
-    followers: '218K',
-    likes: '24.3K',
-    likesCount: 24310,
-    comments: '1,204',
-    caption: 'Added these handcrafted pearl zardosi patches to my festive lehenga border ✨ The zari detailing shines so brightly under royal lighting! Tag someone who loves ethnic DIYs.',
-    song: 'Kesariya · Slowed & Reverb',
-    product: 'Pearl Zardosi Moti Beaded Applique Patches (Set of 20)',
-    productId: 106,
-    slug: 'trio-ecart-pearl-zardosi-moti-beaded-round-applique-patches-set-20',
-    price: '₹199',
-    rawPrice: 199,
-    oldPrice: '₹499',
-    rawOldPrice: 499,
-    discount: '60% OFF',
-    productImage: 'https://gkskeljvgphslkzctjfp.supabase.co/storage/v1/object/public/products/pearl-zardosi-patch-1.jpg',
-    tag: 'Zardosi Craft',
-    rating: 4.9,
-    reviews: 184,
-    views: '412K',
-    commentsList: [
-      { user: 'ananya_pandey', text: 'Stunning zari work! Ordered one set for my wedding lehenga 🙏', time: '2h ago' },
-      { user: 'rohit_verma_delhi', text: 'Received in 3 days in Delhi, packaging was top notch 💯', time: '5h ago' },
-      { user: 'priya.sharma99', text: 'Are the pearls genuine glass moti? Looks super royal ✨', time: '1d ago' },
-    ]
-  },
-  {
-    id: '6bf36e38-2e3f-4db5-86e8-75c1dd4a8e17',
-    avatar: 'https://gkskeljvgphslkzctjfp.supabase.co/storage/v1/object/public/reels/avatars/Agrani_SINGH.jpg',
-    img: 'https://gkskeljvgphslkzctjfp.supabase.co/storage/v1/object/public/products/pooja-thali-brass-diya-1.jpg',
-    video: 'https://gkskeljvgphslkzctjfp.supabase.co/storage/v1/object/public/reels/videos/pooja_thali_brass_diya_reel.mp4',
-    handle: '@agranisingh.official',
-    name: 'Agrani Singh',
-    verified: true,
-    followers: '542K',
-    likes: '58.7K',
-    likesCount: 58720,
-    comments: '3,891',
-    caption: 'POV: You found THE royal velvet pooja thali for wedding ceremonies 🪔 Embellished with pure brass diyas and pearl borders. Pure spiritual elegance!',
-    song: 'Din Shagna Da · Wedding Sitar Mix',
-    product: 'Decorative Red Velvet Pooja Thali with Brass Diyas',
-    productId: 109,
-    slug: 'trio-ecart-decorative-pooja-thali-brass-diyas-red-velvet-pearl-border',
-    price: '₹399',
-    rawPrice: 399,
-    oldPrice: '₹799',
-    rawOldPrice: 799,
-    discount: '50% OFF',
-    productImage: 'https://gkskeljvgphslkzctjfp.supabase.co/storage/v1/object/public/products/pooja-thali-brass-diya-1.jpg',
-    tag: 'Festive Pooja',
-    rating: 5.0,
-    reviews: 326,
-    views: '1.2M',
-    commentsList: [
-      { user: 'meera_kapoor', text: 'Ordered this for Karwa Chauth! The velvet is so rich ❤️', time: '1h ago' },
-      { user: 'sneha_patil21', text: 'Brass diyas are sturdy and heavy. Worth every rupee!', time: '3h ago' },
-      { user: 'pooja_bhatia', text: 'Delivered in 48 hours in Mumbai. Very impressed 🪔', time: '8h ago' },
-    ]
-  },
-  {
-    id: 'd5f985ae-05ea-40d8-8672-e34c3332f992',
-    avatar: 'https://gkskeljvgphslkzctjfp.supabase.co/storage/v1/object/public/reels/avatars/Dezy_Jariwala.jpg',
-    img: 'https://gkskeljvgphslkzctjfp.supabase.co/storage/v1/object/public/products/gota-chudi-ring-1.jpg',
-    video: 'https://gkskeljvgphslkzctjfp.supabase.co/storage/v1/object/public/reels/videos/golden_gota_moti_chudi_reel.mp4',
-    handle: '@dezyjariwala',
-    name: 'Dezy Jariwala',
-    verified: false,
-    followers: '96.4K',
-    likes: '12.1K',
-    likesCount: 12140,
-    comments: '842',
-    caption: 'DIY wedding thali and backdrop styling using these golden gota moti rings 🤍 Super easy to glue or stitch, giving an instant opulent finish!',
-    song: 'Tum Se · Lofi Chill Flip',
-    product: 'Decorated Golden Gota Moti Chudi Rings (Pack of 12)',
-    productId: 108,
-    slug: 'trio-ecart-decorated-golden-gota-moti-chudi-ring-pack-12',
-    price: '₹299',
-    rawPrice: 299,
-    oldPrice: '₹599',
-    rawOldPrice: 599,
-    discount: '50% OFF',
-    productImage: 'https://gkskeljvgphslkzctjfp.supabase.co/storage/v1/object/public/products/gota-chudi-ring-1.jpg',
-    tag: 'Gota Craft',
-    rating: 4.8,
-    reviews: 95,
-    views: '289K',
-    commentsList: [
-      { user: 'crafty_kavya', text: 'Used these on my haldi backdrop hangings, turned out surreal!', time: '4h ago' },
-      { user: 'tanya_oberoi', text: 'Pack of 12 is sufficient for 2 large thalis. Great value 👏', time: '12h ago' },
-    ]
-  },
-  {
-    id: 'dec02b29-0fd5-4772-9d72-dbde74308598',
-    avatar: 'https://gkskeljvgphslkzctjfp.supabase.co/storage/v1/object/public/reels/avatars/Natasha_Prajapati.jpg',
-    img: 'https://gkskeljvgphslkzctjfp.supabase.co/storage/v1/object/public/products/peony-pink.jpg',
-    video: 'https://gkskeljvgphslkzctjfp.supabase.co/storage/v1/object/public/reels/videos/silk_peony_flower_buds_reel.mp4',
-    handle: '@natasha.prajapati',
-    name: 'Natasha Prajapati',
-    verified: true,
-    followers: '310K',
-    likes: '31.9K',
-    likesCount: 31950,
-    comments: '2,156',
-    caption: 'Haldi & mehendi ceremony floral backdrop check 🌸 These pink silk peony buds look 100% real and won’t dry out before the guests arrive!',
-    song: 'Sadi Gali · Acoustic Lounge',
-    product: 'Silk Peony Flower Buds Craft Set (Pack of 24, Pink)',
-    productId: 101,
-    slug: 'trio-ecart-artificial-peony-flower-buds-pink-pack-24',
-    price: '₹321',
-    rawPrice: 321,
-    oldPrice: '₹649',
-    rawOldPrice: 649,
-    discount: '51% OFF',
-    productImage: 'https://gkskeljvgphslkzctjfp.supabase.co/storage/v1/object/public/products/peony-pink.jpg',
-    tag: 'Silk Blooms',
-    rating: 4.9,
-    reviews: 210,
-    views: '506K',
-    commentsList: [
-      { user: 'ritu_designer', text: 'The petals have realistic shading, perfect for photo backdrops!', time: '3h ago' },
-      { user: 'simran_kaur', text: 'Fast delivery to Chandigarh. Silk quality is 10/10 🌸', time: '7h ago' },
-    ]
-  },
-  {
-    id: '294230fb-c77a-4bc5-bc35-4cc97571cea5',
-    avatar: 'https://gkskeljvgphslkzctjfp.supabase.co/storage/v1/object/public/reels/avatars/Samiksha_2211.jpg',
-    img: 'https://gkskeljvgphslkzctjfp.supabase.co/storage/v1/object/public/products/red-rose-1.jpg',
-    video: 'https://gkskeljvgphslkzctjfp.supabase.co/storage/v1/object/public/reels/videos/silk_red_rose_garland_reel.mp4',
-    handle: '@samiksha_2211',
-    name: 'Samiksha Rao',
-    verified: false,
-    followers: '154K',
-    likes: '19.6K',
-    likesCount: 19630,
-    comments: '1,533',
-    caption: 'Decorating my entrance arch with deep red silk roses 🌹 Everyone asked if they were fresh from the florist! Linking the exact pack below.',
-    song: 'Raanjhan · Ambient Flute',
-    product: 'Silk Red Rose Flower Heads (Pack of 12)',
-    productId: 105,
-    slug: 'trio-ecart-artificial-red-rose-flower-heads-pack-12',
-    price: '₹365',
-    rawPrice: 365,
-    oldPrice: '₹699',
-    rawOldPrice: 699,
-    discount: '48% OFF',
-    productImage: 'https://gkskeljvgphslkzctjfp.supabase.co/storage/v1/object/public/products/red-rose-1.jpg',
-    tag: 'Red Roses',
-    rating: 4.9,
-    reviews: 165,
-    views: '380K',
-    commentsList: [
-      { user: 'varun_mehta', text: 'Used for backdrop photobooth decoration, looks extraordinarily real!', time: '2h ago' },
-      { user: 'tanvi_artistry', text: 'Reusable for multiple festival seasons. Fantastic buy ✨', time: '6h ago' },
-    ]
-  }
-];
+/* ---------- Reel Skeleton Shimmer Component (100% Dynamic Loading) ---------- */
+const ReelSkeleton = () => (
+  <div className="shrink-0 w-[78vw] xs:w-[74vw] sm:w-[300px] md:w-[330px] lg:w-[345px] max-w-[360px]">
+    <div className="rounded-2xl sm:rounded-3xl overflow-hidden border border-white/10 bg-[#12100d] p-3 animate-pulse">
+      <div className="flex items-center gap-2.5 mb-3">
+        <div className="w-8 h-8 rounded-full bg-white/10 shrink-0" />
+        <div className="space-y-1.5 flex-1 min-w-0">
+          <div className="h-3 w-24 bg-white/10 rounded" />
+          <div className="h-2 w-16 bg-white/10 rounded" />
+        </div>
+      </div>
+      <div className="aspect-[9/13.5] rounded-xl bg-white/5 flex items-center justify-center">
+        <Video className="w-8 h-8 text-white/15" />
+      </div>
+      <div className="mt-3 flex items-center justify-between gap-2">
+        <div className="space-y-1.5 flex-1 min-w-0">
+          <div className="h-3 w-28 bg-white/10 rounded" />
+          <div className="h-2.5 w-16 bg-white/10 rounded" />
+        </div>
+        <div className="w-20 h-7 rounded-full bg-white/10 shrink-0" />
+      </div>
+    </div>
+  </div>
+);
 
 const gramWords = ['Reels', 'Feed', 'Gram', 'Trend'];
 
@@ -1270,7 +1129,8 @@ function parseNumericCount(val) {
    MAIN SHOP THE GRAM COMPONENT
    ========================================================= */
 export default function ShopTheGram() {
-  const [posts, setPosts] = useState(initialPosts);
+  const [posts, setPosts] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [wordIdx, setWordIdx] = useState(0);
   const [wordChanging, setWordChanging] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
@@ -1292,47 +1152,47 @@ export default function ShopTheGram() {
         });
         if (res.ok) {
           const data = await res.json();
-          if (isMounted && Array.isArray(data) && data.length > 0) {
+          if (isMounted && Array.isArray(data)) {
             const activeReels = data.filter((r) => r.is_active !== false);
-            if (activeReels.length > 0) {
-              const mapped = activeReels.map((r, i) => ({
-                id: r.id || `reel-${i}`,
-                avatar: r.influencer_avatar || 'https://gkskeljvgphslkzctjfp.supabase.co/storage/v1/object/public/reels/avatars/Abida_Fatima.jpg',
-                img: r.thumbnail_url || r.product_image || r.influencer_avatar || 'https://gkskeljvgphslkzctjfp.supabase.co/storage/v1/object/public/reels/avatars/Abida_Fatima.jpg',
-                video: r.video_url,
-                handle: r.influencer_username || '@trioenterprises',
-                name: r.influencer_name || 'Trio Influencer',
-                verified: true,
-                followers: r.followers || '250K',
-                likes: r.likes_count || '15K',
-                likesCount: parseNumericCount(r.likes_count) || 15000,
-                comments: r.comments_count || '250',
-                caption: r.caption || '',
-                song: r.song_title || 'Original Audio · Trio Trends',
-                product: r.product_name || 'Handcrafted Artisan Decor',
-                productId: r.product_id || '',
-                slug: r.product_slug || '',
-                price: `₹${r.product_price || 0}`,
-                rawPrice: Number(r.product_price) || 0,
-                oldPrice: r.product_old_price ? `₹${r.product_old_price}` : '',
-                rawOldPrice: Number(r.product_old_price) || 0,
-                discount: r.product_discount || '',
-                productImage: r.product_image || r.thumbnail_url || '',
-                tag: r.tags || 'Authentic Craft',
-                rating: 4.9,
-                reviews: 150,
-                views: r.views_count || '100K',
-                commentsList: [
-                  { user: 'craft_lover', text: 'Stunning quality! Ordered for our family celebration ✨', time: '2h ago' },
-                  { user: 'pooja_decor', text: 'Packaging was top notch, looks 100% royal 💯', time: '5h ago' }
-                ]
-              }));
-              setPosts(mapped);
-            }
+            const mapped = activeReels.map((r, i) => ({
+              id: r.id || `reel-${i}`,
+              avatar: r.influencer_avatar || r.thumbnail_url || 'https://gkskeljvgphslkzctjfp.supabase.co/storage/v1/object/public/reels/avatars/Abida_Fatima.jpg',
+              img: r.thumbnail_url || r.product_image || r.influencer_avatar || 'https://gkskeljvgphslkzctjfp.supabase.co/storage/v1/object/public/reels/avatars/Abida_Fatima.jpg',
+              video: r.video_url,
+              handle: r.influencer_username || '@trioenterprises',
+              name: r.influencer_name || 'Trio Influencer',
+              verified: true,
+              followers: r.followers || '250K',
+              likes: r.likes_count || '15K',
+              likesCount: parseNumericCount(r.likes_count) || 15000,
+              comments: r.comments_count || '250',
+              caption: r.caption || '',
+              song: r.song_title || 'Original Audio · Trio Trends',
+              product: r.product_name || 'Handcrafted Artisan Decor',
+              productId: r.product_id || '',
+              slug: r.product_slug || '',
+              price: `₹${r.product_price || 0}`,
+              rawPrice: Number(r.product_price) || 0,
+              oldPrice: r.product_old_price ? `₹${r.product_old_price}` : '',
+              rawOldPrice: Number(r.product_old_price) || 0,
+              discount: r.product_discount || '',
+              productImage: r.product_image || r.thumbnail_url || '',
+              tag: r.tags || 'Authentic Craft',
+              rating: 4.9,
+              reviews: 150,
+              views: r.views_count || '100K',
+              commentsList: [
+                { user: 'craft_lover', text: 'Stunning quality! Ordered for our family celebration ✨', time: '2h ago' },
+                { user: 'pooja_decor', text: 'Packaging was top notch, looks 100% royal 💯', time: '5h ago' }
+              ]
+            }));
+            setPosts(mapped);
           }
         }
       } catch (err) {
         console.warn('Could not load reels from /api/reels:', err.message);
+      } finally {
+        if (isMounted) setLoading(false);
       }
     }
     loadReels();
@@ -1555,6 +1415,10 @@ export default function ShopTheGram() {
     setActiveModalPost(posts[prevIdx]);
   };
 
+  if (!loading && posts.length === 0) {
+    return null;
+  }
+
   return (
     <section className="relative py-14 sm:py-20 lg:py-24 bg-[#0a0807] border-t border-white/5 overflow-x-clip">
       {/* Self-contained Styles & Keyframes */}
@@ -1637,7 +1501,7 @@ export default function ShopTheGram() {
                 {/* Profile Stats Row */}
                 <div className="gram-body flex items-center gap-3 sm:gap-5 mt-1.5 sm:mt-3 text-white/50 text-[11px] sm:text-xs tracking-wide flex-wrap">
                   <span><b className="text-white font-bold">1.4M</b> followers</span>
-                  <span><b className="text-white font-bold">5</b> creators</span>
+                  <span><b className="text-white font-bold">{loading ? '...' : posts.length}</b> creators</span>
                   <span className="hidden sm:inline"><b className="text-white font-bold">100%</b> shoppable</span>
                 </div>
               </div>
@@ -1761,18 +1625,26 @@ export default function ShopTheGram() {
         {viewMode === 'grid' ? (
           /* Grid View on Desktop */
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 sm:gap-5">
-            {filtered.map((post, idx) => (
-              <ReelCard
-                key={post.id}
-                post={post}
-                idx={idx}
-                onAddToCart={handleAddToCart}
-                onOpenModal={openModalForPost}
-                isGlobalMuted={isGlobalMuted}
-                toggleGlobalMute={toggleGlobalMute}
-                viewMode="grid"
-              />
-            ))}
+            {loading ? (
+              [1, 2, 3, 4, 5].map((n) => <ReelSkeleton key={n} />)
+            ) : filtered.length === 0 ? (
+              <p className="gram-body text-white/40 text-sm py-16 col-span-full text-center">
+                No reels found matching &ldquo;{query}&rdquo;.
+              </p>
+            ) : (
+              filtered.map((post, idx) => (
+                <ReelCard
+                  key={post.id}
+                  post={post}
+                  idx={idx}
+                  onAddToCart={handleAddToCart}
+                  onOpenModal={openModalForPost}
+                  isGlobalMuted={isGlobalMuted}
+                  toggleGlobalMute={toggleGlobalMute}
+                  viewMode="grid"
+                />
+              ))
+            )}
           </div>
         ) : (
           /* Carousel Stream (Default on mobile & PC) */
@@ -1787,27 +1659,29 @@ export default function ShopTheGram() {
               className={`gram-scroller flex gap-3.5 sm:gap-5 overflow-x-auto pb-4 -mx-3 px-3 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8 ${isMouseDown ? 'cursor-grabbing select-none' : 'cursor-grab'
                 }`}
             >
-              {filtered.length === 0 && (
+              {loading ? (
+                [1, 2, 3, 4, 5].map((n) => <ReelSkeleton key={n} />)
+              ) : filtered.length === 0 ? (
                 <p className="gram-body text-white/40 text-sm py-16 mx-auto text-center">
                   No reels found matching &ldquo;{query}&rdquo;.
                 </p>
+              ) : (
+                filtered.map((post, idx) => (
+                  <ReelCard
+                    key={post.id}
+                    post={post}
+                    idx={idx}
+                    onAddToCart={handleAddToCart}
+                    onOpenModal={openModalForPost}
+                    isGlobalMuted={isGlobalMuted}
+                    toggleGlobalMute={toggleGlobalMute}
+                    viewMode="carousel"
+                  />
+                ))
               )}
 
-              {filtered.map((post, idx) => (
-                <ReelCard
-                  key={post.id}
-                  post={post}
-                  idx={idx}
-                  onAddToCart={handleAddToCart}
-                  onOpenModal={openModalForPost}
-                  isGlobalMuted={isGlobalMuted}
-                  toggleGlobalMute={toggleGlobalMute}
-                  viewMode="carousel"
-                />
-              ))}
-
               {/* Spacer so last card has proper padding */}
-              {filtered.length > 0 && <div className="shrink-0 w-2 sm:w-4" aria-hidden="true" />}
+              {!loading && filtered.length > 0 && <div className="shrink-0 w-2 sm:w-4" aria-hidden="true" />}
             </div>
 
             {/* Mobile / PC Scroll Progress Indicator */}

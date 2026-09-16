@@ -6,120 +6,6 @@ export const runtime = 'nodejs';
 import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '../../../lib/supabase/admin';
 
-// Fallback reels in case database is unreachable
-const FALLBACK_REELS = [
-  {
-    id: 'f6750212-5761-4c2c-bec8-0e649d455c94',
-    influencer_name: 'Abida Fatima',
-    influencer_username: '@abida.fatima_',
-    influencer_avatar: 'https://gkskeljvgphslkzctjfp.supabase.co/storage/v1/object/public/reels/avatars/Abida_Fatima.jpg',
-    video_url: 'https://gkskeljvgphslkzctjfp.supabase.co/storage/v1/object/public/reels/videos/pearl_zardosi_craft_reel.mp4',
-    thumbnail_url: 'https://gkskeljvgphslkzctjfp.supabase.co/storage/v1/object/public/reels/avatars/Abida_Fatima.jpg',
-    caption: 'Added these handcrafted pearl zardosi patches to my festive lehenga border ✨ The zari detailing shines so brightly under royal lighting! Tag someone who loves ethnic DIYs.',
-    song_title: 'Kesariya · Slowed & Reverb',
-    views_count: '412K',
-    likes_count: '24.3K',
-    comments_count: '1,204',
-    product_id: '106',
-    product_name: 'Pearl Zardosi Moti Beaded Applique Patches (Set of 20)',
-    product_slug: 'trio-ecart-pearl-zardosi-moti-beaded-round-applique-patches-set-20',
-    product_price: 199,
-    product_old_price: 499,
-    product_image: '/products/peacock-real-feathers-pair-1.jpg',
-    product_discount: '60% OFF',
-    display_order: 1,
-    is_active: true
-  },
-  {
-    id: '6bf36e38-2e3f-4db5-86e8-75c1dd4a8e17',
-    influencer_name: 'Agrani Singh',
-    influencer_username: '@agranisingh.official',
-    influencer_avatar: 'https://gkskeljvgphslkzctjfp.supabase.co/storage/v1/object/public/reels/avatars/Agrani_SINGH.jpg',
-    video_url: 'https://gkskeljvgphslkzctjfp.supabase.co/storage/v1/object/public/reels/videos/pooja_thali_brass_diya_reel.mp4',
-    thumbnail_url: 'https://gkskeljvgphslkzctjfp.supabase.co/storage/v1/object/public/reels/avatars/Agrani_SINGH.jpg',
-    caption: 'POV: You found THE royal velvet pooja thali for wedding ceremonies 🪔 Embellished with pure brass diyas and pearl borders. Pure spiritual elegance!',
-    song_title: 'Din Shagna Da · Wedding Sitar Mix',
-    views_count: '820K',
-    likes_count: '58.7K',
-    comments_count: '3,891',
-    product_id: '109',
-    product_name: 'Decorative Red Velvet Pooja Thali with Brass Diyas',
-    product_slug: 'trio-ecart-red-velvet-decorative-pooja-thali-brass-diyas',
-    product_price: 549,
-    product_old_price: 999,
-    product_image: '/products/pooja-thali-brass-diya-1.jpg',
-    product_discount: '45% OFF',
-    display_order: 2,
-    is_active: true
-  },
-  {
-    id: 'd5f985ae-05ea-40d8-8672-e34c3332f992',
-    influencer_name: 'Dezy Jariwala',
-    influencer_username: '@dezyjariwala',
-    influencer_avatar: 'https://gkskeljvgphslkzctjfp.supabase.co/storage/v1/object/public/reels/avatars/Dezy_Jariwala.jpg',
-    video_url: 'https://gkskeljvgphslkzctjfp.supabase.co/storage/v1/object/public/reels/videos/golden_gota_moti_chudi_reel.mp4',
-    thumbnail_url: 'https://gkskeljvgphslkzctjfp.supabase.co/storage/v1/object/public/reels/avatars/Dezy_Jariwala.jpg',
-    caption: 'Crafting bridal potlis with these golden floral zardosi patches 👑 The craftsmanship is so fine, looks completely high-end designer grade!',
-    song_title: 'Chhaap Tilak · Sufi Fusion',
-    views_count: '289K',
-    likes_count: '14.2K',
-    comments_count: '840',
-    product_id: '107',
-    product_name: 'Golden Floral Zardosi Border Lace Trim (9 Meters)',
-    product_slug: 'trio-ecart-golden-floral-zardosi-embroidered-lace-trim-9m',
-    product_price: 289,
-    product_old_price: 599,
-    product_image: '/products/golden-floral-zardosi-border-lace-1.jpg',
-    product_discount: '52% OFF',
-    display_order: 3,
-    is_active: true
-  },
-  {
-    id: 'dec02b29-0fd5-4772-9d72-dbde74308598',
-    influencer_name: 'Natasha Prajapati',
-    influencer_username: '@natasha.prajapati',
-    influencer_avatar: 'https://gkskeljvgphslkzctjfp.supabase.co/storage/v1/object/public/reels/avatars/Natasha_Prajapati.jpg',
-    video_url: 'https://gkskeljvgphslkzctjfp.supabase.co/storage/v1/object/public/reels/videos/silk_peony_flower_buds_reel.mp4',
-    thumbnail_url: 'https://gkskeljvgphslkzctjfp.supabase.co/storage/v1/object/public/reels/avatars/Natasha_Prajapati.jpg',
-    caption: 'Haldi & mehendi ceremony floral backdrop check 🌸 These pink silk peony buds look 100% real and won’t dry out before the guests arrive!',
-    song_title: 'Sadi Gali · Acoustic Lounge',
-    views_count: '506K',
-    likes_count: '31.9K',
-    comments_count: '2,156',
-    product_id: '101',
-    product_name: 'Silk Peony Flower Buds Craft Set (Pack of 24, Pink)',
-    product_slug: 'trio-ecart-artificial-peony-flower-buds-pink-pack-24',
-    product_price: 321,
-    product_old_price: 649,
-    product_image: '/products/silk-peony-flower-buds-pink-1.jpg',
-    product_discount: '51% OFF',
-    display_order: 4,
-    is_active: true
-  },
-  {
-    id: '294230fb-c77a-4bc5-bc35-4cc97571cea5',
-    influencer_name: 'Samiksha Rao',
-    influencer_username: '@samiksha_2211',
-    influencer_avatar: 'https://gkskeljvgphslkzctjfp.supabase.co/storage/v1/object/public/reels/avatars/Samiksha_2211.jpg',
-    video_url: 'https://gkskeljvgphslkzctjfp.supabase.co/storage/v1/object/public/reels/videos/silk_red_rose_garland_reel.mp4',
-    thumbnail_url: 'https://gkskeljvgphslkzctjfp.supabase.co/storage/v1/object/public/reels/avatars/Samiksha_2211.jpg',
-    caption: 'Decorating my entrance arch with deep red silk roses 🌹 Everyone asked if they were fresh from the florist! Linking the exact pack below.',
-    song_title: 'Raanjhan · Ambient Flute',
-    views_count: '380K',
-    likes_count: '19.6K',
-    comments_count: '1,533',
-    product_id: '105',
-    product_name: 'Silk Red Rose Flower Heads (Pack of 12)',
-    product_slug: 'trio-ecart-artificial-red-rose-flower-heads-pack-12',
-    product_price: 365,
-    product_old_price: 699,
-    product_image: '/products/silk-red-rose-flower-heads-1.jpg',
-    product_discount: '48% OFF',
-    display_order: 5,
-    is_active: true
-  }
-];
-
 const NO_CACHE_HEADERS = {
   'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0, s-maxage=0',
   'Pragma': 'no-cache',
@@ -145,9 +31,13 @@ export async function GET(request) {
 
     const { data, error } = await query;
 
-    if (error || !data || data.length === 0) {
-      console.warn('Supabase /api/reels fallback used:', error?.message);
-      return NextResponse.json(showAll ? [] : FALLBACK_REELS, { headers: NO_CACHE_HEADERS });
+    if (error) {
+      console.error('Supabase /api/reels query error:', error.message);
+      return NextResponse.json([], { headers: NO_CACHE_HEADERS });
+    }
+
+    if (!data || data.length === 0) {
+      return NextResponse.json([], { headers: NO_CACHE_HEADERS });
     }
 
     // Enrich with live product data from Supabase products table
@@ -199,7 +89,7 @@ export async function GET(request) {
     return NextResponse.json(data, { headers: NO_CACHE_HEADERS });
   } catch (err) {
     console.error('API /api/reels GET error:', err);
-    return NextResponse.json(FALLBACK_REELS, { headers: NO_CACHE_HEADERS });
+    return NextResponse.json([], { headers: NO_CACHE_HEADERS });
   }
 }
 
