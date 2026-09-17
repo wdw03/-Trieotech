@@ -265,7 +265,7 @@ export async function POST(request) {
       occasion: body.occasion || 'Festive / Wedding',
       package_quantity: body.package_quantity || body.packageQuantity || '',
       country_of_origin: body.country_of_origin || body.countryOfOrigin || 'India',
-      description: body.description || body.short_description || body.full_description || '',
+      description: body.description || body.shortDescription || body.short_description || body.fullDescription || body.full_description || '',
       short_description: body.short_description || body.shortDescription || (body.description ? String(body.description).slice(0, 150) : ''),
       full_description: body.full_description || body.fullDescription || body.description || '',
       specifications: typeof body.specifications === 'object' && body.specifications !== null ? body.specifications : {},

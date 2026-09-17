@@ -6,7 +6,10 @@ import { evaluateCouponEligibility, parseCouponDescription } from '../../../../l
 // POST: Validate a coupon code server-side with product-level eligibility & expiry checks
 export async function POST(request) {
   try {
-    const { code, subtotal = 0, items = [] } = await request.json();
+    const body = await request.json();
+    const code = body.code;
+    const subtotal = Number(body.subtotal ?? body.cartTotal ?? body.amount ?? 0);
+    const items = Array.isArray(body.items) ? body.items : (Array.isArray(body.cartItems) ? body.cartItems : []);
 
     if (!code || !code.trim()) {
       return NextResponse.json({ error: 'Coupon code required' }, { status: 400 });

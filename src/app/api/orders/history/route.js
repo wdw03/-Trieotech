@@ -4,10 +4,26 @@ import { createClient } from '../../../../lib/supabase/server';
 import { supabaseAdmin } from '../../../../lib/supabase/admin';
 
 // GET: Fetch user's order history
-export async function GET() {
+export async function GET(request) {
   try {
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
+    let user = null;
+    try {
+      const supabase = await createClient();
+      const { data: { user: authUser } } = await supabase.auth.getUser();
+      user = authUser || null;
+    } catch (_) {}
+
+    if (!user && request) {
+      const authHeader = request.headers.get('Authorization') || request.headers.get('authorization');
+      if (authHeader?.startsWith('Bearer ')) {
+        const token = authHeader.substring(7);
+        try {
+          const { data: { user: tokenUser } } = await supabaseAdmin.auth.getUser(token);
+          user = tokenUser || null;
+        } catch (_) {}
+      }
+    }
+
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
     const { data: orders, error } = await supabaseAdmin

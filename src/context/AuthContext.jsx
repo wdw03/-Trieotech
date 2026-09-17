@@ -491,6 +491,48 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  // ── Update Address ──
+  const updateAddress = async (addressId, addressData) => {
+    if (!user || !addressId) return null;
+
+    try {
+      if (addressData.isDefault) {
+        await supabase
+          .from('addresses')
+          .update({ is_default: false })
+          .eq('user_id', user.id);
+      }
+
+      const { data: updatedAddr, error } = await supabase
+        .from('addresses')
+        .update({
+          name: addressData.name,
+          phone: addressData.phone,
+          address_line: addressData.address || addressData.address_line,
+          city: addressData.city,
+          state: addressData.state,
+          pincode: addressData.zip || addressData.pincode,
+          country: addressData.country || 'India',
+          ...(addressData.isDefault !== undefined ? { is_default: addressData.isDefault } : {}),
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', addressId)
+        .eq('user_id', user.id)
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      await fetchProfile(user.id);
+      addToast('Address updated successfully', 'success');
+      return updatedAddr;
+    } catch (err) {
+      console.error('Error updating address:', err);
+      addToast('Failed to update address', 'error');
+      return null;
+    }
+  };
+
   // ── Update Profile ──
   const updateProfile = async (updatedData) => {
     if (!user) return { success: false };
@@ -627,6 +669,7 @@ export const AuthProvider = ({ children }) => {
         sendResetOtp,
         verifyResetOtp,
         addAddress,
+        updateAddress,
         deleteAddress,
         updateProfile,
         addOrder,

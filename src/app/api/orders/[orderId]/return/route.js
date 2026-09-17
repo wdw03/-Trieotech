@@ -1,7 +1,7 @@
 export const dynamic = 'force-dynamic';
 import { NextResponse } from 'next/server';
-import { createClient } from '../../../../../lib/supabase/server';
 import { supabaseAdmin } from '../../../../../lib/supabase/admin';
+import { getAuthenticatedUser } from '../../../../../lib/auth/validate';
 
 /**
  * POST: Customer raises a Return / Refund Support Ticket with up to 3 photos
@@ -11,12 +11,7 @@ export async function POST(request, { params }) {
     const { orderId } = await params;
 
     // 1. Authenticate user if session exists
-    let user = null;
-    try {
-      const supabase = await createClient();
-      const { data: { user: u } } = await supabase.auth.getUser();
-      user = u;
-    } catch (_) {}
+    const { user } = await getAuthenticatedUser(request);
 
     // 2. Fetch the order
     let order = null;

@@ -16,7 +16,17 @@ export async function GET(request) {
     const cod = searchParams.get('cod') === '1' || searchParams.get('cod') === 'true';
 
     if (!deliveryPincode) {
-      return NextResponse.json({ error: 'Delivery pincode required' }, { status: 400 });
+      return NextResponse.json({
+        success: true,
+        default: true,
+        shippingFee: 70,
+        standardRate: 70,
+        expressRate: 110,
+        standardCourier: 'Standard Surface Shipping',
+        expressCourier: 'BlueDart Air Express',
+        estimatedDays: '3-5',
+        message: 'Default estimated rates. Enter pincode for live carrier rates.'
+      });
     }
 
     const calculation = await calculateCartShipping({

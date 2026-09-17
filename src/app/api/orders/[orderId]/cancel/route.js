@@ -5,6 +5,7 @@ import { supabaseAdmin } from '../../../../../lib/supabase/admin';
 import { createRefund } from '../../../../../lib/razorpay';
 import { sendOrderCancellation } from '../../../../../lib/resend';
 import { cancelShipment, cancelShiprocketComplete } from '../../../../../lib/shiprocket';
+import { getAuthenticatedUser } from '../../../../../lib/auth/validate';
 
 // Statuses that allow customer cancellation — strictly before order is packed
 const CANCELLABLE_STATUSES = ['pending_payment', 'pending', 'confirmed', 'processing'];
@@ -12,12 +13,7 @@ const CANCELLABLE_STATUSES = ['pending_payment', 'pending', 'confirmed', 'proces
 export async function POST(request, { params }) {
   try {
     // 1. Authenticate user
-    let user = null;
-    try {
-      const supabase = await createClient();
-      const { data: { user: u } } = await supabase.auth.getUser();
-      user = u;
-    } catch (_) {}
+    const { user } = await getAuthenticatedUser(request);
 
     const { orderId } = await params;
     if (!orderId) {

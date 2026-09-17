@@ -1,13 +1,12 @@
 export const dynamic = 'force-dynamic';
 import { NextResponse } from 'next/server';
-import { createClient } from '../../../lib/supabase/server';
 import { supabaseAdmin } from '../../../lib/supabase/admin';
+import { getAuthenticatedUser } from '../../../lib/auth/validate';
 
 // GET: Fetch user's cart
-export async function GET() {
+export async function GET(request) {
   try {
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
+    const { user } = await getAuthenticatedUser(request);
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
     const { data: items, error } = await supabaseAdmin
@@ -26,8 +25,7 @@ export async function GET() {
 // POST: Add item to cart
 export async function POST(request) {
   try {
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
+    const { user } = await getAuthenticatedUser(request);
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
     const { productId, quantity = 1, color = '', size = '' } = await request.json();
@@ -92,8 +90,7 @@ export async function POST(request) {
 // PUT: Update cart item quantity
 export async function PUT(request) {
   try {
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
+    const { user } = await getAuthenticatedUser(request);
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
     const { cartItemId, quantity } = await request.json();
@@ -122,8 +119,7 @@ export async function PUT(request) {
 // DELETE: Remove from cart or clear cart
 export async function DELETE(request) {
   try {
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
+    const { user } = await getAuthenticatedUser(request);
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
     const { searchParams } = new URL(request.url);
