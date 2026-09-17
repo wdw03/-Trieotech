@@ -540,12 +540,6 @@ export const Navbar = () => {
               Contact Us
             </Link>
           </div>
-
-          <div className="flex items-center gap-4 text-xs font-bold text-maroon-700 dark:text-gold-400">
-            <span className="flex items-center gap-1.5 bg-maroon-100 dark:bg-maroon-950/60 text-maroon-900 dark:text-gold-300 px-3 py-1 rounded-full border border-maroon-300 dark:border-gold-500/30">
-              <Sparkles className="w-3.5 h-3.5 text-gold-500" /> 100% Genuine Handcrafted
-            </span>
-          </div>
         </div>
       </nav>
 
