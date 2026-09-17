@@ -1,4 +1,5 @@
 export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '../../../../../lib/supabase/admin';
 import { normalizeProduct } from '../route';
@@ -7,6 +8,7 @@ import { normalizeProduct } from '../route';
 async function handleUpdateProduct(request, { params }) {
   try {
     const { id } = await params;
+    const numericId = isNaN(Number(id)) ? id : Number(id);
     const body = await request.json();
 
     const updates = {
@@ -42,7 +44,7 @@ async function handleUpdateProduct(request, { params }) {
       const { data: current } = await supabaseAdmin
         .from('products')
         .select('price, original_price')
-        .eq('id', id)
+        .eq('id', numericId)
         .single();
 
       const effPrice = priceVal !== undefined ? priceVal : Number(current?.price || 0);
@@ -80,20 +82,45 @@ async function handleUpdateProduct(request, { params }) {
       updates.images = [body.image];
     }
 
-    // Variants & Attributes (preserve per-color stock)
+    // Variants & Attributes (preserve per-color stock and synchronize variant prices)
     if (body.colors !== undefined) {
       const fallbackStock = updates.stock !== undefined ? updates.stock : (stockVal !== undefined ? stockVal : 50);
+      const effVariantPrice = updates.price !== undefined ? updates.price : priceVal;
+      const effVariantOrig = updates.original_price !== undefined ? updates.original_price : origVal;
       updates.colors = Array.isArray(body.colors)
         ? body.colors.map(c => {
             if (typeof c === 'object' && c !== null) {
               return {
                 ...c,
+                price: c.price !== undefined ? Number(c.price) : (effVariantPrice !== undefined ? Number(effVariantPrice) : undefined),
+                originalPrice: c.originalPrice !== undefined ? Number(c.originalPrice) : (effVariantOrig !== undefined ? Number(effVariantOrig) : undefined),
                 stock: c.stock !== undefined ? Number(c.stock) : fallbackStock,
               };
             }
-            return { name: String(c), hex: '#C5A028', stock: fallbackStock };
+            return { name: String(c), hex: '#C5A028', price: effVariantPrice, stock: fallbackStock };
           })
         : [];
+    } else if (updates.price !== undefined) {
+      // If price changed but colors was omitted from payload, update existing variant prices in database
+      try {
+        const { data: curr } = await supabaseAdmin
+          .from('products')
+          .select('colors')
+          .eq('id', numericId)
+          .single();
+        if (curr?.colors && Array.isArray(curr.colors)) {
+          updates.colors = curr.colors.map(c => {
+            if (typeof c === 'object' && c !== null) {
+              return {
+                ...c,
+                price: updates.price,
+                originalPrice: updates.original_price || c.originalPrice || updates.price,
+              };
+            }
+            return c;
+          });
+        }
+      } catch (_) {}
     }
     if (body.sizes !== undefined) {
       updates.sizes = Array.isArray(body.sizes) ? body.sizes : [];
@@ -191,7 +218,7 @@ async function handleUpdateProduct(request, { params }) {
     const { data: updated, error } = await supabaseAdmin
       .from('products')
       .update(updates)
-      .eq('id', id)
+      .eq('id', numericId)
       .select()
       .single();
 
@@ -211,10 +238,11 @@ async function handleUpdateProduct(request, { params }) {
 export async function GET(request, { params }) {
   try {
     const { id } = await params;
+    const numericId = isNaN(Number(id)) ? id : Number(id);
     const { data: product, error } = await supabaseAdmin
       .from('products')
       .select('*')
-      .eq('id', id)
+      .eq('id', numericId)
       .single();
 
     if (error || !product) {
@@ -245,11 +273,12 @@ export async function PATCH(request, context) {
 export async function DELETE(request, { params }) {
   try {
     const { id } = await params;
+    const numericId = isNaN(Number(id)) ? id : Number(id);
 
     const { error } = await supabaseAdmin
       .from('products')
       .delete()
-      .eq('id', id);
+      .eq('id', numericId);
 
     if (error) throw error;
 

@@ -8,7 +8,7 @@ import { blogs as fallbackBlogs } from '../../data/blogs';
  */
 export function getApiBase() {
   if (typeof window !== 'undefined') {
-    return process.env.NEXT_PUBLIC_API_URL || '/api';
+    return '/api';
   }
   return process.env.NEXT_PUBLIC_SITE_URL
     ? `${process.env.NEXT_PUBLIC_SITE_URL}/api`
@@ -43,20 +43,35 @@ export function normalizeProduct(p) {
     images = ['/products/shreenathji-statement-patch-1.jpg'];
   }
 
-  // Normalize colors with variant stocks
+  const price = Number(p.price) || 0;
+  const originalPrice = Number(p.original_price ?? p.originalPrice) || price;
+
+  // Normalize colors with variant stocks and prices
   let colors = [];
   if (Array.isArray(p.colors)) {
     colors = p.colors.map(c => typeof c === 'object' && c !== null 
-      ? { ...c, stock: c.stock !== undefined ? Number(c.stock) : (Number(p.stock) || 50) } 
-      : { name: String(c), stock: Number(p.stock) || 50 });
+      ? { 
+          ...c, 
+          price: (c.price !== undefined && c.price !== null && p.colors.length > 1) ? Number(c.price) : price,
+          originalPrice: (c.originalPrice !== undefined && c.originalPrice !== null && p.colors.length > 1) ? Number(c.originalPrice) : originalPrice,
+          stock: c.stock !== undefined ? Number(c.stock) : (Number(p.stock) || 50) 
+        } 
+      : { name: String(c), price, originalPrice, stock: Number(p.stock) || 50 });
   } else if (typeof p.colors === 'string' && p.colors.trim()) {
     try {
       const parsed = JSON.parse(p.colors);
       colors = Array.isArray(parsed)
-        ? parsed.map(c => typeof c === 'object' && c !== null ? { ...c, stock: c.stock !== undefined ? Number(c.stock) : (Number(p.stock) || 50) } : { name: String(c), stock: Number(p.stock) || 50 })
+        ? parsed.map(c => typeof c === 'object' && c !== null 
+            ? { 
+                ...c, 
+                price: (c.price !== undefined && c.price !== null && parsed.length > 1) ? Number(c.price) : price,
+                originalPrice: (c.originalPrice !== undefined && c.originalPrice !== null && parsed.length > 1) ? Number(c.originalPrice) : originalPrice,
+                stock: c.stock !== undefined ? Number(c.stock) : (Number(p.stock) || 50) 
+              } 
+            : { name: String(c), price, originalPrice, stock: Number(p.stock) || 50 })
         : [];
     } catch {
-      colors = p.colors.split(',').map((c) => ({ name: c.trim(), stock: Number(p.stock) || 50 })).filter((c) => c.name);
+      colors = p.colors.split(',').map((c) => ({ name: c.trim(), price, originalPrice, stock: Number(p.stock) || 50 })).filter((c) => c.name);
     }
   }
 
@@ -72,8 +87,6 @@ export function normalizeProduct(p) {
     }
   }
 
-  const price = Number(p.price) || 0;
-  const originalPrice = Number(p.original_price ?? p.originalPrice) || price;
   const inStock = p.in_stock !== undefined ? Boolean(p.in_stock) : Boolean(p.inStock ?? true);
 
   const isBestSeller = Boolean(p.is_best_seller ?? p.isBestSeller);

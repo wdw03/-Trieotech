@@ -1,6 +1,7 @@
 'use client';
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef } from 'react';
 import { useAdmin } from '../../../context/AdminContext.jsx';
+import { adminApi } from '../../../services/adminApi.js';
 import { ProductImage } from '../ui/ProductImage.jsx';
 import { ProductGalleryPreview } from '../ui/ProductGalleryPreview.jsx';
 import { ImageLightbox } from '../ui/ImageLightbox.jsx';
@@ -26,7 +27,9 @@ import {
   Camera,
   ZoomIn,
   Star,
-  Truck
+  Truck,
+  Upload,
+  Loader2
 } from 'lucide-react';
 
 const FILTER_BADGES = [
@@ -59,6 +62,8 @@ export const Products = () => {
   const [editingProduct, setEditingProduct] = useState(null); // modal state for Add/Edit
   const [activeEditorTab, setActiveEditorTab] = useState('basic'); // 'basic'|'media'|'pricing'|'variants'|'details'|'flags'
   const [newImageUrl, setNewImageUrl] = useState('');
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
+  const fileInputRef = useRef(null);
 
   // Filter products
   const filteredProducts = useMemo(() => {
@@ -183,15 +188,33 @@ export const Products = () => {
       ? Boolean(editingProduct.is_visible) 
       : (editingProduct.isVisible !== undefined ? Boolean(editingProduct.isVisible) : true);
 
+    const basePrice = Number(editingProduct.price) || 0;
+    const baseOriginalPrice = Number(editingProduct.originalPrice ?? editingProduct.original_price) || basePrice;
+
     const colorsVal = Array.isArray(editingProduct.colors)
-      ? editingProduct.colors.map(c => ({
-          ...c,
-          stock: c.stock !== undefined ? Number(c.stock) : stockVal,
-        }))
+      ? editingProduct.colors.map(c => {
+          const isSingle = editingProduct.colors.length <= 1;
+          const vPrice = (isSingle || c.price === undefined || c.price === null || c.price === '')
+            ? basePrice
+            : Number(c.price);
+          const vOrigPrice = (isSingle || c.originalPrice === undefined || c.originalPrice === null || c.originalPrice === '')
+            ? baseOriginalPrice
+            : Number(c.originalPrice);
+
+          return {
+            ...c,
+            price: vPrice,
+            originalPrice: vOrigPrice,
+            stock: c.stock !== undefined ? Number(c.stock) : stockVal,
+          };
+        })
       : [];
 
     const payload = {
       ...editingProduct,
+      price: basePrice,
+      originalPrice: baseOriginalPrice,
+      original_price: baseOriginalPrice,
       stock: stockVal,
       inStock: inStockVal,
       in_stock: inStockVal,
@@ -239,9 +262,56 @@ export const Products = () => {
     setEditingProduct({ ...editingProduct, images: filtered });
   };
 
-  // Add new image URL in editor
+  // Direct file upload handler (single or multi-file from device to Supabase CDN)
+  const handleImageUpload = async (e) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    setIsUploadingImage(true);
+    showToast(`Uploading ${files.length} photo(s) to Supabase Storage...`, 'info');
+
+    const newUrls = [];
+    let uploadErrors = 0;
+
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+      try {
+        const res = await adminApi.uploadProductImage(file);
+        if (res && res.url) {
+          newUrls.push(res.url);
+        } else {
+          uploadErrors++;
+        }
+      } catch (err) {
+        console.error('Image upload failed:', err);
+        uploadErrors++;
+      }
+    }
+
+    if (newUrls.length > 0) {
+      setEditingProduct(prev => ({
+        ...prev,
+        images: [...(prev.images || []), ...newUrls]
+      }));
+      showToast(`${newUrls.length} photo(s) successfully uploaded and added!`, 'success');
+    }
+
+    if (uploadErrors > 0) {
+      showToast(`${uploadErrors} photo(s) failed to upload. Check network or storage.`, 'error');
+    }
+
+    setIsUploadingImage(false);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
+  // Add new image URL in editor or open file picker if empty
   const handleAddImage = () => {
-    if (!newImageUrl.trim()) return;
+    if (!newImageUrl.trim()) {
+      fileInputRef.current?.click();
+      return;
+    }
     setEditingProduct({
       ...editingProduct,
       images: [...(editingProduct.images || []), newImageUrl.trim()]
@@ -707,23 +777,71 @@ export const Products = () => {
                     ))}
                   </div>
 
+                  {/* Hidden File Input for Device Uploads */}
+                  <input
+                    type="file"
+                    ref={fileInputRef}
+                    onChange={handleImageUpload}
+                    accept="image/*"
+                    multiple
+                    className="hidden"
+                  />
+
+                  {/* Drag & Drop / Device Upload Area */}
+                  <div
+                    onClick={() => fileInputRef.current?.click()}
+                    className="border-2 border-dashed border-slate-700 hover:border-indigo-500 rounded-2xl p-4 flex flex-col items-center justify-center text-center cursor-pointer transition-all bg-slate-900/40 hover:bg-indigo-950/20 group"
+                  >
+                    {isUploadingImage ? (
+                      <div className="flex flex-col items-center gap-2 py-2">
+                        <Loader2 className="w-8 h-8 text-indigo-400 animate-spin" />
+                        <p className="text-xs font-bold text-slate-200">Uploading photo(s) to Supabase Storage...</p>
+                        <p className="text-[10px] text-slate-400">Please wait while media is processed</p>
+                      </div>
+                    ) : (
+                      <div className="flex flex-col items-center gap-1.5 py-1">
+                        <div className="w-9 h-9 rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400 group-hover:scale-110 transition-transform">
+                          <Upload className="w-4 h-4" />
+                        </div>
+                        <p className="text-xs font-bold text-slate-200">
+                          Click to browse device or drag photos here
+                        </p>
+                        <p className="text-[10px] text-slate-400">
+                          Directly uploads JPG, PNG, WEBP to Supabase Storage CDN
+                        </p>
+                      </div>
+                    )}
+                  </div>
+
                   {/* Add Image Input */}
                   <div className="p-4 bg-slate-950 rounded-2xl border border-slate-800 space-y-2">
-                    <label className="font-semibold text-slate-300 block text-xs">Add Another Photo URL / Path:</label>
+                    <label className="font-semibold text-slate-300 block text-xs">Add by Photo URL / Path or Device:</label>
                     <div className="flex gap-2">
                       <input
                         type="text"
                         value={newImageUrl}
                         onChange={(e) => setNewImageUrl(e.target.value)}
-                        placeholder="e.g. /products/new-angle.jpg"
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            e.preventDefault();
+                            handleAddImage();
+                          }
+                        }}
+                        placeholder="e.g. /products/new-angle.jpg or click Add Image to browse files"
                         className="admin-input flex-1 text-xs font-mono"
                       />
                       <button
                         type="button"
                         onClick={handleAddImage}
-                        className="btn-secondary py-1.5 px-4 text-xs font-bold shrink-0"
+                        disabled={isUploadingImage}
+                        className="btn-secondary py-1.5 px-4 text-xs font-bold shrink-0 flex items-center gap-1.5 cursor-pointer"
                       >
-                        <Plus className="w-3.5 h-3.5" /> Add Image
+                        {isUploadingImage ? (
+                          <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                        ) : (
+                          <Plus className="w-3.5 h-3.5" />
+                        )}
+                        <span>{newImageUrl.trim() ? 'Add URL' : 'Add Image'}</span>
                       </button>
                     </div>
                   </div>
@@ -739,7 +857,15 @@ export const Products = () => {
                       <input
                         type="number"
                         value={editingProduct.price}
-                        onChange={(e) => setEditingProduct({ ...editingProduct, price: Number(e.target.value) })}
+                        onChange={(e) => {
+                          const val = Number(e.target.value);
+                          setEditingProduct(prev => {
+                            const syncColors = Array.isArray(prev.colors)
+                              ? prev.colors.map(c => (prev.colors.length <= 1 ? { ...c, price: val } : c))
+                              : prev.colors;
+                            return { ...prev, price: val, colors: syncColors };
+                          });
+                        }}
                         className="admin-input w-full text-xs"
                       />
                     </div>
@@ -749,7 +875,15 @@ export const Products = () => {
                       <input
                         type="number"
                         value={editingProduct.originalPrice || 0}
-                        onChange={(e) => setEditingProduct({ ...editingProduct, originalPrice: Number(e.target.value) })}
+                        onChange={(e) => {
+                          const val = Number(e.target.value);
+                          setEditingProduct(prev => {
+                            const syncColors = Array.isArray(prev.colors)
+                              ? prev.colors.map(c => (prev.colors.length <= 1 ? { ...c, originalPrice: val } : c))
+                              : prev.colors;
+                            return { ...prev, originalPrice: val, colors: syncColors };
+                          });
+                        }}
                         className="admin-input w-full text-xs"
                       />
                     </div>

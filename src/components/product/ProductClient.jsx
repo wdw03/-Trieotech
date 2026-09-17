@@ -36,7 +36,7 @@ import {
   AlertTriangle
 } from 'lucide-react';
 
-export default function ProductClient({ initialSlug }) {
+export default function ProductClient({ initialSlug, initialProduct = null }) {
   const params = useParams();
   const slug = initialSlug || params?.slug;
   const router = useRouter();
@@ -46,7 +46,7 @@ export default function ProductClient({ initialSlug }) {
   const { addToast } = useToast();
   const { recentlyViewed, addRecentlyViewed } = useRecentlyViewed();
 
-  const [liveProduct, setLiveProduct] = useState(null);
+  const [liveProduct, setLiveProduct] = useState(initialProduct ? normalizeProduct(initialProduct) : null);
 
   const product = useMemo(() => {
     if (liveProduct) return liveProduct;
@@ -148,8 +148,14 @@ export default function ProductClient({ initialSlug }) {
   }
 
   // Variant calculations
-  const activePrice = selectedColor?.price || product.price;
-  const activeOriginalPrice = selectedColor?.originalPrice || product.originalPrice;
+  const hasMultipleColors = Array.isArray(product.colors) && product.colors.length > 1;
+  const activePrice = (hasMultipleColors && selectedColor?.price !== undefined && selectedColor?.price !== null)
+    ? Number(selectedColor.price)
+    : (Number(product.price) || Number(selectedColor?.price) || 0);
+
+  const activeOriginalPrice = (hasMultipleColors && selectedColor?.originalPrice !== undefined && selectedColor?.originalPrice !== null)
+    ? Number(selectedColor.originalPrice)
+    : (Number(product.originalPrice ?? product.original_price) || Number(selectedColor?.originalPrice) || activePrice);
   const discountPercent = activeOriginalPrice && activeOriginalPrice > activePrice
     ? Math.round(((activeOriginalPrice - activePrice) / activeOriginalPrice) * 100)
     : product.discount || 0;
@@ -175,7 +181,7 @@ export default function ProductClient({ initialSlug }) {
   };
 
   const handleAddToCart = () => {
-    const success = addToCart(product, quantity, selectedColor?.name, selectedSize);
+    const success = addToCart({ ...product, price: activePrice, originalPrice: activeOriginalPrice }, quantity, selectedColor?.name, selectedSize);
     if (success) {
       openCart();
     }
@@ -183,7 +189,7 @@ export default function ProductClient({ initialSlug }) {
 
   const handleBuyNow = () => {
     if (!user) {
-      const pendingItem = { product, quantity, selectedColor: selectedColor?.name, selectedSize };
+      const pendingItem = { product: { ...product, price: activePrice, originalPrice: activeOriginalPrice }, quantity, selectedColor: selectedColor?.name, selectedSize };
       try {
         localStorage.setItem('trio_pending_add_to_cart', JSON.stringify(pendingItem));
       } catch (_) {}
@@ -193,7 +199,7 @@ export default function ProductClient({ initialSlug }) {
       }
       return;
     }
-    const success = addToCart(product, quantity, selectedColor?.name, selectedSize);
+    const success = addToCart({ ...product, price: activePrice, originalPrice: activeOriginalPrice }, quantity, selectedColor?.name, selectedSize);
     if (success) {
       router.push('/checkout');
     }

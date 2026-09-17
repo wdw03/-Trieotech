@@ -99,6 +99,15 @@ export const adminApi = {
     });
   },
 
+  uploadProductImage: async (file) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    return request('/admin/upload', {
+      method: 'POST',
+      body: formData,
+    });
+  },
+
   // Orders
   getOrder: async (orderId) => {
     return request(`/admin/orders/${orderId}`);

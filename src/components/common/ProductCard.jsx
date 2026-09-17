@@ -22,8 +22,14 @@ export const ProductCard = ({ product, onQuickView = null, viewMode = 'grid' }) 
   const isWishlisted = isInWishlist(product.id);
 
   // Active price and image calculation based on selected color variant
-  const activePrice = selectedColor?.price || product.price;
-  const activeOriginalPrice = selectedColor?.originalPrice || product.originalPrice;
+  const hasMultipleColors = Array.isArray(product.colors) && product.colors.length > 1;
+  const activePrice = (hasMultipleColors && selectedColor?.price !== undefined && selectedColor?.price !== null)
+    ? Number(selectedColor.price)
+    : (Number(product.price) || Number(selectedColor?.price) || 0);
+
+  const activeOriginalPrice = (hasMultipleColors && selectedColor?.originalPrice !== undefined && selectedColor?.originalPrice !== null)
+    ? Number(selectedColor.originalPrice)
+    : (Number(product.originalPrice ?? product.original_price) || Number(selectedColor?.originalPrice) || activePrice);
   const activeImage = imgError
     ? '/products/shreenathji-statement-patch-1.jpg'
     : selectedColor?.image || product.images?.[0] || '/products/shreenathji-statement-patch-1.jpg';
@@ -56,7 +62,7 @@ export const ProductCard = ({ product, onQuickView = null, viewMode = 'grid' }) 
   const handleQuickAdd = (e) => {
     e.preventDefault();
     e.stopPropagation();
-    addToCart(product, 1, selectedColor?.name, product.sizes?.[0]);
+    addToCart({ ...product, price: activePrice, originalPrice: activeOriginalPrice }, 1, selectedColor?.name, product.sizes?.[0]);
   };
 
   const handleWishlistClick = (e) => {
