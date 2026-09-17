@@ -180,10 +180,13 @@ export const Products = () => {
       return;
     }
 
-    const stockVal = Number(editingProduct.stock !== undefined ? editingProduct.stock : 50);
-    const inStockVal = editingProduct.inStock !== undefined 
+    const rawStock = Number(editingProduct.stock !== undefined ? editingProduct.stock : 50);
+    const rawInStock = editingProduct.inStock !== undefined 
       ? Boolean(editingProduct.inStock) 
-      : (stockVal > 0);
+      : (editingProduct.in_stock !== undefined ? Boolean(editingProduct.in_stock) : rawStock > 0);
+    const isEffectiveInStock = rawInStock && rawStock > 0;
+    const stockVal = isEffectiveInStock ? rawStock : 0;
+    const inStockVal = isEffectiveInStock;
     const isVisibleVal = editingProduct.is_visible !== undefined 
       ? Boolean(editingProduct.is_visible) 
       : (editingProduct.isVisible !== undefined ? Boolean(editingProduct.isVisible) : true);
@@ -205,7 +208,9 @@ export const Products = () => {
             ...c,
             price: vPrice,
             originalPrice: vOrigPrice,
-            stock: c.stock !== undefined ? Number(c.stock) : stockVal,
+            stock: isEffectiveInStock
+              ? (c.stock !== undefined && Number(c.stock) > 0 ? Number(c.stock) : Math.max(1, Math.floor(stockVal / (editingProduct.colors.length || 1))))
+              : 0,
           };
         })
       : [];
@@ -457,33 +462,76 @@ export const Products = () => {
 
                     {/* Stock Units & Quick In/Out of Stock Toggle */}
                     <td className="table-td text-center">
-                      <div className="flex flex-col items-center gap-1">
-                        <span className={`font-black text-xs ${(!p.inStock || (p.stock || 0) <= 0) ? 'text-rose-400' : (p.stock <= (p.low_stock_threshold || 15) ? 'text-amber-400' : 'text-slate-200')}`}>
-                          {p.stock !== undefined ? p.stock : 45} units
-                        </span>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            const newInStock = !(p.inStock ?? true);
-                            updateProduct(p.id, { 
-                              inStock: newInStock, 
-                              in_stock: newInStock,
-                              stock: !newInStock ? 0 : (p.stock > 0 ? p.stock : 25)
-                            });
-                          }}
-                          className={`text-[10px] px-2 py-0.5 rounded-full font-bold transition-all cursor-pointer ${
-                            (p.inStock && (p.stock || 0) > 0)
-                              ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500/20'
-                              : 'bg-rose-500/10 text-rose-400 border border-rose-500/20 hover:bg-rose-500/20'
-                          }`}
-                          title="Click to toggle In Stock / Out of Stock"
-                        >
-                          {(p.inStock && (p.stock || 0) > 0) ? '● In Stock' : '✕ Out of Stock'}
-                        </button>
-                        <span className="text-[10px] text-slate-500">
-                          {p.sold_quantity || 0} sold
-                        </span>
-                      </div>
+                      {(() => {
+                        const isCurrentlyIn = Boolean(p.inStock ?? p.in_stock ?? true) && Number(p.stock ?? 0) > 0;
+                        const displayUnits = isCurrentlyIn ? Number(p.stock || 0) : 0;
+                        return (
+                          <div className="flex flex-col items-center gap-1">
+                            <span className={`font-black text-xs ${!isCurrentlyIn ? 'text-rose-400' : (displayUnits <= (p.low_stock_threshold || 15) ? 'text-amber-400' : 'text-slate-200')}`}>
+                              {displayUnits} units
+                            </span>
+
+                            {/* In Stock / Out of Stock Toggle Button */}
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const nextInStock = !isCurrentlyIn;
+                                const nextStock = nextInStock ? (Number(p.stock) > 0 ? Number(p.stock) : 25) : 0;
+                                updateProduct(p.id, { 
+                                  inStock: nextInStock, 
+                                  in_stock: nextInStock,
+                                  stock: nextStock
+                                });
+                              }}
+                              className={`text-[10px] px-2.5 py-0.5 rounded-full font-bold transition-all cursor-pointer shadow-xs inline-flex items-center gap-1 ${
+                                isCurrentlyIn
+                                  ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/25'
+                                  : 'bg-rose-500/15 text-rose-400 border border-rose-500/30 hover:bg-rose-500/25'
+                              }`}
+                              title={isCurrentlyIn ? "Click to toggle Out of Stock (0 units)" : "Click to toggle In Stock (Restores stock)"}
+                            >
+                              {isCurrentlyIn ? (
+                                <>
+                                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                                  <span>In Stock</span>
+                                </>
+                              ) : (
+                                <>
+                                  <span className="w-1.5 h-1.5 rounded-full bg-rose-400" />
+                                  <span>Out of Stock</span>
+                                </>
+                              )}
+                            </button>
+
+                            {/* Quick Restock Chips */}
+                            <div className="flex items-center gap-1 mt-0.5" title="Quick add stock units">
+                              {[10, 25, 50].map((addQty) => (
+                                <button
+                                  key={addQty}
+                                  type="button"
+                                  onClick={() => {
+                                    const currentStock = isCurrentlyIn ? Number(p.stock || 0) : 0;
+                                    const newStock = currentStock + addQty;
+                                    updateProduct(p.id, {
+                                      stock: newStock,
+                                      inStock: true,
+                                      in_stock: true,
+                                    });
+                                  }}
+                                  className="text-[9px] font-bold px-1.5 py-0.5 bg-slate-800/80 hover:bg-indigo-900/60 text-slate-300 hover:text-indigo-200 border border-slate-700/60 rounded transition-colors cursor-pointer"
+                                  title={`Add +${addQty} units to stock`}
+                                >
+                                  +{addQty}
+                                </button>
+                              ))}
+                            </div>
+
+                            <span className="text-[10px] text-slate-500">
+                              {p.sold_quantity || 0} sold
+                            </span>
+                          </div>
+                        );
+                      })()}
                     </td>
 
                     {/* Badge & Special Flags */}
@@ -905,14 +953,15 @@ export const Products = () => {
                       <div className="flex items-center gap-2">
                         <input
                           type="number"
+                          min="0"
                           value={editingProduct.stock !== undefined ? editingProduct.stock : 50}
                           onChange={(e) => {
-                            const val = Number(e.target.value);
+                            const val = Math.max(0, Number(e.target.value));
                             setEditingProduct({ 
                               ...editingProduct, 
                               stock: val,
-                              inStock: val > 0 ? (editingProduct.inStock ?? true) : false,
-                              in_stock: val > 0 ? (editingProduct.inStock ?? true) : false
+                              inStock: val > 0,
+                              in_stock: val > 0
                             });
                           }}
                           className="admin-input w-full text-xs font-bold font-mono"
@@ -923,12 +972,15 @@ export const Products = () => {
                               key={inc}
                               type="button"
                               onClick={() => {
-                                const newQty = Math.max(0, (Number(editingProduct.stock) || 0) + inc);
+                                const currentStock = (Boolean(editingProduct.inStock ?? editingProduct.in_stock ?? true) && Number(editingProduct.stock) > 0)
+                                  ? Number(editingProduct.stock)
+                                  : 0;
+                                const newQty = currentStock + inc;
                                 setEditingProduct({
                                   ...editingProduct,
                                   stock: newQty,
-                                  inStock: newQty > 0,
-                                  in_stock: newQty > 0,
+                                  inStock: true,
+                                  in_stock: true,
                                 });
                               }}
                               className="px-2 py-1 bg-slate-800 hover:bg-slate-700 text-indigo-300 rounded text-[11px] font-semibold border border-slate-700 cursor-pointer"
@@ -957,34 +1009,48 @@ export const Products = () => {
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 p-3 bg-slate-950/60 rounded-xl border border-slate-800">
                     <div>
                       <label className="text-[11px] font-bold text-slate-400 block mb-1">Stock Availability Status</label>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          const nextInStock = !(editingProduct.inStock ?? true);
-                          setEditingProduct({
-                            ...editingProduct,
-                            inStock: nextInStock,
-                            in_stock: nextInStock,
-                          });
-                        }}
-                        className={`w-full py-2 px-3 rounded-lg text-xs font-bold flex items-center justify-center gap-2 border transition-all cursor-pointer ${
-                          (editingProduct.inStock ?? true) && (Number(editingProduct.stock) > 0)
-                            ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40 hover:bg-emerald-500/30'
-                            : 'bg-rose-500/20 text-rose-300 border-rose-500/40 hover:bg-rose-500/30'
-                        }`}
-                      >
-                        {(editingProduct.inStock ?? true) && (Number(editingProduct.stock) > 0) ? (
-                          <>
-                            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
-                            <span>In Stock</span>
-                          </>
-                        ) : (
-                          <>
-                            <XCircle className="w-3.5 h-3.5 text-rose-400" />
-                            <span>Out of Stock</span>
-                          </>
-                        )}
-                      </button>
+                      {(() => {
+                        const isEditingInStock = Boolean(editingProduct.inStock ?? editingProduct.in_stock ?? true) && Number(editingProduct.stock ?? 0) > 0;
+                        return (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const nextInStock = !isEditingInStock;
+                              const nextStock = nextInStock ? (Number(editingProduct.stock) > 0 ? Number(editingProduct.stock) : 25) : 0;
+                              const nextColors = Array.isArray(editingProduct.colors)
+                                ? editingProduct.colors.map(c => ({
+                                    ...c,
+                                    stock: nextInStock ? (Number(c.stock) > 0 ? Number(c.stock) : Math.max(1, Math.floor(nextStock / (editingProduct.colors.length || 1)))) : 0
+                                  }))
+                                : [];
+                              setEditingProduct({
+                                ...editingProduct,
+                                inStock: nextInStock,
+                                in_stock: nextInStock,
+                                stock: nextStock,
+                                colors: nextColors,
+                              });
+                            }}
+                            className={`w-full py-2 px-3 rounded-lg text-xs font-bold flex items-center justify-center gap-2 border transition-all cursor-pointer ${
+                              isEditingInStock
+                                ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40 hover:bg-emerald-500/30'
+                                : 'bg-rose-500/20 text-rose-300 border-rose-500/40 hover:bg-rose-500/30'
+                            }`}
+                          >
+                            {isEditingInStock ? (
+                              <>
+                                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+                                <span>In Stock ({editingProduct.stock || 25} Units)</span>
+                              </>
+                            ) : (
+                              <>
+                                <XCircle className="w-3.5 h-3.5 text-rose-400" />
+                                <span>Out of Stock</span>
+                              </>
+                            )}
+                          </button>
+                        );
+                      })()}
                     </div>
 
                     <div>

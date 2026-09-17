@@ -56,13 +56,25 @@ async function handleUpdateProduct(request, { params }) {
     const stockVal = body.stock !== undefined
       ? Number(body.stock)
       : (body.availableStock !== undefined ? Number(body.availableStock) : undefined);
+
+    let inStockVal = body.in_stock !== undefined
+      ? Boolean(body.in_stock)
+      : (body.inStock !== undefined ? Boolean(body.inStock) : undefined);
+
     if (stockVal !== undefined) {
-      updates.stock = stockVal;
-      if (stockVal === 0) updates.in_stock = false;
-      else updates.in_stock = true;
+      updates.stock = Math.max(0, stockVal);
+      if (stockVal === 0) inStockVal = false;
+      else if (inStockVal === undefined) inStockVal = true;
     }
-    if (body.in_stock !== undefined) updates.in_stock = Boolean(body.in_stock);
-    if (body.inStock !== undefined) updates.in_stock = Boolean(body.inStock);
+
+    if (inStockVal !== undefined) {
+      updates.in_stock = inStockVal;
+      if (!inStockVal && (updates.stock === undefined || updates.stock > 0)) {
+        updates.stock = 0;
+      } else if (inStockVal && (updates.stock === 0 || updates.stock === undefined)) {
+        updates.stock = (body.stock !== undefined && Number(body.stock) > 0) ? Number(body.stock) : 25;
+      }
+    }
 
     // Storefront Visibility (Hide / Unhide)
     if (body.is_visible !== undefined) updates.is_visible = Boolean(body.is_visible);
@@ -82,9 +94,10 @@ async function handleUpdateProduct(request, { params }) {
       updates.images = [body.image];
     }
 
-    // Variants & Attributes (preserve per-color stock and synchronize variant prices)
+    // Variants & Attributes (preserve per-color stock and synchronize variant prices & stock)
     if (body.colors !== undefined) {
-      const fallbackStock = updates.stock !== undefined ? updates.stock : (stockVal !== undefined ? stockVal : 50);
+      const isProductOut = updates.in_stock === false || updates.stock === 0;
+      const fallbackStock = isProductOut ? 0 : (updates.stock !== undefined ? updates.stock : (stockVal !== undefined ? stockVal : 50));
       const effVariantPrice = updates.price !== undefined ? updates.price : priceVal;
       const effVariantOrig = updates.original_price !== undefined ? updates.original_price : origVal;
       updates.colors = Array.isArray(body.colors)
@@ -94,27 +107,40 @@ async function handleUpdateProduct(request, { params }) {
                 ...c,
                 price: c.price !== undefined ? Number(c.price) : (effVariantPrice !== undefined ? Number(effVariantPrice) : undefined),
                 originalPrice: c.originalPrice !== undefined ? Number(c.originalPrice) : (effVariantOrig !== undefined ? Number(effVariantOrig) : undefined),
-                stock: c.stock !== undefined ? Number(c.stock) : fallbackStock,
+                stock: isProductOut ? 0 : (c.stock !== undefined ? Number(c.stock) : fallbackStock),
               };
             }
-            return { name: String(c), hex: '#C5A028', price: effVariantPrice, stock: fallbackStock };
+            return { name: String(c), hex: '#C5A028', price: effVariantPrice, stock: isProductOut ? 0 : fallbackStock };
           })
         : [];
-    } else if (updates.price !== undefined) {
-      // If price changed but colors was omitted from payload, update existing variant prices in database
+    } else if (updates.price !== undefined || updates.stock !== undefined || updates.in_stock !== undefined) {
+      // If price or stock changed but colors was omitted from payload, update existing variant prices and stocks in database
       try {
         const { data: curr } = await supabaseAdmin
           .from('products')
-          .select('colors')
+          .select('colors, price, original_price, stock, in_stock')
           .eq('id', numericId)
           .single();
+
         if (curr?.colors && Array.isArray(curr.colors)) {
+          const syncPrice = updates.price !== undefined ? updates.price : curr.price;
+          const syncOrig = updates.original_price !== undefined ? updates.original_price : (curr.original_price || syncPrice);
+          const isOut = updates.in_stock === false || updates.stock === 0;
+          const targetStock = isOut ? 0 : (updates.stock !== undefined ? updates.stock : (curr.stock || 25));
+
           updates.colors = curr.colors.map(c => {
             if (typeof c === 'object' && c !== null) {
+              let varStock = c.stock !== undefined ? Number(c.stock) : targetStock;
+              if (isOut) {
+                varStock = 0;
+              } else if (updates.stock !== undefined && updates.stock > 0 && varStock <= 0) {
+                varStock = updates.stock;
+              }
               return {
                 ...c,
-                price: updates.price,
-                originalPrice: updates.original_price || c.originalPrice || updates.price,
+                price: syncPrice !== undefined ? Number(syncPrice) : c.price,
+                originalPrice: syncOrig !== undefined ? Number(syncOrig) : c.originalPrice,
+                stock: varStock,
               };
             }
             return c;

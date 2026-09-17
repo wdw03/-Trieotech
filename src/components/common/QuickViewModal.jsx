@@ -43,7 +43,11 @@ export const QuickViewModal = ({ product, isOpen, onClose }) => {
   const activePrice = selectedColor?.price || product.price;
   const activeOriginalPrice = selectedColor?.originalPrice || product.originalPrice;
 
+  const isOutOfStock = product.inStock === false || product.in_stock === false || Number(product.stock) <= 0 || (selectedColor?.stock !== undefined && Number(selectedColor.stock) <= 0);
+  const remainingStock = selectedColor?.stock !== undefined ? Number(selectedColor.stock) : Number(product.stock || 0);
+
   const handleAddToCart = () => {
+    if (isOutOfStock) return;
     const success = addToCart(product, quantity, selectedColor?.name, selectedSize);
     if (success) {
       onClose();
@@ -72,8 +76,16 @@ export const QuickViewModal = ({ product, isOpen, onClose }) => {
             <img
               src={selectedImage}
               alt={product.name}
-              className="w-full h-full object-cover object-center"
+              className={`w-full h-full object-cover object-center ${isOutOfStock ? 'filter grayscale contrast-125 opacity-75' : ''}`}
             />
+            {isOutOfStock && (
+              <div className="absolute inset-0 bg-stone-950/40 backdrop-blur-[1px] flex items-center justify-center z-10 pointer-events-none">
+                <div className="px-3 py-1 bg-stone-900/95 text-white border border-stone-600/80 rounded-full text-[11px] font-black tracking-widest uppercase shadow-xl flex items-center gap-1.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse" />
+                  <span>Out of Stock</span>
+                </div>
+              </div>
+            )}
             {product.badge && (
               <div className="absolute top-3 left-3">
                 <Badge type={product.badge} />
@@ -207,10 +219,17 @@ export const QuickViewModal = ({ product, isOpen, onClose }) => {
                 </button>
               </div>
 
-              <div className="text-xs text-emerald-700 dark:text-emerald-400 font-bold flex items-center gap-1">
-                <ShieldCheck className="w-4 h-4 text-emerald-600" />
-                <span>100% Authentic Handcraft</span>
-              </div>
+              {isOutOfStock ? (
+                <div className="text-xs text-rose-600 dark:text-rose-400 font-bold flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-rose-500" />
+                  <span>Currently Out of Stock</span>
+                </div>
+              ) : (
+                <div className="text-xs text-emerald-700 dark:text-emerald-400 font-bold flex items-center gap-1.5">
+                  <ShieldCheck className="w-4 h-4 text-emerald-600" />
+                  <span>In Stock ({remainingStock} units)</span>
+                </div>
+              )}
             </div>
           </div>
 
@@ -219,11 +238,15 @@ export const QuickViewModal = ({ product, isOpen, onClose }) => {
             <div className="flex gap-2.5">
               <button
                 onClick={handleAddToCart}
-                disabled={!product.inStock}
-                className="flex-1 btn-primary py-3 text-xs sm:text-sm font-bold uppercase tracking-wider shadow-lg"
+                disabled={isOutOfStock}
+                className={`flex-1 py-3 text-xs sm:text-sm font-bold uppercase tracking-wider shadow-lg flex items-center justify-center gap-2 rounded-xl transition-all ${
+                  isOutOfStock
+                    ? 'bg-stone-300 dark:bg-stone-800 text-stone-500 cursor-not-allowed border border-stone-400/30'
+                    : 'btn-primary active:scale-95 cursor-pointer'
+                }`}
               >
                 <ShoppingBag className="w-4 h-4" />
-                <span>Add to Cart</span>
+                <span>{isOutOfStock ? 'Out of Stock' : 'Add to Cart'}</span>
               </button>
 
               <button

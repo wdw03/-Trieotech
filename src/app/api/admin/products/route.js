@@ -23,21 +23,21 @@ export function normalizeProduct(p) {
     else if (p.is_handmade) badge = 'Handmade';
   }
 
-  const inStock = p.in_stock !== undefined ? Boolean(p.in_stock) : Number(p.stock || 0) > 0;
+  const inStock = Boolean(p.in_stock ?? p.inStock ?? true) && Number(p.stock || 0) > 0;
   const isVisible = p.is_visible !== undefined ? Boolean(p.is_visible) : true;
   const soldQuantity = Number(p.sold_quantity || 0);
   const lowStockThreshold = Number(p.low_stock_threshold || 15);
-  const stock = Number(p.stock || 0);
+  const stock = inStock ? Number(p.stock || 0) : 0;
 
   const colors = Array.isArray(p.colors)
     ? p.colors.map(c => {
         if (typeof c === 'object' && c !== null) {
           return {
             ...c,
-            stock: c.stock !== undefined ? Number(c.stock) : stock,
+            stock: inStock ? (c.stock !== undefined ? Number(c.stock) : stock) : 0,
           };
         }
-        return { name: String(c), hex: '#C5A028', stock };
+        return { name: String(c), hex: '#C5A028', stock: inStock ? stock : 0 };
       })
     : [];
 
@@ -201,10 +201,8 @@ export async function POST(request) {
       ? Number(body.discount)
       : (origPrice > price ? Math.round(((origPrice - price) / origPrice) * 100) : 0);
 
-    const stock = Number(body.stock || body.availableStock || 25);
-    const inStock = body.inStock !== undefined
-      ? Boolean(body.inStock)
-      : (body.in_stock !== undefined ? Boolean(body.in_stock) : stock > 0);
+    const inStock = Boolean(body.inStock ?? body.in_stock ?? true) && Number(body.stock || 25) > 0;
+    const stock = inStock ? Number(body.stock || body.availableStock || 25) : 0;
 
     const isVisible = body.is_visible !== undefined
       ? Boolean(body.is_visible)
@@ -218,10 +216,10 @@ export async function POST(request) {
           if (typeof c === 'object' && c !== null) {
             return {
               ...c,
-              stock: c.stock !== undefined ? Number(c.stock) : stock,
+              stock: inStock ? (c.stock !== undefined ? Number(c.stock) : stock) : 0,
             };
           }
-          return { name: String(c), hex: '#D4AF37', stock };
+          return { name: String(c), hex: '#D4AF37', stock: inStock ? stock : 0 };
         })
       : [];
 

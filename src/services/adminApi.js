@@ -47,6 +47,38 @@ async function request(endpoint, options = {}) {
 }
 
 export const adminApi = {
+  // Helper to normalize product records for admin dashboard
+  normalizeProductRecord: (p) => {
+    if (!p) return null;
+    const stock = Number(p.stock ?? 0);
+    const inStock = Boolean(p.in_stock ?? p.inStock ?? true) && stock > 0;
+    const isVisible = p.is_visible !== undefined ? Boolean(p.is_visible) : (p.isVisible !== undefined ? Boolean(p.isVisible) : true);
+    const origPrice = Number(p.original_price ?? p.originalPrice ?? p.price ?? 0);
+    const price = Number(p.price ?? 0);
+    const colors = Array.isArray(p.colors)
+      ? p.colors.map(c => typeof c === 'object' && c !== null ? {
+          ...c,
+          stock: inStock ? (c.stock !== undefined ? Number(c.stock) : stock) : 0,
+          price: c.price !== undefined ? Number(c.price) : price,
+          originalPrice: c.originalPrice !== undefined ? Number(c.originalPrice) : origPrice,
+        } : { name: String(c), hex: '#C5A028', stock: inStock ? stock : 0, price, originalPrice: origPrice })
+      : [];
+
+    return {
+      ...p,
+      id: Number(p.id),
+      stock: inStock ? stock : 0,
+      inStock,
+      in_stock: inStock,
+      price,
+      originalPrice: origPrice,
+      original_price: origPrice,
+      is_visible: isVisible,
+      isVisible,
+      colors,
+    };
+  },
+
   // Statistics
   getStats: async () => {
     return request('/admin/stats');
@@ -70,27 +102,39 @@ export const adminApi = {
 
       const { data, error } = await q;
       if (!error && Array.isArray(data) && data.length > 0) {
-        return { products: data, total: data.length };
+        return { products: data.map(adminApi.normalizeProductRecord), total: data.length };
       }
     } catch (e) {
       console.warn('Supabase direct getProducts fallback:', e.message);
     }
     const query = new URLSearchParams(params).toString();
-    return request(`/admin/products${query ? `?${query}` : ''}`);
+    const res = await request(`/admin/products${query ? `?${query}` : ''}`);
+    if (res?.products && Array.isArray(res.products)) {
+      return { ...res, products: res.products.map(adminApi.normalizeProductRecord) };
+    }
+    return res;
   },
 
   createProduct: async (productData) => {
-    return request('/admin/products', {
+    const res = await request('/admin/products', {
       method: 'POST',
       body: JSON.stringify(productData),
     });
+    if (res?.product) {
+      res.product = adminApi.normalizeProductRecord(res.product);
+    }
+    return res;
   },
 
   updateProduct: async (id, productData) => {
-    return request(`/admin/products/${id}`, {
+    const res = await request(`/admin/products/${id}`, {
       method: 'PUT',
       body: JSON.stringify(productData),
     });
+    if (res?.product) {
+      res.product = adminApi.normalizeProductRecord(res.product);
+    }
+    return res;
   },
 
   deleteProduct: async (id) => {

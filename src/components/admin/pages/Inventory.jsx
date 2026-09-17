@@ -249,16 +249,28 @@ export const Inventory = () => {
                         ≤ {item.lowStockThreshold}
                       </td>
 
-                      {/* Status */}
+                      {/* Status & Quick Out/In Stock Toggle */}
                       <td className="table-td">
-                        <span className={`
-                          badge
-                          ${item.status === 'In Stock' ? 'badge-emerald' : ''}
-                          ${item.status === 'Low Stock' ? 'badge-rose' : ''}
-                          ${item.status === 'Out of Stock' ? 'badge-slate' : ''}
-                        `}>
-                          {item.status}
-                        </span>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (item.status === 'Out of Stock' || item.availableStock <= 0) {
+                              adjustStock(item.productId, 25, 'Quick Restock via Inventory Status Badge');
+                            } else {
+                              adjustStock(item.productId, -item.availableStock, 'Marked Out of Stock via Inventory Status Badge');
+                            }
+                          }}
+                          className={`
+                            badge cursor-pointer transition-all hover:scale-105 inline-flex items-center gap-1
+                            ${item.status === 'In Stock' ? 'badge-emerald hover:bg-emerald-500/25' : ''}
+                            ${item.status === 'Low Stock' ? 'badge-rose hover:bg-rose-500/25' : ''}
+                            ${item.status === 'Out of Stock' ? 'badge-slate hover:bg-slate-700' : ''}
+                          `}
+                          title={item.status === 'Out of Stock' || item.availableStock <= 0 ? "Click to Restock (+25 units)" : "Click to mark as Out of Stock (0 units)"}
+                        >
+                          <span className={`w-1.5 h-1.5 rounded-full ${item.status === 'In Stock' ? 'bg-emerald-400' : (item.status === 'Low Stock' ? 'bg-amber-400' : 'bg-rose-400')}`} />
+                          <span>{item.status}</span>
+                        </button>
                       </td>
 
                       {/* Last Restocked */}
@@ -266,17 +278,35 @@ export const Inventory = () => {
                         {item.lastRestocked}
                       </td>
 
-                      {/* Actions */}
+                      {/* Actions & Quick Restock */}
                       <td className="table-td text-right">
-                        <button
-                          onClick={() => {
-                            setAdjustingItem(item);
-                            setAdjustmentQty(25);
-                          }}
-                          className="btn-secondary py-1 px-2.5 text-xs font-medium"
-                        >
-                          <Edit3 className="w-3.5 h-3.5" /> Adjust
-                        </button>
+                        <div className="flex items-center justify-end gap-1.5">
+                          <button
+                            type="button"
+                            onClick={() => adjustStock(item.productId, 10, 'Quick +10 Restock')}
+                            className="px-1.5 py-1 text-[10px] font-bold bg-slate-800 hover:bg-indigo-900/60 text-slate-300 hover:text-indigo-200 border border-slate-700/60 rounded cursor-pointer transition-colors"
+                            title="Quick add +10 units"
+                          >
+                            +10
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => adjustStock(item.productId, 25, 'Quick +25 Restock')}
+                            className="px-1.5 py-1 text-[10px] font-bold bg-slate-800 hover:bg-indigo-900/60 text-slate-300 hover:text-indigo-200 border border-slate-700/60 rounded cursor-pointer transition-colors"
+                            title="Quick add +25 units"
+                          >
+                            +25
+                          </button>
+                          <button
+                            onClick={() => {
+                              setAdjustingItem(item);
+                              setAdjustmentQty(25);
+                            }}
+                            className="btn-secondary py-1 px-2.5 text-xs font-medium cursor-pointer"
+                          >
+                            <Edit3 className="w-3.5 h-3.5" /> Adjust
+                          </button>
+                        </div>
                       </td>
                     </tr>
 

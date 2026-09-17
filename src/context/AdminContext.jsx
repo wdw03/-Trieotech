@@ -293,6 +293,41 @@ export const AdminProvider = ({ children }) => {
   const [printDocument, setPrintDocument] = useState(null);
 
   // Toast Notification Helper
+  const buildInventoryFromProducts = (prods) => {
+    if (!Array.isArray(prods)) return [];
+    return prods.map((p) => {
+      const isProdInStock = Boolean(p.inStock ?? p.in_stock ?? true) && Number(p.stock ?? 0) > 0;
+      const stockQty = isProdInStock ? Number(p.stock ?? 0) : 0;
+      const lowThreshold = Number(p.low_stock_threshold || 15);
+      return {
+        productId: Number(p.id),
+        name: p.name,
+        sku: p.sku || `TE-${p.category ? p.category.substring(0, 3).toUpperCase() : 'PRD'}-${p.id}`,
+        category: p.category || 'General',
+        subcategory: p.subcategory || '',
+        price: Number(p.price || 0),
+        image: Array.isArray(p.images) && p.images.length > 0 ? p.images[0] : (typeof p.images === 'string' ? p.images : '/logo.png'),
+        totalStock: stockQty,
+        availableStock: stockQty,
+        reservedStock: 0,
+        lowStockThreshold: lowThreshold,
+        status: !isProdInStock ? 'Out of Stock' : (stockQty <= lowThreshold ? 'Low Stock' : 'In Stock'),
+        is_visible: p.is_visible !== false,
+        sold_quantity: Number(p.sold_quantity || 0),
+        lastRestocked: p.updated_at ? p.updated_at.split('T')[0] : '2026-09-08',
+        variants: (p.colors || []).map((c) => ({
+          name: typeof c === 'object' ? c.name : c,
+          hex: typeof c === 'object' ? c.hex : '#D4AF37',
+          colorHex: typeof c === 'object' ? c.hex : '#D4AF37',
+          colorName: typeof c === 'object' ? c.name : c,
+          available: isProdInStock ? ((typeof c === 'object' && c.stock !== undefined) ? Number(c.stock) : Math.floor(stockQty / ((p.colors?.length) || 1))) : 0,
+          stock: isProdInStock ? ((typeof c === 'object' && c.stock !== undefined) ? Number(c.stock) : Math.floor(stockQty / ((p.colors?.length) || 1))) : 0,
+          reserved: 0
+        })),
+      };
+    });
+  };
+
   const showToast = (message, type = 'success') => {
     const id = Date.now() + Math.random();
     setToasts((prev) => [...prev, { id, message, type }]);
@@ -343,28 +378,7 @@ export const AdminProvider = ({ children }) => {
         if (prodsRes.status === 'fulfilled' && Array.isArray(prodsRes.value?.products)) {
           const liveProds = prodsRes.value.products;
           setProducts(liveProds);
-          setInventory(liveProds.map((p) => ({
-            productId: p.id,
-            name: p.name,
-            sku: p.sku || `TE-${p.category ? p.category.substring(0, 3).toUpperCase() : 'PRD'}-${p.id}`,
-            category: p.category || 'General',
-            subcategory: p.subcategory || '',
-            price: Number(p.price || 0),
-            image: Array.isArray(p.images) && p.images.length > 0 ? p.images[0] : (typeof p.images === 'string' ? p.images : '/logo.png'),
-            totalStock: Number(p.stock ?? 50),
-            availableStock: Number(p.stock ?? 50),
-            reservedStock: 0,
-            lowStockThreshold: Number(p.low_stock_threshold || 15),
-            status: (!p.inStock || Number(p.stock ?? 50) === 0) ? 'Out of Stock' : (Number(p.stock ?? 50) <= Number(p.low_stock_threshold || 15) ? 'Low Stock' : 'In Stock'),
-            is_visible: p.is_visible !== false,
-            sold_quantity: Number(p.sold_quantity || 0),
-            lastRestocked: p.updated_at ? p.updated_at.split('T')[0] : '2026-09-08',
-            variants: (p.colors || []).map((c) => ({
-              name: typeof c === 'object' ? c.name : c,
-              hex: typeof c === 'object' ? c.hex : '#D4AF37',
-              stock: (typeof c === 'object' && c.stock !== undefined) ? Number(c.stock) : Math.floor(Number(p.stock ?? 50) / ((p.colors?.length) || 1)),
-            })),
-          })));
+          setInventory(buildInventoryFromProducts(liveProds));
         }
         if (ordersRes.status === 'fulfilled' && Array.isArray(ordersRes.value?.orders)) {
           const liveOrders = ordersRes.value.orders;
@@ -471,6 +485,7 @@ export const AdminProvider = ({ children }) => {
       let syncCount = 0;
       if (prodsRes.status === 'fulfilled' && Array.isArray(prodsRes.value?.products)) {
         setProducts(prodsRes.value.products);
+        setInventory(buildInventoryFromProducts(prodsRes.value.products));
         syncCount++;
       }
       if (ordersRes.status === 'fulfilled' && Array.isArray(ordersRes.value?.orders)) {
@@ -563,15 +578,64 @@ export const AdminProvider = ({ children }) => {
   };
 
   const updateProduct = async (id, updatedFields) => {
+    // Optimistic update for snappy UI response
     setProducts((prev) =>
-      prev.map((p) => (p.id === Number(id) ? { ...p, ...updatedFields } : p))
+      prev.map((p) => {
+        if (p.id === Number(id)) {
+          const merged = { ...p, ...updatedFields };
+          if (updatedFields.stock !== undefined || updatedFields.inStock !== undefined || updatedFields.in_stock !== undefined) {
+            const hasStock = Boolean(updatedFields.inStock ?? updatedFields.in_stock ?? (merged.in_stock ?? true)) && Number(updatedFields.stock ?? merged.stock ?? 0) > 0;
+            merged.inStock = hasStock;
+            merged.in_stock = hasStock;
+            merged.stock = hasStock ? Number(updatedFields.stock ?? merged.stock ?? 25) : 0;
+            if (Array.isArray(merged.colors)) {
+              merged.colors = merged.colors.map(c => ({
+                ...c,
+                stock: hasStock ? (c.stock !== undefined && Number(c.stock) > 0 ? Number(c.stock) : Math.max(1, Math.floor(merged.stock / (merged.colors.length || 1)))) : 0
+              }));
+            }
+          }
+          return merged;
+        }
+        return p;
+      })
     );
+
     setInventory((prev) =>
-      prev.map((inv) => (inv.productId === Number(id) ? { ...inv, name: updatedFields.name || inv.name, price: updatedFields.price || inv.price } : inv))
+      prev.map((inv) => {
+        if (inv.productId === Number(id)) {
+          const newInv = {
+            ...inv,
+            name: updatedFields.name || inv.name,
+            price: updatedFields.price !== undefined ? Number(updatedFields.price) : inv.price
+          };
+          if (updatedFields.stock !== undefined || updatedFields.inStock !== undefined || updatedFields.in_stock !== undefined) {
+            const hasStock = Boolean(updatedFields.inStock ?? updatedFields.in_stock ?? (inv.status !== 'Out of Stock')) && Number(updatedFields.stock ?? inv.availableStock) > 0;
+            const newAvail = hasStock ? Math.max(0, Number(updatedFields.stock ?? inv.availableStock)) : 0;
+            newInv.availableStock = newAvail;
+            newInv.totalStock = newAvail + (inv.reservedStock || 0);
+            newInv.status = newAvail === 0 ? 'Out of Stock' : (newAvail <= (inv.lowStockThreshold || 15) ? 'Low Stock' : 'In Stock');
+            if (newAvail > 0) {
+              newInv.lastRestocked = new Date().toISOString().split('T')[0];
+            }
+            if (Array.isArray(newInv.variants)) {
+              newInv.variants = newInv.variants.map(v => ({
+                ...v,
+                available: hasStock ? Math.max(1, Math.floor(newAvail / (newInv.variants.length || 1))) : 0
+              }));
+            }
+          }
+          return newInv;
+        }
+        return inv;
+      })
     );
 
     try {
-      await adminApi.updateProduct(id, updatedFields);
+      const res = await adminApi.updateProduct(id, updatedFields);
+      if (res?.product) {
+        setProducts((prev) => prev.map((p) => p.id === Number(id) ? res.product : p));
+      }
       showToast('Product updated in database!');
     } catch (err) {
       showToast('Product updated locally', 'info');
@@ -653,14 +717,16 @@ export const AdminProvider = ({ children }) => {
   const adjustStock = async (productId, adjustmentQty, reason) => {
     const changeNum = Number(adjustmentQty);
     let newStockLevel = 0;
+    let newInStock = false;
 
     setInventory((prev) =>
       prev.map((item) => {
         if (item.productId === Number(productId)) {
           const newAvail = Math.max(0, item.availableStock + changeNum);
-          const newTotal = newAvail + item.reservedStock;
-          const status = newAvail === 0 ? 'Out of Stock' : (newAvail <= item.lowStockThreshold ? 'Low Stock' : 'In Stock');
+          const newTotal = newAvail + (item.reservedStock || 0);
+          const status = newAvail === 0 ? 'Out of Stock' : (newAvail <= (item.lowStockThreshold || 15) ? 'Low Stock' : 'In Stock');
           newStockLevel = newAvail;
+          newInStock = newAvail > 0;
 
           const newLog = {
             id: `LOG-${Date.now()}`,
@@ -679,7 +745,11 @@ export const AdminProvider = ({ children }) => {
             availableStock: newAvail,
             totalStock: newTotal,
             status,
-            lastRestocked: changeNum > 0 ? new Date().toISOString().split('T')[0] : item.lastRestocked
+            lastRestocked: changeNum > 0 ? new Date().toISOString().split('T')[0] : item.lastRestocked,
+            variants: (item.variants || []).map(v => ({
+              ...v,
+              available: newInStock ? Math.max(1, Math.floor(newAvail / (item.variants.length || 1))) : 0
+            }))
           };
         }
         return item;
@@ -687,12 +757,32 @@ export const AdminProvider = ({ children }) => {
     );
 
     setProducts((prev) =>
-      prev.map((p) => (p.id === Number(productId) ? { ...p, stock: newStockLevel, inStock: newStockLevel > 0, in_stock: newStockLevel > 0 } : p))
+      prev.map((p) => {
+        if (p.id === Number(productId)) {
+          return {
+            ...p,
+            stock: newStockLevel,
+            inStock: newInStock,
+            in_stock: newInStock,
+            colors: Array.isArray(p.colors)
+              ? p.colors.map(c => ({
+                  ...c,
+                  stock: newInStock ? (c.stock !== undefined && Number(c.stock) > 0 ? Number(c.stock) : Math.max(1, Math.floor(newStockLevel / (p.colors.length || 1)))) : 0
+                }))
+              : []
+          };
+        }
+        return p;
+      })
     );
 
     // Sync product stock with database
     try {
-      await adminApi.updateProduct(productId, { stock: newStockLevel, in_stock: newStockLevel > 0 });
+      await adminApi.updateProduct(productId, {
+        stock: newStockLevel,
+        in_stock: newInStock,
+        inStock: newInStock,
+      });
     } catch (err) {
       console.warn('DB stock sync skipped:', err.message);
     }
