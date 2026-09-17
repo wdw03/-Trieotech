@@ -48,7 +48,9 @@ export async function generateMetadata({ params }) {
 
   const title = `${product.name} | Trio Enterprises`;
   const description = product.shortDescription || product.description?.slice(0, 155) || 'Authentic handcrafted Indian ethnic craft.';
+  const image = (Array.isArray(product.images) && product.images[0]) || product.image || '/logo.png';
   const siteUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://trioenterprises.in';
+  const fullImageUrl = image.startsWith('http') ? image : `${siteUrl}${image.startsWith('/') ? '' : '/'}${image}`;
   const url = `${siteUrl}/product/${product.slug}`;
 
   return {
@@ -65,7 +67,7 @@ export async function generateMetadata({ params }) {
       type: 'article',
       images: [
         {
-          url: image,
+          url: fullImageUrl,
           alt: product.name,
         },
       ],
@@ -74,7 +76,7 @@ export async function generateMetadata({ params }) {
       card: 'summary_large_image',
       title,
       description,
-      images: [image],
+      images: [fullImageUrl],
     },
   };
 }
