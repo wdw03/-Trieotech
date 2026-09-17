@@ -117,7 +117,7 @@ export const Navbar = () => {
     };
   }, [debouncedSearch]);
 
-  // Close search and user dropdown on click outside or Escape
+  // Close search and user dropdown on click outside, touch outside, mobile scroll, or Escape
   useEffect(() => {
     const handleClickOutside = (e) => {
       const insideDesktop = searchContainerRef.current && searchContainerRef.current.contains(e.target);
@@ -132,6 +132,14 @@ export const Navbar = () => {
       }
     };
 
+    const handleWindowScroll = () => {
+      // On mobile screens, scrolling dismisses open search suggestions and dropdowns to keep viewport clean
+      if (typeof window !== 'undefined' && window.innerWidth < 768) {
+        setIsSearchOpen(false);
+        setIsUserDropdownOpen(false);
+      }
+    };
+
     const handleKeyDown = (e) => {
       if (e.key === 'Escape') {
         setIsSearchOpen(false);
@@ -140,9 +148,13 @@ export const Navbar = () => {
     };
 
     document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener('touchstart', handleClickOutside, { passive: true });
+    window.addEventListener('scroll', handleWindowScroll, { passive: true });
     window.addEventListener('keydown', handleKeyDown);
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('touchstart', handleClickOutside);
+      window.removeEventListener('scroll', handleWindowScroll);
       window.removeEventListener('keydown', handleKeyDown);
     };
   }, []);

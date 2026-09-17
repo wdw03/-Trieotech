@@ -122,7 +122,7 @@ export const ProductCard = ({ product, onQuickView = null, viewMode = 'grid' }) 
   if (viewMode === 'list') {
     return (
       <div
-        className="group relative ethnic-card flex flex-col sm:flex-row overflow-hidden transition-all duration-300 hover:shadow-md hover:-translate-y-0.5 rounded-2xl border border-gold-500/20"
+        className="group relative ethnic-card flex flex-col sm:flex-row overflow-hidden transition-all duration-300 hover:shadow-md sm:hover:-translate-y-0.5 rounded-2xl border border-gold-500/20"
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
       >
@@ -281,7 +281,7 @@ export const ProductCard = ({ product, onQuickView = null, viewMode = 'grid' }) 
   // Grid View (Default)
   return (
     <div
-      className="group relative ethnic-card flex flex-col h-full overflow-hidden transition-all duration-300 hover:-translate-y-1.5 w-full max-w-full min-w-0"
+      className="group relative ethnic-card flex flex-col h-full overflow-hidden transition-all duration-300 sm:hover:-translate-y-1.5 w-full max-w-full min-w-0"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
@@ -292,7 +292,7 @@ export const ProductCard = ({ product, onQuickView = null, viewMode = 'grid' }) 
             src={activeImage}
             alt={product.name}
             onError={() => setImgError(true)}
-            className={`w-full h-full object-cover object-center transition-all duration-500 ease-out group-hover:scale-108 ${
+            className={`w-full h-full object-cover object-center transition-all duration-500 ease-out sm:group-hover:scale-108 ${
               hasMultipleImages ? 'opacity-100 group-hover:opacity-0' : 'opacity-100'
             } ${isOutOfStock ? 'filter grayscale contrast-125 opacity-70' : ''}`}
             loading="lazy"
@@ -301,7 +301,7 @@ export const ProductCard = ({ product, onQuickView = null, viewMode = 'grid' }) 
             <img
               src={secondaryImage}
               alt={`${product.name} alternate view`}
-              className={`absolute inset-0 w-full h-full object-cover object-center transition-all duration-500 ease-out group-hover:scale-108 opacity-0 group-hover:opacity-100 pointer-events-none ${
+              className={`absolute inset-0 w-full h-full object-cover object-center transition-all duration-500 ease-out sm:group-hover:scale-108 opacity-0 group-hover:opacity-100 pointer-events-none ${
                 isOutOfStock ? 'filter grayscale contrast-125 opacity-70' : ''
               }`}
               loading="lazy"

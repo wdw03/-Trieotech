@@ -218,7 +218,7 @@ export default function SearchClient() {
     return pool.slice(0, 4);
   }, [rawResults, filteredResults, allProducts]);
 
-  // Dismiss on-screen mobile keyboard when touching/scrolling results
+  // Dismiss on-screen mobile keyboard safely
   const dismissMobileKeyboard = () => {
     if (typeof document !== 'undefined' && document.activeElement instanceof HTMLElement) {
       if (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA') {
@@ -226,6 +226,22 @@ export default function SearchClient() {
       }
     }
   };
+
+  // Gently blur the search input when tapping outside the form on mobile, without interrupting scroll gestures
+  useEffect(() => {
+    const handleTouchStart = (e) => {
+      const searchForm = document.getElementById('search_page_form');
+      if (searchForm && !searchForm.contains(e.target)) {
+        if (document.activeElement?.id === 'search_page_input') {
+          document.activeElement.blur();
+        }
+      }
+    };
+    document.addEventListener('touchstart', handleTouchStart, { passive: true });
+    return () => {
+      document.removeEventListener('touchstart', handleTouchStart);
+    };
+  }, []);
 
   const handleSelectSearchTerm = (term) => {
     setInputQuery(term);
@@ -244,7 +260,7 @@ export default function SearchClient() {
   };
 
   return (
-    <div className="w-full max-w-7xl mx-auto px-3 sm:px-6 pt-3 sm:pt-6 pb-16 space-y-4 sm:space-y-6 relative z-10 min-w-0 overflow-x-hidden">
+    <div className="w-full max-w-7xl mx-auto px-3 sm:px-6 pt-3 sm:pt-6 pb-28 sm:pb-20 lg:pb-16 space-y-4 sm:space-y-6 relative z-10 min-w-0 overflow-x-clip">
       
       {/* Desktop Breadcrumb (hidden on mobile to save vertical viewport) */}
       <div className="hidden sm:block">
@@ -253,7 +269,7 @@ export default function SearchClient() {
 
       {/* Main Search Header Bar */}
       <div className="ethnic-card p-3.5 sm:p-8 rounded-2xl sm:rounded-3xl space-y-2.5 sm:space-y-4 shadow-sm relative z-10 w-full min-w-0 overflow-hidden">
-        <form onSubmit={handleSearchFormSubmit} className="relative max-w-2xl mx-auto w-full min-w-0">
+        <form id="search_page_form" onSubmit={handleSearchFormSubmit} className="relative max-w-2xl mx-auto w-full min-w-0">
           <input
             id="search_page_input"
             name="search_query"
@@ -332,10 +348,7 @@ export default function SearchClient() {
       </div>
 
       {/* Results Layout */}
-      <div
-        className="flex flex-col lg:flex-row gap-4 lg:gap-8 items-start relative z-10 lg:min-h-[850px] w-full max-w-full min-w-0"
-        onTouchMove={dismissMobileKeyboard}
-      >
+      <div className="flex flex-col lg:flex-row gap-4 lg:gap-8 items-start relative z-10 lg:min-h-[850px] w-full max-w-full min-w-0">
         
         {/* Desktop Filter Sidebar */}
         <FilterSidebar

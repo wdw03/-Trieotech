@@ -319,7 +319,7 @@ export const FilterSidebar = ({
     if (!isOpen) return null;
     return (
       <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex justify-end">
-        <div className="w-4/5 max-w-sm bg-white dark:bg-[#1A110B] h-full overflow-y-auto p-5 shadow-2xl animate-slide-left flex flex-col justify-between">
+        <div className="w-4/5 max-w-sm bg-white dark:bg-[#1A110B] h-[100dvh] max-h-screen overflow-y-auto overscroll-contain p-5 pb-24 sm:pb-5 shadow-2xl animate-slide-left flex flex-col justify-between">
           <div>
             <div className="flex items-center justify-between pb-4 border-b border-gold-500/20 mb-4">
               <span className="font-serif font-bold text-base text-stone-900 dark:text-ivory-100">
