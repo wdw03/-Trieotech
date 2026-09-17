@@ -8,7 +8,7 @@ import ProductCard from '../common/ProductCard';
 import QuickViewModal from '../common/QuickViewModal';
 import EmptyState from '../common/EmptyState';
 import { products as fallbackProducts } from '../../data/products';
-import { fetchLiveProducts, normalizeProduct } from '../../lib/api/store';
+import { fetchLiveProducts, normalizeProduct, normalizeCategorySlug } from '../../lib/api/store';
 import { Filter, LayoutGrid, List, Sparkles, X } from 'lucide-react';
 
 export default function ShopClient() {
@@ -47,6 +47,21 @@ export default function ShopClient() {
     };
   }, []);
 
+  // Sync category filter from URL params if user arrives via link or changes route
+  React.useEffect(() => {
+    const catParam = searchParams.get('category');
+    if (catParam) {
+      setFilters(prev => {
+        const targetSlug = normalizeCategorySlug(catParam);
+        const alreadySelected = prev.categories?.some(c => normalizeCategorySlug(c) === targetSlug);
+        if (!alreadySelected) {
+          return { ...prev, categories: [catParam] };
+        }
+        return prev;
+      });
+    }
+  }, [searchParams]);
+
   const resetFilters = () => {
     setFilters({
       categories: [],
@@ -69,12 +84,12 @@ export default function ShopClient() {
 
     // Category Filter
     if (filters.categories && filters.categories.length > 0) {
-      result = result.filter(p =>
-        filters.categories.some(c =>
-          c.trim().toLowerCase() === p.category?.trim().toLowerCase() ||
-          c.trim().toLowerCase() === p.subcategory?.trim().toLowerCase()
-        )
-      );
+      const filterSlugs = filters.categories.map(normalizeCategorySlug);
+      result = result.filter(p => {
+        const pCatSlug = normalizeCategorySlug(p.category);
+        const pSubSlug = normalizeCategorySlug(p.subcategory);
+        return filterSlugs.includes(pCatSlug) || (pSubSlug && filterSlugs.includes(pSubSlug));
+      });
     }
 
     // Max Price
@@ -168,6 +183,7 @@ export default function ShopClient() {
           filters={filters}
           setFilters={setFilters}
           resetFilters={resetFilters}
+          products={allProducts}
         />
 
         {/* Products Column */}
@@ -313,6 +329,7 @@ export default function ShopClient() {
         isOpen={isMobileFilterOpen}
         onClose={() => setIsMobileFilterOpen(false)}
         isMobile={true}
+        products={allProducts}
       />
 
       {/* Quick View Modal */}

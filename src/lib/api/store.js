@@ -16,6 +16,31 @@ export function getApiBase() {
 }
 
 /**
+ * Normalizes category names or slugs for robust matching.
+ * Handles "Towel / Gamcha" -> "towel-gamcha", "Flower Bunch" -> "flower-bunch", etc.
+ */
+export function normalizeCategorySlug(str) {
+  if (!str) return '';
+  return String(str)
+    .toLowerCase()
+    .trim()
+    .replace(/[\/\\]/g, ' ')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+}
+
+/**
+ * Checks if a product matches a category name or slug.
+ */
+export function matchesCategory(product, categoryIdentifier) {
+  if (!product || !categoryIdentifier) return false;
+  const target = normalizeCategorySlug(categoryIdentifier);
+  const pCat = normalizeCategorySlug(product.category);
+  const pSub = normalizeCategorySlug(product.subcategory);
+  return pCat === target || (pSub && pSub === target);
+}
+
+/**
  * Normalizes product data from Supabase / Backend API to match frontend component needs.
  * Ensures both camelCase and snake_case properties are populated, images are valid arrays, etc.
  */
@@ -226,7 +251,7 @@ export async function fetchLiveProducts(filters = {}) {
   // Final fallback to static data
   let filtered = [...fallbackProducts];
   if (filters.category) {
-    filtered = filtered.filter(p => p.category?.toLowerCase() === filters.category?.toLowerCase());
+    filtered = filtered.filter(p => matchesCategory(p, filters.category));
   }
   if (filters.search) {
     const q = filters.search.toLowerCase();

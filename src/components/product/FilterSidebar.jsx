@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Filter, X, RotateCcw, Star, Check } from 'lucide-react';
 import { categories as fallbackCategories } from '../../data/categories';
-import { fetchLiveCategories } from '../../lib/api/store';
+import { fetchLiveCategories, normalizeCategorySlug } from '../../lib/api/store';
 
 export const FilterSidebar = ({
   filters,
@@ -9,7 +9,8 @@ export const FilterSidebar = ({
   resetFilters,
   isOpen = false,
   onClose = null,
-  isMobile = false
+  isMobile = false,
+  products = []
 }) => {
   const [categoriesList, setCategoriesList] = useState(fallbackCategories);
 
@@ -45,12 +46,19 @@ export const FilterSidebar = ({
     { key: "isTrending", label: "Trending Now" }
   ];
 
-  const handleCategoryToggle = (catName) => {
+  const handleCategoryToggle = (cat) => {
+    const catName = typeof cat === 'string' ? cat : cat.name;
+    const catSlug = typeof cat === 'string' ? normalizeCategorySlug(cat) : normalizeCategorySlug(cat.slug || cat.name);
+
     setFilters(prev => {
       const current = prev.categories || [];
-      const updated = current.includes(catName)
-        ? current.filter(c => c !== catName)
-        : [...current, catName];
+      const isSelected = current.some(c => normalizeCategorySlug(c) === catSlug);
+      let updated;
+      if (isSelected) {
+        updated = current.filter(c => normalizeCategorySlug(c) !== catSlug);
+      } else {
+        updated = [...current, catName];
+      }
       return { ...prev, categories: updated };
     });
   };
@@ -146,12 +154,22 @@ export const FilterSidebar = ({
         </span>
         <div className="space-y-1.5 max-h-48 overflow-y-auto pr-1">
           {categoriesList.map((cat) => {
-            const isChecked = filters.categories?.includes(cat.name);
+            const catSlug = normalizeCategorySlug(cat.slug || cat.name);
+            const isChecked = filters.categories?.some(c => normalizeCategorySlug(c) === catSlug);
+            const count = (products && products.length > 0)
+              ? products.filter(p => {
+                  if (p.is_visible === false || p.isVisible === false) return false;
+                  const pCatSlug = normalizeCategorySlug(p.category);
+                  const pSubSlug = normalizeCategorySlug(p.subcategory);
+                  return pCatSlug === catSlug || (pSubSlug && pSubSlug === catSlug);
+                }).length
+              : (cat.productCount || cat.product_count || 0);
+
             return (
               <button
-                key={cat.id}
+                key={cat.id || cat.slug || cat.name}
                 type="button"
-                onClick={() => handleCategoryToggle(cat.name)}
+                onClick={() => handleCategoryToggle(cat)}
                 className="w-full flex items-center justify-between p-1.5 rounded-lg hover:bg-gold-500/10 cursor-pointer transition-colors text-left"
               >
                 <div className="flex items-center gap-2">
@@ -168,7 +186,7 @@ export const FilterSidebar = ({
                     {cat.name}
                   </span>
                 </div>
-                <span className="text-[10px] text-stone-400">({cat.productCount || cat.product_count || ''})</span>
+                <span className="text-[10px] text-stone-400">({count})</span>
               </button>
             );
           })}

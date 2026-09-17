@@ -9,7 +9,7 @@ import QuickViewModal from '../../components/common/QuickViewModal';
 import EmptyState from '../../components/common/EmptyState';
 import { categories as fallbackCategories, getCategoryBySlug } from '../../data/categories';
 import { products as fallbackProducts } from '../../data/products';
-import { fetchLiveProducts, fetchLiveCategories, normalizeProduct } from '../../lib/api/store';
+import { fetchLiveProducts, fetchLiveCategories, normalizeProduct, normalizeCategorySlug } from '../../lib/api/store';
 import { Filter, LayoutGrid, List, Sparkles, X, ChevronRight } from 'lucide-react';
 
 export default function CategoryClient({ initialSlug }) {
@@ -83,9 +83,21 @@ export default function CategoryClient({ initialSlug }) {
     isTrending: false,
   });
 
+  // When currentCategory resolves, set it as the active category filter if not already set
+  React.useEffect(() => {
+    if (currentCategory?.name) {
+      setFilters(prev => {
+        if (!prev.categories || prev.categories.length === 0) {
+          return { ...prev, categories: [currentCategory.name] };
+        }
+        return prev;
+      });
+    }
+  }, [currentCategory]);
+
   const resetFilters = () => {
     setFilters({
-      categories: [],
+      categories: currentCategory?.name ? [currentCategory.name] : [],
       maxPrice: 3000,
       inStockOnly: false,
       minRating: 0,
@@ -99,27 +111,33 @@ export default function CategoryClient({ initialSlug }) {
     setSelectedSubcategory(null);
   };
 
-  // Products belonging to this category
+  // Products belonging to the initial URL category (for banner / stats)
   const categoryProducts = useMemo(() => {
     if (!currentCategory) return [];
     return allProducts.filter(p => {
-      // Exclude hidden products
       if (p.is_visible === false || p.isVisible === false) return false;
-      const matchCat = p.category?.toLowerCase() === currentCategory.name?.toLowerCase() ||
-        p.category?.toLowerCase().replace(/ \/ /g, '-').replace(/ /g, '-') === currentCategory.slug?.toLowerCase();
-      return matchCat;
+      const targetSlug = normalizeCategorySlug(currentCategory.slug || currentCategory.name);
+      return normalizeCategorySlug(p.category) === targetSlug;
     });
   }, [currentCategory, allProducts]);
 
-  // Subcategories present in actual products
-  const availableSubcategories = useMemo(() => {
-    const subs = categoryProducts.map(p => p.subcategory).filter(Boolean);
-    return [...new Set(subs)];
-  }, [categoryProducts]);
-
-  // Filter and Sort Pipeline
+  // Filter and Sort Pipeline across all products
   const filteredProducts = useMemo(() => {
-    let result = [...categoryProducts];
+    let result;
+
+    // Filter across allProducts by selected categories
+    if (filters.categories && filters.categories.length > 0) {
+      const filterSlugs = filters.categories.map(normalizeCategorySlug);
+      result = allProducts.filter(p => {
+        if (p.is_visible === false || p.isVisible === false) return false;
+        const pCatSlug = normalizeCategorySlug(p.category);
+        const pSubSlug = normalizeCategorySlug(p.subcategory);
+        return filterSlugs.includes(pCatSlug) || (pSubSlug && filterSlugs.includes(pSubSlug));
+      });
+    } else {
+      // If user cleared category filter checkboxes, show all visible products
+      result = allProducts.filter(p => p.is_visible !== false && p.isVisible !== false);
+    }
 
     // Subcategory tab filter
     if (selectedSubcategory) {
@@ -171,7 +189,13 @@ export default function CategoryClient({ initialSlug }) {
     }
 
     return result;
-  }, [categoryProducts, selectedSubcategory, filters, sortBy]);
+  }, [allProducts, filters, selectedSubcategory, sortBy]);
+
+  // Subcategories present in active filtered products
+  const availableSubcategories = useMemo(() => {
+    const subs = filteredProducts.map(p => p.subcategory).filter(Boolean);
+    return [...new Set(subs)];
+  }, [filteredProducts]);
 
   if (!currentCategory) {
     return (
@@ -261,6 +285,7 @@ export default function CategoryClient({ initialSlug }) {
           filters={filters}
           setFilters={setFilters}
           resetFilters={resetFilters}
+          products={allProducts}
         />
 
         {/* Products Column */}
@@ -367,6 +392,7 @@ export default function CategoryClient({ initialSlug }) {
         isOpen={isMobileFilterOpen}
         onClose={() => setIsMobileFilterOpen(false)}
         isMobile={true}
+        products={allProducts}
       />
 
       {/* Quick View Modal */}

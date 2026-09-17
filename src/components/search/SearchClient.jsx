@@ -8,7 +8,7 @@ import ProductCard from '../../components/common/ProductCard';
 import QuickViewModal from '../../components/common/QuickViewModal';
 import EmptyState from '../../components/common/EmptyState';
 import { products as fallbackProducts, searchProducts } from '../../data/products';
-import { fetchLiveProducts, normalizeProduct } from '../../lib/api/store';
+import { fetchLiveProducts, normalizeProduct, normalizeCategorySlug } from '../../lib/api/store';
 import { Search as SearchIcon, Filter, Sparkles, X, Clock, Flame, ArrowRight, Package, LayoutGrid, List } from 'lucide-react';
 import useDebounce from '../../hooks/useDebounce';
 
@@ -147,12 +147,12 @@ export default function SearchClient() {
 
     // Category Filter
     if (filters.categories && filters.categories.length > 0) {
-      result = result.filter(p =>
-        filters.categories.some(c =>
-          c.trim().toLowerCase() === p.category?.trim().toLowerCase() ||
-          c.trim().toLowerCase() === p.subcategory?.trim().toLowerCase()
-        )
-      );
+      const filterSlugs = filters.categories.map(normalizeCategorySlug);
+      result = result.filter(p => {
+        const pCatSlug = normalizeCategorySlug(p.category);
+        const pSubSlug = normalizeCategorySlug(p.subcategory);
+        return filterSlugs.includes(pCatSlug) || (pSubSlug && filterSlugs.includes(pSubSlug));
+      });
     }
 
     // Max Price
@@ -310,6 +310,7 @@ export default function SearchClient() {
           filters={filters}
           setFilters={setFilters}
           resetFilters={resetFilters}
+          products={allProducts}
         />
 
         {/* Results Column */}
@@ -487,6 +488,7 @@ export default function SearchClient() {
         isOpen={isMobileFilterOpen}
         onClose={() => setIsMobileFilterOpen(false)}
         isMobile={true}
+        products={allProducts}
       />
 
       {/* Quick View Modal */}
