@@ -303,7 +303,7 @@ export default function SearchClient() {
       </div>
 
       {/* Results Layout */}
-      <div className="flex gap-8 items-start relative z-10">
+      <div className="flex gap-8 items-start relative z-10 min-h-[850px]">
         
         {/* Desktop Filter Sidebar */}
         <FilterSidebar
@@ -313,8 +313,8 @@ export default function SearchClient() {
           products={allProducts}
         />
 
-        {/* Results Column */}
-        <div className="flex-1 space-y-6 min-w-0">
+        {/* Results Column with fixed min-height to prevent vertical shrinkage */}
+        <div className="flex-1 space-y-6 min-w-0 min-h-[750px]">
           
           {/* Top Bar (Results count, mobile filter trigger, sorting) */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-2xl ethnic-card shadow-xs">
@@ -377,105 +377,107 @@ export default function SearchClient() {
 
           </div>
 
-          {/* Results Grid / List */}
-          {filteredResults.length === 0 ? (
-            <div className="space-y-8">
-              <EmptyState
-                title={`No crafts found for "${queryFromUrl}"`}
-                description="Check your spelling, try generic terms like 'patches' or 'bottle', or explore our recommended collection below."
-                actionText="Browse All Crafts"
-                actionUrl="/shop"
-              />
+          {/* Results Grid / List Container with fixed min-height to prevent vertical shrinkage */}
+          <div className="min-h-[550px]">
+            {filteredResults.length === 0 ? (
+              <div className="space-y-8">
+                <EmptyState
+                  title={`No crafts found for "${queryFromUrl}"`}
+                  description="Check your spelling, try generic terms like 'patches' or 'bottle', or explore our recommended collection below."
+                  actionText="Browse All Crafts"
+                  actionUrl="/shop"
+                />
 
-              {/* Curated Recommendations when search has no direct match */}
-              {similarProducts.length > 0 && (
-                <div className="pt-4 border-t border-gold-500/20 space-y-4">
-                  <div>
-                    <span className="text-[11px] font-bold text-gold-700 dark:text-gold-400 uppercase tracking-widest flex items-center gap-1.5">
-                      <Sparkles className="w-3.5 h-3.5" /> Handcrafted For You
-                    </span>
-                    <h3 className="font-serif font-bold text-lg sm:text-xl text-stone-900 dark:text-ivory-100 mt-0.5">
-                      Popular Artisan Recommendations
-                    </h3>
-                  </div>
-
-                  <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6">
-                    {similarProducts.map((product) => (
-                      <ProductCard
-                        key={`fallback-${product.id}`}
-                        product={product}
-                        onQuickView={setQuickViewProduct}
-                      />
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-          ) : (
-            <div className="space-y-10">
-              {/* Main Product Cards Grid / List */}
-              {viewMode === 'list' ? (
-                <div className="flex flex-col gap-4">
-                  {filteredResults.map((product) => (
-                    <ProductCard
-                      key={product.id}
-                      product={product}
-                      viewMode="list"
-                      onQuickView={setQuickViewProduct}
-                    />
-                  ))}
-                </div>
-              ) : (
-                <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6">
-                  {filteredResults.map((product) => (
-                    <ProductCard
-                      key={product.id}
-                      product={product}
-                      viewMode="grid"
-                      onQuickView={setQuickViewProduct}
-                    />
-                  ))}
-                </div>
-              )}
-
-              {/* Similar & Related Products Section */}
-              {similarProducts.length > 0 && (
-                <div className="pt-10 border-t border-gold-500/20 space-y-6">
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                {/* Curated Recommendations when search has no direct match */}
+                {similarProducts.length > 0 && (
+                  <div className="pt-4 border-t border-gold-500/20 space-y-4">
                     <div>
                       <span className="text-[11px] font-bold text-gold-700 dark:text-gold-400 uppercase tracking-widest flex items-center gap-1.5">
-                        <Sparkles className="w-3.5 h-3.5" /> Artisan Guild Suggestions
+                        <Sparkles className="w-3.5 h-3.5" /> Handcrafted For You
                       </span>
-                      <h3 className="font-serif font-bold text-xl sm:text-2xl text-stone-900 dark:text-ivory-100 mt-1">
-                        Similar &amp; Related Handcrafted Pieces
+                      <h3 className="font-serif font-bold text-lg sm:text-xl text-stone-900 dark:text-ivory-100 mt-0.5">
+                        Popular Artisan Recommendations
                       </h3>
-                      <p className="text-xs text-stone-500 mt-0.5">
-                        Authentic handcrafted creations complementary to your search.
-                      </p>
                     </div>
 
-                    <Link
-                      href="/shop"
-                      className="btn-outline-maroon py-2 px-4 text-xs font-bold self-start sm:self-auto flex items-center gap-1.5"
-                    >
-                      <span>Explore All Crafts</span>
-                      <ArrowRight className="w-3.5 h-3.5" />
-                    </Link>
+                    <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6">
+                      {similarProducts.map((product) => (
+                        <ProductCard
+                          key={`fallback-${product.id}`}
+                          product={product}
+                          onQuickView={setQuickViewProduct}
+                        />
+                      ))}
+                    </div>
                   </div>
-
-                  <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6">
-                    {similarProducts.map((product) => (
+                )}
+              </div>
+            ) : (
+              <div className="space-y-10">
+                {/* Main Product Cards Grid / List */}
+                {viewMode === 'list' ? (
+                  <div className="flex flex-col gap-4">
+                    {filteredResults.map((product) => (
                       <ProductCard
-                        key={`similar-${product.id}`}
+                        key={product.id}
                         product={product}
+                        viewMode="list"
                         onQuickView={setQuickViewProduct}
                       />
                     ))}
                   </div>
-                </div>
-              )}
-            </div>
-          )}
+                ) : (
+                  <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6">
+                    {filteredResults.map((product) => (
+                      <ProductCard
+                        key={product.id}
+                        product={product}
+                        viewMode="grid"
+                        onQuickView={setQuickViewProduct}
+                      />
+                    ))}
+                  </div>
+                )}
+
+                {/* Similar & Related Products Section */}
+                {similarProducts.length > 0 && (
+                  <div className="pt-10 border-t border-gold-500/20 space-y-6">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                      <div>
+                        <span className="text-[11px] font-bold text-gold-700 dark:text-gold-400 uppercase tracking-widest flex items-center gap-1.5">
+                          <Sparkles className="w-3.5 h-3.5" /> Artisan Guild Suggestions
+                        </span>
+                        <h3 className="font-serif font-bold text-xl sm:text-2xl text-stone-900 dark:text-ivory-100 mt-1">
+                          Similar &amp; Related Handcrafted Pieces
+                        </h3>
+                        <p className="text-xs text-stone-500 mt-0.5">
+                          Authentic handcrafted creations complementary to your search.
+                        </p>
+                      </div>
+
+                      <Link
+                        href="/shop"
+                        className="btn-outline-maroon py-2 px-4 text-xs font-bold self-start sm:self-auto flex items-center gap-1.5"
+                      >
+                        <span>Explore All Crafts</span>
+                        <ArrowRight className="w-3.5 h-3.5" />
+                      </Link>
+                    </div>
+
+                    <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6">
+                      {similarProducts.map((product) => (
+                        <ProductCard
+                          key={`similar-${product.id}`}
+                          product={product}
+                          onQuickView={setQuickViewProduct}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
 
         </div>
       </div>

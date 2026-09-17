@@ -114,21 +114,7 @@ export default function CategoryClient({ initialSlug }) {
     setSelectedSubcategory(null);
   }, [filters.categories]);
 
-  // Sync browser URL dynamically with selected category
-  React.useEffect(() => {
-    if (typeof window !== 'undefined') {
-      if (filters.categories && filters.categories.length === 1) {
-        const targetSlug = normalizeCategorySlug(filters.categories[0]);
-        if (targetSlug && window.location.pathname !== `/category/${targetSlug}`) {
-          window.history.replaceState(null, '', `/category/${targetSlug}`);
-        }
-      } else if (filters.categories && filters.categories.length === 0) {
-        if (window.location.pathname.startsWith('/category/')) {
-          window.history.replaceState(null, '', '/shop');
-        }
-      }
-    }
-  }, [filters.categories]);
+
 
   // Active category details (dynamically follows single selected category in sidebar)
   const activeDisplayCategory = useMemo(() => {
@@ -283,7 +269,7 @@ export default function CategoryClient({ initialSlug }) {
       />
 
       {/* Category Hero Banner */}
-      <div className="relative rounded-3xl overflow-hidden min-h-[220px] sm:min-h-[260px] flex items-center p-6 sm:p-10 border border-gold-500/30 shadow-xl bg-gradient-to-r from-maroon-950 via-maroon-900 to-[#1F0C0C] text-white">
+      <div className="relative rounded-3xl overflow-hidden min-h-[210px] sm:min-h-[230px] flex items-center p-6 sm:p-10 border border-gold-500/30 shadow-xl bg-gradient-to-r from-maroon-950 via-maroon-900 to-[#1F0C0C] text-white">
         {/* Background Image Overlay */}
         <div className="absolute right-0 inset-y-0 w-full md:w-1/2 opacity-25 md:opacity-35 pointer-events-none">
           <img
@@ -306,7 +292,7 @@ export default function CategoryClient({ initialSlug }) {
               ? 'All Handcrafted Crafts'
               : currentCategory.name}
           </h1>
-          <p className="text-xs sm:text-sm text-stone-300 leading-relaxed font-normal">
+          <p className="text-xs sm:text-sm text-stone-300 leading-relaxed font-normal min-h-[38px] flex items-center">
             {filters.categories && filters.categories.length === 1
               ? (activeDisplayCategory?.description || `Browsing authentic handcrafted items celebrating traditional Indian artisan heritage.`)
               : filters.categories && filters.categories.length === 0
@@ -321,7 +307,7 @@ export default function CategoryClient({ initialSlug }) {
 
       {/* Subcategory Filter Tabs (if available) */}
       {availableSubcategories.length > 0 && (
-        <div className="flex items-center gap-2 overflow-x-auto py-2 no-scrollbar">
+        <div className="flex items-center gap-2 overflow-x-auto py-2 no-scrollbar min-h-[44px]">
           <button
             onClick={() => setSelectedSubcategory(null)}
             className={`px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all ${
@@ -349,7 +335,7 @@ export default function CategoryClient({ initialSlug }) {
       )}
 
       {/* Content Layout with Sidebar & Products Grid */}
-      <div className="flex gap-8 items-start">
+      <div className="flex gap-8 items-start min-h-[850px]">
         
         {/* Desktop Filter Sidebar */}
         <FilterSidebar
@@ -359,8 +345,8 @@ export default function CategoryClient({ initialSlug }) {
           products={allProducts}
         />
 
-        {/* Products Column */}
-        <div className="flex-1 space-y-6 min-w-0">
+        {/* Products Column with fixed min-height to prevent up/down jumping */}
+        <div className="flex-1 space-y-6 min-w-0 min-h-[750px]">
           
           {/* Top Bar */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-2xl ethnic-card">
@@ -420,37 +406,39 @@ export default function CategoryClient({ initialSlug }) {
 
           </div>
 
-          {/* Products Grid / List */}
-          {filteredProducts.length === 0 ? (
-            <EmptyState
-              title="No crafts match your filter selection"
-              description="Try resetting your filters or switching subcategories."
-              actionText="Reset Filters"
-              onAction={resetFilters}
-            />
-          ) : viewMode === 'list' ? (
-            <div className="flex flex-col gap-4">
-              {filteredProducts.map((product) => (
-                <ProductCard
-                  key={product.id}
-                  product={product}
-                  viewMode="list"
-                  onQuickView={setQuickViewProduct}
-                />
-              ))}
-            </div>
-          ) : (
-            <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6">
-              {filteredProducts.map((product) => (
-                <ProductCard
-                  key={product.id}
-                  product={product}
-                  viewMode="grid"
-                  onQuickView={setQuickViewProduct}
-                />
-              ))}
-            </div>
-          )}
+          {/* Products Grid / List Container with fixed min-height to prevent vertical shrinkage */}
+          <div className="min-h-[550px]">
+            {filteredProducts.length === 0 ? (
+              <EmptyState
+                title="No crafts match your filter selection"
+                description="Try resetting your filters or switching categories."
+                actionText="Reset Filters"
+                onAction={resetFilters}
+              />
+            ) : viewMode === 'list' ? (
+              <div className="flex flex-col gap-4">
+                {filteredProducts.map((product) => (
+                  <ProductCard
+                    key={product.id}
+                    product={product}
+                    viewMode="list"
+                    onQuickView={setQuickViewProduct}
+                  />
+                ))}
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6">
+                {filteredProducts.map((product) => (
+                  <ProductCard
+                    key={product.id}
+                    product={product}
+                    viewMode="grid"
+                    onQuickView={setQuickViewProduct}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
 
         </div>
       </div>

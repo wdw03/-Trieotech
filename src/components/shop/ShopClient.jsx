@@ -176,7 +176,7 @@ export default function ShopClient() {
       </div>
 
       {/* Content Layout with Sidebar & Products Grid */}
-      <div className="flex gap-8 items-start">
+      <div className="flex gap-8 items-start min-h-[850px]">
         
         {/* Desktop Filter Sidebar */}
         <FilterSidebar
@@ -186,8 +186,8 @@ export default function ShopClient() {
           products={allProducts}
         />
 
-        {/* Products Column */}
-        <div className="flex-1 space-y-6 min-w-0">
+        {/* Products Column with fixed min-height to prevent vertical shrinkage */}
+        <div className="flex-1 space-y-6 min-w-0 min-h-[750px]">
           
           {/* Top Bar (Results count, mobile filter trigger, sort, view toggle) */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-2xl ethnic-card">
@@ -286,37 +286,39 @@ export default function ShopClient() {
             </div>
           )}
 
-          {/* Products Grid / List */}
-          {filteredProducts.length === 0 ? (
-            <EmptyState
-              title="No crafts match your filter criteria"
-              description="Try adjusting or clearing your filters to see our full artisan catalog."
-              actionText="Reset All Filters"
-              onAction={resetFilters}
-            />
-          ) : viewMode === 'list' ? (
-            <div className="flex flex-col gap-4">
-              {filteredProducts.map((product) => (
-                <ProductCard
-                  key={product.id}
-                  product={product}
-                  viewMode="list"
-                  onQuickView={setQuickViewProduct}
-                />
-              ))}
-            </div>
-          ) : (
-            <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6">
-              {filteredProducts.map((product) => (
-                <ProductCard
-                  key={product.id}
-                  product={product}
-                  viewMode="grid"
-                  onQuickView={setQuickViewProduct}
-                />
-              ))}
-            </div>
-          )}
+          {/* Products Grid / List Container with fixed min-height to prevent vertical shrinkage */}
+          <div className="min-h-[550px]">
+            {filteredProducts.length === 0 ? (
+              <EmptyState
+                title="No crafts match your filter criteria"
+                description="Try adjusting or clearing your filters to see our full artisan catalog."
+                actionText="Reset All Filters"
+                onAction={resetFilters}
+              />
+            ) : viewMode === 'list' ? (
+              <div className="flex flex-col gap-4">
+                {filteredProducts.map((product) => (
+                  <ProductCard
+                    key={product.id}
+                    product={product}
+                    viewMode="list"
+                    onQuickView={setQuickViewProduct}
+                  />
+                ))}
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6">
+                {filteredProducts.map((product) => (
+                  <ProductCard
+                    key={product.id}
+                    product={product}
+                    viewMode="grid"
+                    onQuickView={setQuickViewProduct}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
 
         </div>
       </div>

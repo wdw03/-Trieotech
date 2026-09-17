@@ -27,6 +27,16 @@ export const FilterSidebar = ({
       isMounted = false;
     };
   }, []);
+
+  useEffect(() => {
+    if (isMobile && isOpen) {
+      const prevOverflow = document.body.style.overflow;
+      document.body.style.overflow = 'hidden';
+      return () => {
+        document.body.style.overflow = prevOverflow;
+      };
+    }
+  }, [isMobile, isOpen]);
   const materials = [
     "Zardosi & Velvet",
     "100% Pure Copper",
