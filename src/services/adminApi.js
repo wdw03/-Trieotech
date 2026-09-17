@@ -207,6 +207,21 @@ export const adminApi = {
 
   uploadCategoryImage: async (file) => {
     try {
+      const formData = new FormData();
+      formData.append('file', file);
+      const res = await request('/admin/categories/upload', {
+        method: 'POST',
+        body: formData,
+      });
+      if (res && res.url) {
+        return res;
+      }
+    } catch (apiErr) {
+      console.warn('Server uploadCategoryImage fallback to client:', apiErr?.message);
+    }
+
+    // Direct Supabase storage fallback
+    try {
       const timestamp = Date.now();
       const cleanName = (file.name || 'image.jpg')
         .toLowerCase()
@@ -229,12 +244,7 @@ export const adminApi = {
     } catch (e) {
       console.warn('Supabase direct uploadCategoryImage fallback:', e.message);
     }
-    const formData = new FormData();
-    formData.append('file', file);
-    return request('/admin/categories/upload', {
-      method: 'POST',
-      body: formData,
-    });
+    throw new Error('Failed to upload category image to server');
   },
 
   // Customers

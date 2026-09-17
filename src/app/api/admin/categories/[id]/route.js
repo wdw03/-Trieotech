@@ -9,11 +9,11 @@ export async function PUT(request, { params }) {
     const body = await request.json();
 
     const updates = {};
-    if (body.name !== undefined) updates.name = body.name.trim();
-    if (body.slug !== undefined) updates.slug = body.slug.trim();
-    if (body.description !== undefined) updates.description = body.description.trim();
-    if (body.image !== undefined) updates.image = body.image.trim();
-    if (body.banner !== undefined) updates.banner = body.banner.trim();
+    if (body.name !== undefined) updates.name = body.name ? String(body.name).trim() : '';
+    if (body.slug !== undefined) updates.slug = body.slug ? String(body.slug).trim() : '';
+    if (body.description !== undefined) updates.description = body.description ? String(body.description).trim() : '';
+    if (body.image !== undefined) updates.image = body.image ? String(body.image).trim() : '';
+    if (body.banner !== undefined) updates.banner = body.banner ? String(body.banner).trim() : '';
     if (body.sort_order !== undefined) updates.sort_order = Number(body.sort_order);
     if (body.subcategories !== undefined && Array.isArray(body.subcategories)) {
       updates.subcategories = body.subcategories;
