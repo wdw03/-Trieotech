@@ -23,6 +23,11 @@ const MobileNavLink = ({ href, children, exact = false }) => {
 export const MobileNav = () => {
   const { itemCount, openCart } = useCart();
   const { wishlistCount } = useWishlist();
+  const [mounted, setMounted] = React.useState(false);
+
+  React.useEffect(() => {
+    setMounted(true);
+  }, []);
 
   return (
     <nav className="lg:hidden fixed bottom-0 inset-x-0 z-40 bg-white/95 dark:bg-[#140D08]/95 backdrop-blur-md border-t border-gold-500/30 py-2 px-3 shadow-2xl">
@@ -50,7 +55,7 @@ export const MobileNav = () => {
         <MobileNavLink href="/wishlist">
           <div className="relative">
             <Heart className="w-5 h-5" />
-            {wishlistCount > 0 && (
+            {mounted && wishlistCount > 0 && (
               <span className="absolute -top-1.5 -right-2 w-4 h-4 rounded-full bg-maroon-700 text-white text-[9px] font-extrabold flex items-center justify-center">
                 {wishlistCount}
               </span>
@@ -67,7 +72,7 @@ export const MobileNav = () => {
         >
           <div className="relative">
             <ShoppingBag className="w-5 h-5 text-maroon-700 dark:text-gold-400" />
-            {itemCount > 0 && (
+            {mounted && itemCount > 0 && (
               <span className="absolute -top-1.5 -right-2 w-4 h-4 rounded-full bg-gold-500 text-maroon-950 text-[9px] font-black flex items-center justify-center">
                 {itemCount}
               </span>

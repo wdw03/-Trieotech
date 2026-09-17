@@ -6,6 +6,7 @@ const WishlistContext = createContext();
 
 export const WishlistProvider = ({ children }) => {
   const [wishlist, setWishlist] = useState([]);
+  const [isLoaded, setIsLoaded] = useState(false);
   const isInitialized = useRef(false);
 
   // Safely hydrate wishlist from localStorage on client mount only
@@ -17,6 +18,7 @@ export const WishlistProvider = ({ children }) => {
       console.error('Failed to load wishlist', e);
     } finally {
       isInitialized.current = true;
+      setIsLoaded(true);
     }
   }, []);
 
@@ -30,13 +32,13 @@ export const WishlistProvider = ({ children }) => {
   }, [wishlist]);
 
   const isInWishlist = (productId) => {
-    return wishlist.some(item => item.id === Number(productId));
+    return wishlist.some(item => String(item.id) === String(productId));
   };
 
   const toggleWishlist = (product) => {
     if (!product) return;
     if (isInWishlist(product.id)) {
-      setWishlist(prev => prev.filter(item => item.id !== product.id));
+      setWishlist(prev => prev.filter(item => String(item.id) !== String(product.id)));
       addToast(`Removed "${product.name.substring(0, 30)}..." from Wishlist`, 'info');
     } else {
       setWishlist(prev => [...prev, product]);
@@ -45,7 +47,7 @@ export const WishlistProvider = ({ children }) => {
   };
 
   const removeFromWishlist = (productId) => {
-    setWishlist(prev => prev.filter(item => item.id !== Number(productId)));
+    setWishlist(prev => prev.filter(item => String(item.id) !== String(productId)));
     addToast('Item removed from wishlist', 'info');
   };
 
@@ -61,7 +63,8 @@ export const WishlistProvider = ({ children }) => {
         isInWishlist,
         toggleWishlist,
         removeFromWishlist,
-        clearWishlist
+        clearWishlist,
+        isLoaded,
       }}
     >
       {children}

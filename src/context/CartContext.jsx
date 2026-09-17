@@ -19,6 +19,7 @@ export const CartProvider = ({ children }) => {
   const [cartItems, setCartItems] = useState([]);
   const [appliedCoupon, setAppliedCoupon] = useState(null);
   const [shippingPincode, setShippingPincode] = useState('');
+  const [isLoaded, setIsLoaded] = useState(false);
   const isInitialized = useRef(false);
 
   // Safely hydrate cart from localStorage on client mount only
@@ -36,6 +37,7 @@ export const CartProvider = ({ children }) => {
       console.error('Failed to load cart from storage:', e);
     } finally {
       isInitialized.current = true;
+      setIsLoaded(true);
     }
   }, []);
 
@@ -513,6 +515,7 @@ export const CartProvider = ({ children }) => {
         applyCoupon,
         removeCoupon,
         availableCoupons,
+        isLoaded,
       }}
     >
       {children}

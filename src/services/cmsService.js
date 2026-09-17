@@ -16,6 +16,7 @@ const STORAGE_KEYS = {
 // Helper to read from localStorage with fallback
 const getStorageData = (key, fallback) => {
   try {
+    if (typeof window === 'undefined') return fallback;
     const item = localStorage.getItem(key);
     return item ? JSON.parse(item) : fallback;
   } catch (err) {
@@ -27,6 +28,7 @@ const getStorageData = (key, fallback) => {
 // Helper to write to localStorage
 const setStorageData = (key, data) => {
   try {
+    if (typeof window === 'undefined') return;
     localStorage.setItem(key, JSON.stringify(data));
   } catch (err) {
     console.error(`Error writing ${key} to storage:`, err);

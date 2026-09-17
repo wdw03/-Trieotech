@@ -19,25 +19,36 @@ export const RatingStars = ({ rating = 5, reviewCount = null, size = "sm", showV
           const isFull = starIndex <= currentRating;
           const isHalf = !isFull && starIndex - 0.5 <= currentRating;
 
+          const starContent = (
+            <Star
+              className={`${sizeClasses[size] || sizeClasses.sm} ${
+                isFull
+                  ? 'fill-amber-400 text-amber-400'
+                  : isHalf
+                  ? 'fill-amber-400/50 text-amber-400'
+                  : 'fill-transparent text-stone-300 dark:text-stone-700'
+              }`}
+            />
+          );
+
+          if (interactive) {
+            return (
+              <button
+                key={starIndex}
+                type="button"
+                onClick={() => onRate && onRate(starIndex)}
+                className="cursor-pointer hover:scale-110 transition-transform"
+                aria-label={`Rate ${starIndex} stars`}
+              >
+                {starContent}
+              </button>
+            );
+          }
+
           return (
-            <button
-              key={starIndex}
-              type="button"
-              disabled={!interactive}
-              onClick={() => interactive && onRate && onRate(starIndex)}
-              className={`${interactive ? 'cursor-pointer hover:scale-110 transition-transform' : 'cursor-default'}`}
-              aria-label={`Rate ${starIndex} stars`}
-            >
-              <Star
-                className={`${sizeClasses[size] || sizeClasses.sm} ${
-                  isFull
-                    ? 'fill-amber-400 text-amber-400'
-                    : isHalf
-                    ? 'fill-amber-400/50 text-amber-400'
-                    : 'fill-transparent text-stone-300 dark:text-stone-700'
-                }`}
-              />
-            </button>
+            <span key={starIndex} className="inline-flex items-center" aria-hidden="true">
+              {starContent}
+            </span>
           );
         })}
       </div>

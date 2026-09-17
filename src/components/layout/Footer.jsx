@@ -335,7 +335,7 @@ export const Footer = () => {
 
       {/* Bottom Copyright & Payment Methods */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 pt-6 border-t border-gold-500/15 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-stone-500">
-        <p className="text-center sm:text-left text-stone-400 text-[11px] sm:text-xs">
+        <p className="text-center sm:text-left text-stone-400 text-[11px] sm:text-xs" suppressHydrationWarning>
           © {new Date().getFullYear()} <strong className="text-gold-400 font-semibold">Trio Enterprises</strong>. Handcrafted with devotion in Jaipur &amp; Surat, India. All Rights Reserved.
         </p>
         

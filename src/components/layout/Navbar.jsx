@@ -43,6 +43,11 @@ export const Navbar = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isUserDropdownOpen, setIsUserDropdownOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     let isMounted = true;
@@ -277,9 +282,9 @@ export const Navbar = () => {
               onClick={toggleTheme}
               className="p-1.5 sm:p-2 rounded-xl text-stone-700 dark:text-stone-300 hover:text-gold-600 dark:hover:text-gold-400 hover:bg-stone-100 dark:hover:bg-stone-800 transition-colors active:scale-90"
               aria-label="Toggle dark mode"
-              title={isDark ? "Switch to light theme" : "Switch to dark theme"}
+              title={mounted && isDark ? "Switch to light theme" : "Switch to dark theme"}
             >
-              {isDark ? <Sun className="w-4 h-4 sm:w-5 sm:h-5 text-gold-400" /> : <Moon className="w-4 h-4 sm:w-5 sm:h-5 text-stone-600" />}
+              {mounted && isDark ? <Sun className="w-4 h-4 sm:w-5 sm:h-5 text-gold-400" /> : <Moon className="w-4 h-4 sm:w-5 sm:h-5 text-stone-600" />}
             </button>
 
             {/* Wishlist Icon */}
@@ -290,7 +295,7 @@ export const Navbar = () => {
               title="My Wishlist"
             >
               <Heart className="w-4 h-4 sm:w-5 sm:h-5" />
-              {wishlistCount > 0 && (
+              {mounted && wishlistCount > 0 && (
                 <span className="absolute -top-0.5 -right-0.5 w-3.5 h-3.5 sm:w-4 sm:h-4 rounded-full bg-maroon-700 text-white text-[9px] sm:text-[10px] font-extrabold flex items-center justify-center animate-pulse">
                   {wishlistCount}
                 </span>
@@ -305,7 +310,7 @@ export const Navbar = () => {
             >
               <div className="relative">
                 <ShoppingBag className="w-4 h-4 sm:w-5 sm:h-5 text-gold-300" />
-                {itemCount > 0 && (
+                {mounted && itemCount > 0 && (
                   <span className="absolute -top-1.5 -right-1.5 sm:-top-2 sm:-right-2 w-3.5 h-3.5 sm:w-4 sm:h-4 rounded-full bg-gold-500 text-maroon-950 text-[9px] sm:text-[10px] font-black flex items-center justify-center shadow-xs">
                     {itemCount}
                   </span>
@@ -313,7 +318,7 @@ export const Navbar = () => {
               </div>
               <div className="hidden lg:flex flex-col text-left">
                 <span className="text-[10px] text-gold-200/80 uppercase tracking-wider font-bold">Cart</span>
-                <span className="text-xs font-bold leading-none">₹{subtotal?.toLocaleString('en-IN')}</span>
+                <span className="text-xs font-bold leading-none">₹{mounted ? (subtotal?.toLocaleString('en-IN') || '0') : '0'}</span>
               </div>
             </button>
 
@@ -325,20 +330,20 @@ export const Navbar = () => {
                   setIsUserDropdownOpen((prev) => !prev);
                 }}
                 className={`flex items-center gap-1.5 p-1.5 sm:px-2.5 rounded-xl border transition-colors cursor-pointer ${
-                  isAuthenticated
+                  mounted && isAuthenticated
                     ? 'border-gold-500/40 bg-gold-500/10 text-maroon-800 dark:text-gold-300'
                     : 'border-stone-200 dark:border-stone-800 hover:border-gold-500 text-stone-700 dark:text-stone-300'
                 }`}
                 aria-label="User menu"
               >
-                {user?.avatar ? (
+                {mounted && user?.avatar ? (
                   <img src={user.avatar} alt={user.name} className="w-6 h-6 sm:w-7 sm:h-7 rounded-lg object-cover ring-1 ring-gold-500/50" />
                 ) : (
                   <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-lg bg-maroon-700 text-white flex items-center justify-center text-xs font-bold shadow-xs">
                     <User className="w-4 h-4" />
                   </div>
                 )}
-                {isAuthenticated && user?.name && (
+                {mounted && isAuthenticated && user?.name && (
                   <span className="hidden sm:inline text-[11px] font-bold truncate max-w-[80px]">
                     {user.name.split(' ')[0]}
                   </span>
@@ -605,7 +610,7 @@ export const Navbar = () => {
 
             {/* Mobile Footer Auth Section */}
             <div className="pt-6 border-t border-gold-500/20 shrink-0 mt-auto">
-              {isAuthenticated ? (
+              {mounted && isAuthenticated ? (
                 <div className="space-y-3">
                   <div className="flex items-center gap-3">
                     {user?.avatar ? (

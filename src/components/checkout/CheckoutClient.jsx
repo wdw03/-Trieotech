@@ -27,7 +27,7 @@ import RazorpayCheckout from './RazorpayCheckout';
 
 export default function CheckoutClient() {
   const router = useRouter();
-  const { cartItems, subtotal, originalSubtotal, productSavings, couponDiscount, shipping, total, appliedCoupon, clearCart, itemCount = 0 } = useCart();
+  const { cartItems, isLoaded, subtotal, originalSubtotal, productSavings, couponDiscount, shipping, total, appliedCoupon, clearCart, itemCount = 0 } = useCart();
   const { user, loading, addAddress, addOrder } = useAuth();
   const { addToast } = useToast();
 
@@ -131,13 +131,14 @@ export default function CheckoutClient() {
 
   // If cart is empty, redirect (unless currently reconciling or having pending checkout)
   useEffect(() => {
+    if (!isLoaded) return;
     if (typeof window !== 'undefined' && localStorage.getItem('trio_pending_checkout')) {
       return;
     }
     if (cartItems.length === 0 && !isReconciling) {
       router.push('/cart');
     }
-  }, [cartItems, router, isReconciling]);
+  }, [cartItems, router, isReconciling, isLoaded]);
 
   // Auth guard: redirect to login if not authenticated
   useEffect(() => {
