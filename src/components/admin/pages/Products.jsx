@@ -194,6 +194,14 @@ export const Products = () => {
     const basePrice = Number(editingProduct.price) || 0;
     const baseOriginalPrice = Number(editingProduct.originalPrice ?? editingProduct.original_price) || basePrice;
 
+    const cleanImgs = Array.isArray(editingProduct.images)
+      ? editingProduct.images.filter(img => typeof img === 'string' && img.trim())
+      : [];
+    const finalImages = cleanImgs.length > 1 && cleanImgs.includes('/products/pearl-zardosi-patch-1.jpg')
+      ? cleanImgs.filter(img => img !== '/products/pearl-zardosi-patch-1.jpg')
+      : (cleanImgs.length > 0 ? cleanImgs : ['/products/pearl-zardosi-patch-1.jpg']);
+    const primaryImg = finalImages[0] || '/products/pearl-zardosi-patch-1.jpg';
+
     const colorsVal = Array.isArray(editingProduct.colors)
       ? editingProduct.colors.map(c => {
           const isSingle = editingProduct.colors.length <= 1;
@@ -204,10 +212,15 @@ export const Products = () => {
             ? baseOriginalPrice
             : Number(c.originalPrice);
 
+          const cImg = (c.image && c.image !== '/products/pearl-zardosi-patch-1.jpg')
+            ? c.image
+            : primaryImg;
+
           return {
             ...c,
             price: vPrice,
             originalPrice: vOrigPrice,
+            image: cImg,
             stock: isEffectiveInStock
               ? (c.stock !== undefined && Number(c.stock) > 0 ? Number(c.stock) : Math.max(1, Math.floor(stockVal / (editingProduct.colors.length || 1))))
               : 0,
@@ -217,6 +230,9 @@ export const Products = () => {
 
     const payload = {
       ...editingProduct,
+      images: finalImages,
+      image: primaryImg,
+      colors: colorsVal,
       price: basePrice,
       originalPrice: baseOriginalPrice,
       original_price: baseOriginalPrice,
@@ -227,7 +243,6 @@ export const Products = () => {
       isVisible: isVisibleVal,
       sold_quantity: Number(editingProduct.sold_quantity ?? editingProduct.soldQuantity ?? 0),
       low_stock_threshold: Number(editingProduct.low_stock_threshold ?? editingProduct.lowStockThreshold ?? 15),
-      colors: colorsVal,
       weight: weightVal,
       length: lengthVal,
       breadth: breadthVal,
@@ -253,7 +268,14 @@ export const Products = () => {
     const reordered = [...editingProduct.images];
     const [selected] = reordered.splice(index, 1);
     reordered.unshift(selected);
-    setEditingProduct({ ...editingProduct, images: reordered });
+    const primary = reordered[0];
+    setEditingProduct({
+      ...editingProduct,
+      images: reordered,
+      colors: Array.isArray(editingProduct.colors)
+        ? editingProduct.colors.map((c, idx) => (idx === 0 || !c.image || c.image === '/products/pearl-zardosi-patch-1.jpg' ? { ...c, image: primary } : c))
+        : editingProduct.colors
+    });
     showToast('Primary cover image updated');
   };
 
@@ -264,7 +286,14 @@ export const Products = () => {
       return;
     }
     const filtered = editingProduct.images.filter((_, i) => i !== index);
-    setEditingProduct({ ...editingProduct, images: filtered });
+    const primary = filtered[0];
+    setEditingProduct({
+      ...editingProduct,
+      images: filtered,
+      colors: Array.isArray(editingProduct.colors)
+        ? editingProduct.colors.map((c, idx) => (idx === 0 || !c.image || c.image === '/products/pearl-zardosi-patch-1.jpg' ? { ...c, image: primary } : c))
+        : editingProduct.colors
+    });
   };
 
   // Direct file upload handler (single or multi-file from device to Supabase CDN)
@@ -294,10 +323,18 @@ export const Products = () => {
     }
 
     if (newUrls.length > 0) {
-      setEditingProduct(prev => ({
-        ...prev,
-        images: [...(prev.images || []), ...newUrls]
-      }));
+      setEditingProduct(prev => {
+        const existingImages = (prev?.images || []).filter(img => img !== '/products/pearl-zardosi-patch-1.jpg');
+        const updatedImages = [...existingImages, ...newUrls];
+        const primary = updatedImages[0];
+        return {
+          ...prev,
+          images: updatedImages,
+          colors: Array.isArray(prev?.colors)
+            ? prev.colors.map((c, idx) => (idx === 0 || !c.image || c.image === '/products/pearl-zardosi-patch-1.jpg' ? { ...c, image: primary } : c))
+            : prev?.colors
+        };
+      });
       showToast(`${newUrls.length} photo(s) successfully uploaded and added!`, 'success');
     }
 
@@ -317,9 +354,15 @@ export const Products = () => {
       fileInputRef.current?.click();
       return;
     }
+    const cleanExisting = (editingProduct.images || []).filter(img => img !== '/products/pearl-zardosi-patch-1.jpg');
+    const updatedImages = [...cleanExisting, newImageUrl.trim()];
+    const primary = updatedImages[0];
     setEditingProduct({
       ...editingProduct,
-      images: [...(editingProduct.images || []), newImageUrl.trim()]
+      images: updatedImages,
+      colors: Array.isArray(editingProduct.colors)
+        ? editingProduct.colors.map((c, idx) => (idx === 0 || !c.image || c.image === '/products/pearl-zardosi-patch-1.jpg' ? { ...c, image: primary } : c))
+        : editingProduct.colors
     });
     setNewImageUrl('');
     showToast('Photo added to product gallery');

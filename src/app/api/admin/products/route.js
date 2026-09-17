@@ -32,12 +32,14 @@ export function normalizeProduct(p) {
   const colors = Array.isArray(p.colors)
     ? p.colors.map(c => {
         if (typeof c === 'object' && c !== null) {
+          const cImg = (c.image && c.image !== '/products/pearl-zardosi-patch-1.jpg') ? c.image : (mainImage || c.image);
           return {
             ...c,
+            image: cImg,
             stock: inStock ? (c.stock !== undefined ? Number(c.stock) : stock) : 0,
           };
         }
-        return { name: String(c), hex: '#C5A028', stock: inStock ? stock : 0 };
+        return { name: String(c), hex: '#C5A028', image: mainImage, stock: inStock ? stock : 0 };
       })
     : [];
 
@@ -214,12 +216,14 @@ export async function POST(request) {
     const colors = Array.isArray(body.colors)
       ? body.colors.map(c => {
           if (typeof c === 'object' && c !== null) {
+            const cImg = (c.image && c.image !== '/products/pearl-zardosi-patch-1.jpg') ? c.image : (images[0] || c.image);
             return {
               ...c,
+              image: cImg,
               stock: inStock ? (c.stock !== undefined ? Number(c.stock) : stock) : 0,
             };
           }
-          return { name: String(c), hex: '#D4AF37', stock: inStock ? stock : 0 };
+          return { name: String(c), hex: '#D4AF37', image: images[0], stock: inStock ? stock : 0 };
         })
       : [];
 

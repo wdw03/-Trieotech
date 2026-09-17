@@ -55,11 +55,12 @@ export function normalizeProduct(p) {
     colors = p.colors.map(c => typeof c === 'object' && c !== null 
       ? { 
           ...c, 
+          image: (c.image && c.image !== '/products/pearl-zardosi-patch-1.jpg') ? c.image : (images[0] || c.image || null),
           price: (c.price !== undefined && c.price !== null && p.colors.length > 1) ? Number(c.price) : price,
           originalPrice: (c.originalPrice !== undefined && c.originalPrice !== null && p.colors.length > 1) ? Number(c.originalPrice) : originalPrice,
           stock: c.stock !== undefined ? Number(c.stock) : (Number(p.stock) || 50) 
         } 
-      : { name: String(c), price, originalPrice, stock: Number(p.stock) || 50 });
+      : { name: String(c), image: images[0] || null, price, originalPrice, stock: Number(p.stock) || 50 });
   } else if (typeof p.colors === 'string' && p.colors.trim()) {
     try {
       const parsed = JSON.parse(p.colors);
@@ -67,14 +68,15 @@ export function normalizeProduct(p) {
         ? parsed.map(c => typeof c === 'object' && c !== null 
             ? { 
                 ...c, 
+                image: (c.image && c.image !== '/products/pearl-zardosi-patch-1.jpg') ? c.image : (images[0] || c.image || null),
                 price: (c.price !== undefined && c.price !== null && parsed.length > 1) ? Number(c.price) : price,
                 originalPrice: (c.originalPrice !== undefined && c.originalPrice !== null && parsed.length > 1) ? Number(c.originalPrice) : originalPrice,
                 stock: c.stock !== undefined ? Number(c.stock) : (Number(p.stock) || 50) 
               } 
-            : { name: String(c), price, originalPrice, stock: Number(p.stock) || 50 })
+            : { name: String(c), image: images[0] || null, price, originalPrice, stock: Number(p.stock) || 50 })
         : [];
     } catch {
-      colors = p.colors.split(',').map((c) => ({ name: c.trim(), price, originalPrice, stock: Number(p.stock) || 50 })).filter((c) => c.name);
+      colors = p.colors.split(',').map((c) => ({ name: c.trim(), image: images[0] || null, price, originalPrice, stock: Number(p.stock) || 50 })).filter((c) => c.name);
     }
   }
 

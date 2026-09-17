@@ -527,14 +527,35 @@ export const AdminProvider = ({ children }) => {
     const slug = newProduct.slug || newProduct.name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
     const localId = Date.now();
 
+    const cleanImgs = Array.isArray(newProduct.images)
+      ? newProduct.images.filter(img => typeof img === 'string' && img.trim())
+      : [];
+    const finalImgs = cleanImgs.length > 1 && cleanImgs.includes('/products/pearl-zardosi-patch-1.jpg')
+      ? cleanImgs.filter(img => img !== '/products/pearl-zardosi-patch-1.jpg')
+      : (cleanImgs.length ? cleanImgs : ['/products/pearl-zardosi-patch-1.jpg']);
+    const primaryImg = finalImgs[0];
+
+    const cleanColors = Array.isArray(newProduct.colors)
+      ? newProduct.colors.map((c) => {
+          if (typeof c === 'object' && c !== null) {
+            return {
+              ...c,
+              image: (c.image && c.image !== '/products/pearl-zardosi-patch-1.jpg') ? c.image : primaryImg
+            };
+          }
+          return c;
+        })
+      : [];
+
     const created = {
       ...newProduct,
       id: localId,
       slug,
       inStock: newProduct.inStock ?? true,
       badge: newProduct.badge || 'New',
-      images: newProduct.images?.length ? newProduct.images : ['/products/pearl-zardosi-patch-1.jpg'],
-      colors: newProduct.colors || [],
+      images: finalImgs,
+      image: primaryImg,
+      colors: cleanColors,
       sizes: newProduct.sizes || [],
       features: newProduct.features || [],
       specifications: newProduct.specifications || {},
@@ -592,6 +613,23 @@ export const AdminProvider = ({ children }) => {
               merged.colors = merged.colors.map(c => ({
                 ...c,
                 stock: hasStock ? (c.stock !== undefined && Number(c.stock) > 0 ? Number(c.stock) : Math.max(1, Math.floor(merged.stock / (merged.colors.length || 1)))) : 0
+              }));
+            }
+          }
+          if (updatedFields.images !== undefined || updatedFields.image !== undefined) {
+            const cleanImgs = Array.isArray(merged.images)
+              ? merged.images.filter(img => typeof img === 'string' && img.trim())
+              : (merged.image ? [merged.image] : []);
+            const finalImgs = cleanImgs.length > 1 && cleanImgs.includes('/products/pearl-zardosi-patch-1.jpg')
+              ? cleanImgs.filter(img => img !== '/products/pearl-zardosi-patch-1.jpg')
+              : cleanImgs;
+            const primaryImg = finalImgs[0] || merged.image || '/products/pearl-zardosi-patch-1.jpg';
+            merged.images = finalImgs;
+            merged.image = primaryImg;
+            if (Array.isArray(merged.colors)) {
+              merged.colors = merged.colors.map(c => ({
+                ...c,
+                image: (c.image && c.image !== '/products/pearl-zardosi-patch-1.jpg') ? c.image : primaryImg
               }));
             }
           }

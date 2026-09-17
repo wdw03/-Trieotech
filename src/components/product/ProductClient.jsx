@@ -175,7 +175,7 @@ export default function ProductClient({ initialSlug, initialProduct = null }) {
 
   const handleColorChange = (col) => {
     setSelectedColor(col);
-    if (col.image) {
+    if (col.image && col.image !== '/products/pearl-zardosi-patch-1.jpg') {
       setSelectedImage(col.image);
     }
   };

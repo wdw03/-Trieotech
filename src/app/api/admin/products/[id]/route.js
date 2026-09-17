@@ -100,17 +100,20 @@ async function handleUpdateProduct(request, { params }) {
       const fallbackStock = isProductOut ? 0 : (updates.stock !== undefined ? updates.stock : (stockVal !== undefined ? stockVal : 50));
       const effVariantPrice = updates.price !== undefined ? updates.price : priceVal;
       const effVariantOrig = updates.original_price !== undefined ? updates.original_price : origVal;
+      const effMainImg = (updates.images && updates.images[0]) || (body.images && body.images[0]);
       updates.colors = Array.isArray(body.colors)
         ? body.colors.map(c => {
             if (typeof c === 'object' && c !== null) {
+              const cImg = (c.image && c.image !== '/products/pearl-zardosi-patch-1.jpg') ? c.image : (effMainImg || c.image);
               return {
                 ...c,
+                image: cImg,
                 price: c.price !== undefined ? Number(c.price) : (effVariantPrice !== undefined ? Number(effVariantPrice) : undefined),
                 originalPrice: c.originalPrice !== undefined ? Number(c.originalPrice) : (effVariantOrig !== undefined ? Number(effVariantOrig) : undefined),
                 stock: isProductOut ? 0 : (c.stock !== undefined ? Number(c.stock) : fallbackStock),
               };
             }
-            return { name: String(c), hex: '#C5A028', price: effVariantPrice, stock: isProductOut ? 0 : fallbackStock };
+            return { name: String(c), hex: '#C5A028', image: effMainImg, price: effVariantPrice, stock: isProductOut ? 0 : fallbackStock };
           })
         : [];
     } else if (updates.price !== undefined || updates.stock !== undefined || updates.in_stock !== undefined) {

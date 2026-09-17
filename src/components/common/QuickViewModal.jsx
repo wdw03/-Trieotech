@@ -34,7 +34,7 @@ export const QuickViewModal = ({ product, isOpen, onClose }) => {
   // Handle color change
   const handleColorSelect = (col) => {
     setSelectedColor(col);
-    if (col.image) {
+    if (col.image && col.image !== '/products/pearl-zardosi-patch-1.jpg') {
       setSelectedImage(col.image);
     }
   };

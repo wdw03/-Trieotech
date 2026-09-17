@@ -1,5 +1,5 @@
 'use client';
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import Link from 'next/link';
 import { Heart, ShoppingBag, Eye } from 'lucide-react';
 import { useCart } from '../../context/CartContext';
@@ -21,6 +21,26 @@ export const ProductCard = ({ product, onQuickView = null, viewMode = 'grid' }) 
 
   const isWishlisted = isInWishlist(product.id);
 
+  // Extract clean list of valid product images
+  const productImages = useMemo(() => {
+    let list = [];
+    if (Array.isArray(product.images)) {
+      list = product.images;
+    } else if (typeof product.images === 'string' && product.images.trim()) {
+      try {
+        const parsed = JSON.parse(product.images);
+        list = Array.isArray(parsed) ? parsed : [product.images];
+      } catch {
+        list = product.images.split(/\s+/);
+      }
+    } else if (product.image) {
+      list = [product.image];
+    }
+    return list
+      .map((url) => (typeof url === 'string' ? url.trim() : ''))
+      .filter((url) => url && url.length > 0);
+  }, [product.images, product.image]);
+
   // Active price and image calculation based on selected color variant
   const hasMultipleColors = Array.isArray(product.colors) && product.colors.length > 1;
   const activePrice = (hasMultipleColors && selectedColor?.price !== undefined && selectedColor?.price !== null)
@@ -30,11 +50,32 @@ export const ProductCard = ({ product, onQuickView = null, viewMode = 'grid' }) 
   const activeOriginalPrice = (hasMultipleColors && selectedColor?.originalPrice !== undefined && selectedColor?.originalPrice !== null)
     ? Number(selectedColor.originalPrice)
     : (Number(product.originalPrice ?? product.original_price) || Number(selectedColor?.originalPrice) || activePrice);
+
+  // Check if selectedColor has a genuine variant photo (not a stale default dummy placeholder)
+  const isSelectedColorGenuine = Boolean(
+    hasMultipleColors &&
+    selectedColor?.image &&
+    selectedColor.image !== '/products/pearl-zardosi-patch-1.jpg'
+  );
+
+  // Primary cover image:
+  // 1. Color variant image if genuinely selected from multi-variants
+  // 2. First image added by user (productImages[0])
+  // 3. Fallback to product.image or default
+  const primaryImage = isSelectedColorGenuine
+    ? selectedColor.image
+    : (productImages[0] || product.image || '/products/shreenathji-statement-patch-1.jpg');
+
   const activeImage = imgError
     ? '/products/shreenathji-statement-patch-1.jpg'
-    : selectedColor?.image || product.images?.[0] || '/products/shreenathji-statement-patch-1.jpg';
+    : primaryImage;
 
-  const secondaryImage = product.images?.[1] || activeImage;
+  // Secondary image on hover:
+  // Rule:
+  // - If product has 2 or more images: show 2nd image (productImages[1]) on hover
+  // - If product has only 1 image: DO NOT swap on hover (show only that 1 image)
+  const hasMultipleImages = productImages.length >= 2 && Boolean(productImages[1]) && productImages[1] !== activeImage;
+  const secondaryImage = hasMultipleImages ? productImages[1] : activeImage;
 
   // Out of stock and inventory metrics
   const isOutOfStock = product.inStock === false || product.in_stock === false || Number(product.stock) <= 0 || (selectedColor?.stock !== undefined && Number(selectedColor.stock) <= 0);
@@ -87,15 +128,26 @@ export const ProductCard = ({ product, onQuickView = null, viewMode = 'grid' }) 
       >
         {/* Left Image */}
         <div className="relative w-full sm:w-56 md:w-64 aspect-square sm:aspect-auto shrink-0 bg-ivory-200 dark:bg-stone-900 overflow-hidden">
-          <Link href={`/product/${product.slug}`} className="block w-full h-full min-h-[190px]">
+          <Link href={`/product/${product.slug}`} className="block w-full h-full min-h-[190px] relative">
             <img
-              src={isHovered && secondaryImage !== activeImage ? secondaryImage : activeImage}
+              src={activeImage}
               alt={product.name}
               onError={() => setImgError(true)}
-              className={`w-full h-full object-cover object-center transition-transform duration-700 ease-out group-hover:scale-105 ${isOutOfStock ? 'filter grayscale contrast-125 opacity-70' : ''
-                }`}
+              className={`w-full h-full object-cover object-center transition-all duration-500 ease-out group-hover:scale-105 ${
+                hasMultipleImages ? 'opacity-100 group-hover:opacity-0' : 'opacity-100'
+              } ${isOutOfStock ? 'filter grayscale contrast-125 opacity-70' : ''}`}
               loading="lazy"
             />
+            {hasMultipleImages && (
+              <img
+                src={secondaryImage}
+                alt={`${product.name} alternate view`}
+                className={`absolute inset-0 w-full h-full object-cover object-center transition-all duration-500 ease-out group-hover:scale-105 opacity-0 group-hover:opacity-100 pointer-events-none ${
+                  isOutOfStock ? 'filter grayscale contrast-125 opacity-70' : ''
+                }`}
+                loading="lazy"
+              />
+            )}
           </Link>
 
           {/* Out of Stock Overlay */}
@@ -235,15 +287,26 @@ export const ProductCard = ({ product, onQuickView = null, viewMode = 'grid' }) 
     >
       {/* Product Image Container */}
       <div className="relative aspect-square w-full overflow-hidden bg-ivory-200 dark:bg-stone-900">
-        <Link href={`/product/${product.slug}`} className="block w-full h-full">
+        <Link href={`/product/${product.slug}`} className="block w-full h-full relative">
           <img
-            src={isHovered && secondaryImage !== activeImage ? secondaryImage : activeImage}
+            src={activeImage}
             alt={product.name}
             onError={() => setImgError(true)}
-            className={`w-full h-full object-cover object-center transition-transform duration-700 ease-out group-hover:scale-108 ${isOutOfStock ? 'filter grayscale contrast-125 opacity-70' : ''
-              }`}
+            className={`w-full h-full object-cover object-center transition-all duration-500 ease-out group-hover:scale-108 ${
+              hasMultipleImages ? 'opacity-100 group-hover:opacity-0' : 'opacity-100'
+            } ${isOutOfStock ? 'filter grayscale contrast-125 opacity-70' : ''}`}
             loading="lazy"
           />
+          {hasMultipleImages && (
+            <img
+              src={secondaryImage}
+              alt={`${product.name} alternate view`}
+              className={`absolute inset-0 w-full h-full object-cover object-center transition-all duration-500 ease-out group-hover:scale-108 opacity-0 group-hover:opacity-100 pointer-events-none ${
+                isOutOfStock ? 'filter grayscale contrast-125 opacity-70' : ''
+              }`}
+              loading="lazy"
+            />
+          )}
         </Link>
 
         {/* Out of Stock Overlay */}
