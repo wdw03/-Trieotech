@@ -13,7 +13,7 @@ export const metadata = {
   openGraph: {
     title: 'Artisan Craft Journal & DIY Guides | Trio Enterprises',
     description: 'Explore stories of royal needlework, ancient Vedic wellness, and festive decor guides.',
-    url: 'https://trioenterprises.com/blog',
+    url: 'https://trioenterprises.in/blog',
   },
 };
 

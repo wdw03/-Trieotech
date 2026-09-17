@@ -47,7 +47,8 @@ export async function generateMetadata({ params }) {
   const title = `${category.name} Collection | Trio Enterprises`;
   const description = category.description || `Handcrafted ${category.name} collection by master artisans.`;
   const image = category.image || '/logo.png';
-  const url = `https://trioenterprises.com/category/${category.slug}`;
+  const siteUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://trioenterprises.in';
+  const url = `${siteUrl}/category/${category.slug}`;
 
   return {
     title,
@@ -92,7 +93,7 @@ export default async function CategoryPage({ params }) {
     '@type': 'CollectionPage',
     name: currentCategory.name,
     description: currentCategory.description,
-    url: `https://trioenterprises.com/category/${currentCategory.slug}`,
+    url: `${process.env.NEXT_PUBLIC_APP_URL || 'https://trioenterprises.in'}/category/${currentCategory.slug}`,
   };
 
   return (

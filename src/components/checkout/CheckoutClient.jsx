@@ -154,10 +154,9 @@ export default function CheckoutClient() {
       : null;
 
   const activeShippingAddress =
-    matchedAddress ||
-    (Array.isArray(user?.addresses) && user.addresses[0]) ||
-    newAddressForm ||
-    {};
+    selectedAddressId === 'new'
+      ? (newAddressForm || {})
+      : (matchedAddress || (Array.isArray(user?.addresses) && user.addresses[0]) || newAddressForm || {});
 
   const activePincode =
     activeShippingAddress?.zip ||

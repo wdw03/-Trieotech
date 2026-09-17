@@ -926,6 +926,38 @@ export const AdminProvider = ({ children }) => {
     }
   };
 
+  const updateCoupon = async (id, couponData) => {
+    try {
+      const res = await adminApi.updateCoupon(id, {
+        code: couponData.code,
+        discount_type: couponData.type?.toLowerCase() === 'flat' ? 'flat' : 'percentage',
+        value: Number(couponData.value) || 0,
+        min_spend: Number(couponData.minOrderValue ?? couponData.minSpend) || 0,
+        max_discount: Number(couponData.maxDiscount) || null,
+        max_uses: Number(couponData.maxUses) || 500,
+        expires_at: couponData.expiresAt || couponData.endDate || null,
+        description: couponData.description || '',
+        applicable_product_ids: couponData.applicableProductIds || [],
+        applicable_product_names: couponData.applicableProductNames || []
+      });
+
+      if (res?.success && res.coupon) {
+        const c = res.coupon;
+        const formatted = formatDashboardCoupon(c);
+        setCoupons((prev) =>
+          prev.map((item) => (String(item.id) === String(id) || String(item.code) === String(id) ? formatted : item))
+        );
+        showToast(`Coupon ${formatted.code} updated successfully!`);
+        return { success: true, coupon: formatted };
+      }
+      return { success: false, error: 'Failed to update coupon' };
+    } catch (err) {
+      console.error('Failed to update coupon on backend:', err);
+      showToast(err.message || 'Failed to update coupon', 'error');
+      return { success: false, error: err.message };
+    }
+  };
+
   const toggleCouponStatus = async (id) => {
     try {
       await adminApi.toggleCouponStatus(id);
@@ -1323,6 +1355,7 @@ export const AdminProvider = ({ children }) => {
         updateCategory,
         deleteCategory,
         addCoupon,
+        updateCoupon,
         toggleCouponStatus,
         deleteCoupon,
         updateReturnStatus,

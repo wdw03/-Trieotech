@@ -48,8 +48,8 @@ export async function generateMetadata({ params }) {
 
   const title = `${product.name} | Trio Enterprises`;
   const description = product.shortDescription || product.description?.slice(0, 155) || 'Authentic handcrafted Indian ethnic craft.';
-  const image = product.images?.[0] || '/logo.png';
-  const url = `https://trioenterprises.com/product/${product.slug}`;
+  const siteUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://trioenterprises.in';
+  const url = `${siteUrl}/product/${product.slug}`;
 
   return {
     title,
@@ -100,7 +100,7 @@ export default async function ProductPage({ params }) {
     },
     offers: {
       '@type': 'Offer',
-      url: `https://trioenterprises.com/product/${product.slug}`,
+      url: `${process.env.NEXT_PUBLIC_APP_URL || 'https://trioenterprises.in'}/product/${product.slug}`,
       priceCurrency: 'INR',
       price: product.price,
       availability: product.inStock ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',

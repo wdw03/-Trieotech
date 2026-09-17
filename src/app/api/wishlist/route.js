@@ -36,7 +36,7 @@ export async function POST(request) {
       .select('id')
       .eq('user_id', user.id)
       .eq('product_id', productId)
-      .single();
+      .maybeSingle();
 
     if (existing) {
       // Remove from wishlist

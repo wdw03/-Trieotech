@@ -35,7 +35,7 @@ export async function POST(request) {
       .from('products')
       .select('id, stock, in_stock')
       .eq('id', productId)
-      .single();
+      .maybeSingle();
 
     if (!product || !product.in_stock) {
       return NextResponse.json({ error: 'Product unavailable' }, { status: 400 });
@@ -47,9 +47,9 @@ export async function POST(request) {
       .select('id, quantity')
       .eq('user_id', user.id)
       .eq('product_id', productId)
-      .eq('color', color)
-      .eq('size', size)
-      .single();
+      .eq('color', color || '')
+      .eq('size', size || '')
+      .maybeSingle();
 
     if (existing) {
       const newQty = existing.quantity + quantity;

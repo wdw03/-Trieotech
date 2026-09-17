@@ -228,16 +228,14 @@ export default function ProfileClient() {
 
         {/* Action Buttons: Edit Profile, Admin Portal & Sign Out */}
         <div className="flex items-center flex-wrap gap-2.5 shrink-0 self-center sm:self-auto w-full sm:w-auto justify-center">
-          {user.role === 'admin' && (
-            <a
-              href="http://localhost:5173"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="bg-maroon-800 text-gold-300 border border-gold-500/40 hover:bg-maroon-900 py-2.5 px-4 text-xs font-bold rounded-xl flex items-center justify-center gap-1.5 shadow-md flex-1 sm:flex-initial"
+          {(user.role === 'admin' || user.role === 'super_admin' || user.role === 'staff' || user.role === 'seo_manager') && (
+            <Link
+              href="/admin"
+              className="bg-maroon-800 text-gold-300 border border-gold-500/40 hover:bg-maroon-900 py-2.5 px-4 text-xs font-bold rounded-xl flex items-center justify-center gap-1.5 shadow-md flex-1 sm:flex-initial transition-colors"
             >
               <ShieldCheck className="w-3.5 h-3.5 text-gold-400" />
               <span>Admin Dashboard</span>
-            </a>
+            </Link>
           )}
 
           <button

@@ -4,15 +4,12 @@ import { createClient } from '../../../../lib/supabase/server';
 import { supabaseAdmin } from '../../../../lib/supabase/admin';
 import { trackShipment, trackByOrderId } from '../../../../lib/shiprocket';
 
+import { getAuthenticatedUser } from '../../../../lib/auth/validate';
+
 // GET: Fetch single order details with real tracking data
 export async function GET(request, { params }) {
   try {
-    let user = null;
-    try {
-      const supabase = await createClient();
-      const { data: { user: u } } = await supabase.auth.getUser();
-      user = u;
-    } catch (_) {}
+    const { user } = await getAuthenticatedUser(request);
 
     const { orderId } = await params;
     const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(orderId);

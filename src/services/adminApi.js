@@ -644,6 +644,13 @@ export const adminApi = {
     });
   },
 
+  updateCoupon: async (id, couponData) => {
+    return request('/admin/coupons/' + id, {
+      method: 'PUT',
+      body: JSON.stringify(couponData),
+    });
+  },
+
   deleteCoupon: async (id) => {
     return request('/admin/coupons/' + id, {
       method: 'DELETE',

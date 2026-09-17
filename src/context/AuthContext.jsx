@@ -575,9 +575,17 @@ export const AuthProvider = ({ children }) => {
   // ── Cancel Order ──
   const cancelOrder = useCallback(async (orderId, reason) => {
     try {
+      const headers = { 'Content-Type': 'application/json' };
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session?.access_token) {
+          headers['Authorization'] = `Bearer ${session.access_token}`;
+        }
+      } catch (_) {}
+
       const res = await fetch(`/api/orders/${orderId}/cancel`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         body: JSON.stringify({ reason: reason || 'Customer requested cancellation' }),
       });
       const data = await res.json();
@@ -596,9 +604,17 @@ export const AuthProvider = ({ children }) => {
   // ── Raise Return & Refund Support Ticket ──
   const raiseReturnTicket = useCallback(async (orderId, claimData) => {
     try {
+      const headers = { 'Content-Type': 'application/json' };
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session?.access_token) {
+          headers['Authorization'] = `Bearer ${session.access_token}`;
+        }
+      } catch (_) {}
+
       const res = await fetch(`/api/orders/${orderId}/return`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         body: JSON.stringify(claimData),
       });
       const data = await res.json();

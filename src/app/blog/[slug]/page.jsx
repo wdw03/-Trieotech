@@ -27,8 +27,8 @@ export async function generateMetadata({ params }) {
 
   const title = `${blog.title} | Trio Enterprises`;
   const description = blog.excerpt || 'Read this article from the Trio Enterprises Craft Journal.';
-  const image = blog.image || '/logo.png';
-  const url = `https://trioenterprises.com/blog/${blog.slug}`;
+  const siteUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://trioenterprises.in';
+  const url = `${siteUrl}/blog/${blog.slug}`;
 
   return {
     title,
@@ -60,30 +60,31 @@ export default async function BlogPostPage({ params }) {
     notFound();
   }
 
-  const jsonLd = {
-    '@context': 'https://schema.org',
-    '@type': 'Article',
-    headline: blog.title,
-    description: blog.excerpt,
-    image: blog.image ? (blog.image.startsWith('http') ? [blog.image] : [`https://trioenterprises.com${blog.image}`]) : [],
-    datePublished: blog.date,
-    author: {
-      '@type': 'Person',
-      name: blog.author,
-    },
-    publisher: {
-      '@type': 'Organization',
-      name: 'Trio Enterprises',
-      logo: {
-        '@type': 'ImageObject',
-        url: 'https://trioenterprises.com/logo.png',
+    const siteUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://trioenterprises.in';
+    const jsonLd = {
+      '@context': 'https://schema.org',
+      '@type': 'Article',
+      headline: blog.title,
+      description: blog.excerpt,
+      image: blog.image ? (blog.image.startsWith('http') ? [blog.image] : [`${siteUrl}${blog.image}`]) : [],
+      datePublished: blog.date,
+      author: {
+        '@type': 'Person',
+        name: blog.author,
       },
-    },
-    mainEntityOfPage: {
-      '@type': 'WebPage',
-      '@id': `https://trioenterprises.com/blog/${blog.slug}`,
-    },
-  };
+      publisher: {
+        '@type': 'Organization',
+        name: 'Trio Enterprises',
+        logo: {
+          '@type': 'ImageObject',
+          url: `${siteUrl}/logo.png`,
+        },
+      },
+      mainEntityOfPage: {
+        '@type': 'WebPage',
+        '@id': `${siteUrl}/blog/${blog.slug}`,
+      },
+    };
 
   return (
     <>

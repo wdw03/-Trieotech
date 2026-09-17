@@ -12,7 +12,7 @@ export const metadata = {
   openGraph: {
     title: 'Shop All Indian Ethnic Crafts | Trio Enterprises',
     description: 'Browse the complete catalog of handcrafted Indian ethnic items: patches, copper bottles, pooja aasans & festive crafts.',
-    url: 'https://trioenterprises.com/shop',
+    url: 'https://trioenterprises.in/shop',
   },
 };
 

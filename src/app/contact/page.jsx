@@ -9,7 +9,7 @@ export const metadata = {
   openGraph: {
     title: 'Contact Trio Enterprises | Artisan Support & Inquiries',
     description: 'Get in touch with Trio Enterprises for orders, bridal patch customization, and support.',
-    url: 'https://trioenterprises.com/contact',
+    url: 'https://trioenterprises.in/contact',
   },
 };
 

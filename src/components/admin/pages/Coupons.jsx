@@ -21,7 +21,8 @@ import {
   Copy,
   Package,
   Layers,
-  AlertTriangle
+  AlertTriangle,
+  Edit3
 } from 'lucide-react';
 import {
   BarChart,
@@ -34,7 +35,7 @@ import {
 } from 'recharts';
 
 export const Coupons = () => {
-  const { coupons, addCoupon, toggleCouponStatus, deleteCoupon, products, showToast } = useAdmin();
+  const { coupons, addCoupon, updateCoupon, toggleCouponStatus, deleteCoupon, products, showToast } = useAdmin();
   const isPageLoading = usePageLoading(450);
 
   const [editingCoupon, setEditingCoupon] = useState(null);
@@ -75,6 +76,33 @@ export const Coupons = () => {
       description: 'Special discount on exquisite handcrafted collection',
       expiresAt: getPresetDate(30),
       maxUses: 500
+    });
+    setProductSearch('');
+  };
+
+  const handleEditCoupon = (c) => {
+    let formattedExpires = '';
+    if (c.expiresAt) {
+      const d = new Date(c.expiresAt);
+      if (!isNaN(d.getTime())) {
+        const pad = (n) => String(n).padStart(2, '0');
+        formattedExpires = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+      }
+    }
+
+    setEditingCoupon({
+      id: c.id,
+      code: c.code,
+      type: c.type || (c.discountType === 'percentage' ? 'Percentage' : 'Flat'),
+      value: c.value,
+      minOrderValue: c.minOrderValue ?? c.minSpend ?? 0,
+      maxDiscount: c.maxDiscount || '',
+      productScope: (c.applicableProductIds && c.applicableProductIds.length > 0) ? 'specific' : 'all',
+      applicableProductIds: c.applicableProductIds || [],
+      applicableProductNames: c.applicableProductNames || [],
+      description: c.description || '',
+      expiresAt: formattedExpires,
+      maxUses: c.maxUses || 500
     });
     setProductSearch('');
   };
@@ -160,7 +188,10 @@ export const Coupons = () => {
         applicableProductNames: editingCoupon.productScope === 'specific' ? editingCoupon.applicableProductNames : []
       };
 
-      const res = await addCoupon(payload);
+      const res = editingCoupon.id
+        ? await updateCoupon(editingCoupon.id, payload)
+        : await addCoupon(payload);
+
       if (res?.success) {
         setEditingCoupon(null);
       }
@@ -408,13 +439,21 @@ export const Coupons = () => {
                       Redeemed: <strong className="text-slate-200">{c.usedCount || 0}</strong> / {c.maxUses || 500}
                     </span>
 
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1.5">
+                      <button
+                        onClick={() => handleEditCoupon(c)}
+                        className="p-1.5 text-indigo-400 hover:text-indigo-300 hover:bg-indigo-950/40 rounded-lg transition-colors"
+                        title="Edit coupon"
+                      >
+                        <Edit3 className="w-3.5 h-3.5" />
+                      </button>
+
                       <button
                         onClick={() => toggleCouponStatus(c.id)}
-                        className={`text-[11px] font-semibold transition-colors ${
+                        className={`text-[11px] font-semibold transition-colors px-1.5 py-0.5 rounded ${
                           c.status === 'Active'
-                            ? 'text-amber-400 hover:text-amber-300'
-                            : 'text-emerald-400 hover:text-emerald-300'
+                            ? 'text-amber-400 hover:text-amber-300 hover:bg-amber-950/30'
+                            : 'text-emerald-400 hover:text-emerald-300 hover:bg-emerald-950/30'
                         }`}
                       >
                         {c.status === 'Active' ? 'Deactivate' : 'Activate'}
@@ -443,7 +482,9 @@ export const Coupons = () => {
             <div className="flex items-center justify-between border-b border-slate-800 pb-3 shrink-0">
               <div className="flex items-center gap-2">
                 <TicketPercent className="w-5 h-5 text-indigo-400" />
-                <h3 className="font-bold text-white text-base">Create Discount Coupon</h3>
+                <h3 className="font-bold text-white text-base">
+                  {editingCoupon.id ? `Edit Coupon: ${editingCoupon.code}` : 'Create Discount Coupon'}
+                </h3>
               </div>
               <button
                 onClick={() => setEditingCoupon(null)}
@@ -795,7 +836,7 @@ export const Coupons = () => {
                   className="btn-primary py-2 px-5 text-xs font-bold flex items-center gap-2 shadow-lg disabled:opacity-50"
                 >
                   <Save className="w-4 h-4" />
-                  {isSubmitting ? 'Saving Coupon...' : 'Publish Coupon'}
+                  {isSubmitting ? 'Saving Coupon...' : editingCoupon.id ? 'Save Changes' : 'Publish Coupon'}
                 </button>
               </div>
             </form>

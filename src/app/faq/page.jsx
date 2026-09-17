@@ -12,7 +12,7 @@ export const metadata = {
   openGraph: {
     title: 'Frequently Asked Questions | Trio Enterprises',
     description: 'Find answers regarding craft materials, patch applications, copper maintenance, and delivery.',
-    url: 'https://trioenterprises.com/faq',
+    url: 'https://trioenterprises.in/faq',
   },
 };
 
