@@ -1,17 +1,24 @@
 'use client';
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 
 export const useRecentlyViewed = () => {
-  const [recentlyViewed, setRecentlyViewed] = useState(() => {
+  const [recentlyViewed, setRecentlyViewed] = useState([]);
+  const isInitialized = useRef(false);
+
+  // Safely hydrate from localStorage on client mount only
+  useEffect(() => {
     try {
       const saved = localStorage.getItem('trio_recently_viewed');
-      return saved ? JSON.parse(saved) : [];
-    } catch {
-      return [];
+      if (saved) setRecentlyViewed(JSON.parse(saved));
+    } catch (e) {
+      console.error('Failed to load recently viewed items', e);
+    } finally {
+      isInitialized.current = true;
     }
-  });
+  }, []);
 
   useEffect(() => {
+    if (!isInitialized.current) return;
     try {
       localStorage.setItem('trio_recently_viewed', JSON.stringify(recentlyViewed));
     } catch (e) {

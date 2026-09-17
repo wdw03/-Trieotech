@@ -1,5 +1,5 @@
 'use client';
-import React, { createContext, useContext, useState, useEffect, useMemo } from 'react';
+import React, { createContext, useContext, useState, useEffect, useMemo, useRef } from 'react';
 import { useToast } from './ToastContext';
 import { useAuth } from './AuthContext';
 
@@ -16,23 +16,28 @@ export const CartProvider = ({ children }) => {
   const { user } = useAuth();
   const { addToast } = useToast();
 
-  const [cartItems, setCartItems] = useState(() => {
-    try {
-      const saved = localStorage.getItem('trio_cart');
-      return saved ? JSON.parse(saved) : [];
-    } catch {
-      return [];
-    }
-  });
+  const [cartItems, setCartItems] = useState([]);
+  const [appliedCoupon, setAppliedCoupon] = useState(null);
+  const [shippingPincode, setShippingPincode] = useState('');
+  const isInitialized = useRef(false);
 
-  const [appliedCoupon, setAppliedCoupon] = useState(() => {
+  // Safely hydrate cart from localStorage on client mount only
+  useEffect(() => {
     try {
-      const saved = localStorage.getItem('trio_coupon');
-      return saved ? JSON.parse(saved) : null;
-    } catch {
-      return null;
+      const savedCart = localStorage.getItem('trio_cart');
+      if (savedCart) setCartItems(JSON.parse(savedCart));
+
+      const savedCoupon = localStorage.getItem('trio_coupon');
+      if (savedCoupon) setAppliedCoupon(JSON.parse(savedCoupon));
+
+      const savedPin = localStorage.getItem('trio_pincode');
+      if (savedPin) setShippingPincode(savedPin);
+    } catch (e) {
+      console.error('Failed to load cart from storage:', e);
+    } finally {
+      isInitialized.current = true;
     }
-  });
+  }, []);
 
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
@@ -40,15 +45,6 @@ export const CartProvider = ({ children }) => {
   const [couponError, setCouponError] = useState(null);
   const [couponLoading, setCouponLoading] = useState(false);
   const [availableCoupons, setAvailableCoupons] = useState(Object.values(COUPONS));
-
-  // Dynamic Shiprocket & Quantity-Scaled Shipping State
-  const [shippingPincode, setShippingPincode] = useState(() => {
-    try {
-      return localStorage.getItem('trio_pincode') || '';
-    } catch {
-      return '';
-    }
-  });
   const [shippingDetails, setShippingDetails] = useState(null);
   const [shippingBreakdown, setShippingBreakdown] = useState(null);
   const [serverShippingFee, setServerShippingFee] = useState(0);
@@ -152,6 +148,7 @@ export const CartProvider = ({ children }) => {
   }, []);
 
   useEffect(() => {
+    if (!isInitialized.current) return;
     try {
       localStorage.setItem('trio_cart', JSON.stringify(cartItems));
     } catch (e) {
@@ -160,6 +157,7 @@ export const CartProvider = ({ children }) => {
   }, [cartItems]);
 
   useEffect(() => {
+    if (!isInitialized.current) return;
     try {
       if (appliedCoupon) {
         localStorage.setItem('trio_coupon', JSON.stringify(appliedCoupon));

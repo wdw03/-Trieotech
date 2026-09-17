@@ -61,21 +61,6 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <head>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link
-          href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap"
-          rel="stylesheet"
-        />
-        <link
-          rel="preload"
-          href="/products/fonts/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa2JL7SUc.woff2"
-          as="font"
-          type="font/woff2"
-          crossOrigin="anonymous"
-        />
-      </head>
       <body className="bg-ivory-100 text-stone-900 dark:bg-ethnic-dark dark:text-ethnic-text font-sans antialiased selection:bg-gold-500 selection:text-maroon-950 transition-colors duration-200" suppressHydrationWarning>
         <Providers>
           <StorefrontShell>

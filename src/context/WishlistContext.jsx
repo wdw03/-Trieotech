@@ -1,22 +1,27 @@
 'use client';
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { useToast } from './ToastContext';
 
 const WishlistContext = createContext();
 
 export const WishlistProvider = ({ children }) => {
-  const [wishlist, setWishlist] = useState(() => {
+  const [wishlist, setWishlist] = useState([]);
+  const isInitialized = useRef(false);
+
+  // Safely hydrate wishlist from localStorage on client mount only
+  useEffect(() => {
     try {
       const saved = localStorage.getItem('trio_wishlist');
-      return saved ? JSON.parse(saved) : [];
-    } catch {
-      return [];
+      if (saved) setWishlist(JSON.parse(saved));
+    } catch (e) {
+      console.error('Failed to load wishlist', e);
+    } finally {
+      isInitialized.current = true;
     }
-  });
-
-  const { addToast } = useToast();
+  }, []);
 
   useEffect(() => {
+    if (!isInitialized.current) return;
     try {
       localStorage.setItem('trio_wishlist', JSON.stringify(wishlist));
     } catch (e) {
