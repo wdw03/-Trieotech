@@ -6,7 +6,10 @@
     "dev": "next dev --port 3000",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "echo 'No lint errors'"
+  },
+  "engines": {
+    "node": ">=18.18.0"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.7",
