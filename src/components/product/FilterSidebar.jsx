@@ -47,19 +47,25 @@ export const FilterSidebar = ({
   ];
 
   const handleCategoryToggle = (cat) => {
+    if (cat === 'all' || !cat) {
+      setFilters(prev => ({ ...prev, categories: [] }));
+      return;
+    }
+
     const catName = typeof cat === 'string' ? cat : cat.name;
     const catSlug = typeof cat === 'string' ? normalizeCategorySlug(cat) : normalizeCategorySlug(cat.slug || cat.name);
 
     setFilters(prev => {
       const current = prev.categories || [];
       const isSelected = current.some(c => normalizeCategorySlug(c) === catSlug);
-      let updated;
-      if (isSelected) {
-        updated = current.filter(c => normalizeCategorySlug(c) !== catSlug);
-      } else {
-        updated = [...current, catName];
+
+      // If already selected exclusively, clicking it toggles off to All Categories
+      if (isSelected && current.length === 1) {
+        return { ...prev, categories: [] };
       }
-      return { ...prev, categories: updated };
+
+      // Otherwise, select this category exclusively so it applies cleanly to products
+      return { ...prev, categories: [catName] };
     });
   };
 
@@ -149,10 +155,47 @@ export const FilterSidebar = ({
 
       {/* Craft Categories Filter */}
       <div className="space-y-2.5 pt-2 border-t border-gold-500/20">
-        <span className="font-serif font-bold text-sm text-stone-900 dark:text-ivory-100 block">
-          Categories
-        </span>
-        <div className="space-y-1.5 max-h-48 overflow-y-auto pr-1">
+        <div className="flex items-center justify-between">
+          <span className="font-serif font-bold text-sm text-stone-900 dark:text-ivory-100 block">
+            Categories
+          </span>
+          {filters.categories && filters.categories.length > 0 && (
+            <button
+              type="button"
+              onClick={() => handleCategoryToggle('all')}
+              className="text-[10px] text-maroon-700 dark:text-gold-400 font-bold hover:underline cursor-pointer"
+            >
+              Show All ({products?.length || 45})
+            </button>
+          )}
+        </div>
+        <div className="space-y-1.5 max-h-56 overflow-y-auto pr-1">
+          {/* All Categories Option */}
+          <button
+            type="button"
+            onClick={() => handleCategoryToggle('all')}
+            className={`w-full flex items-center justify-between p-1.5 rounded-lg hover:bg-gold-500/10 cursor-pointer transition-colors text-left ${
+              !filters.categories || filters.categories.length === 0 ? 'bg-gold-500/15 font-bold' : ''
+            }`}
+          >
+            <div className="flex items-center gap-2">
+              <div
+                className={`w-4 h-4 rounded border flex items-center justify-center transition-colors ${
+                  !filters.categories || filters.categories.length === 0
+                    ? 'bg-maroon-700 border-maroon-700 text-white'
+                    : 'border-stone-300 dark:border-stone-600'
+                }`}
+              >
+                {(!filters.categories || filters.categories.length === 0) && <Check className="w-3 h-3 stroke-[3]" />}
+              </div>
+              <span className={!filters.categories || filters.categories.length === 0 ? 'font-bold text-maroon-800 dark:text-gold-400' : ''}>
+                All Categories
+              </span>
+            </div>
+            <span className="text-[10px] text-stone-400">({products?.length || 45})</span>
+          </button>
+
+          {/* Individual Categories */}
           {categoriesList.map((cat) => {
             const catSlug = normalizeCategorySlug(cat.slug || cat.name);
             const isChecked = filters.categories?.some(c => normalizeCategorySlug(c) === catSlug);
@@ -170,7 +213,9 @@ export const FilterSidebar = ({
                 key={cat.id || cat.slug || cat.name}
                 type="button"
                 onClick={() => handleCategoryToggle(cat)}
-                className="w-full flex items-center justify-between p-1.5 rounded-lg hover:bg-gold-500/10 cursor-pointer transition-colors text-left"
+                className={`w-full flex items-center justify-between p-1.5 rounded-lg hover:bg-gold-500/10 cursor-pointer transition-colors text-left ${
+                  isChecked ? 'bg-gold-500/15' : ''
+                }`}
               >
                 <div className="flex items-center gap-2">
                   <div

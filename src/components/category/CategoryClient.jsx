@@ -70,34 +70,86 @@ export default function CategoryClient({ initialSlug }) {
     return null;
   }, [slug, categoriesList, allProducts]);
 
-  const [filters, setFilters] = useState({
-    categories: [],
-    maxPrice: 3000,
-    inStockOnly: false,
-    minRating: 0,
-    isBestSeller: false,
-    isFestivalSpecial: false,
-    isWeddingSpecial: false,
-    isHandmade: false,
-    isNew: false,
-    isTrending: false,
+  // Derive initial category name from slug
+  const initialCategoryName = useMemo(() => {
+    const found = categoriesList.find(c => c.slug?.toLowerCase() === slug?.toLowerCase()) || getCategoryBySlug(slug);
+    return found?.name || slug || '';
+  }, [slug, categoriesList]);
+
+  const [filters, setFilters] = useState(() => {
+    const initialName = getCategoryBySlug(initialSlug)?.name 
+      || fallbackCategories.find(c => c.slug?.toLowerCase() === initialSlug?.toLowerCase())?.name 
+      || initialSlug;
+    return {
+      categories: initialSlug ? [initialName] : [],
+      maxPrice: 3000,
+      inStockOnly: false,
+      minRating: 0,
+      isBestSeller: false,
+      isFestivalSpecial: false,
+      isWeddingSpecial: false,
+      isHandmade: false,
+      isNew: false,
+      isTrending: false,
+    };
   });
 
-  // When currentCategory resolves, set it as the active category filter if not already set
+  const previousSlugRef = React.useRef(slug);
+  // Sync only when route slug actually changes from one page navigation to another
   React.useEffect(() => {
-    if (currentCategory?.name) {
-      setFilters(prev => {
-        if (!prev.categories || prev.categories.length === 0) {
-          return { ...prev, categories: [currentCategory.name] };
-        }
-        return prev;
-      });
+    if (slug && slug !== previousSlugRef.current) {
+      previousSlugRef.current = slug;
+      const found = categoriesList.find(c => c.slug?.toLowerCase() === slug?.toLowerCase()) || getCategoryBySlug(slug);
+      const catName = found?.name || slug;
+      setFilters(prev => ({
+        ...prev,
+        categories: [catName]
+      }));
+      setSelectedSubcategory(null);
     }
-  }, [currentCategory]);
+  }, [slug, categoriesList]);
+
+  // Whenever category filter changes, reset subcategory selection so it doesn't block other categories
+  React.useEffect(() => {
+    setSelectedSubcategory(null);
+  }, [filters.categories]);
+
+  // Sync browser URL dynamically with selected category
+  React.useEffect(() => {
+    if (typeof window !== 'undefined') {
+      if (filters.categories && filters.categories.length === 1) {
+        const targetSlug = normalizeCategorySlug(filters.categories[0]);
+        if (targetSlug && window.location.pathname !== `/category/${targetSlug}`) {
+          window.history.replaceState(null, '', `/category/${targetSlug}`);
+        }
+      } else if (filters.categories && filters.categories.length === 0) {
+        if (window.location.pathname.startsWith('/category/')) {
+          window.history.replaceState(null, '', '/shop');
+        }
+      }
+    }
+  }, [filters.categories]);
+
+  // Active category details (dynamically follows single selected category in sidebar)
+  const activeDisplayCategory = useMemo(() => {
+    if (filters.categories && filters.categories.length === 1) {
+      const targetSlug = normalizeCategorySlug(filters.categories[0]);
+      const found = categoriesList.find(c => normalizeCategorySlug(c.slug || c.name) === targetSlug)
+        || getCategoryBySlug(targetSlug);
+      if (found) return found;
+      return {
+        name: filters.categories[0],
+        slug: targetSlug,
+        image: '/products/shreenathji-statement-patch-1.jpg',
+        description: `Explore our collection of authentic ${filters.categories[0]} handcrafted by Indian artisans.`
+      };
+    }
+    return currentCategory;
+  }, [filters.categories, categoriesList, currentCategory]);
 
   const resetFilters = () => {
     setFilters({
-      categories: currentCategory?.name ? [currentCategory.name] : [],
+      categories: [],
       maxPrice: 3000,
       inStockOnly: false,
       minRating: 0,
@@ -217,7 +269,16 @@ export default function CategoryClient({ initialSlug }) {
       <Breadcrumb
         items={[
           { name: 'Categories', url: '/shop' },
-          { name: currentCategory.name, url: `/category/${currentCategory.slug}` }
+          {
+            name: filters.categories?.length === 1
+              ? filters.categories[0]
+              : filters.categories?.length === 0
+              ? 'All Crafts'
+              : 'Filtered Collection',
+            url: filters.categories?.length === 1
+              ? `/category/${normalizeCategorySlug(filters.categories[0])}`
+              : '/shop'
+          }
         ]}
       />
 
@@ -226,8 +287,8 @@ export default function CategoryClient({ initialSlug }) {
         {/* Background Image Overlay */}
         <div className="absolute right-0 inset-y-0 w-full md:w-1/2 opacity-25 md:opacity-35 pointer-events-none">
           <img
-            src={currentCategory.banner || currentCategory.image}
-            alt={currentCategory.name}
+            src={activeDisplayCategory?.banner || activeDisplayCategory?.image || currentCategory?.image}
+            alt={activeDisplayCategory?.name || currentCategory?.name}
             className="w-full h-full object-cover object-center"
           />
         </div>
@@ -237,13 +298,23 @@ export default function CategoryClient({ initialSlug }) {
             <Sparkles className="w-3.5 h-3.5 text-gold-400" /> Artisan Craft Guild
           </span>
           <h1 className="font-serif font-black text-2xl sm:text-4xl text-ivory-100">
-            {currentCategory.name}
+            {filters.categories && filters.categories.length === 1
+              ? filters.categories[0]
+              : filters.categories && filters.categories.length > 1
+              ? 'Selected Craft Collections'
+              : filters.categories && filters.categories.length === 0
+              ? 'All Handcrafted Crafts'
+              : currentCategory.name}
           </h1>
           <p className="text-xs sm:text-sm text-stone-300 leading-relaxed font-normal">
-            {currentCategory.description}
+            {filters.categories && filters.categories.length === 1
+              ? (activeDisplayCategory?.description || `Browsing authentic handcrafted items celebrating traditional Indian artisan heritage.`)
+              : filters.categories && filters.categories.length === 0
+              ? `Browsing our complete artisan craft catalog across all traditional Indian handicraft categories.`
+              : `Browsing authentic handcrafted items celebrating traditional Indian artisan heritage.`}
           </p>
           <div className="pt-1 text-xs font-bold text-gold-300">
-            {categoryProducts.length} Handcrafted Products Available
+            {filteredProducts.length} Handcrafted Products Available
           </div>
         </div>
       </div>
@@ -259,7 +330,7 @@ export default function CategoryClient({ initialSlug }) {
                 : 'bg-white dark:bg-stone-900 text-stone-700 dark:text-stone-300 border border-gold-500/20 hover:border-gold-500'
             }`}
           >
-            All {currentCategory.name}
+            All {filters.categories?.length === 1 ? filters.categories[0] : 'Crafts'}
           </button>
           {availableSubcategories.map((sub) => (
             <button
