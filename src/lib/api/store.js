@@ -44,7 +44,10 @@ export function normalizeProduct(p) {
   }
 
   const price = Number(p.price) || 0;
-  const originalPrice = Number(p.original_price ?? p.originalPrice) || price;
+  let originalPrice = Number(p.original_price ?? p.originalPrice) || price;
+  if (originalPrice < price && price > 0) {
+    originalPrice = Math.round(price * 1.5);
+  }
 
   // Normalize colors with variant stocks and prices
   let colors = [];

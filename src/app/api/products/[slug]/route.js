@@ -3,6 +3,7 @@ export const revalidate = 0;
 import { NextResponse } from 'next/server';
 import { getProductBySlug, getProductById } from '../../../../lib/api/products';
 import { products as fallbackProducts } from '../../../../data/products';
+import { normalizeProduct } from '../../../../lib/api/store';
 
 // GET: Fetch single product by slug or id
 export async function GET(request, { params }) {
@@ -38,7 +39,7 @@ export async function GET(request, { params }) {
       return NextResponse.json({ error: 'Product not found' }, { status: 404 });
     }
 
-    return NextResponse.json({ product });
+    return NextResponse.json({ product: normalizeProduct(product) });
   } catch (err) {
     return NextResponse.json({ error: err.message }, { status: 500 });
   }

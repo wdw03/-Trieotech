@@ -1,5 +1,6 @@
 import { products, getProductBySlug as getFallbackProductBySlug } from '../../../data/products';
 import { getProductBySlug as getLiveProductBySlug } from '../../../lib/api/products';
+import { normalizeProduct } from '../../../lib/api/store';
 import ProductClient from '../../../components/product/ProductClient';
 import { notFound } from 'next/navigation';
 
@@ -22,9 +23,10 @@ async function findProduct(rawSlug) {
         live = await getLiveProductBySlug(slug);
       }
     }
-    if (live) return live;
+    if (live) return normalizeProduct(live);
   } catch (_) {}
-  return getFallbackProductBySlug(slug) || products.find((p) => p.slug?.toLowerCase() === slug.toLowerCase() || p.id === Number(slug)) || null;
+  const fallback = getFallbackProductBySlug(slug) || products.find((p) => p.slug?.toLowerCase() === slug.toLowerCase() || p.id === Number(slug)) || null;
+  return fallback ? normalizeProduct(fallback) : null;
 }
 
 export async function generateStaticParams() {

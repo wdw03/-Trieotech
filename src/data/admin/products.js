@@ -1531,9 +1531,9 @@ const products = [
     "category": "Flower Bunch",
     "subcategory": "Puja & Ritual Flower Heads",
     "brand": "Trio Ecart",
-    "price": 365,
+    "price": 370,
     "originalPrice": 485,
-    "discount": 25,
+    "discount": 24,
     "rating": 5,
     "reviewCount": 3,
     "images": [
@@ -1545,7 +1545,7 @@ const products = [
       {
         "name": "Classic Crimson Red",
         "hex": "#C62828",
-        "price": 365,
+        "price": 370,
         "originalPrice": 485,
         "image": "/products/red-rose-1.jpg"
       }
@@ -2723,9 +2723,9 @@ const products = [
     "category": "Aasan",
     "subcategory": "Velvet Pooja Aasan",
     "brand": "Trio Ecart",
-    "price": 249,
-    "originalPrice": 599,
-    "discount": 58,
+    "price": 695,
+    "originalPrice": 1499,
+    "discount": 54,
     "rating": 5,
     "reviewCount": 2,
     "images": [
@@ -2738,8 +2738,8 @@ const products = [
       {
         "name": "Multicolor Lotus Petals with Golden Jari Lace",
         "hex": "#FF4081",
-        "price": 249,
-        "originalPrice": 599,
+        "price": 695,
+        "originalPrice": 1499,
         "image": "/products/lotus-kamal-aasan-1.jpg"
       }
     ],
