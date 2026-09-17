@@ -163,11 +163,23 @@ async function handleUpdateProduct(request, { params }) {
     if (body.countryOfOrigin !== undefined) updates.country_of_origin = body.countryOfOrigin;
 
     // Descriptions & Specifications
-    if (body.description !== undefined) updates.description = body.description;
-    if (body.short_description !== undefined) updates.short_description = body.short_description;
-    if (body.shortDescription !== undefined) updates.short_description = body.shortDescription;
-    if (body.full_description !== undefined) updates.full_description = body.full_description;
-    if (body.fullDescription !== undefined) updates.full_description = body.fullDescription;
+    const hasDesc = body.description !== undefined;
+    const hasShort = body.short_description !== undefined || body.shortDescription !== undefined;
+    const hasFull = body.full_description !== undefined || body.fullDescription !== undefined;
+
+    if (hasDesc || hasShort || hasFull) {
+      const rawShort = body.short_description !== undefined ? body.short_description : body.shortDescription;
+      const rawFull = body.full_description !== undefined ? body.full_description : body.fullDescription;
+      const rawDesc = body.description;
+
+      const resolvedDesc = rawDesc !== undefined ? rawDesc : (rawFull !== undefined ? rawFull : rawShort);
+      const resolvedFull = rawFull !== undefined ? rawFull : resolvedDesc;
+      const resolvedShort = rawShort !== undefined ? rawShort : (resolvedDesc ? String(resolvedDesc).slice(0, 160) : '');
+
+      if (resolvedDesc !== undefined) updates.description = resolvedDesc;
+      if (resolvedFull !== undefined) updates.full_description = resolvedFull;
+      if (resolvedShort !== undefined) updates.short_description = resolvedShort;
+    }
     if (body.specifications !== undefined) {
       updates.specifications = typeof body.specifications === 'object' && body.specifications !== null ? body.specifications : {};
     }

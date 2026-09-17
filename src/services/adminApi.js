@@ -64,6 +64,10 @@ export const adminApi = {
         } : { name: String(c), hex: '#C5A028', stock: inStock ? stock : 0, price, originalPrice: origPrice })
       : [];
 
+    const desc = p.description || p.full_description || p.fullDescription || p.short_description || p.shortDescription || '';
+    const fullDesc = p.full_description || p.fullDescription || desc || '';
+    const shortDesc = p.short_description || p.shortDescription || (desc ? String(desc).slice(0, 160) : '') || '';
+
     return {
       ...p,
       id: Number(p.id),
@@ -76,6 +80,11 @@ export const adminApi = {
       is_visible: isVisible,
       isVisible,
       colors,
+      description: desc,
+      shortDescription: shortDesc,
+      short_description: shortDesc,
+      fullDescription: fullDesc,
+      full_description: fullDesc,
     };
   },
 

@@ -142,6 +142,23 @@ export const Products = () => {
     setActiveEditorTab('basic');
   };
 
+  // Open editor for existing product with normalized descriptions
+  const handleOpenEditProduct = (p) => {
+    const desc = p.description || p.fullDescription || p.full_description || p.shortDescription || p.short_description || '';
+    const fullDesc = p.fullDescription || p.full_description || desc || '';
+    const shortDesc = p.shortDescription || p.short_description || (desc ? String(desc).slice(0, 160) : '') || '';
+
+    setEditingProduct({
+      ...p,
+      description: desc,
+      fullDescription: fullDesc,
+      full_description: fullDesc,
+      shortDescription: shortDesc,
+      short_description: shortDesc,
+    });
+    setActiveEditorTab('basic');
+  };
+
   // Save product from editor
   const handleSaveProduct = (e) => {
     e.preventDefault();
@@ -228,8 +245,17 @@ export const Products = () => {
         })
       : [];
 
+    const descVal = String(editingProduct.description || editingProduct.fullDescription || editingProduct.full_description || editingProduct.shortDescription || editingProduct.short_description || '').trim();
+    const fullDescVal = String(editingProduct.fullDescription || editingProduct.full_description || descVal || '').trim();
+    const shortDescVal = String(editingProduct.shortDescription || editingProduct.short_description || (descVal ? descVal.slice(0, 160) : '')).trim();
+
     const payload = {
       ...editingProduct,
+      description: descVal || fullDescVal || shortDescVal,
+      fullDescription: fullDescVal || descVal,
+      full_description: fullDescVal || descVal,
+      shortDescription: shortDescVal || (descVal ? descVal.slice(0, 160) : ''),
+      short_description: shortDescVal || (descVal ? descVal.slice(0, 160) : ''),
       images: finalImages,
       image: primaryImg,
       colors: colorsVal,
@@ -474,7 +500,13 @@ export const Products = () => {
 
                     {/* Name, Slug, Category */}
                     <td className="table-td max-w-xs">
-                      <p className="font-bold text-slate-100 text-xs truncate leading-snug">{p.name}</p>
+                      <p
+                        onClick={() => handleOpenEditProduct(p)}
+                        className="font-bold text-slate-100 text-xs truncate leading-snug cursor-pointer hover:text-indigo-400 transition-colors"
+                        title="Click to edit product"
+                      >
+                        {p.name}
+                      </p>
                       <div className="flex items-center gap-2 text-[11px] text-slate-400 mt-1">
                         <span className="text-indigo-400 font-semibold">{p.category}</span>
                         <span>•</span>
@@ -632,11 +664,8 @@ export const Products = () => {
                     <td className="table-td text-right">
                       <div className="flex items-center justify-end gap-1">
                         <button
-                          onClick={() => {
-                            setEditingProduct({ ...p });
-                            setActiveEditorTab('basic');
-                          }}
-                          className="p-1.5 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors"
+                          onClick={() => handleOpenEditProduct(p)}
+                          className="p-1.5 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors cursor-pointer"
                           title="Edit Product Details"
                         >
                           <Edit2 className="w-4 h-4" />
@@ -796,6 +825,36 @@ export const Products = () => {
                         className="admin-input w-full text-xs"
                       />
                     </div>
+                  </div>
+
+                  <div>
+                    <div className="flex items-center justify-between mb-1">
+                      <label className="font-semibold text-slate-300 block">Product Authentic Description *</label>
+                      <button
+                        type="button"
+                        onClick={() => setActiveEditorTab('details')}
+                        className="text-[11px] text-indigo-400 hover:text-indigo-300 hover:underline cursor-pointer"
+                      >
+                        Advanced Specs &amp; Details Tab (Tab 5) →
+                      </button>
+                    </div>
+                    <textarea
+                      rows={4}
+                      value={editingProduct.fullDescription || editingProduct.description || editingProduct.shortDescription || ''}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setEditingProduct({
+                          ...editingProduct,
+                          description: val,
+                          fullDescription: val,
+                          full_description: val,
+                          shortDescription: editingProduct.shortDescription || (val.length > 160 ? val.slice(0, 160) : val),
+                          short_description: editingProduct.short_description || (val.length > 160 ? val.slice(0, 160) : val),
+                        });
+                      }}
+                      placeholder="Enter full authentic product description, details, craftsmanship story..."
+                      className="admin-input w-full text-xs leading-relaxed"
+                    />
                   </div>
                 </div>
               )}
@@ -1404,22 +1463,48 @@ export const Products = () => {
               {activeEditorTab === 'details' && (
                 <div className="space-y-4 animate-fadeIn">
                   <div>
-                    <label className="font-semibold text-slate-300 block mb-1">Short Description</label>
+                    <div className="flex items-center justify-between mb-1">
+                      <label className="font-semibold text-slate-300 block">Full Authentic Description</label>
+                      <span className="text-[10px] text-indigo-400 font-medium">Appears in "Detailed Description" tab on live storefront</span>
+                    </div>
                     <textarea
-                      rows={2}
-                      value={editingProduct.shortDescription || ''}
-                      onChange={(e) => setEditingProduct({ ...editingProduct, shortDescription: e.target.value })}
-                      className="admin-input w-full text-xs"
+                      rows={5}
+                      value={editingProduct.fullDescription || editingProduct.description || ''}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setEditingProduct({
+                          ...editingProduct,
+                          fullDescription: val,
+                          full_description: val,
+                          description: val,
+                          shortDescription: editingProduct.shortDescription || (val.length > 160 ? val.slice(0, 160) : val),
+                          short_description: editingProduct.short_description || (val.length > 160 ? val.slice(0, 160) : val),
+                        });
+                      }}
+                      placeholder="Detailed authentic handicraft story, materials used, embroidery technique, styling guidance..."
+                      className="admin-input w-full text-xs leading-relaxed"
                     />
                   </div>
 
                   <div>
-                    <label className="font-semibold text-slate-300 block mb-1">Full Authentic Description</label>
+                    <div className="flex items-center justify-between mb-1">
+                      <label className="font-semibold text-slate-300 block">Short Description / Overview Hook</label>
+                      <span className="text-[10px] text-slate-500">1-2 sentences for card previews &amp; sharing</span>
+                    </div>
                     <textarea
-                      rows={4}
-                      value={editingProduct.fullDescription || ''}
-                      onChange={(e) => setEditingProduct({ ...editingProduct, fullDescription: e.target.value })}
-                      className="admin-input w-full text-xs"
+                      rows={2}
+                      value={editingProduct.shortDescription || editingProduct.short_description || ''}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setEditingProduct({
+                          ...editingProduct,
+                          shortDescription: val,
+                          short_description: val,
+                          description: editingProduct.description || val,
+                        });
+                      }}
+                      placeholder="Concise 1-2 sentence hook describing the item..."
+                      className="admin-input w-full text-xs leading-relaxed"
                     />
                   </div>
                 </div>

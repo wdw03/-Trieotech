@@ -559,6 +559,11 @@ export const AdminProvider = ({ children }) => {
       sizes: newProduct.sizes || [],
       features: newProduct.features || [],
       specifications: newProduct.specifications || {},
+      description: newProduct.description || newProduct.fullDescription || newProduct.full_description || newProduct.shortDescription || newProduct.short_description || '',
+      fullDescription: newProduct.fullDescription || newProduct.full_description || newProduct.description || '',
+      full_description: newProduct.full_description || newProduct.fullDescription || newProduct.description || '',
+      shortDescription: newProduct.shortDescription || newProduct.short_description || (newProduct.description ? String(newProduct.description).slice(0, 160) : '') || '',
+      short_description: newProduct.short_description || newProduct.shortDescription || (newProduct.description ? String(newProduct.description).slice(0, 160) : '') || '',
     };
 
     setProducts((prev) => [created, ...prev]);
@@ -633,6 +638,18 @@ export const AdminProvider = ({ children }) => {
               }));
             }
           }
+
+          if (updatedFields.shortDescription !== undefined || updatedFields.short_description !== undefined || updatedFields.fullDescription !== undefined || updatedFields.full_description !== undefined || updatedFields.description !== undefined) {
+            const d = updatedFields.description ?? updatedFields.fullDescription ?? updatedFields.full_description ?? updatedFields.shortDescription ?? updatedFields.short_description ?? merged.description ?? '';
+            const f = updatedFields.fullDescription ?? updatedFields.full_description ?? d ?? merged.fullDescription ?? merged.full_description ?? '';
+            const s = updatedFields.shortDescription ?? updatedFields.short_description ?? (d ? String(d).slice(0, 160) : '') ?? merged.shortDescription ?? merged.short_description ?? '';
+            merged.description = d;
+            merged.fullDescription = f;
+            merged.full_description = f;
+            merged.shortDescription = s;
+            merged.short_description = s;
+          }
+
           return merged;
         }
         return p;

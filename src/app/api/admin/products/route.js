@@ -94,6 +94,11 @@ export function normalizeProduct(p) {
       breadth: Number(p.breadth || 10.0),
       height: Number(p.height || 5.0),
     },
+    description: p.description || p.full_description || p.fullDescription || p.short_description || p.shortDescription || '',
+    shortDescription: p.short_description || p.shortDescription || (p.description ? String(p.description).slice(0, 160) : '') || '',
+    short_description: p.short_description || p.shortDescription || (p.description ? String(p.description).slice(0, 160) : '') || '',
+    fullDescription: p.full_description || p.fullDescription || p.description || p.short_description || '',
+    full_description: p.full_description || p.fullDescription || p.description || p.short_description || '',
   };
 }
 
