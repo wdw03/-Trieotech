@@ -281,7 +281,7 @@ export const ProductCard = ({ product, onQuickView = null, viewMode = 'grid' }) 
   // Grid View (Default)
   return (
     <div
-      className="group relative ethnic-card flex flex-col h-full overflow-hidden transition-all duration-300 hover:-translate-y-1.5"
+      className="group relative ethnic-card flex flex-col h-full overflow-hidden transition-all duration-300 hover:-translate-y-1.5 w-full max-w-full min-w-0"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
@@ -370,18 +370,20 @@ export const ProductCard = ({ product, onQuickView = null, viewMode = 'grid' }) 
       </div>
 
       {/* Product Content Info */}
-      <div className="p-3.5 sm:p-4 flex flex-col flex-1 justify-between gap-2.5">
-        <div>
+      <div className="p-2.5 sm:p-4 flex flex-col flex-1 justify-between gap-2 sm:gap-2.5 min-w-0">
+        <div className="min-w-0">
           {/* Category & Rating */}
-          <div className="flex items-center justify-between gap-2 text-[11px] text-stone-500 dark:text-stone-400">
-            <span className="font-semibold uppercase tracking-wider text-gold-700 dark:text-gold-400 truncate">
+          <div className="flex items-center justify-between gap-1 sm:gap-2 text-[10px] sm:text-[11px] text-stone-500 dark:text-stone-400 min-w-0">
+            <span className="font-semibold uppercase tracking-wider text-gold-700 dark:text-gold-400 truncate min-w-0">
               {product.category}
             </span>
-            <RatingStars rating={product.rating || 4.8} reviewCount={product.reviewCount || 10} size="xs" />
+            <div className="shrink-0">
+              <RatingStars rating={product.rating || 4.8} reviewCount={product.reviewCount || 10} size="xs" />
+            </div>
           </div>
 
           {/* Product Title */}
-          <Link href={`/product/${product.slug}`} className="block mt-1">
+          <Link href={`/product/${product.slug}`} className="block mt-1 min-w-0">
             <h3 className="font-serif font-bold text-xs sm:text-sm text-stone-900 dark:text-ivory-100 line-clamp-2 leading-snug group-hover:text-maroon-700 dark:group-hover:text-gold-400 transition-colors">
               {product.name}
             </h3>
@@ -390,7 +392,7 @@ export const ProductCard = ({ product, onQuickView = null, viewMode = 'grid' }) 
 
         {/* Variant Swatches (if available) */}
         {product.colors && product.colors.length > 1 && (
-          <div className="flex items-center gap-1.5 pt-1">
+          <div className="flex items-center gap-1.5 pt-1 overflow-hidden">
             {product.colors.slice(0, 4).map((col, idx) => (
               <button
                 key={idx}
@@ -398,7 +400,7 @@ export const ProductCard = ({ product, onQuickView = null, viewMode = 'grid' }) 
                   e.preventDefault();
                   setSelectedColor(col);
                 }}
-                className={`w-4 h-4 rounded-full border transition-all ${selectedColor?.name === col.name
+                className={`w-3.5 h-3.5 sm:w-4 sm:h-4 rounded-full border transition-all shrink-0 ${selectedColor?.name === col.name
                     ? 'ring-2 ring-gold-500 ring-offset-1 scale-110'
                     : 'opacity-80 hover:opacity-100 hover:scale-105'
                   }`}
@@ -408,34 +410,34 @@ export const ProductCard = ({ product, onQuickView = null, viewMode = 'grid' }) 
               />
             ))}
             {product.colors.length > 4 && (
-              <span className="text-[10px] text-stone-400">+{product.colors.length - 4}</span>
+              <span className="text-[9px] sm:text-[10px] text-stone-400 shrink-0">+{product.colors.length - 4}</span>
             )}
           </div>
         )}
 
         {/* Price & Mobile Add Button */}
-        <div className="pt-2 border-t border-gold-500/10 dark:border-stone-800 flex items-center justify-between gap-2">
-          <div>
-            <div className="flex items-baseline gap-1.5 flex-wrap">
-              <span className="font-serif font-extrabold text-base sm:text-lg text-maroon-800 dark:text-gold-400">
+        <div className="pt-2 border-t border-gold-500/10 dark:border-stone-800 flex items-center justify-between gap-1 sm:gap-2 min-w-0">
+          <div className="min-w-0 flex-1">
+            <div className="flex items-baseline gap-1 sm:gap-1.5 flex-wrap min-w-0">
+              <span className="font-serif font-extrabold text-sm xs:text-base sm:text-lg text-maroon-800 dark:text-gold-400">
                 ₹{activePrice?.toLocaleString('en-IN')}
               </span>
               {activeOriginalPrice && activeOriginalPrice > activePrice && (
-                <span className="text-xs text-stone-400 line-through">
+                <span className="text-[10px] sm:text-xs text-stone-400 line-through">
                   ₹{activeOriginalPrice?.toLocaleString('en-IN')}
                 </span>
               )}
             </div>
-            <div className="flex items-center gap-1.5 mt-0.5">
+            <div className="flex items-center gap-1 sm:gap-1.5 mt-0.5 min-w-0">
               {isOutOfStock ? (
-                <span className="text-[10px] text-rose-600 font-bold">● Out of Stock</span>
+                <span className="text-[9px] sm:text-[10px] text-rose-600 font-bold truncate">● Out of Stock</span>
               ) : remainingStock <= 10 ? (
-                <span className="text-[10px] text-amber-600 font-bold animate-pulse">● Only {remainingStock} left!</span>
+                <span className="text-[9px] sm:text-[10px] text-amber-600 font-bold animate-pulse truncate">● Only {remainingStock} left!</span>
               ) : (
-                <span className="text-[10px] text-emerald-600 font-semibold">● In Stock</span>
+                <span className="text-[9px] sm:text-[10px] text-emerald-600 font-semibold truncate">● In Stock</span>
               )}
               {totalSold > 0 && (
-                <span className="text-[10px] text-stone-400">({totalSold} sold)</span>
+                <span className="hidden xs:inline text-[9px] sm:text-[10px] text-stone-400 truncate">({totalSold} sold)</span>
               )}
             </div>
           </div>
@@ -444,14 +446,14 @@ export const ProductCard = ({ product, onQuickView = null, viewMode = 'grid' }) 
           <button
             onClick={handleQuickAdd}
             disabled={isOutOfStock}
-            className={`sm:hidden p-2 rounded-lg transition-all ${isOutOfStock
+            className={`sm:hidden p-1.5 xs:p-2 rounded-lg transition-all shrink-0 ${isOutOfStock
                 ? 'bg-stone-300 dark:bg-stone-800 text-stone-500 cursor-not-allowed border border-stone-400/30'
                 : 'bg-maroon-700 text-white hover:bg-maroon-800 active:scale-95 shadow-xs cursor-pointer'
               }`}
             aria-label="Add to cart"
             title={isOutOfStock ? "Out of Stock" : "Add to cart"}
           >
-            <ShoppingBag className="w-4 h-4" />
+            <ShoppingBag className="w-3.5 h-3.5 xs:w-4 xs:h-4" />
           </button>
         </div>
       </div>

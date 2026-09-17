@@ -427,8 +427,9 @@ export const Navbar = () => {
           </div>
         </div>
 
-        {/* Mobile Search Bar Row with Live Dropdown */}
-        <div ref={mobileSearchContainerRef} className="md:hidden mt-2.5 pt-2.5 border-t border-gold-500/10 w-full relative z-40">
+        {/* Mobile Search Bar Row with Live Dropdown (hidden on /search page to prevent redundant double search bar) */}
+        {!pathname?.startsWith('/search') && (
+          <div ref={mobileSearchContainerRef} className="md:hidden mt-2.5 pt-2.5 border-t border-gold-500/10 w-full relative z-40">
           <form onSubmit={handleSearchSubmit} className="relative w-full">
             <input
               id="navbar_search_mobile"
@@ -494,6 +495,7 @@ export const Navbar = () => {
             </div>
           )}
         </div>
+        )}
       </div>
 
       {/* Desktop Secondary Category Navigation Links */}

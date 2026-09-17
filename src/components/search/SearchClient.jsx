@@ -218,8 +218,18 @@ export default function SearchClient() {
     return pool.slice(0, 4);
   }, [rawResults, filteredResults, allProducts]);
 
+  // Dismiss on-screen mobile keyboard when touching/scrolling results
+  const dismissMobileKeyboard = () => {
+    if (typeof document !== 'undefined' && document.activeElement instanceof HTMLElement) {
+      if (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA') {
+        document.activeElement.blur();
+      }
+    }
+  };
+
   const handleSelectSearchTerm = (term) => {
     setInputQuery(term);
+    dismissMobileKeyboard();
     router.push(`/search?q=${encodeURIComponent(term)}`);
   };
 
@@ -228,48 +238,65 @@ export default function SearchClient() {
     localStorage.removeItem('trio_recent_searches');
   };
 
+  const handleSearchFormSubmit = (e) => {
+    e.preventDefault();
+    dismissMobileKeyboard();
+  };
+
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 pt-4 sm:pt-6 pb-16 space-y-6 relative z-10">
+    <div className="w-full max-w-7xl mx-auto px-3 sm:px-6 pt-3 sm:pt-6 pb-16 space-y-4 sm:space-y-6 relative z-10 min-w-0 overflow-x-hidden">
       
-      <Breadcrumb items={[{ name: 'Search', url: '/search' }]} />
+      {/* Desktop Breadcrumb (hidden on mobile to save vertical viewport) */}
+      <div className="hidden sm:block">
+        <Breadcrumb items={[{ name: 'Search', url: '/search' }]} />
+      </div>
 
       {/* Main Search Header Bar */}
-      <div className="ethnic-card p-5 sm:p-8 rounded-3xl space-y-4 shadow-sm relative z-10">
-        <div className="relative max-w-2xl mx-auto">
+      <div className="ethnic-card p-3.5 sm:p-8 rounded-2xl sm:rounded-3xl space-y-2.5 sm:space-y-4 shadow-sm relative z-10 w-full min-w-0 overflow-hidden">
+        <form onSubmit={handleSearchFormSubmit} className="relative max-w-2xl mx-auto w-full min-w-0">
           <input
-            type="text"
+            id="search_page_input"
+            name="search_query"
+            type="search"
+            inputMode="search"
+            enterKeyHint="search"
+            autoCapitalize="none"
+            autoCorrect="off"
+            spellCheck="false"
             placeholder="Type craft name, material, color, deity..."
             value={inputQuery}
             onChange={(e) => setInputQuery(e.target.value)}
-            className="w-full pl-12 pr-10 py-3.5 bg-ivory-100 dark:bg-stone-900 text-stone-900 dark:text-ivory-100 rounded-2xl border-2 border-gold-500/40 text-sm focus:border-maroon-700 dark:focus:border-gold-500 outline-none shadow-xs"
+            className="w-full pl-10 sm:pl-12 pr-10 py-2.5 sm:py-3.5 bg-ivory-100 dark:bg-stone-900 text-stone-900 dark:text-ivory-100 rounded-xl sm:rounded-2xl border-2 border-gold-500/40 text-xs sm:text-sm focus:border-maroon-700 dark:focus:border-gold-500 outline-none shadow-xs transition-colors"
           />
-          <SearchIcon className="w-5 h-5 text-gold-600 absolute left-4 top-1/2 -translate-y-1/2" />
+          <SearchIcon className="w-4 h-4 sm:w-5 sm:h-5 text-gold-600 absolute left-3.5 sm:left-4 top-1/2 -translate-y-1/2 pointer-events-none" />
           {inputQuery && (
             <button
+              type="button"
               onClick={() => {
                 setInputQuery('');
                 router.push('/search');
               }}
-              className="absolute right-4 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-700"
+              className="absolute right-3 sm:right-4 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-700 dark:hover:text-stone-200 p-1"
               aria-label="Clear search"
             >
               <X className="w-4 h-4" />
             </button>
           )}
-        </div>
+        </form>
 
-        {/* Trending & Recent Search Chips */}
-        <div className="space-y-3 pt-2">
+        {/* Trending & Recent Search Chips (Horizontal scroll on mobile, wrap on desktop) */}
+        <div className="space-y-2 sm:space-y-3 pt-0.5 sm:pt-2 w-full min-w-0 overflow-hidden">
           {/* Trending */}
-          <div className="flex items-center gap-2 flex-wrap text-xs">
-            <span className="text-gold-700 dark:text-gold-400 font-bold flex items-center gap-1 shrink-0">
-              <Flame className="w-3.5 h-3.5" /> Trending:
+          <div className="flex items-center gap-1.5 sm:gap-2 overflow-x-auto no-scrollbar sm:flex-wrap text-xs py-0.5 sm:py-0 w-full min-w-0">
+            <span className="text-gold-700 dark:text-gold-400 font-bold flex items-center gap-1 shrink-0 text-[11px] sm:text-xs">
+              <Flame className="w-3.5 h-3.5 shrink-0" /> Trending:
             </span>
             {TRENDING_SEARCHES.map((term) => (
               <button
                 key={term}
+                type="button"
                 onClick={() => handleSelectSearchTerm(term)}
-                className="px-3 py-1 rounded-full bg-ivory-200/80 dark:bg-stone-800 text-stone-700 dark:text-stone-300 hover:bg-gold-500/20 hover:text-maroon-800 transition-colors border border-gold-500/20 text-[11px] font-medium"
+                className="px-2.5 sm:px-3 py-1 rounded-full bg-ivory-200/80 dark:bg-stone-800 text-stone-700 dark:text-stone-300 hover:bg-gold-500/20 hover:text-maroon-800 transition-colors border border-gold-500/20 text-[11px] font-medium shrink-0 whitespace-nowrap active:scale-95 cursor-pointer"
               >
                 {term}
               </button>
@@ -278,22 +305,24 @@ export default function SearchClient() {
 
           {/* Recent */}
           {recentSearches.length > 0 && (
-            <div className="flex items-center gap-2 flex-wrap text-xs pt-1">
-              <span className="text-stone-400 font-bold flex items-center gap-1 shrink-0">
-                <Clock className="w-3.5 h-3.5" /> Recent:
+            <div className="flex items-center gap-1.5 sm:gap-2 overflow-x-auto no-scrollbar sm:flex-wrap text-xs pt-0.5 sm:pt-1 w-full min-w-0">
+              <span className="text-stone-400 font-bold flex items-center gap-1 shrink-0 text-[11px] sm:text-xs">
+                <Clock className="w-3.5 h-3.5 shrink-0" /> Recent:
               </span>
               {recentSearches.map((term) => (
                 <button
                   key={term}
+                  type="button"
                   onClick={() => handleSelectSearchTerm(term)}
-                  className="px-2.5 py-0.5 rounded-full bg-stone-100 dark:bg-stone-900 text-stone-600 dark:text-stone-400 hover:text-stone-900 transition-colors border border-stone-200 dark:border-stone-800 text-[11px]"
+                  className="px-2.5 py-0.5 rounded-full bg-stone-100 dark:bg-stone-900 text-stone-600 dark:text-stone-400 hover:text-stone-900 transition-colors border border-stone-200 dark:border-stone-800 text-[11px] shrink-0 whitespace-nowrap active:scale-95 cursor-pointer"
                 >
                   {term}
                 </button>
               ))}
               <button
+                type="button"
                 onClick={handleClearRecentSearches}
-                className="text-[10px] text-stone-400 hover:underline ml-1"
+                className="text-[10px] text-stone-400 hover:underline ml-1 shrink-0 cursor-pointer"
               >
                 Clear
               </button>
@@ -303,7 +332,10 @@ export default function SearchClient() {
       </div>
 
       {/* Results Layout */}
-      <div className="flex gap-8 items-start relative z-10 min-h-[850px]">
+      <div
+        className="flex flex-col lg:flex-row gap-4 lg:gap-8 items-start relative z-10 lg:min-h-[850px] w-full max-w-full min-w-0"
+        onTouchMove={dismissMobileKeyboard}
+      >
         
         {/* Desktop Filter Sidebar */}
         <FilterSidebar
@@ -313,38 +345,40 @@ export default function SearchClient() {
           products={allProducts}
         />
 
-        {/* Results Column with fixed min-height to prevent vertical shrinkage */}
-        <div className="flex-1 space-y-6 min-w-0 min-h-[750px]">
+        {/* Results Column */}
+        <div className="flex-1 space-y-4 sm:space-y-6 min-w-0 w-full max-w-full lg:min-h-[750px]">
           
           {/* Top Bar (Results count, mobile filter trigger, sorting) */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-2xl ethnic-card shadow-xs">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 sm:gap-4 p-3 sm:p-4 rounded-2xl ethnic-card shadow-xs w-full max-w-full min-w-0 overflow-hidden">
             
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1 w-full sm:w-auto">
               <button
                 onClick={() => setIsMobileFilterOpen(true)}
-                className="lg:hidden btn-outline-maroon py-2 px-3.5 text-xs font-bold flex items-center gap-1.5 active:scale-90 transition-all cursor-pointer"
+                className="lg:hidden btn-outline-maroon py-1.5 px-3 text-xs font-bold flex items-center gap-1.5 active:scale-95 transition-all cursor-pointer shrink-0"
               >
-                <Filter className="w-3.5 h-3.5" />
+                <Filter className="w-3.5 h-3.5 shrink-0" />
                 <span>Filters</span>
               </button>
 
-              <span className="text-xs font-medium text-stone-600 dark:text-stone-400">
+              <span className="text-xs font-medium text-stone-600 dark:text-stone-400 min-w-0 truncate flex-1">
                 {queryFromUrl ? (
-                  <>Found <strong className="text-stone-900 dark:text-ivory-100">{filteredResults.length}</strong> matching crafts for "<span className="text-maroon-700 dark:text-gold-400 font-bold">{queryFromUrl}</span>"</>
+                  <span className="truncate block">
+                    Found <strong className="text-stone-900 dark:text-ivory-100">{filteredResults.length}</strong> crafts for &ldquo;<span className="text-maroon-700 dark:text-gold-400 font-bold truncate">{queryFromUrl}</span>&rdquo;
+                  </span>
                 ) : (
-                  <>Showing all <strong className="text-stone-900 dark:text-ivory-100">{filteredResults.length}</strong> crafts</>
+                  <span className="truncate block">Showing all <strong className="text-stone-900 dark:text-ivory-100">{filteredResults.length}</strong> crafts</span>
                 )}
               </span>
             </div>
 
             {/* Sort Controls & View Toggle */}
-            <div className="flex items-center gap-3 text-xs">
-              <div className="flex items-center gap-2">
-                <span className="text-stone-500 hidden sm:inline">Sort By:</span>
+            <div className="flex items-center justify-between sm:justify-end gap-2 sm:gap-3 text-xs shrink-0 w-full sm:w-auto pt-2 sm:pt-0 border-t border-gold-500/10 sm:border-t-0">
+              <div className="flex items-center gap-1.5 sm:gap-2">
+                <span className="text-stone-500 text-[11px] sm:text-xs shrink-0">Sort By:</span>
                 <select
                   value={sortBy}
                   onChange={(e) => setSortBy(e.target.value)}
-                  className="px-3 py-1.5 rounded-xl bg-ivory-100 dark:bg-stone-900 border border-gold-500/30 text-stone-900 dark:text-ivory-100 text-xs font-semibold outline-none focus:ring-1 focus:ring-gold-500"
+                  className="px-2.5 sm:px-3 py-1.5 rounded-xl bg-ivory-100 dark:bg-stone-900 border border-gold-500/30 text-stone-900 dark:text-ivory-100 text-xs font-semibold outline-none focus:ring-1 focus:ring-gold-500 cursor-pointer"
                 >
                   <option value="relevance">Relevance</option>
                   <option value="price-asc">Price: Low to High</option>
@@ -354,7 +388,7 @@ export default function SearchClient() {
                 </select>
               </div>
 
-              {/* Grid / List toggle */}
+              {/* Grid / List toggle (hidden on mobile, visible sm+) */}
               <div className="hidden sm:flex items-center border border-gold-500/20 rounded-xl overflow-hidden bg-ivory-100 dark:bg-stone-900">
                 <button
                   type="button"
@@ -377,10 +411,10 @@ export default function SearchClient() {
 
           </div>
 
-          {/* Results Grid / List Container with fixed min-height to prevent vertical shrinkage */}
-          <div className="min-h-[550px]">
+          {/* Results Grid / List Container with responsive min-height */}
+          <div className="min-h-[300px] sm:min-h-[550px] w-full max-w-full min-w-0">
             {filteredResults.length === 0 ? (
-              <div className="space-y-8">
+              <div className="space-y-6 sm:space-y-8">
                 <EmptyState
                   title={`No crafts found for "${queryFromUrl}"`}
                   description="Check your spelling, try generic terms like 'patches' or 'bottle', or explore our recommended collection below."
@@ -400,7 +434,7 @@ export default function SearchClient() {
                       </h3>
                     </div>
 
-                    <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6">
+                    <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 gap-2.5 sm:gap-6 w-full max-w-full min-w-0">
                       {similarProducts.map((product) => (
                         <ProductCard
                           key={`fallback-${product.id}`}
@@ -413,10 +447,10 @@ export default function SearchClient() {
                 )}
               </div>
             ) : (
-              <div className="space-y-10">
+              <div className="space-y-8 sm:space-y-10">
                 {/* Main Product Cards Grid / List */}
                 {viewMode === 'list' ? (
-                  <div className="flex flex-col gap-4">
+                  <div className="flex flex-col gap-3 sm:gap-4 w-full max-w-full min-w-0">
                     {filteredResults.map((product) => (
                       <ProductCard
                         key={product.id}
@@ -427,7 +461,7 @@ export default function SearchClient() {
                     ))}
                   </div>
                 ) : (
-                  <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6">
+                  <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 gap-2.5 sm:gap-6 w-full max-w-full min-w-0">
                     {filteredResults.map((product) => (
                       <ProductCard
                         key={product.id}
@@ -441,13 +475,13 @@ export default function SearchClient() {
 
                 {/* Similar & Related Products Section */}
                 {similarProducts.length > 0 && (
-                  <div className="pt-10 border-t border-gold-500/20 space-y-6">
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                      <div>
+                  <div className="pt-8 sm:pt-10 border-t border-gold-500/20 space-y-4 sm:space-y-6 w-full max-w-full min-w-0">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 min-w-0">
+                      <div className="min-w-0">
                         <span className="text-[11px] font-bold text-gold-700 dark:text-gold-400 uppercase tracking-widest flex items-center gap-1.5">
                           <Sparkles className="w-3.5 h-3.5" /> Artisan Guild Suggestions
                         </span>
-                        <h3 className="font-serif font-bold text-xl sm:text-2xl text-stone-900 dark:text-ivory-100 mt-1">
+                        <h3 className="font-serif font-bold text-lg sm:text-2xl text-stone-900 dark:text-ivory-100 mt-1 truncate">
                           Similar &amp; Related Handcrafted Pieces
                         </h3>
                         <p className="text-xs text-stone-500 mt-0.5">
@@ -457,14 +491,14 @@ export default function SearchClient() {
 
                       <Link
                         href="/shop"
-                        className="btn-outline-maroon py-2 px-4 text-xs font-bold self-start sm:self-auto flex items-center gap-1.5"
+                        className="btn-outline-maroon py-2 px-4 text-xs font-bold self-start sm:self-auto flex items-center gap-1.5 shrink-0 cursor-pointer"
                       >
                         <span>Explore All Crafts</span>
                         <ArrowRight className="w-3.5 h-3.5" />
                       </Link>
                     </div>
 
-                    <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6">
+                    <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-2.5 sm:gap-6 w-full max-w-full min-w-0">
                       {similarProducts.map((product) => (
                         <ProductCard
                           key={`similar-${product.id}`}
