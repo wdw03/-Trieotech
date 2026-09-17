@@ -173,8 +173,9 @@ export const CartDrawer = () => {
                   {/* Thumbnail */}
                   <div className="w-20 h-20 rounded-lg overflow-hidden bg-stone-100 dark:bg-stone-800 shrink-0 border border-stone-200 dark:border-stone-700">
                     <img
-                      src={item.image}
-                      alt={item.name}
+                      src={item.image || '/logo.png'}
+                      alt={item.name || 'Artisanal item'}
+                      onError={(e) => { e.currentTarget.src = '/logo.png'; }}
                       className="w-full h-full object-cover"
                     />
                   </div>

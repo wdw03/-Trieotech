@@ -89,12 +89,16 @@ export default async function ProductPage({ params }) {
     notFound();
   }
 
+  const siteUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://trioenterprises.in';
+  const prodImages = (Array.isArray(product.images) && product.images.length > 0 ? product.images : [product.image || '/logo.png'])
+    .map((img) => (img.startsWith('http') ? img : `${siteUrl}${img.startsWith('/') ? '' : '/'}${img}`));
+
   const jsonLd = {
     '@context': 'https://schema.org',
     '@type': 'Product',
     name: product.name,
-    image: product.images || [],
-    description: product.description || product.shortDescription,
+    image: prodImages,
+    description: product.description || product.shortDescription || 'Authentic handcrafted Indian ethnic craft.',
     sku: `TRIO-${product.id}`,
     brand: {
       '@type': 'Brand',
@@ -102,7 +106,7 @@ export default async function ProductPage({ params }) {
     },
     offers: {
       '@type': 'Offer',
-      url: `${process.env.NEXT_PUBLIC_APP_URL || 'https://trioenterprises.in'}/product/${product.slug}`,
+      url: `${siteUrl}/product/${product.slug}`,
       priceCurrency: 'INR',
       price: product.price,
       availability: product.inStock ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',

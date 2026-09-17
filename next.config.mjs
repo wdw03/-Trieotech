@@ -32,6 +32,36 @@ const nextConfig = {
         destination: '/profile/orders',
         permanent: true,
       },
+      {
+        source: '/privacy-policy',
+        destination: '/privacy',
+        permanent: true,
+      },
+      {
+        source: '/return-policy',
+        destination: '/returns',
+        permanent: true,
+      },
+      {
+        source: '/shipping-policy',
+        destination: '/shipping',
+        permanent: true,
+      },
+      {
+        source: '/signup',
+        destination: '/register',
+        permanent: true,
+      },
+      {
+        source: '/sign-up',
+        destination: '/register',
+        permanent: true,
+      },
+      {
+        source: '/categories',
+        destination: '/shop',
+        permanent: true,
+      },
     ];
   },
   async headers() {

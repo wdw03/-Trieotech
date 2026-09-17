@@ -27,7 +27,9 @@ export async function generateMetadata({ params }) {
 
   const title = `${blog.title} | Trio Enterprises`;
   const description = blog.excerpt || 'Read this article from the Trio Enterprises Craft Journal.';
+  const image = blog.image || '/logo.png';
   const siteUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://trioenterprises.in';
+  const fullImageUrl = image.startsWith('http') ? image : `${siteUrl}${image.startsWith('/') ? '' : '/'}${image}`;
   const url = `${siteUrl}/blog/${blog.slug}`;
 
   return {
@@ -41,13 +43,13 @@ export async function generateMetadata({ params }) {
       description,
       url,
       type: 'article',
-      images: [{ url: image, alt: blog.title }],
+      images: [{ url: fullImageUrl, alt: blog.title }],
     },
     twitter: {
       card: 'summary_large_image',
       title,
       description,
-      images: [image],
+      images: [fullImageUrl],
     },
   };
 }

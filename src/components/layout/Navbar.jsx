@@ -34,7 +34,7 @@ export const Navbar = () => {
   const { itemCount, subtotal, openCart } = useCart();
   const { wishlistCount } = useWishlist();
   const { isDark, toggleTheme } = useTheme();
-  const { user, isAuthenticated, logout } = useAuth();
+  const { user, isAuthenticated, logout, isAdmin } = useAuth();
 
   const [categoriesList, setCategoriesList] = useState(fallbackCategories);
   const [searchQuery, setSearchQuery] = useState('');
@@ -360,6 +360,15 @@ export const Navbar = () => {
                         <p className="font-bold text-stone-900 dark:text-ivory-100 truncate">{user.name}</p>
                         <p className="text-[11px] text-stone-400 truncate">{user.email}</p>
                       </div>
+                      {isAdmin && (
+                        <Link
+                          href="/admin"
+                          onClick={() => setIsUserDropdownOpen(false)}
+                          className="block px-4 py-2 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 font-bold transition-colors border-b border-stone-100 dark:border-stone-800/80"
+                        >
+                          ⚡ Admin Dashboard
+                        </Link>
+                      )}
                       <Link
                         href="/profile"
                         onClick={() => setIsUserDropdownOpen(false)}
@@ -625,6 +634,15 @@ export const Navbar = () => {
                       <p className="text-[10px] text-stone-400 truncate">{user?.email}</p>
                     </div>
                   </div>
+                  {isAdmin && (
+                    <Link
+                      href="/admin"
+                      onClick={() => setIsMobileMenuOpen(false)}
+                      className="block w-full py-2 text-center bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold transition-colors shadow-xs"
+                    >
+                      ⚡ Open Admin Dashboard
+                    </Link>
+                  )}
                   <div className="grid grid-cols-2 gap-2">
                     <Link
                       href="/profile"

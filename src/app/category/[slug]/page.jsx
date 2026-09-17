@@ -48,6 +48,7 @@ export async function generateMetadata({ params }) {
   const description = category.description || `Handcrafted ${category.name} collection by master artisans.`;
   const image = category.image || '/logo.png';
   const siteUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://trioenterprises.in';
+  const fullImageUrl = image.startsWith('http') ? image : `${siteUrl}${image.startsWith('/') ? '' : '/'}${image}`;
   const url = `${siteUrl}/category/${category.slug}`;
 
   return {
@@ -60,13 +61,13 @@ export async function generateMetadata({ params }) {
       title,
       description,
       url,
-      images: [{ url: image, alt: category.name }],
+      images: [{ url: fullImageUrl, alt: category.name }],
     },
     twitter: {
       card: 'summary_large_image',
       title,
       description,
-      images: [image],
+      images: [fullImageUrl],
     },
   };
 }

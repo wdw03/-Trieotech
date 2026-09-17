@@ -185,8 +185,9 @@ export default function CartClient() {
                 <div className="flex items-center gap-4 min-w-0">
                   <div className="w-20 sm:w-24 aspect-square rounded-2xl overflow-hidden bg-stone-100 shrink-0 border border-gold-500/20 shadow-xs">
                     <img
-                      src={item.image}
-                      alt={item.name}
+                      src={item.image || '/logo.png'}
+                      alt={item.name || 'Artisanal item'}
+                      onError={(e) => { e.currentTarget.src = '/logo.png'; }}
                       className="w-full h-full object-cover"
                     />
                   </div>

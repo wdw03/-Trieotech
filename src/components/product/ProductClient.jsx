@@ -70,9 +70,11 @@ export default function ProductClient({ initialSlug, initialProduct = null }) {
   }, [slug]);
 
   // States
-  const [selectedImage, setSelectedImage] = useState('');
-  const [selectedColor, setSelectedColor] = useState(null);
-  const [selectedSize, setSelectedSize] = useState(null);
+  const [selectedImage, setSelectedImage] = useState(
+    initialProduct?.images?.[0] || initialProduct?.image || ''
+  );
+  const [selectedColor, setSelectedColor] = useState(initialProduct?.colors?.[0] || null);
+  const [selectedSize, setSelectedSize] = useState(initialProduct?.sizes?.[0] || null);
   const [quantity, setQuantity] = useState(1);
   const [activeTab, setActiveTab] = useState('description'); // description | specs | features | reviews
 
@@ -330,7 +332,7 @@ export default function ProductClient({ initialSlug, initialProduct = null }) {
           {/* Main Visual Display with Hover Zoom */}
           <div className="relative aspect-square w-full rounded-3xl overflow-hidden ethnic-card border-2 border-gold-500/30 bg-white dark:bg-stone-900 group shadow-lg">
             <img
-              src={selectedImage}
+              src={selectedImage || product?.images?.[0] || product?.image || '/logo.png'}
               alt={product.name}
               className={`w-full h-full object-cover object-center transition-transform duration-700 ease-out group-hover:scale-110 ${
                 isOutOfStock ? 'filter grayscale contrast-125 opacity-75' : ''
