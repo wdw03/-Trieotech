@@ -217,14 +217,14 @@ export const Footer = () => {
                 openSections.categories ? 'block' : 'hidden lg:block'
               }`}
             >
-              <li><Link href="/category/patches" className="hover:text-gold-300 transition-colors block py-0.5">Embroidery Patches &amp; Buttis</Link></li>
-              <li><Link href="/category/bottle" className="hover:text-gold-300 transition-colors block py-0.5">Pure Copper Ayurvedic Bottles</Link></li>
-              <li><Link href="/category/aasan" className="hover:text-gold-300 transition-colors block py-0.5">Pooja Aasans &amp; Thali Covers</Link></li>
-              <li><Link href="/category/towel-gamcha" className="hover:text-gold-300 transition-colors block py-0.5">Pure Cotton Devotional Gamcha</Link></li>
-              <li><Link href="/category/flower-bunch" className="hover:text-gold-300 transition-colors block py-0.5">Handmade Artificial Flowers</Link></li>
-              <li><Link href="/category/cup-chain" className="hover:text-gold-300 transition-colors block py-0.5">Zari Stone &amp; Cup Chains</Link></li>
-              <li><Link href="/category/paranda" className="hover:text-gold-300 transition-colors block py-0.5">Bridal Paranda Latkans</Link></li>
-              <li><Link href="/category/chudi-ring" className="hover:text-gold-300 transition-colors block py-0.5">Traditional Gota Chudi Rings</Link></li>
+              <li><Link href="/category/patches" prefetch={false} className="hover:text-gold-300 transition-colors block py-0.5">Embroidery Patches &amp; Buttis</Link></li>
+              <li><Link href="/category/bottle" prefetch={false} className="hover:text-gold-300 transition-colors block py-0.5">Pure Copper Ayurvedic Bottles</Link></li>
+              <li><Link href="/category/aasan" prefetch={false} className="hover:text-gold-300 transition-colors block py-0.5">Pooja Aasans &amp; Thali Covers</Link></li>
+              <li><Link href="/category/towel-gamcha" prefetch={false} className="hover:text-gold-300 transition-colors block py-0.5">Pure Cotton Devotional Gamcha</Link></li>
+              <li><Link href="/category/flower-bunch" prefetch={false} className="hover:text-gold-300 transition-colors block py-0.5">Handmade Artificial Flowers</Link></li>
+              <li><Link href="/category/cup-chain" prefetch={false} className="hover:text-gold-300 transition-colors block py-0.5">Zari Stone &amp; Cup Chains</Link></li>
+              <li><Link href="/category/paranda" prefetch={false} className="hover:text-gold-300 transition-colors block py-0.5">Bridal Paranda Latkans</Link></li>
+              <li><Link href="/category/chudi-ring" prefetch={false} className="hover:text-gold-300 transition-colors block py-0.5">Traditional Gota Chudi Rings</Link></li>
             </ul>
           </div>
 
@@ -251,12 +251,12 @@ export const Footer = () => {
                 openSections.care ? 'block' : 'hidden lg:block'
               }`}
             >
-              <li><Link href="/track-order" className="hover:text-gold-300 transition-colors block py-0.5">Track Your Order</Link></li>
-              <li><Link href="/profile/orders" className="hover:text-gold-300 transition-colors block py-0.5">Order History &amp; Invoice</Link></li>
-              <li><Link href="/shipping" className="hover:text-gold-300 transition-colors block py-0.5">Shipping &amp; Delivery</Link></li>
-              <li><Link href="/returns" className="hover:text-gold-300 transition-colors block py-0.5">Return &amp; Exchange Policy</Link></li>
-              <li><Link href="/faq" className="hover:text-gold-300 transition-colors block py-0.5">Frequently Asked Questions</Link></li>
-              <li><Link href="/contact" className="hover:text-gold-300 transition-colors block py-0.5">Contact Artisan Guild</Link></li>
+              <li><Link href="/track-order" prefetch={false} className="hover:text-gold-300 transition-colors block py-0.5">Track Your Order</Link></li>
+              <li><Link href="/profile/orders" prefetch={false} className="hover:text-gold-300 transition-colors block py-0.5">Order History &amp; Invoice</Link></li>
+              <li><Link href="/shipping" prefetch={false} className="hover:text-gold-300 transition-colors block py-0.5">Shipping &amp; Delivery</Link></li>
+              <li><Link href="/returns" prefetch={false} className="hover:text-gold-300 transition-colors block py-0.5">Return &amp; Exchange Policy</Link></li>
+              <li><Link href="/faq" prefetch={false} className="hover:text-gold-300 transition-colors block py-0.5">Frequently Asked Questions</Link></li>
+              <li><Link href="/contact" prefetch={false} className="hover:text-gold-300 transition-colors block py-0.5">Contact Artisan Guild</Link></li>
             </ul>
           </div>
 
@@ -283,10 +283,10 @@ export const Footer = () => {
                 openSections.about ? 'block' : 'hidden lg:block'
               }`}
             >
-              <li><Link href="/about" className="hover:text-gold-300 transition-colors block py-0.5">Our Karigar Story</Link></li>
-              <li><Link href="/blog" className="hover:text-gold-300 transition-colors block py-0.5">Craft Journal &amp; Guides</Link></li>
-              <li><Link href="/privacy" className="hover:text-gold-300 transition-colors block py-0.5">Privacy Policy</Link></li>
-              <li><Link href="/terms" className="hover:text-gold-300 transition-colors block py-0.5">Terms of Service</Link></li>
+              <li><Link href="/about" prefetch={false} className="hover:text-gold-300 transition-colors block py-0.5">Our Karigar Story</Link></li>
+              <li><Link href="/blog" prefetch={false} className="hover:text-gold-300 transition-colors block py-0.5">Craft Journal &amp; Guides</Link></li>
+              <li><Link href="/privacy" prefetch={false} className="hover:text-gold-300 transition-colors block py-0.5">Privacy Policy</Link></li>
+              <li><Link href="/terms" prefetch={false} className="hover:text-gold-300 transition-colors block py-0.5">Terms of Service</Link></li>
             </ul>
 
             {/* Social Icons */}
