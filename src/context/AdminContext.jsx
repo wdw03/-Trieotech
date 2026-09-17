@@ -832,47 +832,47 @@ export const AdminProvider = ({ children }) => {
   // CATEGORY OPERATIONS (CONNECTED TO LIVE API)
   // ═══════════════════════════════════════════════════════════════
   const addCategory = async (catData) => {
-    const localCat = {
-      ...catData,
-      id: Date.now(),
-      slug: catData.slug || catData.name.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
-      productCount: 0,
-      subcategories: catData.subcategories || []
-    };
-    setCategories((prev) => [...prev, localCat]);
-
     try {
-      const res = await adminApi.createCategory(localCat);
+      const res = await adminApi.createCategory(catData);
       if (res?.category) {
-        setCategories((prev) => prev.map((c) => c.id === localCat.id ? res.category : c));
+        setCategories((prev) => [...prev, res.category]);
+        showToast(`Category "${res.category.name}" saved to database`, 'success');
+        return res.category;
+      } else {
+        throw new Error(res?.error || 'Failed to save category to database');
       }
-      showToast(`Category "${localCat.name}" saved to database`);
     } catch (err) {
-      showToast(`Category "${localCat.name}" added`);
+      console.error('addCategory error:', err);
+      showToast(err.message || 'Failed to save category', 'error');
+      throw err;
     }
   };
 
   const updateCategory = async (id, updatedFields) => {
-    setCategories((prev) =>
-      prev.map((c) => (c.id === Number(id) ? { ...c, ...updatedFields } : c))
-    );
-
     try {
-      await adminApi.updateCategory(id, updatedFields);
-      showToast('Category updated in database');
+      const res = await adminApi.updateCategory(id, updatedFields);
+      const updated = res?.category || updatedFields;
+      setCategories((prev) =>
+        prev.map((c) => (String(c.id) === String(id) ? { ...c, ...updated } : c))
+      );
+      showToast('Category updated in database', 'success');
+      return updated;
     } catch (err) {
-      showToast('Category updated');
+      console.error('updateCategory error:', err);
+      showToast(err.message || 'Failed to update category', 'error');
+      throw err;
     }
   };
 
   const deleteCategory = async (id) => {
-    setCategories((prev) => prev.filter((c) => c.id !== Number(id)));
-
     try {
       await adminApi.deleteCategory(id);
+      setCategories((prev) => prev.filter((c) => String(c.id) !== String(id)));
       showToast('Category deleted from database', 'info');
     } catch (err) {
-      showToast('Category deleted', 'info');
+      console.error('deleteCategory error:', err);
+      showToast(err.message || 'Failed to delete category', 'error');
+      throw err;
     }
   };
 

@@ -29,10 +29,10 @@ export async function GET() {
       slug: c.slug,
       description: c.description || '',
       image: c.image || '/products/pearl-zardosi-patch-1.jpg',
-      productCount: counts[c.name] || 0,
-      subcategories: [],
+      banner: c.banner || c.image || '',
+      productCount: counts[c.name] ?? c.product_count ?? 0,
+      subcategories: Array.isArray(c.subcategories) ? c.subcategories : [],
       sort_order: c.sort_order || 0,
-      is_active: c.is_active ?? true,
     }));
 
     return NextResponse.json({ categories: formatted });
@@ -46,7 +46,7 @@ export async function GET() {
 export async function POST(request) {
   try {
     const body = await request.json();
-    if (!body.name) {
+    if (!body.name || !body.name.trim()) {
       return NextResponse.json({ error: 'Category name is required' }, { status: 400 });
     }
 
@@ -54,22 +54,40 @@ export async function POST(request) {
       ? body.slug.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '')
       : body.name.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '');
 
+    const insertData = {
+      name: body.name.trim(),
+      slug,
+      description: body.description?.trim() || '',
+      image: body.image?.trim() || '/products/pearl-zardosi-patch-1.jpg',
+      banner: body.banner?.trim() || body.image?.trim() || '',
+      sort_order: Number(body.sort_order ?? 99),
+      subcategories: Array.isArray(body.subcategories) ? body.subcategories : [],
+    };
+
     const { data: newCat, error } = await supabaseAdmin
       .from('categories')
-      .insert({
-        name: body.name,
-        slug,
-        description: body.description || '',
-        image: body.image || '/products/pearl-zardosi-patch-1.jpg',
-        sort_order: body.sort_order || 99,
-        is_active: body.is_active ?? true,
-      })
+      .insert(insertData)
       .select()
       .single();
 
-    if (error) throw error;
+    if (error) {
+      console.error('Supabase category insert error:', error);
+      throw error;
+    }
 
-    return NextResponse.json({ success: true, category: newCat }, { status: 201 });
+    const formatted = {
+      id: newCat.id,
+      name: newCat.name,
+      slug: newCat.slug,
+      description: newCat.description || '',
+      image: newCat.image || '/products/pearl-zardosi-patch-1.jpg',
+      banner: newCat.banner || '',
+      productCount: 0,
+      subcategories: Array.isArray(newCat.subcategories) ? newCat.subcategories : [],
+      sort_order: newCat.sort_order || 0,
+    };
+
+    return NextResponse.json({ success: true, category: formatted }, { status: 201 });
   } catch (err) {
     console.error('Create category error:', err);
     return NextResponse.json({ error: err.message }, { status: 500 });

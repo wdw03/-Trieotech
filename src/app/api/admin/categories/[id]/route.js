@@ -9,24 +9,31 @@ export async function PUT(request, { params }) {
     const body = await request.json();
 
     const updates = {};
-    if (body.name !== undefined) updates.name = body.name;
-    if (body.slug !== undefined) updates.slug = body.slug;
-    if (body.description !== undefined) updates.description = body.description;
-    if (body.image !== undefined) updates.image = body.image;
-    if (body.sort_order !== undefined) updates.sort_order = body.sort_order;
-    if (body.is_active !== undefined) updates.is_active = body.is_active;
+    if (body.name !== undefined) updates.name = body.name.trim();
+    if (body.slug !== undefined) updates.slug = body.slug.trim();
+    if (body.description !== undefined) updates.description = body.description.trim();
+    if (body.image !== undefined) updates.image = body.image.trim();
+    if (body.banner !== undefined) updates.banner = body.banner.trim();
+    if (body.sort_order !== undefined) updates.sort_order = Number(body.sort_order);
+    if (body.subcategories !== undefined && Array.isArray(body.subcategories)) {
+      updates.subcategories = body.subcategories;
+    }
 
     const { data: updated, error } = await supabaseAdmin
       .from('categories')
       .update(updates)
-      .eq('id', id)
+      .eq('id', Number(id))
       .select()
       .single();
 
-    if (error) throw error;
+    if (error) {
+      console.error('Supabase category update error:', error);
+      throw error;
+    }
 
     return NextResponse.json({ success: true, category: updated });
   } catch (err) {
+    console.error('Update category error:', err);
     return NextResponse.json({ error: err.message }, { status: 500 });
   }
 }
@@ -39,12 +46,16 @@ export async function DELETE(request, { params }) {
     const { error } = await supabaseAdmin
       .from('categories')
       .delete()
-      .eq('id', id);
+      .eq('id', Number(id));
 
-    if (error) throw error;
+    if (error) {
+      console.error('Supabase category delete error:', error);
+      throw error;
+    }
 
     return NextResponse.json({ success: true, message: 'Category deleted' });
   } catch (err) {
+    console.error('Delete category error:', err);
     return NextResponse.json({ error: err.message }, { status: 500 });
   }
 }

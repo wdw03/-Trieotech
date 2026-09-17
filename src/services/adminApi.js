@@ -186,12 +186,6 @@ export const adminApi = {
   },
 
   createCategory: async (categoryData) => {
-    try {
-      const { data, error } = await supabase.from('categories').insert([categoryData]).select().single();
-      if (!error && data) return { success: true, category: data };
-    } catch (e) {
-      console.warn('Supabase direct createCategory fallback:', e.message);
-    }
     return request('/admin/categories', {
       method: 'POST',
       body: JSON.stringify(categoryData),
@@ -199,12 +193,6 @@ export const adminApi = {
   },
 
   updateCategory: async (id, categoryData) => {
-    try {
-      const { data, error } = await supabase.from('categories').update(categoryData).eq('id', id).select().single();
-      if (!error && data) return { success: true, category: data };
-    } catch (e) {
-      console.warn('Supabase direct updateCategory fallback:', e.message);
-    }
     return request(`/admin/categories/${id}`, {
       method: 'PUT',
       body: JSON.stringify(categoryData),
@@ -212,12 +200,6 @@ export const adminApi = {
   },
 
   deleteCategory: async (id) => {
-    try {
-      const { error } = await supabase.from('categories').delete().eq('id', id);
-      if (!error) return { success: true, message: 'Category deleted' };
-    } catch (e) {
-      console.warn('Supabase direct deleteCategory fallback:', e.message);
-    }
     return request(`/admin/categories/${id}`, {
       method: 'DELETE',
     });

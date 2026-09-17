@@ -29,10 +29,10 @@ export async function GET() {
       slug: c.slug,
       description: c.description || '',
       image: c.image || '/products/pearl-zardosi-patch-1.jpg',
-      productCount: counts[c.name] || 0,
-      subcategories: [],
+      banner: c.banner || c.image || '',
+      productCount: counts[c.name] ?? c.product_count ?? 0,
+      subcategories: Array.isArray(c.subcategories) ? c.subcategories : [],
       sort_order: c.sort_order || 0,
-      is_active: c.is_active ?? true,
     }));
 
     return NextResponse.json({ categories: formatted });
