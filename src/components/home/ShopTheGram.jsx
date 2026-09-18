@@ -7,7 +7,7 @@ import {
   ArrowLeft, ArrowRight, BadgeCheck, Camera, Play, Pause, Music2,
   Volume2, VolumeX, Sparkles, Check, Maximize2, ChevronUp, ChevronDown,
   Grid, LayoutList, Share2, Star, ShieldCheck, Flame, ExternalLink, Zap,
-  Video, Film, Instagram
+  Video, Film
 } from 'lucide-react';
 import { useCart } from '../../context/CartContext';
 import { useToast } from '../../context/ToastContext';
