@@ -10,12 +10,14 @@ import EmptyState from '../common/EmptyState';
 import { products as fallbackProducts } from '../../data/products';
 import { fetchLiveProducts, normalizeProduct, normalizeCategorySlug } from '../../lib/api/store';
 import { Filter, LayoutGrid, List, Sparkles, X } from 'lucide-react';
+import { ProductGridSkeleton } from '../common/LoadingSkeleton';
 
 export default function ShopClient() {
   const searchParams = useSearchParams();
   const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
   const [quickViewProduct, setQuickViewProduct] = useState(null);
   const [viewMode, setViewMode] = useState('grid'); // 'grid' | 'list'
+  const [isLoading, setIsLoading] = useState(true);
 
   const [filters, setFilters] = useState({
     categories: searchParams.get('category') ? [searchParams.get('category')] : [],
@@ -41,7 +43,10 @@ export default function ShopClient() {
           setAllProducts(data.products);
         }
       })
-      .catch((err) => console.warn('Live products fetch notice:', err));
+      .catch((err) => console.warn('Live products fetch notice:', err))
+      .finally(() => {
+        if (isMounted) setIsLoading(false);
+      });
     return () => {
       isMounted = false;
     };
@@ -288,7 +293,9 @@ export default function ShopClient() {
 
           {/* Products Grid / List Container with fixed min-height to prevent vertical shrinkage */}
           <div className="min-h-[550px]">
-            {filteredProducts.length === 0 ? (
+            {isLoading ? (
+              <ProductGridSkeleton count={8} viewMode={viewMode} />
+            ) : filteredProducts.length === 0 ? (
               <EmptyState
                 title="No crafts match your filter criteria"
                 description="Try adjusting or clearing your filters to see our full artisan catalog."

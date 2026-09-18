@@ -11,6 +11,7 @@ import { products as fallbackProducts, searchProducts } from '../../data/product
 import { fetchLiveProducts, normalizeProduct, normalizeCategorySlug } from '../../lib/api/store';
 import { Search as SearchIcon, Filter, Sparkles, X, Clock, Flame, ArrowRight, Package, LayoutGrid, List } from 'lucide-react';
 import useDebounce from '../../hooks/useDebounce';
+import { ProductGridSkeleton } from '../../components/common/LoadingSkeleton';
 
 const TRENDING_SEARCHES = [
   "Peacock Patches",
@@ -35,6 +36,7 @@ export default function SearchClient() {
   const [viewMode, setViewMode] = useState('grid');
   const [allProducts, setAllProducts] = useState(() => fallbackProducts.map(normalizeProduct));
   const [liveSearchResults, setLiveSearchResults] = useState(null);
+  const [isSearching, setIsSearching] = useState(false);
 
   const debouncedQuery = useDebounce(inputQuery, 300);
 
@@ -43,13 +45,17 @@ export default function SearchClient() {
     let isMounted = true;
     const q = queryFromUrl.trim();
     if (q) {
+      setIsSearching(true);
       fetchLiveProducts({ search: q, limit: 100 })
         .then((data) => {
           if (isMounted && data?.products) {
             setLiveSearchResults(data.products);
           }
         })
-        .catch(() => {});
+        .catch(() => {})
+        .finally(() => {
+          if (isMounted) setIsSearching(false);
+        });
     } else {
       setLiveSearchResults(null);
       fetchLiveProducts({ limit: 100 })
@@ -426,7 +432,9 @@ export default function SearchClient() {
 
           {/* Results Grid / List Container with responsive min-height */}
           <div className="min-h-[300px] sm:min-h-[550px] w-full max-w-full min-w-0">
-            {filteredResults.length === 0 ? (
+            {isSearching ? (
+              <ProductGridSkeleton count={6} viewMode={viewMode} />
+            ) : filteredResults.length === 0 ? (
               <div className="space-y-6 sm:space-y-8">
                 <EmptyState
                   title={`No crafts found for "${queryFromUrl}"`}

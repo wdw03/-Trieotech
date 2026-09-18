@@ -43,8 +43,14 @@ export const QuickViewModal = ({ product, isOpen, onClose }) => {
   const activePrice = selectedColor?.price || product.price;
   const activeOriginalPrice = selectedColor?.originalPrice || product.originalPrice;
 
-  const isOutOfStock = product.inStock === false || product.in_stock === false || Number(product.stock) <= 0 || (selectedColor?.stock !== undefined && Number(selectedColor.stock) <= 0);
-  const remainingStock = selectedColor?.stock !== undefined ? Number(selectedColor.stock) : Number(product.stock || 0);
+  const isOutOfStock =
+    product.inStock === false ||
+    product.in_stock === false ||
+    (product.stock !== undefined && product.stock !== null && Number(product.stock) <= 0) ||
+    (selectedColor?.stock !== undefined && selectedColor?.stock !== null && Number(selectedColor.stock) <= 0);
+  const remainingStock = (selectedColor?.stock !== undefined && selectedColor?.stock !== null)
+    ? Number(selectedColor.stock)
+    : Number(product.stock ?? 50);
 
   const handleAddToCart = () => {
     if (isOutOfStock) return;

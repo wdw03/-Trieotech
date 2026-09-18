@@ -36,7 +36,8 @@ export const CartDrawer = () => {
     updateQuantity,
     removeFromCart,
     applyCoupon,
-    removeCoupon
+    removeCoupon,
+    isLoaded
   } = useCart();
 
   const [couponInput, setCouponInput] = useState('');
@@ -146,7 +147,20 @@ export const CartDrawer = () => {
 
         {/* Cart Item List */}
         <div className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-4">
-          {cartItems.length === 0 ? (
+          {!isLoaded ? (
+            <div className="space-y-3">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="flex gap-3 p-3 rounded-xl border border-stone-200 dark:border-stone-800 bg-ivory-50/50 dark:bg-stone-900/30">
+                  <div className="w-20 h-20 rounded-lg skeleton-shimmer shrink-0" />
+                  <div className="flex-1 space-y-2 py-1">
+                    <div className="h-4 w-3/4 rounded skeleton-shimmer" />
+                    <div className="h-3 w-1/3 rounded skeleton-shimmer" />
+                    <div className="h-5 w-1/4 rounded skeleton-shimmer mt-2" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : cartItems.length === 0 ? (
             <div className="text-center py-12 space-y-4">
               <div className="w-16 h-16 rounded-full bg-gold-500/10 dark:bg-stone-800 flex items-center justify-center mx-auto text-gold-600">
                 <ShoppingBag className="w-8 h-8" />

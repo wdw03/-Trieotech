@@ -35,6 +35,7 @@ import {
   XCircle,
   AlertTriangle
 } from 'lucide-react';
+import { ProductDetailSkeleton } from '../common/LoadingSkeleton';
 
 export default function ProductClient({ initialSlug, initialProduct = null }) {
   const params = useParams();
@@ -47,6 +48,7 @@ export default function ProductClient({ initialSlug, initialProduct = null }) {
   const { recentlyViewed, addRecentlyViewed } = useRecentlyViewed();
 
   const [liveProduct, setLiveProduct] = useState(initialProduct ? normalizeProduct(initialProduct) : null);
+  const [isLoading, setIsLoading] = useState(!initialProduct);
 
   const product = useMemo(() => {
     if (liveProduct) return liveProduct;
@@ -57,17 +59,23 @@ export default function ProductClient({ initialSlug, initialProduct = null }) {
   // Fetch live product from API
   useEffect(() => {
     let isMounted = true;
+    if (!initialProduct) {
+      setIsLoading(true);
+    }
     fetchLiveProductBySlug(slug)
       .then((data) => {
         if (isMounted && data) {
           setLiveProduct(data);
         }
       })
-      .catch(() => {});
+      .catch(() => {})
+      .finally(() => {
+        if (isMounted) setIsLoading(false);
+      });
     return () => {
       isMounted = false;
     };
-  }, [slug]);
+  }, [slug, initialProduct]);
 
   // States
   const [selectedImage, setSelectedImage] = useState(
@@ -138,6 +146,9 @@ export default function ProductClient({ initialSlug, initialProduct = null }) {
   }, [product?.id, addRecentlyViewed]);
 
   if (!product) {
+    if (isLoading) {
+      return <ProductDetailSkeleton />;
+    }
     return (
       <div className="max-w-4xl mx-auto px-4 py-16 text-center space-y-4">
         <h2 className="font-serif font-bold text-2xl text-stone-900 dark:text-ivory-100">Product Not Found</h2>
@@ -163,10 +174,16 @@ export default function ProductClient({ initialSlug, initialProduct = null }) {
     : product.discount || 0;
 
   // Inventory & stock calculations
-  const isProductOutOfStock = product.inStock === false || product.in_stock === false || Number(product.stock) <= 0;
-  const isColorOutOfStock = selectedColor && selectedColor.stock !== undefined && Number(selectedColor.stock) <= 0;
+  const isProductOutOfStock =
+    product.inStock === false ||
+    product.in_stock === false ||
+    (product.stock !== undefined && product.stock !== null && Number(product.stock) <= 0);
+  const isColorOutOfStock =
+    Boolean(selectedColor && selectedColor.stock !== undefined && selectedColor.stock !== null && Number(selectedColor.stock) <= 0);
   const isOutOfStock = isProductOutOfStock || isColorOutOfStock;
-  const remainingStock = selectedColor?.stock !== undefined ? Number(selectedColor.stock) : Number(product.stock || 0);
+  const remainingStock = (selectedColor?.stock !== undefined && selectedColor?.stock !== null)
+    ? Number(selectedColor.stock)
+    : Number(product.stock ?? 50);
   const totalSold = Number(product.sold_quantity ?? product.soldQuantity ?? 0);
 
   const isWishlisted = isInWishlist(product.id);

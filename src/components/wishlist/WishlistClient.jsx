@@ -4,12 +4,13 @@ import Link from 'next/link';
 import Breadcrumb from '../../components/common/Breadcrumb';
 import EmptyState from '../../components/common/EmptyState';
 import ProductCard from '../../components/common/ProductCard';
+import { ProductGridSkeleton } from '../../components/common/LoadingSkeleton';
 import { useWishlist } from '../../context/WishlistContext';
 import { useCart } from '../../context/CartContext';
 import { Heart, Trash2, ShoppingBag, Sparkles } from 'lucide-react';
 
 export default function WishlistClient() {
-  const { wishlist, clearWishlist } = useWishlist();
+  const { wishlist, clearWishlist, isLoaded } = useWishlist();
   const { addToCart, openCart } = useCart();
 
   const handleMoveAllToCart = () => {
@@ -19,10 +20,25 @@ export default function WishlistClient() {
     openCart();
   };
 
+  if (!isLoaded) {
+    return (
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 space-y-8">
+        <Breadcrumb items={[{ name: 'Wishlist', url: '/wishlist' }]} />
+        <div className="flex items-center justify-between border-b border-gold-500/20 pb-4">
+          <div className="space-y-2">
+            <div className="h-3 w-28 bg-stone-200 dark:bg-stone-800 rounded skeleton-shimmer" />
+            <div className="h-8 w-56 bg-stone-200 dark:bg-stone-800 rounded-xl skeleton-shimmer" />
+          </div>
+        </div>
+        <ProductGridSkeleton count={4} />
+      </div>
+    );
+  }
+
   if (wishlist.length === 0) {
     return (
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-10 space-y-6">
-                <Breadcrumb items={[{ name: 'Wishlist', url: '/wishlist' }]} />
+        <Breadcrumb items={[{ name: 'Wishlist', url: '/wishlist' }]} />
         <EmptyState
           icon={Heart}
           title="Your Handcraft Wishlist is Empty"

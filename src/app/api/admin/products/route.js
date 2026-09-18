@@ -23,11 +23,13 @@ export function normalizeProduct(p) {
     else if (p.is_handmade) badge = 'Handmade';
   }
 
-  const inStock = Boolean(p.in_stock ?? p.inStock ?? true) && Number(p.stock || 0) > 0;
+  const rawStock = p.stock !== undefined && p.stock !== null ? Number(p.stock) : null;
+  const inStockVal = Boolean(p.in_stock ?? p.inStock ?? true);
+  const stock = rawStock !== null ? rawStock : (inStockVal ? 50 : 0);
+  const inStock = inStockVal && stock > 0;
   const isVisible = p.is_visible !== undefined ? Boolean(p.is_visible) : true;
   const soldQuantity = Number(p.sold_quantity || 0);
   const lowStockThreshold = Number(p.low_stock_threshold || 15);
-  const stock = inStock ? Number(p.stock || 0) : 0;
 
   const colors = Array.isArray(p.colors)
     ? p.colors.map(c => {

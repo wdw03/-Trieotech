@@ -117,7 +117,11 @@ export function normalizeProduct(p) {
     }
   }
 
-  const inStock = p.in_stock !== undefined ? Boolean(p.in_stock) : Boolean(p.inStock ?? true);
+  const inStockVal = p.in_stock !== undefined ? Boolean(p.in_stock) : Boolean(p.inStock ?? true);
+  const rawStock = p.stock !== undefined && p.stock !== null ? Number(p.stock) : null;
+  // If stock was not specified (e.g. fallback catalog), default to 50 (in stock) unless in_stock is explicitly false
+  const resolvedStock = rawStock !== null ? rawStock : (inStockVal ? 50 : 0);
+  const finalInStock = inStockVal && resolvedStock > 0;
 
   const isBestSeller = Boolean(p.is_best_seller ?? p.isBestSeller);
   const isFestivalSpecial = Boolean(p.is_festival_special ?? p.isFestivalSpecial);
@@ -151,9 +155,9 @@ export function normalizeProduct(p) {
     rating: Number(p.rating) || 5,
     reviewsCount: Number(p.review_count ?? p.reviewsCount ?? p.rating_count) || 0,
     review_count: Number(p.review_count ?? p.reviewsCount ?? p.rating_count) || 0,
-    stock: Number(p.stock) || 0,
-    inStock: inStock && (Number(p.stock) > 0),
-    in_stock: inStock && (Number(p.stock) > 0),
+    stock: resolvedStock,
+    inStock: finalInStock,
+    in_stock: finalInStock,
     is_visible: p.is_visible !== undefined ? Boolean(p.is_visible) : true,
     isVisible: p.is_visible !== undefined ? Boolean(p.is_visible) : true,
     sold_quantity: Number(p.sold_quantity ?? p.soldQuantity ?? 0),

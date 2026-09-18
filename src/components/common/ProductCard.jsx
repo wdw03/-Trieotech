@@ -78,8 +78,14 @@ export const ProductCard = ({ product, onQuickView = null, viewMode = 'grid' }) 
   const secondaryImage = hasMultipleImages ? productImages[1] : activeImage;
 
   // Out of stock and inventory metrics
-  const isOutOfStock = product.inStock === false || product.in_stock === false || Number(product.stock) <= 0 || (selectedColor?.stock !== undefined && Number(selectedColor.stock) <= 0);
-  const remainingStock = selectedColor?.stock !== undefined ? Number(selectedColor.stock) : Number(product.stock || 0);
+  const isOutOfStock =
+    product.inStock === false ||
+    product.in_stock === false ||
+    (product.stock !== undefined && product.stock !== null && Number(product.stock) <= 0) ||
+    (selectedColor?.stock !== undefined && selectedColor?.stock !== null && Number(selectedColor.stock) <= 0);
+  const remainingStock = (selectedColor?.stock !== undefined && selectedColor?.stock !== null)
+    ? Number(selectedColor.stock)
+    : Number(product.stock ?? 50);
   const totalSold = Number(product.sold_quantity ?? product.soldQuantity ?? 0);
 
   // Compute discount percentage

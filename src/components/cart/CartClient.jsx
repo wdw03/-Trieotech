@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Breadcrumb from '../../components/common/Breadcrumb';
 import EmptyState from '../../components/common/EmptyState';
 import ProductCard from '../../components/common/ProductCard';
+import { CartSkeleton } from '../../components/common/LoadingSkeleton';
 import { useCart } from '../../context/CartContext';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
@@ -53,7 +54,8 @@ export default function CartClient() {
     clearCart,
     applyCoupon,
     removeCoupon,
-    availableCoupons
+    availableCoupons,
+    isLoaded
   } = useCart();
 
   const [couponCodeInput, setCouponCodeInput] = useState('');
@@ -103,6 +105,10 @@ export default function CartClient() {
   const upsellProducts = allProducts
     .filter(p => !cartItems.some(ci => ci.productId === p.id))
     .slice(0, 4);
+
+  if (!isLoaded) {
+    return <CartSkeleton />;
+  }
 
   if (cartItems.length === 0) {
     return (

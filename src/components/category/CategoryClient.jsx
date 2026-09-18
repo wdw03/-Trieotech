@@ -11,6 +11,7 @@ import { categories as fallbackCategories, getCategoryBySlug } from '../../data/
 import { products as fallbackProducts } from '../../data/products';
 import { fetchLiveProducts, fetchLiveCategories, normalizeProduct, normalizeCategorySlug } from '../../lib/api/store';
 import { Filter, LayoutGrid, List, Sparkles, X, ChevronRight } from 'lucide-react';
+import { ProductGridSkeleton } from '../../components/common/LoadingSkeleton';
 
 export default function CategoryClient({ initialSlug }) {
   const params = useParams();
@@ -20,26 +21,26 @@ export default function CategoryClient({ initialSlug }) {
   const [selectedSubcategory, setSelectedSubcategory] = useState(null);
   const [sortBy, setSortBy] = useState('featured');
   const [viewMode, setViewMode] = useState('grid');
+  const [isLoading, setIsLoading] = useState(true);
   const [categoriesList, setCategoriesList] = useState(fallbackCategories);
   const [allProducts, setAllProducts] = useState(() => fallbackProducts.map(normalizeProduct));
 
   React.useEffect(() => {
     let isMounted = true;
-    fetchLiveCategories()
-      .then((cats) => {
+    Promise.allSettled([
+      fetchLiveCategories().then((cats) => {
         if (isMounted && Array.isArray(cats) && cats.length > 0) {
           setCategoriesList(cats);
         }
-      })
-      .catch(() => {});
-
-    fetchLiveProducts({ limit: 100 })
-      .then((data) => {
+      }),
+      fetchLiveProducts({ limit: 100 }).then((data) => {
         if (isMounted && data?.products?.length) {
           setAllProducts(data.products);
         }
       })
-      .catch(() => {});
+    ]).finally(() => {
+      if (isMounted) setIsLoading(false);
+    });
 
     return () => {
       isMounted = false;
@@ -408,7 +409,9 @@ export default function CategoryClient({ initialSlug }) {
 
           {/* Products Grid / List Container with fixed min-height to prevent vertical shrinkage */}
           <div className="min-h-[550px]">
-            {filteredProducts.length === 0 ? (
+            {isLoading ? (
+              <ProductGridSkeleton count={8} viewMode={viewMode} />
+            ) : filteredProducts.length === 0 ? (
               <EmptyState
                 title="No crafts match your filter selection"
                 description="Try resetting your filters or switching categories."

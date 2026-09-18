@@ -3,6 +3,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
 import { ArrowRight, Sparkles, ChevronLeft, ChevronRight } from 'lucide-react';
 import ProductCard from '../common/ProductCard';
+import { ProductCarouselSkeleton } from '../common/LoadingSkeleton';
 
 export const ProductCarousel = ({
   title,
@@ -12,8 +13,19 @@ export const ProductCarousel = ({
   viewAllLink = "/shop",
   limit = 8,
   onQuickView = null,
-  bgClass = "bg-transparent"
+  bgClass = "bg-transparent",
+  isLoading = false
 }) => {
+  if (isLoading) {
+    return (
+      <section className={`py-8 sm:py-12 ${bgClass}`}>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <ProductCarouselSkeleton count={4} />
+        </div>
+      </section>
+    );
+  }
+
   if (!products || products.length === 0) return null;
 
   const displayProducts = products.slice(0, limit);
