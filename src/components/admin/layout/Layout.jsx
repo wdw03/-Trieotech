@@ -4,6 +4,7 @@ import React from 'react';
 import { Sidebar } from './Sidebar';
 import { Header } from './Header';
 import { ToastContainer } from '../ui/ToastContainer';
+import { PrintModal } from '../ui/PrintModal';
 
 export const Layout = ({ children }) => {
   return (
@@ -16,6 +17,7 @@ export const Layout = ({ children }) => {
         </main>
       </div>
       <ToastContainer />
+      <PrintModal />
     </div>
   );
 };

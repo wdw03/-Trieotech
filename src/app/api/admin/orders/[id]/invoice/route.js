@@ -3,12 +3,13 @@ import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '../../../../../../lib/supabase/admin';
 import { generateInvoiceHTML } from '../../../../../../lib/invoice';
 
-// GET: View or Download official invoice for an order from admin panel
+// GET: View or Download official GST tax invoice for an order from admin panel
 export async function GET(request, { params }) {
   try {
     const { id } = await params;
     const { searchParams } = new URL(request.url);
     const shouldDownload = searchParams.get('download') === 'true';
+    const shouldPrint = searchParams.get('print') === 'true';
 
     const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
 
@@ -28,11 +29,12 @@ export async function GET(request, { params }) {
       return NextResponse.json({ error: 'Order not found' }, { status: 404 });
     }
 
-    const html = generateInvoiceHTML(order);
+    const html = generateInvoiceHTML(order, { autoPrint: shouldPrint });
 
+    const safeNumber = order.order_number || order.id || 'order';
     const disposition = shouldDownload
-      ? `attachment; filename="Invoice-${order.order_number}.html"`
-      : `inline; filename="Invoice-${order.order_number}.html"`;
+      ? `attachment; filename="Tax-Invoice-${safeNumber}.html"`
+      : `inline; filename="Tax-Invoice-${safeNumber}.html"`;
 
     return new NextResponse(html, {
       status: 200,
