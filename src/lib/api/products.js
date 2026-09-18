@@ -118,19 +118,23 @@ export async function getAllProductSlugs() {
  * Fetch products by category
  */
 export async function getProductsByCategory(categorySlug) {
-  // First get the category name from slug
+  if (!categorySlug) return [];
+  const clean = String(categorySlug).trim();
+
+  // First get the category name from slug or name (case-insensitive)
   const { data: cat } = await supabaseAdmin
     .from('categories')
     .select('name')
-    .eq('slug', categorySlug)
-    .single();
+    .or(`slug.ilike.${clean},name.ilike.${clean}`)
+    .limit(1)
+    .maybeSingle();
 
-  if (!cat) return [];
+  const targetCategory = cat?.name || clean;
 
   const { data, error } = await supabaseAdmin
     .from('products')
     .select('*')
-    .ilike('category', cat.name)
+    .ilike('category', targetCategory)
     .or('is_visible.is.null,is_visible.eq.true')
     .order('is_featured', { ascending: false });
 
@@ -168,16 +172,19 @@ export async function getCategories() {
 }
 
 /**
- * Fetch single category by slug
+ * Fetch single category by slug or name (case-insensitive)
  */
 export async function getCategoryBySlug(slug) {
+  if (!slug) return null;
+  const clean = String(slug).trim();
   const { data, error } = await supabaseAdmin
     .from('categories')
     .select('*')
-    .eq('slug', slug)
-    .single();
+    .or(`slug.ilike.${clean},name.ilike.${clean}`)
+    .limit(1)
+    .maybeSingle();
 
-  if (error) return null;
+  if (error || !data) return null;
   return data;
 }
 

@@ -900,11 +900,24 @@ export const AdminProvider = ({ children }) => {
 
   const updateCategory = async (id, updatedFields) => {
     try {
+      const oldCat = categories.find((c) => String(c.id) === String(id));
       const res = await adminApi.updateCategory(id, updatedFields);
       const updated = res?.category || updatedFields;
       setCategories((prev) =>
         prev.map((c) => (String(c.id) === String(id) ? { ...c, ...updated } : c))
       );
+
+      // If category name was changed, also update product category tags in local state
+      if (updated?.name && oldCat?.name && updated.name.toLowerCase() !== oldCat.name.toLowerCase()) {
+        setProducts((prev) =>
+          prev.map((p) =>
+            (p.category || '').toLowerCase() === oldCat.name.toLowerCase()
+              ? { ...p, category: updated.name }
+              : p
+          )
+        );
+      }
+
       showToast('Category updated in database', 'success');
       return updated;
     } catch (err) {

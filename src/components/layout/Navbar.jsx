@@ -543,28 +543,23 @@ export const Navbar = () => {
               </div>
             </div>
 
-            <Link href="/shop" className="text-stone-700 dark:text-stone-300 hover:text-maroon-700 dark:hover:text-gold-400 transition-colors">
+            <Link href="/shop" className="text-stone-700 dark:text-stone-300 hover:text-maroon-700 dark:hover:text-gold-400 transition-colors shrink-0">
               Explore All Crafts
             </Link>
-            <Link href="/category/patches" className="text-stone-700 dark:text-stone-300 hover:text-maroon-700 dark:hover:text-gold-400 transition-colors">
-              Embroidery Patches
-            </Link>
-            <Link href="/category/bottle" className="text-stone-700 dark:text-stone-300 hover:text-maroon-700 dark:hover:text-gold-400 transition-colors">
-              Pure Copper Bottles
-            </Link>
-            <Link href="/category/aasan" className="text-stone-700 dark:text-stone-300 hover:text-maroon-700 dark:hover:text-gold-400 transition-colors">
-              Pooja Aasans &amp; Thali
-            </Link>
-            <Link href="/category/towel-gamcha" className="text-stone-700 dark:text-stone-300 hover:text-maroon-700 dark:hover:text-gold-400 transition-colors">
-              Cotton Gamcha
-            </Link>
-            <Link href="/category/cup-chain" className="text-stone-700 dark:text-stone-300 hover:text-maroon-700 dark:hover:text-gold-400 transition-colors">
-              Cup Chains &amp; Lace
-            </Link>
-            <Link href="/blog" className="text-stone-700 dark:text-stone-300 hover:text-maroon-700 dark:hover:text-gold-400 transition-colors">
+            {categoriesList.slice(0, 5).map((cat) => (
+              <Link
+                key={cat.id || cat.slug}
+                href={`/category/${cat.slug}`}
+                className="text-stone-700 dark:text-stone-300 hover:text-maroon-700 dark:hover:text-gold-400 transition-colors truncate max-w-[150px] shrink-0"
+                title={cat.name}
+              >
+                {cat.name}
+              </Link>
+            ))}
+            <Link href="/blog" className="text-stone-700 dark:text-stone-300 hover:text-maroon-700 dark:hover:text-gold-400 transition-colors shrink-0">
               Craft Journal
             </Link>
-            <Link href="/contact" className="text-stone-700 dark:text-stone-300 hover:text-maroon-700 dark:hover:text-gold-400 transition-colors">
+            <Link href="/contact" className="text-stone-700 dark:text-stone-300 hover:text-maroon-700 dark:hover:text-gold-400 transition-colors shrink-0">
               Contact Us
             </Link>
           </div>

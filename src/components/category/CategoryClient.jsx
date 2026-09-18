@@ -31,6 +31,15 @@ export default function CategoryClient({ initialSlug }) {
       fetchLiveCategories().then((cats) => {
         if (isMounted && Array.isArray(cats) && cats.length > 0) {
           setCategoriesList(cats);
+          // Sync active filter with live database category if matching current slug
+          const targetSlug = normalizeCategorySlug(slug);
+          const matched = cats.find(c => normalizeCategorySlug(c.slug || c.name) === targetSlug);
+          if (matched) {
+            setFilters(prev => ({
+              ...prev,
+              categories: [matched.name]
+            }));
+          }
         }
       }),
       fetchLiveProducts({ limit: 100 }).then((data) => {
@@ -45,16 +54,17 @@ export default function CategoryClient({ initialSlug }) {
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [slug]);
 
   // Find category details
   const currentCategory = useMemo(() => {
-    const found = categoriesList.find(c => c.slug?.toLowerCase() === slug?.toLowerCase()) || getCategoryBySlug(slug);
+    const targetSlug = normalizeCategorySlug(slug);
+    const found = categoriesList.find(c => normalizeCategorySlug(c.slug || c.name) === targetSlug) || getCategoryBySlug(slug);
     if (found) return found;
 
     // Fallback: match by product category name
     const matchingProduct = allProducts.find(
-      p => p.category?.toLowerCase().replace(/ \/ /g, '-').replace(/ /g, '-') === slug?.toLowerCase()
+      p => normalizeCategorySlug(p.category) === targetSlug
     );
     if (matchingProduct) {
       return {
@@ -62,8 +72,9 @@ export default function CategoryClient({ initialSlug }) {
         name: matchingProduct.category,
         slug: slug,
         image: matchingProduct.images?.[0] || '/products/shreenathji-statement-patch-1.jpg',
+        banner: matchingProduct.images?.[1] || '',
         description: `Explore our collection of authentic ${matchingProduct.category} handcrafted by Indian artisans.`,
-        productCount: allProducts.filter(p => p.category === matchingProduct.category).length,
+        productCount: allProducts.filter(p => normalizeCategorySlug(p.category) === targetSlug).length,
         subcategories: []
       };
     }
@@ -73,13 +84,15 @@ export default function CategoryClient({ initialSlug }) {
 
   // Derive initial category name from slug
   const initialCategoryName = useMemo(() => {
-    const found = categoriesList.find(c => c.slug?.toLowerCase() === slug?.toLowerCase()) || getCategoryBySlug(slug);
+    const targetSlug = normalizeCategorySlug(slug);
+    const found = categoriesList.find(c => normalizeCategorySlug(c.slug || c.name) === targetSlug) || getCategoryBySlug(slug);
     return found?.name || slug || '';
   }, [slug, categoriesList]);
 
   const [filters, setFilters] = useState(() => {
+    const targetSlug = normalizeCategorySlug(initialSlug);
     const initialName = getCategoryBySlug(initialSlug)?.name 
-      || fallbackCategories.find(c => c.slug?.toLowerCase() === initialSlug?.toLowerCase())?.name 
+      || fallbackCategories.find(c => normalizeCategorySlug(c.slug || c.name) === targetSlug)?.name 
       || initialSlug;
     return {
       categories: initialSlug ? [initialName] : [],
@@ -100,7 +113,8 @@ export default function CategoryClient({ initialSlug }) {
   React.useEffect(() => {
     if (slug && slug !== previousSlugRef.current) {
       previousSlugRef.current = slug;
-      const found = categoriesList.find(c => c.slug?.toLowerCase() === slug?.toLowerCase()) || getCategoryBySlug(slug);
+      const targetSlug = normalizeCategorySlug(slug);
+      const found = categoriesList.find(c => normalizeCategorySlug(c.slug || c.name) === targetSlug) || getCategoryBySlug(slug);
       const catName = found?.name || slug;
       setFilters(prev => ({
         ...prev,

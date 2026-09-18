@@ -772,4 +772,38 @@ export const adminApi = {
       body: JSON.stringify({ action, ...details }),
     });
   },
+
+  // Categories Management (Live Supabase API)
+  getCategories: async () => {
+    return request('/admin/categories');
+  },
+
+  createCategory: async (categoryData) => {
+    return request('/admin/categories', {
+      method: 'POST',
+      body: JSON.stringify(categoryData),
+    });
+  },
+
+  updateCategory: async (id, categoryData) => {
+    return request(`/admin/categories/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(categoryData),
+    });
+  },
+
+  deleteCategory: async (id) => {
+    return request(`/admin/categories/${id}`, {
+      method: 'DELETE',
+    });
+  },
+
+  uploadCategoryImage: async (file) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    return request('/admin/categories/upload', {
+      method: 'POST',
+      body: formData,
+    });
+  },
 };

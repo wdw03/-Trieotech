@@ -268,13 +268,17 @@ export async function fetchLiveProducts(filters = {}) {
 }
 
 /**
- * Fetch categories from live backend API.
+ * Fetch categories from live backend API with cache-busting and fallback.
  */
 export async function fetchLiveCategories() {
   const apiBase = getApiBase();
+  const timestamp = Date.now();
+
+  // 1. Primary: Storefront categories API
   try {
-    const res = await fetch(`${apiBase}/admin/categories`, {
+    const res = await fetch(`${apiBase}/categories?t=${timestamp}`, {
       cache: 'no-store',
+      headers: { 'Cache-Control': 'no-cache, no-store' },
     });
     if (res.ok) {
       const data = await res.json();
@@ -283,12 +287,14 @@ export async function fetchLiveCategories() {
       }
     }
   } catch (err) {
-    console.warn('Categories API fetch failed, trying local fallback:', err);
+    console.warn('Primary categories API fetch failed, trying admin endpoint:', err);
   }
 
+  // 2. Secondary: Admin categories API
   try {
-    const res = await fetch('/api/admin/categories', {
+    const res = await fetch(`${apiBase}/admin/categories?t=${timestamp}`, {
       cache: 'no-store',
+      headers: { 'Cache-Control': 'no-cache, no-store' },
     });
     if (res.ok) {
       const data = await res.json();
@@ -298,7 +304,30 @@ export async function fetchLiveCategories() {
     }
   } catch (_) {}
 
+  // 3. Same-origin fallback in browser
+  if (typeof window !== 'undefined') {
+    try {
+      const res = await fetch(`/api/categories?t=${timestamp}`, { cache: 'no-store' });
+      if (res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data.categories) && data.categories.length > 0) {
+          return data.categories;
+        }
+      }
+    } catch (_) {}
+  }
+
   return fallbackCategories;
+}
+
+/**
+ * Fetch single live category by slug or name
+ */
+export async function getLiveCategoryBySlug(slug) {
+  if (!slug) return null;
+  const cats = await fetchLiveCategories();
+  const target = normalizeCategorySlug(slug);
+  return cats.find(c => normalizeCategorySlug(c.slug || c.name) === target) || null;
 }
 
 /**
