@@ -70,6 +70,92 @@ export async function middleware(request) {
       user = null;
     }
 
+    // ─────────────────────────────────────────────────────────────
+    // STRICT ADMIN ROUTE PROTECTION (/admin and /admin/*)
+    // ─────────────────────────────────────────────────────────────
+    if (pathname.startsWith('/admin')) {
+      // 1. Unauthenticated visitors: redirect immediately to login
+      if (!user) {
+        const url = request.nextUrl.clone();
+        url.pathname = '/login';
+        url.searchParams.set('redirect', pathname);
+        return NextResponse.redirect(url);
+      }
+
+      // 2. Authenticated user: verify staff role (Super Admin or SEO Manager)
+      const userEmail = (user.email || '').toLowerCase();
+      const isMasterAdmin =
+        userEmail === 'trioenterprises10@gmail.com' ||
+        userEmail === 'admin@trioenterprises.com';
+      const metaRole = (user.user_metadata?.role || '').toLowerCase();
+
+      let hasStaffAccess =
+        isMasterAdmin ||
+        ['super_admin', 'superadmin', 'admin', 'seo_manager', 'seo'].includes(metaRole) ||
+        metaRole.includes('seo') ||
+        metaRole.includes('cms');
+
+      // If not determined via metadata or master email, check profiles table
+      if (!hasStaffAccess && !isMasterAdmin) {
+        try {
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('role')
+            .eq('id', user.id)
+            .maybeSingle();
+          const dbRole = (profile?.role || '').toLowerCase();
+          if (
+            dbRole === 'admin' ||
+            dbRole === 'super_admin' ||
+            dbRole === 'seo_manager' ||
+            dbRole.includes('seo')
+          ) {
+            hasStaffAccess = true;
+          }
+        } catch (_) {}
+      }
+
+      // Regular customer: Not permitted on /admin -> Redirect to storefront home (/)
+      if (!hasStaffAccess) {
+        const url = request.nextUrl.clone();
+        url.pathname = '/';
+        url.search = '';
+        return NextResponse.redirect(url);
+      }
+
+      // 3. SEO Manager route restrictions
+      const isSeo =
+        !isMasterAdmin &&
+        (metaRole === 'seo_manager' ||
+          metaRole === 'seo' ||
+          metaRole.includes('seo') ||
+          metaRole.includes('cms'));
+
+      if (isSeo) {
+        // If at root /admin or /admin/, route to /admin/cms/home
+        if (pathname === '/admin' || pathname === '/admin/') {
+          const url = request.nextUrl.clone();
+          url.pathname = '/admin/cms/home';
+          return NextResponse.redirect(url);
+        }
+
+        // Only allow SEO/CMS pages for SEO Manager
+        const allowedSeoPrefixes = [
+          '/admin/cms',
+          '/admin/categories',
+          '/admin/banners',
+          '/admin/reels',
+          '/admin/inquiries',
+        ];
+        const isAllowed = allowedSeoPrefixes.some((prefix) => pathname.startsWith(prefix));
+        if (!isAllowed) {
+          const url = request.nextUrl.clone();
+          url.pathname = '/admin/cms/home';
+          return NextResponse.redirect(url);
+        }
+      }
+    }
+
     // Check if current route is protected
     const isProtectedRoute = PROTECTED_ROUTES.some((route) =>
       pathname.startsWith(route)

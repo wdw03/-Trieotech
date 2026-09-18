@@ -111,7 +111,7 @@ export const AdminProvider = ({ children }) => {
 
   const isAuthenticated = Boolean(
     (!authLoading && authUser && authIsAdmin) ||
-    (localSession?.active === true)
+    (!authUser && localSession?.active === true)
   );
 
   const isAuthChecking = Boolean(
@@ -182,6 +182,13 @@ export const AdminProvider = ({ children }) => {
       try {
         localStorage.setItem('trio_superadmin_session', JSON.stringify(sessionData));
         setLocalSession(sessionData);
+      } catch (_) { }
+    } else if (authUser && !authIsAdmin) {
+      // Customer is authenticated: purge any stale admin tokens immediately
+      try {
+        localStorage.removeItem('trio_superadmin_session');
+        sessionStorage.removeItem('trio_superadmin_session');
+        setLocalSession(null);
       } catch (_) { }
     }
   }, [authUser, authProfile, authIsAdmin, authRole, authIsSeoManager]);

@@ -27,23 +27,24 @@ export default function LoginClient() {
     if (loading) return; // Wait until AuthContext finishes initializing session
     if (user) {
       const userEmail = (user.email || '').toLowerCase();
-      const isMasterAdmin = userEmail === 'trioenterprises10@gmail.com';
+      const isMasterAdmin = userEmail === 'trioenterprises10@gmail.com' || userEmail === 'admin@trioenterprises.com';
       const role = (profile?.role || user.user_metadata?.role || user.role || '').toLowerCase();
-      const isAdminUser = isMasterAdmin || ['super_admin', 'admin', 'seo_manager'].includes(role);
+      const isSeo = !isMasterAdmin && (role === 'seo_manager' || role === 'seo' || role.includes('seo') || role.includes('cms'));
+      const isAdminUser = isMasterAdmin || ['super_admin', 'admin'].includes(role) || isSeo;
 
       if (isAdminUser) {
         // Sync admin session to localStorage for AdminContext
         if (typeof window !== 'undefined') {
-          const adminRole = isMasterAdmin ? 'Super Admin' : (role === 'seo_manager' ? 'SEO Manager' : 'Admin');
+          const adminRole = isMasterAdmin ? 'Super Admin' : (isSeo ? 'SEO Manager' : 'Admin');
           const sessionData = {
             active: true,
             user: {
               id: user.id || 'admin-super',
-              name: profile?.full_name || user.name || (isMasterAdmin ? 'Trio Super Admin' : 'Administrator'),
+              name: profile?.full_name || user.name || (isMasterAdmin ? 'Trio Super Admin' : (isSeo ? 'SEO Manager' : 'Administrator')),
               email: userEmail,
               role: adminRole,
-              roleKey: isMasterAdmin ? 'super_admin' : (role || 'admin'),
-              avatar: 'SA',
+              roleKey: isMasterAdmin ? 'super_admin' : (isSeo ? 'seo_manager' : 'admin'),
+              avatar: isSeo ? 'SEO' : 'SA',
               lastLogin: new Date().toISOString()
             },
             token: `trio_auth_${Date.now()}`
@@ -52,12 +53,13 @@ export default function LoginClient() {
             localStorage.setItem('trio_superadmin_session', JSON.stringify(sessionData));
           } catch (_) {}
         }
-        const target = role === 'seo_manager' ? '/admin/cms/home' : (redirectParam && redirectParam.startsWith('/admin') ? redirectParam : '/admin');
+        const target = isSeo ? '/admin/cms/home' : (redirectParam && redirectParam.startsWith('/admin') ? redirectParam : '/admin');
         router.replace(target);
       } else {
-        // If the user came to /login?redirect=/admin, do NOT kick them to '/'!
-        // Allow them to stay on the page and sign in as Super Admin.
-        if (!redirectParam || !redirectParam.startsWith('/admin')) {
+        // Customer session: If attempted to redirect to /admin, force storefront root /
+        if (redirectParam && redirectParam.startsWith('/admin')) {
+          router.replace('/');
+        } else {
           router.replace(redirectTo);
         }
       }
@@ -75,22 +77,23 @@ export default function LoginClient() {
       const result = await login(cleanEmail, cleanPassword);
       if (result.success) {
         const userEmail = (cleanEmail || result.user?.email || '').toLowerCase();
-        const isMasterAdmin = userEmail === 'trioenterprises10@gmail.com';
+        const isMasterAdmin = userEmail === 'trioenterprises10@gmail.com' || userEmail === 'admin@trioenterprises.com';
         const role = (result.profile?.role || result.user?.user_metadata?.role || '').toLowerCase();
-        const isAdminUser = isMasterAdmin || ['super_admin', 'admin', 'seo_manager'].includes(role);
+        const isSeo = !isMasterAdmin && (role === 'seo_manager' || role === 'seo' || role.includes('seo') || role.includes('cms'));
+        const isAdminUser = isMasterAdmin || ['super_admin', 'admin'].includes(role) || isSeo;
 
         if (isAdminUser) {
           if (typeof window !== 'undefined') {
-            const adminRole = isMasterAdmin ? 'Super Admin' : (role === 'seo_manager' ? 'SEO Manager' : 'Admin');
+            const adminRole = isMasterAdmin ? 'Super Admin' : (isSeo ? 'SEO Manager' : 'Admin');
             const sessionData = {
               active: true,
               user: {
                 id: result.user?.id || 'admin-super',
-                name: result.profile?.full_name || (isMasterAdmin ? 'Trio Super Admin' : 'Administrator'),
+                name: result.profile?.full_name || (isMasterAdmin ? 'Trio Super Admin' : (isSeo ? 'SEO Manager' : 'Administrator')),
                 email: userEmail,
                 role: adminRole,
-                roleKey: isMasterAdmin ? 'super_admin' : (role || 'admin'),
-                avatar: 'SA',
+                roleKey: isMasterAdmin ? 'super_admin' : (isSeo ? 'seo_manager' : 'admin'),
+                avatar: isSeo ? 'SEO' : 'SA',
                 lastLogin: new Date().toISOString()
               },
               token: `trio_auth_${Date.now()}`
@@ -98,7 +101,7 @@ export default function LoginClient() {
             try {
               localStorage.setItem('trio_superadmin_session', JSON.stringify(sessionData));
             } catch (_) {}
-            const target = role === 'seo_manager' ? '/admin/cms/home' : (redirectParam && redirectParam.startsWith('/admin') ? redirectParam : '/admin');
+            const target = isSeo ? '/admin/cms/home' : (redirectParam && redirectParam.startsWith('/admin') ? redirectParam : '/admin');
             window.location.href = target;
             return;
           }

@@ -34,7 +34,7 @@ export const Navbar = () => {
   const { itemCount, subtotal, openCart } = useCart();
   const { wishlistCount } = useWishlist();
   const { isDark, toggleTheme } = useTheme();
-  const { user, isAuthenticated, logout, isAdmin } = useAuth();
+  const { user, isAuthenticated, logout, isAdmin, isSeoManager } = useAuth();
 
   const [categoriesList, setCategoriesList] = useState(fallbackCategories);
   const [searchQuery, setSearchQuery] = useState('');
@@ -374,11 +374,11 @@ export const Navbar = () => {
                       </div>
                       {isAdmin && (
                         <Link
-                          href="/admin"
+                          href={isSeoManager ? "/admin/cms/home" : "/admin"}
                           onClick={() => setIsUserDropdownOpen(false)}
                           className="block px-4 py-2 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 font-bold transition-colors border-b border-stone-100 dark:border-stone-800/80"
                         >
-                          ⚡ Admin Dashboard
+                          {isSeoManager ? "⚡ SEO & CMS Workspace" : "⚡ Admin Dashboard"}
                         </Link>
                       )}
                       <Link
@@ -650,11 +650,11 @@ export const Navbar = () => {
                   </div>
                   {isAdmin && (
                     <Link
-                      href="/admin"
+                      href={isSeoManager ? "/admin/cms/home" : "/admin"}
                       onClick={() => setIsMobileMenuOpen(false)}
                       className="block w-full py-2 text-center bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold transition-colors shadow-xs"
                     >
-                      ⚡ Open Admin Dashboard
+                      {isSeoManager ? "⚡ Open SEO & CMS Workspace" : "⚡ Open Admin Dashboard"}
                     </Link>
                   )}
                   <div className="grid grid-cols-2 gap-2">
