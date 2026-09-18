@@ -121,17 +121,22 @@ export const AdminProvider = ({ children }) => {
   const adminUser = useMemo(() => {
     if (authUser && authIsAdmin) {
       const email = (authUser.email || '').toLowerCase();
-      const isMaster = email === 'trioenterprises10@gmail.com';
+      const isMaster = email === 'trioenterprises10@gmail.com' || email === 'admin@trioenterprises.com';
+      const metaRole = (authUser.user_metadata?.role || '').toLowerCase();
+      const isSeo = !isMaster && (authRole === 'seo_manager' || authIsSeoManager || metaRole.includes('seo') || metaRole === 'seo_manager');
+
       const roleDisplay = isMaster
         ? 'Super Admin'
-        : (authRole === 'seo_manager' ? 'SEO Manager' : (authRole === 'super_admin' ? 'Super Admin' : 'Admin'));
+        : (isSeo ? 'SEO Manager' : (authRole === 'super_admin' ? 'Super Admin' : 'Admin'));
+      const roleKey = isMaster ? 'super_admin' : (isSeo ? 'seo_manager' : authRole);
+
       return {
         id: authUser.id,
-        name: authProfile?.full_name || authUser.name || (isMaster ? 'Trio Super Admin' : 'Administrator'),
+        name: authProfile?.full_name || authUser.name || (isMaster ? 'Trio Super Admin' : (isSeo ? 'SEO Manager' : 'Administrator')),
         email,
         role: roleDisplay,
-        roleKey: authRole,
-        avatar: 'SA',
+        roleKey,
+        avatar: isSeo ? 'SEO' : 'SA',
         lastLogin: new Date().toISOString()
       };
     }
@@ -146,25 +151,30 @@ export const AdminProvider = ({ children }) => {
       avatar: 'SA',
       lastLogin: null
     };
-  }, [authUser, authProfile, authIsAdmin, authRole, localSession]);
+  }, [authUser, authProfile, authIsAdmin, authRole, authIsSeoManager, localSession]);
 
   // Keep localStorage session synced with current authenticated admin
   useEffect(() => {
     if (authUser && authIsAdmin) {
       const email = (authUser.email || '').toLowerCase();
-      const isMaster = email === 'trioenterprises10@gmail.com';
+      const isMaster = email === 'trioenterprises10@gmail.com' || email === 'admin@trioenterprises.com';
+      const metaRole = (authUser.user_metadata?.role || '').toLowerCase();
+      const isSeo = !isMaster && (authRole === 'seo_manager' || authIsSeoManager || metaRole.includes('seo') || metaRole === 'seo_manager');
+
       const roleDisplay = isMaster
         ? 'Super Admin'
-        : (authRole === 'seo_manager' ? 'SEO Manager' : (authRole === 'super_admin' ? 'Super Admin' : 'Admin'));
+        : (isSeo ? 'SEO Manager' : (authRole === 'super_admin' ? 'Super Admin' : 'Admin'));
+      const roleKey = isMaster ? 'super_admin' : (isSeo ? 'seo_manager' : authRole);
+
       const sessionData = {
         active: true,
         user: {
           id: authUser.id,
-          name: authProfile?.full_name || authUser.name || (isMaster ? 'Trio Super Admin' : 'Administrator'),
+          name: authProfile?.full_name || authUser.name || (isMaster ? 'Trio Super Admin' : (isSeo ? 'SEO Manager' : 'Administrator')),
           email,
           role: roleDisplay,
-          roleKey: authRole,
-          avatar: 'SA',
+          roleKey,
+          avatar: isSeo ? 'SEO' : 'SA',
           lastLogin: new Date().toISOString()
         },
         token: `trio_auth_${Date.now()}`
@@ -174,7 +184,7 @@ export const AdminProvider = ({ children }) => {
         setLocalSession(sessionData);
       } catch (_) { }
     }
-  }, [authUser, authProfile, authIsAdmin, authRole]);
+  }, [authUser, authProfile, authIsAdmin, authRole, authIsSeoManager]);
 
   // ═══════════════════════════════════════════════════════════════
   // ROLE-BASED ACCESS CONTROL (RBAC) HELPERS & STAFF USERS
@@ -182,19 +192,34 @@ export const AdminProvider = ({ children }) => {
   const [usersList, setUsersList] = useState([]);
   const [isLoadingUsers, setIsLoadingUsers] = useState(false);
 
-  const isSuperAdmin = () => {
-    if (authIsSuperAdmin) return true;
-    const role = (adminUser?.role || '').toLowerCase();
-    const roleKey = (adminUser?.roleKey || '').toLowerCase();
-    const email = (adminUser?.email || '').toLowerCase();
-    return role.includes('super') || roleKey === 'super_admin' || roleKey === 'admin' || email === 'trioenterprises10@gmail.com' || email === 'admin@trioenterprises.com';
+  const isSeoManager = () => {
+    const email = (authUser?.email || adminUser?.email || localSession?.user?.email || '').toLowerCase();
+    if (email === 'trioenterprises10@gmail.com' || email === 'admin@trioenterprises.com') return false;
+
+    if (authIsSeoManager || authRole === 'seo_manager') return true;
+
+    const metaRole = (authUser?.user_metadata?.role || '').toLowerCase();
+    if (metaRole === 'seo_manager' || metaRole === 'seo' || metaRole.includes('seo') || metaRole.includes('cms')) {
+      return true;
+    }
+
+    const role = (adminUser?.role || localSession?.user?.role || '').toLowerCase();
+    const roleKey = (adminUser?.roleKey || localSession?.user?.roleKey || '').toLowerCase();
+    return role.includes('seo') || roleKey === 'seo_manager' || roleKey === 'seo';
   };
 
-  const isSeoManager = () => {
-    if (authIsSeoManager) return true;
-    const role = (adminUser?.role || '').toLowerCase();
-    const roleKey = (adminUser?.roleKey || '').toLowerCase();
-    return role.includes('seo') || roleKey === 'seo_manager';
+  const isSuperAdmin = () => {
+    // SEO Managers are strictly restricted from Super Admin access
+    if (isSeoManager()) return false;
+
+    const email = (authUser?.email || adminUser?.email || localSession?.user?.email || '').toLowerCase();
+    if (email === 'trioenterprises10@gmail.com' || email === 'admin@trioenterprises.com') return true;
+
+    if (authIsSuperAdmin && !authIsSeoManager) return true;
+
+    const role = (adminUser?.role || localSession?.user?.role || '').toLowerCase();
+    const roleKey = (adminUser?.roleKey || localSession?.user?.roleKey || '').toLowerCase();
+    return role.includes('super') || roleKey === 'super_admin';
   };
 
   // SEO Manager allowed paths (Home/Banners, Reels, Blogs, Contact Inquiries, Static Pages)
@@ -213,7 +238,8 @@ export const AdminProvider = ({ children }) => {
   const canAccessRoute = (pathname) => {
     if (isSuperAdmin()) return true;
     if (isSeoManager()) {
-      const cleanPath = pathname.toLowerCase().replace(/\/+$/, '');
+      let cleanPath = String(pathname || '').toLowerCase().replace(/\/+$/, '');
+      cleanPath = cleanPath.replace(/^\/admin/, '') || '/';
       if (cleanPath === '' || cleanPath === '/') return false; // SEO Manager defaults to /cms/home
       return SEO_ALLOWED_PATHS.some((p) => cleanPath === p || cleanPath.startsWith(p + '/'));
     }
@@ -1199,23 +1225,25 @@ export const AdminProvider = ({ children }) => {
         });
 
         if (!error && data?.user) {
-          const isMaster = cleanEmail === 'trioenterprises10@gmail.com';
+          const isMaster = cleanEmail === 'trioenterprises10@gmail.com' || cleanEmail === 'admin@trioenterprises.com';
           const metaRole = (data.user.user_metadata?.role || '').toLowerCase();
-          const effectiveRole = isMaster ? 'super_admin' : (metaRole || 'admin');
+          const isSeo = !isMaster && (metaRole === 'seo_manager' || metaRole === 'seo' || metaRole.includes('seo') || metaRole.includes('cms'));
+          const effectiveRole = isMaster ? 'super_admin' : (isSeo ? 'seo_manager' : (metaRole || 'admin'));
 
           const formattedRole = isMaster
             ? 'Super Admin'
-            : (effectiveRole === 'seo_manager' ? 'SEO Manager' : (effectiveRole === 'super_admin' ? 'Super Admin' : 'Admin'));
+            : (isSeo ? 'SEO Manager' : (effectiveRole === 'super_admin' ? 'Super Admin' : 'Admin'));
+          const roleKey = isMaster ? 'super_admin' : (isSeo ? 'seo_manager' : effectiveRole);
 
           const sessionData = {
             active: true,
             user: {
               id: data.user.id,
-              name: isMaster ? 'Trio Super Admin' : (data.user.user_metadata?.full_name || 'Administrator'),
+              name: isMaster ? 'Trio Super Admin' : (data.user.user_metadata?.full_name || (isSeo ? 'SEO Manager' : 'Administrator')),
               email: cleanEmail,
               role: formattedRole,
-              roleKey: effectiveRole,
-              avatar: 'SA',
+              roleKey,
+              avatar: isSeo ? 'SEO' : 'SA',
               lastLogin: new Date().toISOString()
             },
             token: `trio_auth_${Date.now()}`

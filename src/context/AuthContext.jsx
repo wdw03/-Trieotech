@@ -630,13 +630,36 @@ export const AuthProvider = ({ children }) => {
   }, [user?.id, fetchOrders]);
 
   const userEmail = (user?.email || '').toLowerCase();
-  const isMasterAdmin = userEmail === 'trioenterprises10@gmail.com';
+  const isMasterAdmin = userEmail === 'trioenterprises10@gmail.com' || userEmail === 'admin@trioenterprises.com';
   const roleFromDb = (profile?.role || '').toLowerCase();
   const roleFromMeta = (user?.user_metadata?.role || '').toLowerCase();
-  const effectiveRole = isMasterAdmin ? 'super_admin' : (roleFromDb || roleFromMeta || 'customer');
-  const isAdmin = isMasterAdmin || ['super_admin', 'admin', 'seo_manager'].includes(effectiveRole);
-  const isSuperAdmin = isMasterAdmin || ['super_admin', 'admin'].includes(effectiveRole);
+
+  // Determine effectiveRole:
+  // 1. Primary master owner is always super_admin
+  // 2. Specific metadata role ('seo_manager' / 'seo') takes precedence over generic DB 'admin'
+  let effectiveRole = 'customer';
+  if (isMasterAdmin) {
+    effectiveRole = 'super_admin';
+  } else if (
+    roleFromMeta === 'seo_manager' ||
+    roleFromMeta === 'seo' ||
+    roleFromMeta.includes('seo') ||
+    roleFromMeta.includes('cms') ||
+    roleFromDb === 'seo_manager' ||
+    roleFromDb.includes('seo')
+  ) {
+    effectiveRole = 'seo_manager';
+  } else if (roleFromMeta === 'super_admin' || roleFromMeta === 'superadmin') {
+    effectiveRole = 'super_admin';
+  } else if (roleFromMeta === 'admin' || roleFromDb === 'admin') {
+    effectiveRole = 'super_admin';
+  } else {
+    effectiveRole = roleFromMeta || roleFromDb || 'customer';
+  }
+
   const isSeoManager = effectiveRole === 'seo_manager';
+  const isSuperAdmin = isMasterAdmin || (effectiveRole === 'super_admin' && !isSeoManager);
+  const isAdmin = isMasterAdmin || isSuperAdmin || isSeoManager;
 
   // ── Computed user object for backward compatibility ──
   const compatUser = user

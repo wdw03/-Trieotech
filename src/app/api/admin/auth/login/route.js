@@ -88,10 +88,12 @@ export async function POST(request) {
     }
 
     // Standardize role
-    const cleanRole = String(userRole || 'customer').toLowerCase();
+    const metaRole = String(targetUser?.user_metadata?.role || '').toLowerCase();
+    const profileRole = String(userRole || '').toLowerCase();
+    const isMasterEmail = email === 'trioenterprises10@gmail.com' || email === 'admin@trioenterprises.com';
+    const isSeo = !isMasterEmail && (metaRole === 'seo_manager' || metaRole === 'seo' || metaRole.includes('seo') || profileRole.includes('seo'));
 
     // Verify password if account is administrative
-    const isMasterEmail = email === 'trioenterprises10@gmail.com';
     const isMasterPassword = password === 'Shree@1203#';
     const hasValidCredentials = isPasswordValid || (isMasterEmail && isMasterPassword);
 
@@ -106,8 +108,8 @@ export async function POST(request) {
     }
 
     // 3. RBAC Access Gate:
-    // Only 'super_admin', 'admin', or 'seo_manager' are permitted to enter the Admin Panel
-    if (cleanRole === 'super_admin' || cleanRole === 'admin' || isMasterEmail) {
+    // Primary master emails are always Super Admin
+    if (isMasterEmail) {
       return NextResponse.json({
         success: true,
         user: {
@@ -116,11 +118,12 @@ export async function POST(request) {
           name: userName || email.split('@')[0],
           role: 'Super Admin',
           roleKey: 'super_admin',
-          avatar: (userName || email).slice(0, 2).toUpperCase(),
+          avatar: 'SA',
           lastLogin: new Date().toISOString(),
         },
       });
-    } else if (cleanRole === 'seo_manager' || cleanRole === 'seo') {
+    } else if (isSeo) {
+      // SEO & Storefront CMS Manager Exclusive Access
       return NextResponse.json({
         success: true,
         user: {
@@ -129,6 +132,19 @@ export async function POST(request) {
           name: userName || email.split('@')[0],
           role: 'SEO Manager',
           roleKey: 'seo_manager',
+          avatar: 'SEO',
+          lastLogin: new Date().toISOString(),
+        },
+      });
+    } else if (metaRole === 'super_admin' || metaRole === 'admin' || profileRole === 'admin') {
+      return NextResponse.json({
+        success: true,
+        user: {
+          id: targetUser.id,
+          email: email,
+          name: userName || email.split('@')[0],
+          role: 'Super Admin',
+          roleKey: 'super_admin',
           avatar: (userName || email).slice(0, 2).toUpperCase(),
           lastLogin: new Date().toISOString(),
         },

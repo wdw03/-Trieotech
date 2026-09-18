@@ -1,15 +1,21 @@
 'use client';
 import React from 'react';
-import { Link } from 'next/link';
+import Link from 'next/link';
+import { useAdmin } from '../../../context/AdminContext.jsx';
 
 export const TrioLogo = ({
   className = '',
   showTagline = true,
   isCompact = false,
-  badgeText = 'ADMIN'
+  badgeText
 }) => {
+  const { isSeoManager } = useAdmin();
+  const isSeo = isSeoManager ? isSeoManager() : false;
+  const targetHref = isSeo ? '/admin/cms/home' : '/admin';
+  const effectiveBadge = badgeText || (isSeo ? 'SEO' : 'ADMIN');
+
   return (
-    <Link href="/admin" className={`inline-flex items-center gap-2.5 group select-none shrink-0 min-w-0 ${className}`}>
+    <Link href={targetHref} className={`inline-flex items-center gap-2.5 group select-none shrink-0 min-w-0 ${className}`}>
       {/* Brand Logo Emblem */}
       <div className={`relative ${isCompact ? 'w-8 h-8' : 'w-10 h-10'} rounded-xl overflow-hidden p-0.5 bg-gradient-to-br from-amber-500/50 via-rose-700/40 to-amber-500/50 shadow-md group-hover:shadow-amber-500/20 transition-all duration-300 shrink-0`}>
         <div className="w-full h-full rounded-[10px] bg-slate-950 flex items-center justify-center overflow-hidden border border-amber-500/40">
@@ -31,9 +37,13 @@ export const TrioLogo = ({
           <span className={`font-black tracking-tight text-white group-hover:text-amber-400 transition-colors truncate ${isCompact ? 'text-sm' : 'text-base'}`}>
             TRIO <span className="text-amber-400 font-bold">ENTERPRISES</span>
           </span>
-          {badgeText && (
-            <span className="text-[9px] bg-amber-500/10 text-amber-400 border border-amber-500/30 px-1.5 py-0.2 rounded font-black tracking-widest uppercase">
-              {badgeText}
+          {effectiveBadge && (
+            <span className={`text-[9px] px-1.5 py-0.2 rounded font-black tracking-widest uppercase ${
+              isSeo
+                ? 'bg-indigo-500/15 text-indigo-400 border border-indigo-500/30'
+                : 'bg-amber-500/10 text-amber-400 border border-amber-500/30'
+            }`}>
+              {effectiveBadge}
             </span>
           )}
         </div>

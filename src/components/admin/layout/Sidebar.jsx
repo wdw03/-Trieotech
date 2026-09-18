@@ -195,7 +195,10 @@ export const Sidebar = () => {
       >
         {/* Brand Header */}
         <div className="h-16 flex items-center justify-between px-3.5 border-b border-slate-800/80 shrink-0">
-          <div className="flex items-center gap-3 overflow-hidden">
+          <Link
+            href={isSeoManager() ? '/admin/cms/home' : '/admin'}
+            className="flex items-center gap-3 overflow-hidden cursor-pointer"
+          >
             {/* Authentic Logo Emblem from triotech */}
             <div className="w-10 h-10 rounded-xl overflow-hidden p-0.5 bg-gradient-to-br from-amber-500/50 via-rose-700/40 to-amber-500/50 shadow-md shrink-0">
               <div className="w-full h-full rounded-[10px] bg-slate-950 flex items-center justify-center overflow-hidden border border-amber-500/40">
@@ -213,16 +216,20 @@ export const Sidebar = () => {
                   <span className="font-black text-sm tracking-tight text-white">
                     TRIO <span className="text-amber-400 font-bold">ENTERPRISES</span>
                   </span>
-                  <span className="text-[8px] bg-amber-500/10 text-amber-400 border border-amber-500/30 px-1 py-0.2 rounded font-black uppercase">
-                    CMS
+                  <span className={`text-[8px] px-1 py-0.2 rounded font-black uppercase ${
+                    isSeoManager()
+                      ? 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/30'
+                      : 'bg-amber-500/10 text-amber-400 border border-amber-500/30'
+                  }`}>
+                    {isSeoManager() ? 'SEO' : 'ADMIN'}
                   </span>
                 </div>
                 <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider truncate">
-                  Ethnic Craft Guild
+                  {isSeoManager() ? 'SEO & Storefront CMS' : 'Ethnic Craft Guild'}
                 </span>
               </div>
             )}
-          </div>
+          </Link>
 
           {/* Collapse toggle (Desktop only) */}
           <button

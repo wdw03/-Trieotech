@@ -64,7 +64,7 @@ export const Header = () => {
     if (!globalSearch.trim() || globalSearch.length < 2) return null;
     const q = globalSearch.toLowerCase().trim();
 
-    const matchedOrders = orders.filter(
+    const matchedOrders = isSeoManager() ? [] : orders.filter(
       (o) =>
         o.id.toLowerCase().includes(q) ||
         o.customer.name.toLowerCase().includes(q) ||
@@ -78,7 +78,7 @@ export const Header = () => {
         p.subcategory.toLowerCase().includes(q)
     ).slice(0, 4);
 
-    const matchedCustomers = customers.filter(
+    const matchedCustomers = isSeoManager() ? [] : customers.filter(
       (c) =>
         c.name.toLowerCase().includes(q) ||
         c.email.toLowerCase().includes(q) ||
@@ -91,7 +91,7 @@ export const Header = () => {
       customers: matchedCustomers,
       total: matchedOrders.length + matchedProducts.length + matchedCustomers.length
     };
-  }, [globalSearch, orders, products, customers]);
+  }, [globalSearch, orders, products, customers, isSeoManager]);
 
   return (
     <header className="sticky top-0 z-30 h-16 bg-[#0B0F19]/80 backdrop-blur-xl border-b border-slate-800/80 flex items-center justify-between px-3 sm:px-6 lg:px-8 transition-all duration-300 w-full max-w-full min-w-0">
@@ -115,7 +115,7 @@ export const Header = () => {
               value={globalSearch}
               onChange={(e) => setGlobalSearch(e.target.value)}
               onFocus={() => setSearchFocused(true)}
-              placeholder="Search orders, products, customers..."
+              placeholder={isSeoManager() ? "Search products..." : "Search orders, products, customers..."}
               className="w-full bg-slate-900/90 border border-slate-800 rounded-xl pl-8 sm:pl-10 pr-8 sm:pr-9 py-1.5 sm:py-2 text-xs sm:text-sm text-slate-200 placeholder-slate-500 focus:outline-none focus:border-indigo-500/80 focus:ring-2 focus:ring-indigo-500/20 transition-all"
             />
             {globalSearch && (
@@ -133,7 +133,7 @@ export const Header = () => {
             <div className="absolute top-full left-0 right-0 mt-2 bg-slate-900 border border-slate-700/80 rounded-2xl shadow-2xl p-3 max-h-96 overflow-y-auto z-50 animate-scaleIn">
               {searchResults.total === 0 ? (
                 <div className="p-4 text-center text-xs text-slate-400">
-                  No matching orders, products, or customers found.
+                  {isSeoManager() ? "No matching products found." : "No matching orders, products, or customers found."}
                 </div>
               ) : (
                 <div className="space-y-3">
@@ -145,10 +145,10 @@ export const Header = () => {
                         <div
                           key={p.id}
                           onClick={() => {
-                            navigate('/products');
+                            if (!isSeoManager()) navigate('/products');
                             setSearchFocused(false);
                           }}
-                          className="flex items-center gap-2.5 p-2 rounded-xl hover:bg-slate-800 cursor-pointer transition-colors"
+                          className={`flex items-center gap-2.5 p-2 rounded-xl transition-colors ${!isSeoManager() ? 'hover:bg-slate-800 cursor-pointer' : ''}`}
                         >
                           <div className="w-8 h-8 rounded-lg bg-indigo-500/10 text-indigo-400 flex items-center justify-center shrink-0 border border-indigo-500/20">
                             <Sparkles className="w-4 h-4" />
@@ -162,8 +162,8 @@ export const Header = () => {
                     </div>
                   )}
 
-                  {/* Matching Orders */}
-                  {searchResults.orders.length > 0 && (
+                  {/* Matching Orders (Super Admin Only) */}
+                  {!isSeoManager() && searchResults.orders.length > 0 && (
                     <div>
                       <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500 px-2 mb-1">Orders ({searchResults.orders.length})</p>
                       {searchResults.orders.map((o) => (
@@ -187,8 +187,8 @@ export const Header = () => {
                     </div>
                   )}
 
-                  {/* Matching Customers */}
-                  {searchResults.customers.length > 0 && (
+                  {/* Matching Customers (Super Admin Only) */}
+                  {!isSeoManager() && searchResults.customers.length > 0 && (
                     <div>
                       <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500 px-2 mb-1">Customers ({searchResults.customers.length})</p>
                       {searchResults.customers.map((c) => (
@@ -218,14 +218,16 @@ export const Header = () => {
 
       {/* Right: Quick Actions, Notifications, User Profile */}
       <div className="flex items-center gap-2.5">
-        {/* Quick Add Product Button */}
-        <button
-          onClick={() => navigate('/products/new')}
-          className="btn-primary py-1.5 px-3 text-xs hidden sm:inline-flex"
-        >
-          <Plus className="w-3.5 h-3.5" />
-          Add Product
-        </button>
+        {/* Quick Add Product Button (Super Admin Only) */}
+        {!isSeoManager() && (
+          <button
+            onClick={() => navigate('/products/new')}
+            className="btn-primary py-1.5 px-3 text-xs hidden sm:inline-flex"
+          >
+            <Plus className="w-3.5 h-3.5" />
+            Add Product
+          </button>
+        )}
 
         {/* Refresh Live Data Button */}
         <button
@@ -237,53 +239,55 @@ export const Header = () => {
           <RefreshCw className={`w-4 h-4 ${isRefreshing || isLoading ? 'animate-spin text-indigo-400' : ''}`} />
         </button>
 
-        {/* Notifications Dropdown */}
-        <div className="relative">
-          <button
-            onClick={() => setShowNotifications(!showNotifications)}
-            className="p-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-xl relative transition-colors"
-            title="Notifications"
-          >
-            <Bell className="w-5 h-5" />
-            <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-indigo-500 ring-2 ring-[#0B0F19]" />
-          </button>
+        {/* Notifications Dropdown (Super Admin Only) */}
+        {!isSeoManager() && (
+          <div className="relative">
+            <button
+              onClick={() => setShowNotifications(!showNotifications)}
+              className="p-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-xl relative transition-colors"
+              title="Notifications"
+            >
+              <Bell className="w-5 h-5" />
+              <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-indigo-500 ring-2 ring-[#0B0F19]" />
+            </button>
 
-          {showNotifications && (
-            <div className="absolute right-0 mt-2 w-80 bg-slate-900 border border-slate-700/80 rounded-2xl shadow-2xl p-3 z-50 animate-scaleIn">
-              <div className="flex items-center justify-between pb-2 border-b border-slate-800 mb-2 px-1">
-                <span className="font-semibold text-xs text-white">Notifications</span>
-                <span className="text-[10px] bg-indigo-500/20 text-indigo-400 px-2 py-0.5 rounded-full font-bold">
-                  {stats.statusCounts.new + stats.lowStockCount} New
-                </span>
-              </div>
-              <div className="space-y-2 text-xs">
-                <div
-                  onClick={() => { navigate('/orders'); setShowNotifications(false); }}
-                  className="p-2.5 rounded-xl bg-slate-800/60 hover:bg-slate-800 cursor-pointer flex gap-2.5 items-start"
-                >
-                  <ShoppingBag className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
-                  <div>
-                    <p className="font-medium text-slate-200">New Orders Placed</p>
-                    <p className="text-[11px] text-slate-400">{stats.statusCounts.new} customer orders awaiting confirmation.</p>
-                  </div>
+            {showNotifications && (
+              <div className="absolute right-0 mt-2 w-80 bg-slate-900 border border-slate-700/80 rounded-2xl shadow-2xl p-3 z-50 animate-scaleIn">
+                <div className="flex items-center justify-between pb-2 border-b border-slate-800 mb-2 px-1">
+                  <span className="font-semibold text-xs text-white">Notifications</span>
+                  <span className="text-[10px] bg-indigo-500/20 text-indigo-400 px-2 py-0.5 rounded-full font-bold">
+                    {stats.statusCounts.new + stats.lowStockCount} New
+                  </span>
                 </div>
-
-                {stats.lowStockCount > 0 && (
+                <div className="space-y-2 text-xs">
                   <div
-                    onClick={() => { navigate('/inventory'); setShowNotifications(false); }}
+                    onClick={() => { navigate('/orders'); setShowNotifications(false); }}
                     className="p-2.5 rounded-xl bg-slate-800/60 hover:bg-slate-800 cursor-pointer flex gap-2.5 items-start"
                   >
-                    <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+                    <ShoppingBag className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
                     <div>
-                      <p className="font-medium text-slate-200">Low Stock Alert</p>
-                      <p className="text-[11px] text-slate-400">{stats.lowStockCount} craft products running below 15 units.</p>
+                      <p className="font-medium text-slate-200">New Orders Placed</p>
+                      <p className="text-[11px] text-slate-400">{stats.statusCounts.new} customer orders awaiting confirmation.</p>
                     </div>
                   </div>
-                )}
+
+                  {stats.lowStockCount > 0 && (
+                    <div
+                      onClick={() => { navigate('/inventory'); setShowNotifications(false); }}
+                      className="p-2.5 rounded-xl bg-slate-800/60 hover:bg-slate-800 cursor-pointer flex gap-2.5 items-start"
+                    >
+                      <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+                      <div>
+                        <p className="font-medium text-slate-200">Low Stock Alert</p>
+                        <p className="text-[11px] text-slate-400">{stats.lowStockCount} craft products running below 15 units.</p>
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
-            </div>
-          )}
-        </div>
+            )}
+          </div>
+        )}
 
         {/* Profile Card */}
         <div className="relative">
