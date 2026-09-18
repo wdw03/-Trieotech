@@ -9,7 +9,7 @@ import QuickViewModal from '../../components/common/QuickViewModal';
 import EmptyState from '../../components/common/EmptyState';
 import { categories as fallbackCategories, getCategoryBySlug } from '../../data/categories';
 import { products as fallbackProducts } from '../../data/products';
-import { fetchLiveProducts, fetchLiveCategories, normalizeProduct, normalizeCategorySlug } from '../../lib/api/store';
+import { fetchLiveProducts, fetchLiveCategories, normalizeProduct, normalizeCategorySlug, matchesCategory } from '../../lib/api/store';
 import { Filter, LayoutGrid, List, Sparkles, X, ChevronRight } from 'lucide-react';
 import { ProductGridSkeleton } from '../../components/common/LoadingSkeleton';
 
