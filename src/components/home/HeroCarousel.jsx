@@ -61,11 +61,19 @@ export const HeroCarousel = () => {
   const [slides, setSlides] = useState(FALLBACK_SLIDES);
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
 
   // Drag & Touch tracking refs
   const isDraggingRef = useRef(false);
   const dragStartXRef = useRef(0);
   const dragDistanceRef = useRef(0);
+  const touchPauseTimeoutRef = useRef(null);
+
+  useEffect(() => {
+    return () => {
+      if (touchPauseTimeoutRef.current) clearTimeout(touchPauseTimeoutRef.current);
+    };
+  }, []);
 
   // Dynamically load slides from Supabase API with window focus auto-sync & cache-busting
   useEffect(() => {
@@ -97,18 +105,19 @@ export const HeroCarousel = () => {
   }, []);
 
   useEffect(() => {
-    if (isPaused || slides.length === 0) return;
+    if (isHovered || isPaused || slides.length === 0) return;
     const timer = setInterval(() => {
       setCurrentSlide((prev) => (prev + 1) % slides.length);
     }, 4500);
     return () => clearInterval(timer);
-  }, [isPaused, slides.length]);
+  }, [isHovered, isPaused, slides.length]);
 
   const activeIndex = currentSlide >= slides.length ? 0 : currentSlide;
   const slide = slides[activeIndex] || FALLBACK_SLIDES[0];
 
   // Touch handlers
   const handleTouchStart = (e) => {
+    if (touchPauseTimeoutRef.current) clearTimeout(touchPauseTimeoutRef.current);
     setIsPaused(true);
     isDraggingRef.current = true;
     dragStartXRef.current = e.touches[0].clientX;
@@ -123,12 +132,17 @@ export const HeroCarousel = () => {
   const handleTouchEnd = () => {
     if (!isDraggingRef.current || slides.length === 0) return;
     isDraggingRef.current = false;
-    setIsPaused(false);
     if (dragDistanceRef.current < -40) {
       setCurrentSlide((prev) => (prev + 1) % slides.length);
     } else if (dragDistanceRef.current > 40) {
       setCurrentSlide((prev) => (prev - 1 + slides.length) % slides.length);
     }
+    if (touchPauseTimeoutRef.current) clearTimeout(touchPauseTimeoutRef.current);
+    touchPauseTimeoutRef.current = setTimeout(() => {
+      if (!isHovered) {
+        setIsPaused(false);
+      }
+    }, 5000);
   };
 
   // Mouse handlers
@@ -148,7 +162,9 @@ export const HeroCarousel = () => {
   const handleMouseUp = () => {
     if (!isDraggingRef.current || slides.length === 0) return;
     isDraggingRef.current = false;
-    setIsPaused(false);
+    if (!isHovered) {
+      setIsPaused(false);
+    }
     if (dragDistanceRef.current < -40) {
       setCurrentSlide((prev) => (prev + 1) % slides.length);
     } else if (dragDistanceRef.current > 40) {
@@ -165,13 +181,17 @@ export const HeroCarousel = () => {
         setCurrentSlide((prev) => (prev - 1 + slides.length) % slides.length);
       }
     }
+    setIsHovered(false);
     setIsPaused(false);
   };
 
   return (
     <div
       className="relative overflow-hidden w-full max-w-full bg-gradient-to-b from-[#2A0E0E] via-[#1E0909] to-[#120505] text-white py-4 sm:py-8 lg:py-20 border-b border-gold-500/30 select-none cursor-grab active:cursor-grabbing touch-pan-y"
-      onMouseEnter={() => setIsPaused(true)}
+      onMouseEnter={() => {
+        setIsHovered(true);
+        setIsPaused(true);
+      }}
       onMouseLeave={handleMouseLeave}
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}

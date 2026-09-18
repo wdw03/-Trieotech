@@ -33,6 +33,7 @@ export const ProductCarousel = ({
 
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
   const [isTransitioning, setIsTransitioning] = useState(true);
   const [visibleCount, setVisibleCount] = useState(4);
 
@@ -40,6 +41,14 @@ export const ProductCarousel = ({
   const isDraggingRef = useRef(false);
   const dragStartXRef = useRef(0);
   const dragDistanceRef = useRef(0);
+  const touchPauseTimeoutRef = useRef(null);
+
+  // Clean up timeouts on unmount
+  useEffect(() => {
+    return () => {
+      if (touchPauseTimeoutRef.current) clearTimeout(touchPauseTimeoutRef.current);
+    };
+  }, []);
 
   // Responsive visible count
   useEffect(() => {
@@ -98,17 +107,18 @@ export const ProductCarousel = ({
     }
   };
 
-  // Auto-scroll every 3.5 seconds
+  // Auto-scroll every 3.5 seconds - strictly frozen when hovering or dragging
   useEffect(() => {
-    if (isPaused || totalOriginal <= visibleCount) return;
+    if (isHovered || isPaused || totalOriginal <= visibleCount) return;
     const interval = setInterval(() => {
       nextSlide();
     }, 3500);
     return () => clearInterval(interval);
-  }, [isPaused, nextSlide, totalOriginal, visibleCount]);
+  }, [isHovered, isPaused, nextSlide, totalOriginal, visibleCount]);
 
   // Touch handlers (Mobile swipe)
   const handleTouchStart = (e) => {
+    if (touchPauseTimeoutRef.current) clearTimeout(touchPauseTimeoutRef.current);
     setIsPaused(true);
     isDraggingRef.current = true;
     dragStartXRef.current = e.touches[0].clientX;
@@ -123,12 +133,18 @@ export const ProductCarousel = ({
   const handleTouchEnd = () => {
     if (!isDraggingRef.current) return;
     isDraggingRef.current = false;
-    setIsPaused(false);
     if (dragDistanceRef.current < -35) {
       nextSlide();
     } else if (dragDistanceRef.current > 35) {
       prevSlide();
     }
+    // Maintain pause after touching so mobile users can view without jumping
+    if (touchPauseTimeoutRef.current) clearTimeout(touchPauseTimeoutRef.current);
+    touchPauseTimeoutRef.current = setTimeout(() => {
+      if (!isHovered) {
+        setIsPaused(false);
+      }
+    }, 4500);
   };
 
   // Mouse drag handlers (Desktop click-and-drag swipe)
@@ -149,7 +165,9 @@ export const ProductCarousel = ({
   const handleMouseUp = () => {
     if (!isDraggingRef.current) return;
     isDraggingRef.current = false;
-    setIsPaused(false);
+    if (!isHovered) {
+      setIsPaused(false);
+    }
     if (dragDistanceRef.current < -35) {
       nextSlide();
     } else if (dragDistanceRef.current > 35) {
@@ -166,7 +184,6 @@ export const ProductCarousel = ({
         prevSlide();
       }
     }
-    setIsPaused(false);
   };
 
   // Active original item index for dots pagination
@@ -181,8 +198,14 @@ export const ProductCarousel = ({
   return (
     <section
       className={`py-10 sm:py-16 ${bgClass} relative overflow-hidden`}
-      onMouseEnter={() => setIsPaused(true)}
-      onMouseLeave={() => setIsPaused(false)}
+      onMouseEnter={() => {
+        setIsHovered(true);
+        setIsPaused(true);
+      }}
+      onMouseLeave={() => {
+        setIsHovered(false);
+        setIsPaused(false);
+      }}
     >
       <div className="max-w-7xl mx-auto px-3 sm:px-6 space-y-6 sm:space-y-8">
         
@@ -224,6 +247,10 @@ export const ProductCarousel = ({
           {totalOriginal > visibleCount && (
             <button
               onClick={prevSlide}
+              onMouseEnter={() => {
+                setIsHovered(true);
+                setIsPaused(true);
+              }}
               className="absolute -left-2 sm:-left-4 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-[#1C120B]/90 text-gold-300 border border-gold-500/40 shadow-xl backdrop-blur-md flex items-center justify-center hover:bg-gold-500 hover:text-maroon-950 active:scale-90 transition-all opacity-80 group-hover/carousel:opacity-100 cursor-pointer"
               aria-label="Previous products"
             >
@@ -235,6 +262,10 @@ export const ProductCarousel = ({
           {totalOriginal > visibleCount && (
             <button
               onClick={nextSlide}
+              onMouseEnter={() => {
+                setIsHovered(true);
+                setIsPaused(true);
+              }}
               className="absolute -right-2 sm:-right-4 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-[#1C120B]/90 text-gold-300 border border-gold-500/40 shadow-xl backdrop-blur-md flex items-center justify-center hover:bg-gold-500 hover:text-maroon-950 active:scale-90 transition-all opacity-80 group-hover/carousel:opacity-100 cursor-pointer"
               aria-label="Next products"
             >
@@ -245,6 +276,10 @@ export const ProductCarousel = ({
           {/* Swipeable Track with Real-Time Scaling */}
           <div
             className="relative overflow-hidden w-full select-none cursor-grab active:cursor-grabbing touch-pan-y py-2"
+            onMouseEnter={() => {
+              setIsHovered(true);
+              setIsPaused(true);
+            }}
             onTouchStart={handleTouchStart}
             onTouchMove={handleTouchMove}
             onTouchEnd={handleTouchEnd}
@@ -265,6 +300,10 @@ export const ProductCarousel = ({
                   key={`${product.id}-${idx}`}
                   className="shrink-0 px-1.5 sm:px-2.5 transition-all duration-300 transform hover:scale-[1.02]"
                   style={{ width: `${100 / visibleCount}%` }}
+                  onMouseEnter={() => {
+                    setIsHovered(true);
+                    setIsPaused(true);
+                  }}
                 >
                   <ProductCard
                     product={product}

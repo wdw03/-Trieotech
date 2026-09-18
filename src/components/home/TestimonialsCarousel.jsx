@@ -10,6 +10,7 @@ export const TestimonialsCarousel = () => {
   const [reviewsList, setReviewsList] = useState(fallbackReviews);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
   const [isTransitioning, setIsTransitioning] = useState(true);
   const [visibleCount, setVisibleCount] = useState(3);
   
@@ -17,6 +18,13 @@ export const TestimonialsCarousel = () => {
   const isDraggingRef = useRef(false);
   const dragStartXRef = useRef(0);
   const dragDistanceRef = useRef(0);
+  const touchPauseTimeoutRef = useRef(null);
+
+  useEffect(() => {
+    return () => {
+      if (touchPauseTimeoutRef.current) clearTimeout(touchPauseTimeoutRef.current);
+    };
+  }, []);
 
   // Responsive visible card count detection
   useEffect(() => {
@@ -104,17 +112,18 @@ export const TestimonialsCarousel = () => {
     }
   };
 
-  // Auto-scroll every 3 seconds (3000ms) with hover pause
+  // Auto-scroll every 3 seconds (3000ms) - completely frozen when hovering or dragging
   useEffect(() => {
-    if (isPaused || totalOriginal <= 1) return;
+    if (isHovered || isPaused || totalOriginal <= 1) return;
     const interval = setInterval(() => {
       nextSlide();
     }, 3000);
     return () => clearInterval(interval);
-  }, [isPaused, nextSlide, totalOriginal]);
+  }, [isHovered, isPaused, nextSlide, totalOriginal]);
 
   // Touch handlers (Mobile swipe)
   const handleTouchStart = (e) => {
+    if (touchPauseTimeoutRef.current) clearTimeout(touchPauseTimeoutRef.current);
     setIsPaused(true);
     isDraggingRef.current = true;
     dragStartXRef.current = e.touches[0].clientX;
@@ -129,12 +138,17 @@ export const TestimonialsCarousel = () => {
   const handleTouchEnd = () => {
     if (!isDraggingRef.current) return;
     isDraggingRef.current = false;
-    setIsPaused(false);
     if (dragDistanceRef.current < -35) {
       nextSlide();
     } else if (dragDistanceRef.current > 35) {
       prevSlide();
     }
+    if (touchPauseTimeoutRef.current) clearTimeout(touchPauseTimeoutRef.current);
+    touchPauseTimeoutRef.current = setTimeout(() => {
+      if (!isHovered) {
+        setIsPaused(false);
+      }
+    }, 4500);
   };
 
   // Mouse drag handlers (Desktop click-and-drag swipe)
@@ -153,7 +167,9 @@ export const TestimonialsCarousel = () => {
   const handleMouseUp = () => {
     if (!isDraggingRef.current) return;
     isDraggingRef.current = false;
-    setIsPaused(false);
+    if (!isHovered) {
+      setIsPaused(false);
+    }
     if (dragDistanceRef.current < -35) {
       nextSlide();
     } else if (dragDistanceRef.current > 35) {
@@ -170,7 +186,6 @@ export const TestimonialsCarousel = () => {
         prevSlide();
       }
     }
-    setIsPaused(false);
   };
 
   // Active original item index for dots pagination
@@ -185,8 +200,14 @@ export const TestimonialsCarousel = () => {
   return (
     <section
       className="py-12 sm:py-16 bg-ivory-100 dark:bg-ethnic-dark relative overflow-hidden"
-      onMouseEnter={() => setIsPaused(true)}
-      onMouseLeave={() => setIsPaused(false)}
+      onMouseEnter={() => {
+        setIsHovered(true);
+        setIsPaused(true);
+      }}
+      onMouseLeave={() => {
+        setIsHovered(false);
+        setIsPaused(false);
+      }}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 space-y-8 sm:space-y-10">
         
@@ -212,6 +233,10 @@ export const TestimonialsCarousel = () => {
           {/* Floating Left Button (Visible on hover / mobile) */}
           <button
             onClick={prevSlide}
+            onMouseEnter={() => {
+              setIsHovered(true);
+              setIsPaused(true);
+            }}
             className="absolute -left-2 sm:-left-4 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-[#1C120B]/90 text-gold-300 border border-gold-500/40 shadow-xl backdrop-blur-md flex items-center justify-center hover:bg-gold-500 hover:text-maroon-950 active:scale-90 transition-all opacity-80 group-hover/carousel:opacity-100 cursor-pointer"
             aria-label="Swipe left"
           >
@@ -221,6 +246,10 @@ export const TestimonialsCarousel = () => {
           {/* Floating Right Button (Visible on hover / mobile) */}
           <button
             onClick={nextSlide}
+            onMouseEnter={() => {
+              setIsHovered(true);
+              setIsPaused(true);
+            }}
             className="absolute -right-2 sm:-right-4 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-[#1C120B]/90 text-gold-300 border border-gold-500/40 shadow-xl backdrop-blur-md flex items-center justify-center hover:bg-gold-500 hover:text-maroon-950 active:scale-90 transition-all opacity-80 group-hover/carousel:opacity-100 cursor-pointer"
             aria-label="Swipe right"
           >
@@ -230,6 +259,10 @@ export const TestimonialsCarousel = () => {
           {/* Swipeable Track */}
           <div
             className="relative overflow-hidden w-full select-none cursor-grab active:cursor-grabbing touch-pan-y"
+            onMouseEnter={() => {
+              setIsHovered(true);
+              setIsPaused(true);
+            }}
             onTouchStart={handleTouchStart}
             onTouchMove={handleTouchMove}
             onTouchEnd={handleTouchEnd}
@@ -250,6 +283,10 @@ export const TestimonialsCarousel = () => {
                   key={`${rev.id}-${idx}`}
                   className="shrink-0 px-2.5 sm:px-3"
                   style={{ width: `${100 / visibleCount}%` }}
+                  onMouseEnter={() => {
+                    setIsHovered(true);
+                    setIsPaused(true);
+                  }}
                 >
                   <div className="ethnic-card p-6 rounded-3xl border border-gold-500/30 flex flex-col justify-between space-y-4 hover:border-gold-500/60 shadow-lg relative group h-full bg-white dark:bg-[#1A1009] transition-all duration-300">
                     <div className="space-y-3">

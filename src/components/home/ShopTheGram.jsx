@@ -1448,6 +1448,7 @@ export default function ShopTheGram() {
           100% { transform: scale(1); opacity: 0.95; }
         }
         .gram-marquee { animation: gram-marquee 28s linear infinite; }
+        .gram-marquee:hover { animation-play-state: paused; }
         @keyframes gram-marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
         .gram-scroller {
           scrollbar-width: none;
@@ -1704,7 +1705,7 @@ export default function ShopTheGram() {
 
       {/* ===== Infinite Bottom Marquee Strip ===== */}
       <div className="relative mt-12 sm:mt-16 border-t border-b border-white/5 py-3.5 sm:py-4 overflow-hidden">
-        <div className="gram-marquee flex whitespace-nowrap w-max">
+        <div className="gram-marquee flex whitespace-nowrap w-max hover:[animation-play-state:paused] cursor-default">
           <div className="flex items-center" aria-hidden="false">
             <span className="gram-body inline-flex items-center gap-2.5 mx-4 sm:mx-6 text-white/40 text-[9px] sm:text-[10px] font-bold uppercase tracking-[0.3em]">
               <Sparkles size={10} className="text-[#ee2a7b]" /> #TrioEcart
