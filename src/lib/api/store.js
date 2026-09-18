@@ -21,12 +21,17 @@ export function getApiBase() {
  */
 export function normalizeCategorySlug(str) {
   if (!str) return '';
-  return String(str)
+  let decoded = String(str);
+  try { decoded = decodeURIComponent(decoded); } catch (_) {}
+  const normalized = decoded
     .toLowerCase()
     .trim()
     .replace(/[\/\\]/g, ' ')
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-+|-+$/g, '');
+
+  if (normalized === 'aasan') return 'pooja-articles';
+  return normalized;
 }
 
 /**
@@ -37,7 +42,13 @@ export function matchesCategory(product, categoryIdentifier) {
   const target = normalizeCategorySlug(categoryIdentifier);
   const pCat = normalizeCategorySlug(product.category);
   const pSub = normalizeCategorySlug(product.subcategory);
-  return pCat === target || (pSub && pSub === target);
+  const pCatId = product.category_id || product.categoryId;
+
+  if (target === 'pooja-articles') {
+    if (pCatId === 3 || pCat === 'pooja-articles' || pCat === 'aasan') return true;
+  }
+
+  return pCat === target || (pSub && pSub === target) || (pCatId && String(pCatId) === String(categoryIdentifier));
 }
 
 /**

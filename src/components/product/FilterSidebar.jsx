@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Filter, X, RotateCcw, Star, Check } from 'lucide-react';
 import { categories as fallbackCategories } from '../../data/categories';
-import { fetchLiveCategories, normalizeCategorySlug } from '../../lib/api/store';
+import { fetchLiveCategories, normalizeCategorySlug, matchesCategory } from '../../lib/api/store';
 
 export const FilterSidebar = ({
   filters,
@@ -212,9 +212,7 @@ export const FilterSidebar = ({
             const count = (products && products.length > 0)
               ? products.filter(p => {
                   if (p.is_visible === false || p.isVisible === false) return false;
-                  const pCatSlug = normalizeCategorySlug(p.category);
-                  const pSubSlug = normalizeCategorySlug(p.subcategory);
-                  return pCatSlug === catSlug || (pSubSlug && pSubSlug === catSlug);
+                  return matchesCategory(p, catSlug);
                 }).length
               : (cat.productCount || cat.product_count || 0);
 

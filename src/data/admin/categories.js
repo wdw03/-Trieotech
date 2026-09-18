@@ -86,12 +86,12 @@ const categories = [
     ],
   },
   {
-    id: 7,
-    name: "Aasan",
-    slug: "aasan",
-    image: "/products/lotus-kamal-aasan-1.jpg",
-    banner: "/products/lotus-kamal-aasan-3.jpg",
-    description: "Handcrafted velvet Lotus Kamal Aasan (Padma Asana) with layered satin petals and shining golden jari designer lace for Laddu Gopal, Ganesh, Lakshmi idols & pooja chowki.",
+    id: 3,
+    name: "Pooja Articles",
+    slug: "pooja-articles",
+    image: "https://gkskeljvgphslkzctjfp.supabase.co/storage/v1/object/public/products/categories/1789726631109-pooja-thaali.jpg",
+    banner: "https://gkskeljvgphslkzctjfp.supabase.co/storage/v1/object/public/products/categories/1789726631109-pooja-thaali.jpg",
+    description: "Sacred velvet, silk, and beaded pooja aasans, chowki cloths, mandir mats, and divine pooja articles designed for festive rituals and daily devotion.",
     productCount: 1,
     subcategories: [
       { name: "Velvet Pooja Aasan", slug: "velvet-pooja-aasan" },

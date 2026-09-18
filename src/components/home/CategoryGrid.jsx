@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { categories as fallbackCategories } from '../../data/categories';
-import { fetchLiveCategories } from '../../lib/api/store';
+import { fetchLiveCategories, normalizeCategorySlug } from '../../lib/api/store';
 import { ArrowRight, Sparkles, ChevronRight } from 'lucide-react';
 
 export const CategoryGrid = () => {
@@ -61,12 +61,12 @@ export const CategoryGrid = () => {
             {featured.map((category) => (
               <Link
                 key={category.id || category.slug}
-                href={`/category/${category.slug}`}
+                href={`/category/${normalizeCategorySlug(category.slug || category.name)}`}
                 className="group relative rounded-3xl overflow-hidden border border-gold-500/20 hover:border-gold-500/50 shadow-ethnic hover:shadow-ethnic-hover flex flex-col justify-end aspect-[4/3] sm:aspect-[16/10] transition-all duration-500 transform hover:-translate-y-1.5"
               >
                 {/* Image */}
                 <img
-                  src={category.image || '/products/pearl-zardosi-patch-1.jpg'}
+                  src={category.image || category.banner || '/products/lotus-kamal-aasan-1.jpg'}
                   alt={category.name}
                   className="absolute inset-0 w-full h-full object-cover object-center group-hover:scale-110 transition-transform duration-700 ease-out"
                   loading="lazy"
@@ -123,7 +123,7 @@ export const CategoryGrid = () => {
             {standard.map((category, idx) => (
               <Link
                 key={category.id || category.slug}
-                href={`/category/${category.slug}`}
+                href={`/category/${normalizeCategorySlug(category.slug || category.name)}`}
                 className="group relative rounded-2xl sm:rounded-3xl overflow-hidden border border-gold-500/15 hover:border-gold-500/50 shadow-ethnic hover:shadow-ethnic-hover flex flex-col justify-end aspect-[3/4] sm:aspect-[3/3.8] transition-all duration-500 transform hover:-translate-y-1.5"
                 style={{
                   animationDelay: `${idx * 60}ms`
@@ -131,7 +131,7 @@ export const CategoryGrid = () => {
               >
                 {/* Image */}
                 <img
-                  src={category.image || '/products/pearl-zardosi-patch-1.jpg'}
+                  src={category.image || category.banner || '/products/lotus-kamal-aasan-1.jpg'}
                   alt={category.name}
                   className="absolute inset-0 w-full h-full object-cover object-center group-hover:scale-110 transition-transform duration-700 ease-out"
                   loading="lazy"

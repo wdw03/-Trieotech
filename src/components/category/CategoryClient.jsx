@@ -13,9 +13,17 @@ import { fetchLiveProducts, fetchLiveCategories, normalizeProduct, normalizeCate
 import { Filter, LayoutGrid, List, Sparkles, X, ChevronRight } from 'lucide-react';
 import { ProductGridSkeleton } from '../../components/common/LoadingSkeleton';
 
-export default function CategoryClient({ initialSlug }) {
+export default function CategoryClient({ initialSlug, initialCategory }) {
   const params = useParams();
-  const slug = initialSlug || params?.slug;
+  const rawParamSlug = initialSlug || params?.slug || '';
+  const slug = useMemo(() => {
+    try {
+      return decodeURIComponent(rawParamSlug).trim();
+    } catch (_) {
+      return String(rawParamSlug).trim();
+    }
+  }, [rawParamSlug]);
+
   const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
   const [quickViewProduct, setQuickViewProduct] = useState(null);
   const [selectedSubcategory, setSelectedSubcategory] = useState(null);
@@ -33,7 +41,10 @@ export default function CategoryClient({ initialSlug }) {
           setCategoriesList(cats);
           // Sync active filter with live database category if matching current slug
           const targetSlug = normalizeCategorySlug(slug);
-          const matched = cats.find(c => normalizeCategorySlug(c.slug || c.name) === targetSlug);
+          const matched = cats.find(c => {
+            const cNorm = normalizeCategorySlug(c.slug || c.name);
+            return cNorm === targetSlug || (targetSlug === 'pooja-articles' && (cNorm === 'pooja-articles' || cNorm === 'aasan'));
+          });
           if (matched) {
             setFilters(prev => ({
               ...prev,
@@ -58,44 +69,57 @@ export default function CategoryClient({ initialSlug }) {
 
   // Find category details
   const currentCategory = useMemo(() => {
+    if (initialCategory) return initialCategory;
     const targetSlug = normalizeCategorySlug(slug);
-    const found = categoriesList.find(c => normalizeCategorySlug(c.slug || c.name) === targetSlug) || getCategoryBySlug(slug);
+    const found = categoriesList.find(c => {
+      const cNorm = normalizeCategorySlug(c.slug || c.name);
+      return cNorm === targetSlug || (targetSlug === 'pooja-articles' && (cNorm === 'pooja-articles' || cNorm === 'aasan'));
+    }) || getCategoryBySlug(slug);
     if (found) return found;
 
     // Fallback: match by product category name
     const matchingProduct = allProducts.find(
-      p => normalizeCategorySlug(p.category) === targetSlug
+      p => matchesCategory(p, targetSlug)
     );
     if (matchingProduct) {
       return {
-        id: 99,
+        id: matchingProduct.category_id || 99,
         name: matchingProduct.category,
-        slug: slug,
-        image: matchingProduct.images?.[0] || '/products/shreenathji-statement-patch-1.jpg',
-        banner: matchingProduct.images?.[1] || '',
+        slug: targetSlug,
+        image: matchingProduct.images?.[0] || 'https://gkskeljvgphslkzctjfp.supabase.co/storage/v1/object/public/products/categories/1789726631109-pooja-thaali.jpg',
+        banner: matchingProduct.images?.[1] || 'https://gkskeljvgphslkzctjfp.supabase.co/storage/v1/object/public/products/categories/1789726631109-pooja-thaali.jpg',
         description: `Explore our collection of authentic ${matchingProduct.category} handcrafted by Indian artisans.`,
-        productCount: allProducts.filter(p => normalizeCategorySlug(p.category) === targetSlug).length,
+        productCount: allProducts.filter(p => matchesCategory(p, targetSlug)).length,
         subcategories: []
       };
     }
 
+    if (targetSlug === 'pooja-articles' || targetSlug === 'aasan') {
+      return fallbackCategories.find(c => c.id === 3) || null;
+    }
+
     return null;
-  }, [slug, categoriesList, allProducts]);
+  }, [slug, categoriesList, allProducts, initialCategory]);
 
   // Derive initial category name from slug
   const initialCategoryName = useMemo(() => {
     const targetSlug = normalizeCategorySlug(slug);
-    const found = categoriesList.find(c => normalizeCategorySlug(c.slug || c.name) === targetSlug) || getCategoryBySlug(slug);
-    return found?.name || slug || '';
+    const found = categoriesList.find(c => {
+      const cNorm = normalizeCategorySlug(c.slug || c.name);
+      return cNorm === targetSlug || (targetSlug === 'pooja-articles' && (cNorm === 'pooja-articles' || cNorm === 'aasan'));
+    }) || getCategoryBySlug(slug);
+    return found?.name || (targetSlug === 'pooja-articles' ? 'Pooja Articles' : slug) || '';
   }, [slug, categoriesList]);
 
   const [filters, setFilters] = useState(() => {
-    const targetSlug = normalizeCategorySlug(initialSlug);
-    const initialName = getCategoryBySlug(initialSlug)?.name 
-      || fallbackCategories.find(c => normalizeCategorySlug(c.slug || c.name) === targetSlug)?.name 
-      || initialSlug;
+    const targetSlug = normalizeCategorySlug(initialSlug || rawParamSlug);
+    const catObj = initialCategory 
+      || getCategoryBySlug(initialSlug || rawParamSlug) 
+      || fallbackCategories.find(c => normalizeCategorySlug(c.slug || c.name) === targetSlug);
+    const initialName = catObj?.name 
+      || (targetSlug === 'pooja-articles' || targetSlug === 'aasan' ? 'Pooja Articles' : (initialSlug || rawParamSlug));
     return {
-      categories: initialSlug ? [initialName] : [],
+      categories: (initialSlug || rawParamSlug) ? [initialName] : [],
       maxPrice: 3000,
       inStockOnly: false,
       minRating: 0,
@@ -169,8 +193,7 @@ export default function CategoryClient({ initialSlug }) {
     if (!currentCategory) return [];
     return allProducts.filter(p => {
       if (p.is_visible === false || p.isVisible === false) return false;
-      const targetSlug = normalizeCategorySlug(currentCategory.slug || currentCategory.name);
-      return normalizeCategorySlug(p.category) === targetSlug;
+      return matchesCategory(p, currentCategory.slug || currentCategory.name);
     });
   }, [currentCategory, allProducts]);
 
@@ -180,12 +203,9 @@ export default function CategoryClient({ initialSlug }) {
 
     // Filter across allProducts by selected categories
     if (filters.categories && filters.categories.length > 0) {
-      const filterSlugs = filters.categories.map(normalizeCategorySlug);
       result = allProducts.filter(p => {
         if (p.is_visible === false || p.isVisible === false) return false;
-        const pCatSlug = normalizeCategorySlug(p.category);
-        const pSubSlug = normalizeCategorySlug(p.subcategory);
-        return filterSlugs.includes(pCatSlug) || (pSubSlug && filterSlugs.includes(pSubSlug));
+        return filters.categories.some(catFilter => matchesCategory(p, catFilter));
       });
     } else {
       // If user cleared category filter checkboxes, show all visible products

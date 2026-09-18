@@ -30,11 +30,11 @@ export const categories = [
   },
   {
     id: 3,
-    name: "Aasan",
-    slug: "aasan",
-    image: "/products/lotus-kamal-aasan-1.jpg",
-    banner: "/products/pooja-thali-brass-diya-1.jpg",
-    description: "Sacred velvet, silk, and beaded pooja aasans, chowki cloths, and mandir mats designed for festive rituals and daily devotion.",
+    name: "Pooja Articles",
+    slug: "pooja-articles",
+    image: "https://gkskeljvgphslkzctjfp.supabase.co/storage/v1/object/public/products/categories/1789726631109-pooja-thaali.jpg",
+    banner: "https://gkskeljvgphslkzctjfp.supabase.co/storage/v1/object/public/products/categories/1789726631109-pooja-thaali.jpg",
+    description: "Sacred velvet, silk, and beaded pooja aasans, chowki cloths, mandir mats, and divine pooja articles designed for festive rituals and daily devotion.",
     productCount: 4,
     subcategories: [
       { name: "Lotus Kamal Aasan", slug: "lotus-kamal-aasan" },
@@ -128,8 +128,17 @@ export const categories = [
 
 export const getCategoryBySlug = (slug) => {
   if (!slug) return null;
-  const cleanSlug = slug.toLowerCase().trim();
-  return categories.find(c => c.slug === cleanSlug || c.name.toLowerCase().replace(/ \/ /g, '-').replace(/ /g, '-') === cleanSlug);
+  let decoded = slug;
+  try { decoded = decodeURIComponent(slug); } catch (_) {}
+  const cleanSlug = decoded.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+  if (cleanSlug === 'aasan' || cleanSlug === 'pooja-articles') {
+    return categories.find(c => c.id === 3 || c.slug === 'pooja-articles' || c.slug === 'aasan');
+  }
+  return categories.find(c => {
+    const cSlug = c.slug.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+    const cName = c.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+    return cSlug === cleanSlug || cName === cleanSlug;
+  });
 };
 
 export default categories;

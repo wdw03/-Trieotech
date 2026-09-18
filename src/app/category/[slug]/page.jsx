@@ -19,9 +19,10 @@ async function findCategory(rawSlug) {
 }
 
 export async function generateStaticParams() {
-  return categories.map((c) => ({
-    slug: c.slug,
-  }));
+  const slugs = new Set(categories.map((c) => c.slug));
+  slugs.add('pooja-articles');
+  slugs.add('aasan');
+  return Array.from(slugs).map((slug) => ({ slug }));
 }
 
 export async function generateMetadata({ params }) {
@@ -36,6 +37,13 @@ export async function generateMetadata({ params }) {
       return {
         title: `${matchingProduct.category} Collection | Trio Enterprises`,
         description: `Explore our collection of authentic ${matchingProduct.category} handcrafted by Indian artisans.`,
+      };
+    }
+    const clean = decodeURIComponent(slug || '').toLowerCase().replace(/[^a-z0-9]+/g, '-');
+    if (clean === 'aasan' || clean === 'pooja-articles') {
+      return {
+        title: `Pooja Articles Collection | Trio Enterprises`,
+        description: `Explore our collection of authentic Pooja Articles and sacred aasans handcrafted by Indian artisans.`,
       };
     }
     return {
@@ -74,19 +82,24 @@ export async function generateMetadata({ params }) {
 
 export default async function CategoryPage({ params }) {
   const { slug } = await params;
-  const category = await findCategory(slug);
+  let category = await findCategory(slug);
   const matchingProduct = !category ? products.find(
     p => p.category.toLowerCase().replace(/ \/ /g, '-').replace(/ /g, '-') === slug?.toLowerCase()
   ) : null;
 
   if (!category && !matchingProduct) {
-    notFound();
+    const clean = decodeURIComponent(slug || '').toLowerCase().replace(/[^a-z0-9]+/g, '-');
+    if (clean === 'aasan' || clean === 'pooja-articles') {
+      category = categories.find(c => c.id === 3 || c.slug === 'pooja-articles' || c.slug === 'aasan');
+    } else {
+      notFound();
+    }
   }
 
   const currentCategory = category || {
-    name: matchingProduct.category,
+    name: matchingProduct?.category || 'Pooja Articles',
     slug: slug,
-    description: `Explore our collection of authentic ${matchingProduct.category} handcrafted by Indian artisans.`,
+    description: `Explore our collection of authentic ${matchingProduct?.category || 'Pooja Articles'} handcrafted by Indian artisans.`,
   };
 
   const jsonLd = {
@@ -103,7 +116,7 @@ export default async function CategoryPage({ params }) {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
-      <CategoryClient initialSlug={slug} />
+      <CategoryClient initialSlug={slug} initialCategory={currentCategory} />
     </>
   );
 }

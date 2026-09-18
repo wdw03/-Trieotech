@@ -119,25 +119,26 @@ export async function getAllProductSlugs() {
  */
 export async function getProductsByCategory(categorySlug) {
   if (!categorySlug) return [];
-  const clean = String(categorySlug).trim();
+  const cat = await getCategoryBySlug(categorySlug);
+  const targetCategory = cat?.name || categorySlug;
 
-  // First get the category name from slug or name (case-insensitive)
-  const { data: cat } = await supabaseAdmin
-    .from('categories')
-    .select('name')
-    .or(`slug.ilike.${clean},name.ilike.${clean}`)
-    .limit(1)
-    .maybeSingle();
-
-  const targetCategory = cat?.name || clean;
-
-  const { data, error } = await supabaseAdmin
+  let query = supabaseAdmin
     .from('products')
     .select('*')
-    .ilike('category', targetCategory)
     .or('is_visible.is.null,is_visible.eq.true')
     .order('is_featured', { ascending: false });
 
+  if (cat?.id) {
+    if (cat.id === 3 || targetCategory.toLowerCase().includes('pooja') || targetCategory.toLowerCase().includes('aasan')) {
+      query = query.or('category_id.eq.3,category.ilike.%Pooja Articles%,category.ilike.%Aasan%');
+    } else {
+      query = query.or(`category_id.eq.${cat.id},category.ilike.${targetCategory}`);
+    }
+  } else {
+    query = query.ilike('category', targetCategory);
+  }
+
+  const { data, error } = await query;
   if (error) return [];
   return data || [];
 }
@@ -172,20 +173,43 @@ export async function getCategories() {
 }
 
 /**
- * Fetch single category by slug or name (case-insensitive)
+ * Fetch single category by slug or name (case-insensitive with aliases and normalization)
  */
 export async function getCategoryBySlug(slug) {
   if (!slug) return null;
-  const clean = String(slug).trim();
-  const { data, error } = await supabaseAdmin
-    .from('categories')
-    .select('*')
-    .or(`slug.ilike.${clean},name.ilike.${clean}`)
-    .limit(1)
-    .maybeSingle();
+  let raw = String(slug).trim();
+  try { raw = decodeURIComponent(raw); } catch (_) {}
+  const clean = raw.toLowerCase();
+  const normalized = clean.replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
 
-  if (error || !data) return null;
-  return data;
+  try {
+    const { data: allCats } = await supabaseAdmin
+      .from('categories')
+      .select('*')
+      .order('sort_order', { ascending: true });
+
+    if (Array.isArray(allCats) && allCats.length > 0) {
+      // 1. Direct match on slug or name
+      const exact = allCats.find(c => {
+        const cSlug = String(c.slug || '').toLowerCase().trim();
+        const cName = String(c.name || '').toLowerCase().trim();
+        const cNorm = cSlug.replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+        const nNorm = cName.replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+        return cSlug === clean || cName === clean || cNorm === normalized || nNorm === normalized;
+      });
+      if (exact) return exact;
+
+      // 2. Alias: aasan <-> pooja-articles
+      if (normalized === 'aasan' || normalized === 'pooja-articles') {
+        const aliasMatch = allCats.find(c => c.id === 3 || String(c.slug).toLowerCase().includes('pooja') || String(c.name).toLowerCase().includes('pooja'));
+        if (aliasMatch) return aliasMatch;
+      }
+    }
+  } catch (err) {
+    console.error('getCategoryBySlug error:', err);
+  }
+
+  return null;
 }
 
 /**
