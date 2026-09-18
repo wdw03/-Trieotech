@@ -18,7 +18,17 @@ export async function PUT(request, { params }) {
 
     const updates = {};
     if (body.name !== undefined) updates.name = body.name ? String(body.name).trim() : '';
-    if (body.slug !== undefined) updates.slug = body.slug ? String(body.slug).trim() : '';
+    
+    // Always guarantee a clean kebab-case slug
+    if (body.slug !== undefined || body.name !== undefined) {
+      const rawSlug = (body.slug || body.name || existingCat?.name || '').trim();
+      updates.slug = rawSlug
+        .toLowerCase()
+        .replace(/[\/\\]/g, ' ')
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-+|-+$/g, '');
+    }
+
     if (body.description !== undefined) updates.description = body.description ? String(body.description).trim() : '';
     if (body.image !== undefined) updates.image = body.image ? String(body.image).trim() : '';
     if (body.banner !== undefined) updates.banner = body.banner ? String(body.banner).trim() : '';
@@ -48,8 +58,8 @@ export async function PUT(request, { params }) {
       try {
         await supabaseAdmin
           .from('products')
-          .update({ category: updates.name })
-          .ilike('category', existingCat.name);
+          .update({ category: updates.name, category_id: Number(id) })
+          .or(`category.ilike.${existingCat.name},category_id.eq.${Number(id)}`);
       } catch (cascadeErr) {
         console.warn('Failed to cascade category rename to products:', cascadeErr);
       }

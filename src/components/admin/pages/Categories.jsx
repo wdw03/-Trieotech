@@ -153,7 +153,14 @@ export const Categories = () => {
 
     setIsSaving(true);
     try {
-      const slug = editingCategory.slug?.trim() || editingCategory.name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+      const rawSlug = editingCategory.slug?.trim() || editingCategory.name;
+      const slug = rawSlug
+        .toLowerCase()
+        .trim()
+        .replace(/[\/\\]/g, ' ')
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-+|-+$/g, '');
+
       const payload = {
         ...editingCategory,
         name: editingCategory.name.trim(),
@@ -889,7 +896,15 @@ export const Categories = () => {
                 <input
                   type="text"
                   value={editingCategory.name}
-                  onChange={(e) => setEditingCategory({ ...editingCategory, name: e.target.value })}
+                  onChange={(e) => {
+                    const newName = e.target.value;
+                    const autoSlug = newName.toLowerCase().trim().replace(/[\/\\]/g, ' ').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+                    setEditingCategory(prev => ({
+                      ...prev,
+                      name: newName,
+                      slug: !prev.slug || prev.slug === (prev.name || '').toLowerCase().trim().replace(/[\/\\]/g, ' ').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') ? autoSlug : prev.slug
+                    }));
+                  }}
                   placeholder="e.g. Traditional Torans & Hangings"
                   className="admin-input w-full text-xs font-semibold"
                   required
@@ -902,6 +917,10 @@ export const Categories = () => {
                   type="text"
                   value={editingCategory.slug || ''}
                   onChange={(e) => setEditingCategory({ ...editingCategory, slug: e.target.value })}
+                  onBlur={(e) => {
+                    const formatted = e.target.value.toLowerCase().trim().replace(/[\/\\]/g, ' ').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+                    setEditingCategory(prev => ({ ...prev, slug: formatted }));
+                  }}
                   placeholder="auto-generated from name if blank"
                   className="admin-input w-full text-xs font-mono"
                 />
