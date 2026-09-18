@@ -87,6 +87,7 @@ export const ReelEditorModal = ({
     product_discount: reel?.product_discount || reel?.discount || '',
     display_order: reel?.display_order !== undefined ? reel.display_order : 0,
     is_active: reel?.is_active !== undefined ? Boolean(reel.is_active) : true,
+    instagram_url: reel?.instagram_url || '',
   });
 
   // Upload states
@@ -258,11 +259,17 @@ export const ReelEditorModal = ({
 
     setIsSubmitting(true);
     try {
+      let normalizedInstaUrl = (formData.instagram_url || '').trim();
+      if (normalizedInstaUrl && !/^https?:\/\//i.test(normalizedInstaUrl)) {
+        normalizedInstaUrl = `https://${normalizedInstaUrl}`;
+      }
+
       await onSave({
         ...formData,
         display_order: Number(formData.display_order) || 0,
         product_price: Number(formData.product_price) || 0,
         product_old_price: Number(formData.product_old_price) || 0,
+        instagram_url: normalizedInstaUrl,
       });
       onClose();
     } catch (err) {
@@ -637,6 +644,64 @@ export const ReelEditorModal = ({
                     />
                   </div>
                 </div>
+              </div>
+
+              {/* SECTION 2B: Instagram Reel Link */}
+              <div className="p-4 rounded-xl bg-slate-950/60 border-2 border-[#ee2a7b]/40 space-y-3 shadow-lg shadow-[#ee2a7b]/5">
+                <div className="flex items-center justify-between pb-2 border-b border-slate-800">
+                  <div className="flex items-center gap-2">
+                    <div className="w-6 h-6 rounded-lg bg-gradient-to-tr from-[#f09433] via-[#dc2743] to-[#bc1888] flex items-center justify-center text-white">
+                      <svg viewBox="0 0 24 24" fill="currentColor" className="w-3.5 h-3.5">
+                        <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/>
+                      </svg>
+                    </div>
+                    <h3 className="text-xs font-bold text-white uppercase tracking-wider">Original Instagram Reel Link (Direct Link)</h3>
+                  </div>
+                  {formData.instagram_url ? (
+                    <span className="text-[10px] font-bold text-emerald-400 bg-emerald-950/60 border border-emerald-500/30 px-2 py-0.5 rounded-full flex items-center gap-1">
+                      <CheckCircle2 className="w-3 h-3" /> Reel Linked
+                    </span>
+                  ) : (
+                    <span className="text-[10px] font-bold text-amber-400 bg-amber-950/60 border border-amber-500/30 px-2 py-0.5 rounded-full">
+                      Optional
+                    </span>
+                  )}
+                </div>
+
+                <p className="text-[11px] text-slate-300 leading-relaxed">
+                  Paste the original Instagram Reel URL here (e.g. <span className="font-mono text-pink-300">https://www.instagram.com/reel/C-V_3y_sB5X/</span>). A high-visibility <b className="text-white">"View Reel / Watch on Instagram"</b> button will appear on the storefront so visitors can tap and directly watch the original reel on Instagram.
+                </p>
+
+                <div className="flex gap-2">
+                  <input
+                    id="reel_instagram_url"
+                    name="instagram_url"
+                    type="text"
+                    value={formData.instagram_url}
+                    onChange={(e) => setFormData({ ...formData, instagram_url: e.target.value })}
+                    placeholder="https://www.instagram.com/reel/C-V_3y_sB5X/"
+                    className="admin-input bg-slate-900 border border-slate-700 text-white placeholder-slate-500 focus:bg-slate-950 focus:border-[#ee2a7b] flex-1 text-xs font-mono"
+                  />
+                  {formData.instagram_url ? (
+                    <a
+                      href={formData.instagram_url.startsWith('http') ? formData.instagram_url : `https://${formData.instagram_url}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="px-3.5 py-2 rounded-lg bg-gradient-to-r from-[#f09433] via-[#dc2743] to-[#bc1888] text-white text-xs font-bold flex items-center gap-1.5 hover:opacity-90 active:scale-95 transition-all shrink-0 shadow-md"
+                      title="Open and test Instagram Reel link in new tab"
+                    >
+                      <ExternalLink className="w-3.5 h-3.5" />
+                      <span>Test Reel</span>
+                    </a>
+                  ) : null}
+                </div>
+
+                {formData.instagram_url && (
+                  <div className="p-2.5 rounded-lg bg-emerald-950/40 border border-emerald-500/30 flex items-center gap-2 text-[11px] text-emerald-300">
+                    <CheckCircle2 className="w-3.5 h-3.5 shrink-0 text-emerald-400" />
+                    <span>Active: Storefront visitors will see a direct "View Reel" button linking to this reel on Instagram.</span>
+                  </div>
+                )}
               </div>
 
               {/* SECTION 3: ALL-PRODUCT LINKING WITH CATEGORIES FILTER */}

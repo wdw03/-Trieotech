@@ -7,7 +7,7 @@ import {
   ArrowLeft, ArrowRight, BadgeCheck, Camera, Play, Pause, Music2,
   Volume2, VolumeX, Sparkles, Check, Maximize2, ChevronUp, ChevronDown,
   Grid, LayoutList, Share2, Star, ShieldCheck, Flame, ExternalLink, Zap,
-  Video, Film
+  Video, Film, Instagram
 } from 'lucide-react';
 import { useCart } from '../../context/CartContext';
 import { useToast } from '../../context/ToastContext';
@@ -77,6 +77,13 @@ const ReelSkeleton = () => (
 );
 
 const gramWords = ['Reels', 'Feed', 'Gram', 'Trend'];
+
+/* ---------- Authentic Instagram Glyph SVG Component ---------- */
+const InstagramGlyph = ({ className = 'w-4 h-4' }) => (
+  <svg viewBox="0 0 24 24" fill="currentColor" className={className}>
+    <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z" />
+  </svg>
+);
 
 /* =========================================================
    SINGLE REEL CARD COMPONENT
@@ -327,6 +334,21 @@ const ReelCard = ({
           </div>
 
           <div className="flex items-center gap-1.5 shrink-0">
+            {post.instagramUrl ? (
+              <a
+                href={post.instagramUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={(e) => e.stopPropagation()}
+                className="gram-body group/igpill inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-full bg-gradient-to-r from-[#f09433] via-[#dc2743] to-[#bc1888] text-white text-[9px] sm:text-[10px] font-black uppercase tracking-wider shadow-[0_2px_10px_rgba(220,39,67,0.45)] hover:shadow-[0_4px_16px_rgba(220,39,67,0.7)] hover:scale-105 active:scale-95 transition-all duration-200 border border-white/25 shrink-0 cursor-pointer"
+                title="Watch original reel on Instagram"
+              >
+                <InstagramGlyph className="w-3.5 h-3.5 shrink-0 transition-transform group-hover/igpill:rotate-12" />
+                <span className="hidden xs:inline sm:inline">View Reel</span>
+                <span className="xs:hidden sm:hidden">Reel</span>
+                <ExternalLink size={10} className="opacity-90 transition-transform group-hover/igpill:translate-x-0.5 group-hover/igpill:-translate-y-0.5" />
+              </a>
+            ) : null}
             <span className="gram-body gram-float-badge inline-flex items-center gap-1 bg-black/60 backdrop-blur-md text-white text-[8px] sm:text-[9px] font-black uppercase tracking-wider px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full border border-white/15 shadow-sm">
               <Play size={8} className="fill-white" /> {post.views}
             </span>
@@ -472,19 +494,22 @@ const ReelCard = ({
               <span className="gram-body text-white text-[9px] font-bold">Share</span>
             </button>
 
-            {/* Bookmark */}
-            <button
-              type="button"
-              aria-label={isSaved ? 'Unsave' : 'Save'}
-              onClick={toggleSave}
-              className="transition-transform active:scale-75"
-            >
-              <Bookmark
-                size={18}
-                className={`transition-colors ${isSaved ? 'fill-[#d4af37] text-[#d4af37]' : 'text-white hover:text-[#d4af37]'
-                  }`}
-              />
-            </button>
+            {/* Direct Watch on Instagram Reel button */}
+            {post.instagramUrl ? (
+              <a
+                href={post.instagramUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={(e) => e.stopPropagation()}
+                className="flex flex-col items-center gap-0.5 group/igrail transition-transform active:scale-75 cursor-pointer"
+                title="Watch original reel on Instagram"
+              >
+                <div className="w-7 h-7 rounded-full bg-gradient-to-tr from-[#f09433] via-[#dc2743] to-[#bc1888] flex items-center justify-center shadow-md border border-white/25 group-hover/igrail:scale-110 transition-transform">
+                  <InstagramGlyph className="w-3.5 h-3.5 text-white" />
+                </div>
+                <span className="gram-body text-white text-[8px] font-extrabold drop-shadow">Insta</span>
+              </a>
+            ) : null}
           </div>
 
           {/* Bottom Caption & Music Bar Overlay */}
@@ -530,17 +555,34 @@ const ReelCard = ({
             </div>
           </div>
 
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              onAddToCart(post);
-            }}
-            className="gram-body group/cart shrink-0 inline-flex items-center gap-1.5 bg-[#d4af37] text-[#171310] text-[9px] sm:text-[10px] font-black uppercase tracking-wider px-3 sm:px-3.5 py-2 sm:py-2.5 rounded-full transition-all hover:scale-105 active:scale-95 shadow-md cursor-pointer"
-          >
-            <ShoppingBag size={12} className="transition-transform group-hover/cart:-rotate-12" />
-            <span>Add to Cart</span>
-          </button>
+          <div className="flex items-center gap-1.5 shrink-0">
+            {post.instagramUrl ? (
+              <a
+                href={post.instagramUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={(e) => e.stopPropagation()}
+                className="gram-body group/igfoot inline-flex items-center gap-1 bg-gradient-to-r from-[#f09433] via-[#dc2743] to-[#bc1888] text-white text-[9px] sm:text-[10px] font-black uppercase tracking-wider px-2.5 sm:px-3 py-2 sm:py-2.5 rounded-full transition-all hover:scale-105 active:scale-95 shadow-md border border-white/20"
+                title="Watch original reel on Instagram"
+              >
+                <InstagramGlyph className="w-3 h-3 transition-transform group-hover/igfoot:rotate-12" />
+                <span className="hidden xs:inline">View Reel</span>
+                <span className="xs:hidden">Reel</span>
+                <ExternalLink size={9} className="opacity-80" />
+              </a>
+            ) : null}
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                onAddToCart(post);
+              }}
+              className="gram-body group/cart shrink-0 inline-flex items-center gap-1.5 bg-[#d4af37] text-[#171310] text-[9px] sm:text-[10px] font-black uppercase tracking-wider px-3 sm:px-3.5 py-2 sm:py-2.5 rounded-full transition-all hover:scale-105 active:scale-95 shadow-md cursor-pointer"
+            >
+              <ShoppingBag size={12} className="transition-transform group-hover/cart:-rotate-12" />
+              <span>Add to Cart</span>
+            </button>
+          </div>
         </div>
       </article>
     </div>
@@ -832,6 +874,21 @@ const ReelModal = ({ post, isOpen, onClose, onAddToCart, onBuyNow, onNext, onPre
                 {isMuted ? <VolumeX size={22} className="text-white/80" /> : <Volume2 size={22} className="text-[#d4af37]" />}
                 <span className="gram-body text-white text-[9px] font-bold">{isMuted ? 'Mute' : 'Audio'}</span>
               </button>
+
+              {post?.instagramUrl && (
+                <a
+                  href={post.instagramUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex flex-col items-center gap-0.5 group/morig transition-transform active:scale-75"
+                  title="Watch original reel on Instagram"
+                >
+                  <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-[#f09433] via-[#dc2743] to-[#bc1888] flex items-center justify-center shadow-md border border-white/25 group-hover/morig:scale-110 transition-transform">
+                    <InstagramGlyph className="w-4 h-4 text-white" />
+                  </div>
+                  <span className="gram-body text-white text-[8px] font-extrabold">Insta</span>
+                </a>
+              )}
             </div>
 
             {/* Caption & Music Bar on Mobile (Overlaid at bottom of video) */}
@@ -915,14 +972,29 @@ const ReelModal = ({ post, isOpen, onClose, onAddToCart, onBuyNow, onNext, onPre
               </div>
             </div>
 
-            <a
-              href="https://instagram.com"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="gram-body px-3.5 py-1.5 rounded-full bg-white/10 hover:bg-white/20 text-white text-xs font-bold transition-all"
-            >
-              Follow
-            </a>
+            <div className="flex items-center gap-2">
+              {post?.instagramUrl && (
+                <a
+                  href={post.instagramUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="gram-body group/mighdr px-3.5 sm:px-4 py-1.5 sm:py-2 rounded-full bg-gradient-to-r from-[#f09433] via-[#dc2743] to-[#bc1888] hover:opacity-95 text-white text-xs font-black uppercase tracking-wider transition-all flex items-center gap-1.5 shadow-[0_3px_12px_rgba(220,39,67,0.45)] hover:scale-105 active:scale-95 border border-white/20"
+                  title="Watch Original Reel on Instagram"
+                >
+                  <InstagramGlyph className="w-3.5 h-3.5 transition-transform group-hover/mighdr:rotate-12" />
+                  <span>Watch Reel</span>
+                  <ExternalLink size={12} className="opacity-90" />
+                </a>
+              )}
+              <a
+                href="https://instagram.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="gram-body px-3.5 py-1.5 rounded-full bg-white/10 hover:bg-white/20 text-white text-xs font-bold transition-all"
+              >
+                Follow
+              </a>
+            </div>
           </div>
 
           {/* Caption & Music Bar */}
@@ -1038,6 +1110,20 @@ const ReelModal = ({ post, isOpen, onClose, onAddToCart, onBuyNow, onNext, onPre
                   >
                     View Full Product Details &amp; Specifications →
                   </Link>
+
+                  {/* Watch on Instagram Button (Desktop Modal) */}
+                  {post?.instagramUrl && (
+                    <a
+                      href={post.instagramUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="mt-3.5 w-full py-3 px-4 rounded-xl bg-gradient-to-r from-[#f09433] via-[#e6683c] via-[#dc2743] via-[#cc2366] to-[#bc1888] hover:opacity-95 text-white text-xs font-black uppercase tracking-wider transition-all flex items-center justify-center gap-2.5 shadow-[0_6px_20px_rgba(220,39,67,0.45)] hover:shadow-[0_8px_28px_rgba(220,39,67,0.7)] hover:scale-[1.02] active:scale-[0.98] border border-white/25 group/igcta"
+                    >
+                      <InstagramGlyph className="w-4 h-4 transition-transform group-hover/igcta:rotate-12" />
+                      <span>Watch Original Reel on Instagram</span>
+                      <ExternalLink size={14} className="opacity-90 transition-transform group-hover/igcta:translate-x-0.5 group-hover/igcta:-translate-y-0.5" />
+                    </a>
+                  )}
                 </div>
 
                 {/* Keyboard controls helper pill */}
@@ -1182,6 +1268,12 @@ export default function ShopTheGram() {
               rating: 4.9,
               reviews: 150,
               views: r.views_count || '100K',
+              instagramUrl: (() => {
+                const raw = (r.instagram_url || '').trim();
+                if (raw) return raw.startsWith('http') ? raw : `https://${raw}`;
+                const handle = (r.influencer_username || '').replace('@', '').trim();
+                return handle ? `https://www.instagram.com/${handle}/` : 'https://www.instagram.com/trioenterprises/';
+              })(),
               commentsList: [
                 { user: 'craft_lover', text: 'Stunning quality! Ordered for our family celebration ✨', time: '2h ago' },
                 { user: 'pooja_decor', text: 'Packaging was top notch, looks 100% royal 💯', time: '5h ago' }

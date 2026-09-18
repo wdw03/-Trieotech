@@ -62,6 +62,7 @@ export async function PUT(request, { params }) {
     if (body.product_discount !== undefined) updateData.product_discount = String(body.product_discount).trim();
     if (body.display_order !== undefined) updateData.display_order = Number(body.display_order);
     if (body.is_active !== undefined) updateData.is_active = Boolean(body.is_active);
+    if (body.instagram_url !== undefined) updateData.instagram_url = String(body.instagram_url).trim();
     updateData.updated_at = new Date().toISOString();
 
     const { data, error } = await supabaseAdmin

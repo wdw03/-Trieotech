@@ -117,6 +117,7 @@ export async function POST(request) {
       product_discount: (body.product_discount || '').trim(),
       display_order: Number(body.display_order) || 0,
       is_active: body.is_active !== undefined ? Boolean(body.is_active) : true,
+      instagram_url: (body.instagram_url || '').trim(),
     };
 
     const { data, error } = await supabaseAdmin

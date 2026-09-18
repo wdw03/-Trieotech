@@ -24,7 +24,8 @@ import {
   ArrowUpDown,
   Filter,
   RefreshCw,
-  Loader2
+  Loader2,
+  Instagram
 } from 'lucide-react';
 
 export const ReelsCms = () => {
@@ -424,6 +425,36 @@ export const ReelsCms = () => {
                   <span className="text-[10px] text-slate-500 block text-center">
                     No product linked
                   </span>
+                )}
+              </div>
+
+              {/* Instagram Reel Link Indicator & Quick Tester */}
+              <div className="px-2.5 pb-2">
+                {reel.instagram_url ? (
+                  <a
+                    href={reel.instagram_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-full py-1.5 px-2.5 rounded-lg bg-gradient-to-r from-[#f09433]/15 via-[#dc2743]/15 to-[#bc1888]/15 border border-[#ee2a7b]/40 hover:border-[#ee2a7b] text-[#ee2a7b] hover:text-white hover:bg-gradient-to-r hover:from-[#f09433] hover:via-[#dc2743] hover:to-[#bc1888] text-[10px] font-bold flex items-center justify-between transition-all group/instatest"
+                    title="Open original Instagram reel link in new tab"
+                  >
+                    <span className="flex items-center gap-1.5 truncate">
+                      <Instagram className="w-3 h-3 shrink-0 text-[#ee2a7b] group-hover/instatest:text-white" />
+                      <span className="truncate">Instagram Reel Linked</span>
+                    </span>
+                    <ExternalLink className="w-2.5 h-2.5 shrink-0 ml-1 opacity-80" />
+                  </a>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSelectedReel(reel);
+                      setEditorOpen(true);
+                    }}
+                    className="w-full py-1.5 px-2.5 rounded-lg bg-amber-500/10 border border-amber-500/25 hover:bg-amber-500/20 text-amber-300 text-[10px] font-bold flex items-center justify-center gap-1 transition-colors cursor-pointer"
+                  >
+                    <span>⚠️ Add Instagram Reel Link</span>
+                  </button>
                 )}
               </div>
 
