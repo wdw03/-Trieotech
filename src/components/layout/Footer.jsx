@@ -50,12 +50,12 @@ export const Footer = () => {
   };
 
   return (
-    <footer className="bg-gradient-to-b from-[#180E09] via-[#120A06] to-[#0A0503] text-stone-300 border-t border-gold-500/25 mt-6 sm:mt-10 font-inter w-full max-w-full overflow-hidden pb-32 sm:pb-20 lg:pb-12">
+    <footer className="bg-gradient-to-b from-[#180E09] via-[#120A06] to-[#0A0503] text-stone-300 border-t border-gold-500/25 mt-16 font-inter w-full max-w-full overflow-hidden pb-32 sm:pb-20 lg:pb-12">
       
       {/* Back to Top Bar */}
       <button
         onClick={scrollToTop}
-        className="w-full py-2.5 bg-[#1F130B]/90 hover:bg-[#2A1A0F] border-b border-gold-500/15 text-gold-400 hover:text-gold-300 text-xs font-semibold flex items-center justify-center gap-2 transition-colors duration-200 group cursor-pointer"
+        className="w-full py-3 bg-[#1F130B]/80 hover:bg-[#2A1A0F] border-b border-gold-500/15 text-gold-400/90 hover:text-gold-300 text-xs font-semibold flex items-center justify-center gap-2 transition-all duration-200 group cursor-pointer"
         aria-label="Back to top of page"
       >
         <span>Back to Top</span>
@@ -63,7 +63,7 @@ export const Footer = () => {
       </button>
 
       {/* Top Trust Features Strip */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 pt-6 pb-8 border-b border-gold-500/15">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 pt-8 pb-10 border-b border-gold-500/15">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-5">
           
           <div className="flex items-center gap-2.5 sm:gap-3 p-3 sm:p-3.5 rounded-2xl bg-[#1C120B]/90 border border-gold-500/20 backdrop-blur-sm shadow-sm hover:border-gold-500/40 transition-colors">
@@ -72,7 +72,7 @@ export const Footer = () => {
             </div>
             <div className="min-w-0">
               <h4 className="font-bold text-xs sm:text-sm text-gold-200 truncate">100% Handcrafted</h4>
-              <p className="text-xs text-stone-400 truncate">Jaipur &amp; Surat Karigars</p>
+              <p className="text-[10px] sm:text-[11px] text-stone-400 truncate">Jaipur &amp; Surat Karigars</p>
             </div>
           </div>
 
@@ -82,7 +82,7 @@ export const Footer = () => {
             </div>
             <div className="min-w-0">
               <h4 className="font-bold text-xs sm:text-sm text-gold-200 truncate">Free Express Ship</h4>
-              <p className="text-xs text-stone-400 truncate">Orders above ₹999</p>
+              <p className="text-[10px] sm:text-[11px] text-stone-400 truncate">Orders above ₹999</p>
             </div>
           </div>
 
@@ -92,7 +92,7 @@ export const Footer = () => {
             </div>
             <div className="min-w-0">
               <h4 className="font-bold text-xs sm:text-sm text-gold-200 truncate">7-Day Easy Return</h4>
-              <p className="text-xs text-stone-400 truncate">Hassle-free guarantee</p>
+              <p className="text-[10px] sm:text-[11px] text-stone-400 truncate">Hassle-free guarantee</p>
             </div>
           </div>
 

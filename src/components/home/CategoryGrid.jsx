@@ -33,11 +33,11 @@ export const CategoryGrid = () => {
         {/* Section Header */}
         <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-5">
           <div className="space-y-2">
-            <span className="text-xs font-bold uppercase tracking-[0.2em] text-gold-700 dark:text-gold-400 flex items-center gap-2">
-              <span className="w-8 h-px bg-gold-500/60" />
+            <span className="text-[11px] font-bold uppercase tracking-[0.3em] text-gold-700 dark:text-gold-400 flex items-center gap-2">
+              <span className="w-8 h-px bg-gold-500" />
               <Sparkles className="w-3.5 h-3.5 text-gold-600" />
               Handcrafted Heritage
-              <span className="w-8 h-px bg-gold-500/60" />
+              <span className="w-8 h-px bg-gold-500" />
             </span>
             <h2 className="font-serif font-black text-3xl sm:text-4xl text-stone-900 dark:text-ivory-100 leading-tight">
               Browse by Craft Category
@@ -80,14 +80,14 @@ export const CategoryGrid = () => {
                 <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-bl from-gold-500/15 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
 
                 {/* Content */}
-                <div className="relative z-10 p-5 sm:p-7 flex flex-col justify-end min-h-[140px]">
+                <div className="relative z-10 p-5 sm:p-7 flex flex-col justify-end">
                   {/* Top badge row */}
                   <div className="flex items-center gap-2 mb-3">
-                    <span className="text-xs font-bold uppercase tracking-wider text-gold-300 bg-black/50 backdrop-blur-xl px-3 py-1 rounded-full border border-gold-500/30">
+                    <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-gold-300 bg-black/50 backdrop-blur-xl px-3 py-1 rounded-full border border-gold-500/30">
                       {category.productCount || 0} Items
                     </span>
                     {category.subcategories && category.subcategories.length > 0 && (
-                      <span className="text-xs font-semibold text-white/80 bg-white/10 backdrop-blur-xl px-2.5 py-1 rounded-full border border-white/10 hidden sm:inline-flex">
+                      <span className="text-[10px] font-semibold text-white/70 bg-white/10 backdrop-blur-xl px-2.5 py-1 rounded-full border border-white/10 hidden sm:inline-flex">
                         {category.subcategories.length} Subcategories
                       </span>
                     )}
@@ -119,7 +119,7 @@ export const CategoryGrid = () => {
 
         {/* Standard Category Cards Grid */}
         {standard.length > 0 && (
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-5">
             {standard.map((category, idx) => (
               <Link
                 key={category.id || category.slug}
@@ -144,31 +144,28 @@ export const CategoryGrid = () => {
                 <div className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-gold-500/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
 
                 {/* Content */}
-                <div className="relative z-10 p-3.5 sm:p-4 flex flex-col justify-between min-h-[105px] sm:min-h-[120px]">
-                  {/* Item count badge & Explore Signifier */}
+                <div className="relative z-10 p-3.5 sm:p-4 flex flex-col justify-end">
+                  {/* Item count badge */}
                   <div className="flex items-center justify-between gap-2 mb-1.5">
-                    <span className="text-xs font-bold uppercase tracking-wider text-gold-400 bg-black/50 backdrop-blur-xl px-2.5 py-0.5 rounded-full border border-gold-500/25">
+                    <span className="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-gold-400 bg-black/50 backdrop-blur-xl px-2 sm:px-2.5 py-0.5 rounded-full border border-gold-500/25">
                       {category.productCount || 0} Items
                     </span>
-                    <span className="inline-flex items-center gap-1 text-[11px] font-bold text-gold-300 group-hover:text-gold-100 uppercase tracking-wider transition-colors">
-                      Explore
-                      <ChevronRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
-                    </span>
+                    <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-gold-500/15 text-gold-300 flex items-center justify-center group-hover:bg-gold-500 group-hover:text-maroon-950 transition-all duration-300 group-hover:scale-110 border border-gold-500/20 group-hover:border-gold-400">
+                      <ChevronRight className="w-3 h-3 sm:w-3.5 sm:h-3.5 group-hover:translate-x-0.5 transition-transform" />
+                    </div>
                   </div>
 
-                  <div>
-                    {/* Name */}
-                    <h3 className="font-serif font-bold text-sm sm:text-base text-white group-hover:text-gold-300 transition-colors duration-300 leading-snug">
-                      {category.name}
-                    </h3>
+                  {/* Name */}
+                  <h3 className="font-serif font-bold text-sm sm:text-base text-white group-hover:text-gold-300 transition-colors duration-300 leading-snug">
+                    {category.name}
+                  </h3>
 
-                    {/* Short description */}
-                    {category.description && (
-                      <p className="text-xs text-stone-300 line-clamp-1 mt-0.5 leading-normal hidden sm:block">
-                        {category.description}
-                      </p>
-                    )}
-                  </div>
+                  {/* Short description - only on sm+ */}
+                  {category.description && (
+                    <p className="text-[10px] sm:text-[11px] text-stone-400 line-clamp-1 mt-0.5 leading-snug hidden sm:block">
+                      {category.description}
+                    </p>
+                  )}
                 </div>
               </Link>
             ))}

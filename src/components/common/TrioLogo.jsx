@@ -22,7 +22,7 @@ export const TrioLogo = ({ className = "h-auto", showTagline = true, isCompact =
           TRIO <span className="text-gold-600 dark:text-ivory-100 font-bold">ENTERPRISES</span>
         </span>
         {showTagline && (
-          <span className={`text-[11px] sm:text-xs font-semibold text-gold-700 dark:text-gold-400/90 leading-tight mt-0.5 transition-all duration-300 truncate tracking-wide`}>
+          <span className={`text-[7.5px] xs:text-[8.5px] ${isCompact ? 'sm:text-[8.5px]' : 'sm:text-[10px]'} uppercase font-bold tracking-widest text-gold-700 dark:text-gold-500/90 leading-none mt-0.5 transition-all duration-300 truncate`}>
             Ethnic Craft Guild
           </span>
         )}
