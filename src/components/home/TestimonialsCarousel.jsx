@@ -13,6 +13,11 @@ export const TestimonialsCarousel = () => {
   const [isHovered, setIsHovered] = useState(false);
   const [isTransitioning, setIsTransitioning] = useState(true);
   const [visibleCount, setVisibleCount] = useState(3);
+  const [isInView, setIsInView] = useState(true);
+  const [isDocumentVisible, setIsDocumentVisible] = useState(true);
+
+  const sectionRef = useRef(null);
+  const resetTimeoutRef = useRef(null);
   
   // Drag & Touch tracking refs
   const isDraggingRef = useRef(false);
@@ -23,7 +28,30 @@ export const TestimonialsCarousel = () => {
   useEffect(() => {
     return () => {
       if (touchPauseTimeoutRef.current) clearTimeout(touchPauseTimeoutRef.current);
+      if (resetTimeoutRef.current) clearTimeout(resetTimeoutRef.current);
     };
+  }, []);
+
+  // IntersectionObserver to only auto-scroll when section is in viewport
+  useEffect(() => {
+    if (!sectionRef.current) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        setIsInView(entry.isIntersecting);
+      },
+      { threshold: 0.05 }
+    );
+    observer.observe(sectionRef.current);
+    return () => observer.disconnect();
+  }, []);
+
+  // Page visibility listener: pause when browser tab is inactive/minimized
+  useEffect(() => {
+    const handleVisibility = () => {
+      setIsDocumentVisible(document.visibilityState === 'visible');
+    };
+    document.addEventListener('visibilitychange', handleVisibility);
+    return () => document.removeEventListener('visibilitychange', handleVisibility);
   }, []);
 
   // Responsive visible card count detection
@@ -72,7 +100,7 @@ export const TestimonialsCarousel = () => {
   const totalOriginal = reviewsList.length;
 
   // Build cloned array for true infinite wrap-around sliding
-  const bufferMultiplier = totalOriginal > 0 ? Math.max(3, Math.ceil(9 / totalOriginal)) : 3;
+  const bufferMultiplier = totalOriginal > 0 ? Math.max(3, Math.ceil((visibleCount * 3) / totalOriginal)) : 3;
   const displayItems = [];
   for (let i = 0; i < bufferMultiplier; i++) {
     displayItems.push(...reviewsList);
@@ -86,40 +114,89 @@ export const TestimonialsCarousel = () => {
     }
   }, [totalOriginal]);
 
-  // Next slide handler
+  // Next slide handler with strict index normalization & timeout fallback
   const nextSlide = useCallback(() => {
-    if (totalOriginal <= 0) return;
+    if (totalOriginal <= visibleCount) return;
+    if (resetTimeoutRef.current) clearTimeout(resetTimeoutRef.current);
     setIsTransitioning(true);
-    setCurrentIndex((prev) => prev + 1);
-  }, [totalOriginal]);
 
-  // Prev slide handler
+    setCurrentIndex((prev) => {
+      let base = prev;
+      if (base >= 2 * totalOriginal) {
+        base = totalOriginal + ((base - 2 * totalOriginal) % totalOriginal);
+      }
+      const next = base + 1;
+
+      if (next >= 2 * totalOriginal) {
+        resetTimeoutRef.current = setTimeout(() => {
+          setIsTransitioning(false);
+          setCurrentIndex((idx) => (idx >= 2 * totalOriginal ? totalOriginal + ((idx - 2 * totalOriginal) % totalOriginal) : idx));
+        }, 520);
+      }
+
+      return next;
+    });
+  }, [totalOriginal, visibleCount]);
+
+  // Prev slide handler with strict index normalization & timeout fallback
   const prevSlide = useCallback(() => {
-    if (totalOriginal <= 0) return;
+    if (totalOriginal <= visibleCount) return;
+    if (resetTimeoutRef.current) clearTimeout(resetTimeoutRef.current);
     setIsTransitioning(true);
-    setCurrentIndex((prev) => prev - 1);
-  }, [totalOriginal]);
 
-  // Infinite loop boundary reset on transition end
-  const handleTransitionEnd = () => {
+    setCurrentIndex((prev) => {
+      let base = prev;
+      if (base < totalOriginal) {
+        base = totalOriginal + (base % totalOriginal);
+      }
+      const next = base - 1;
+
+      if (next < totalOriginal) {
+        resetTimeoutRef.current = setTimeout(() => {
+          setIsTransitioning(false);
+          setCurrentIndex((idx) => (idx < totalOriginal ? totalOriginal + (idx % totalOriginal) : idx));
+        }, 520);
+      }
+
+      return next;
+    });
+  }, [totalOriginal, visibleCount]);
+
+  // Seamlessly re-arm transitions after instant snap
+  useEffect(() => {
+    if (!isTransitioning) {
+      const raf = requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          setIsTransitioning(true);
+        });
+      });
+      return () => cancelAnimationFrame(raf);
+    }
+  }, [isTransitioning]);
+
+  // Infinite loop boundary reset on transition end (with bubbling filter)
+  const handleTransitionEnd = (e) => {
+    if (e && e.target !== e.currentTarget) return;
+    if (resetTimeoutRef.current) clearTimeout(resetTimeoutRef.current);
+
     if (totalOriginal <= 0) return;
     if (currentIndex >= 2 * totalOriginal) {
       setIsTransitioning(false);
-      setCurrentIndex((prev) => prev - totalOriginal);
+      setCurrentIndex((prev) => (prev >= 2 * totalOriginal ? totalOriginal + ((prev - 2 * totalOriginal) % totalOriginal) : prev));
     } else if (currentIndex < totalOriginal) {
       setIsTransitioning(false);
-      setCurrentIndex((prev) => prev + totalOriginal);
+      setCurrentIndex((prev) => (prev < totalOriginal ? totalOriginal + (prev % totalOriginal) : prev));
     }
   };
 
-  // Auto-scroll every 3 seconds (3000ms) - completely frozen when hovering or dragging
+  // Auto-scroll every 3.5s - runs ONLY when visible on screen and not backgrounded
   useEffect(() => {
-    if (isHovered || isPaused || totalOriginal <= 1) return;
+    if (isHovered || isPaused || !isInView || !isDocumentVisible || totalOriginal <= visibleCount) return;
     const interval = setInterval(() => {
       nextSlide();
-    }, 3000);
+    }, 3500);
     return () => clearInterval(interval);
-  }, [isHovered, isPaused, nextSlide, totalOriginal]);
+  }, [isHovered, isPaused, isInView, isDocumentVisible, nextSlide, totalOriginal, visibleCount]);
 
   // Touch handlers (Mobile swipe)
   const handleTouchStart = (e) => {
@@ -192,13 +269,14 @@ export const TestimonialsCarousel = () => {
   const activeDotIndex = totalOriginal > 0 ? ((currentIndex % totalOriginal) + totalOriginal) % totalOriginal : 0;
 
   const goToSlide = (dotIdx) => {
+    if (resetTimeoutRef.current) clearTimeout(resetTimeoutRef.current);
     setIsTransitioning(true);
-    const currentBase = Math.floor(currentIndex / totalOriginal) * totalOriginal;
-    setCurrentIndex(currentBase + dotIdx);
+    setCurrentIndex(totalOriginal + dotIdx);
   };
 
   return (
     <section
+      ref={sectionRef}
       className="py-12 sm:py-16 bg-ivory-100 dark:bg-ethnic-dark relative overflow-hidden"
       onMouseEnter={() => {
         setIsHovered(true);
@@ -230,31 +308,35 @@ export const TestimonialsCarousel = () => {
         {/* Carousel Slider Track Container with Floating Controls & Drag/Swipe */}
         <div className="relative group/carousel">
           
-          {/* Floating Left Button (Visible on hover / mobile) */}
-          <button
-            onClick={prevSlide}
-            onMouseEnter={() => {
-              setIsHovered(true);
-              setIsPaused(true);
-            }}
-            className="absolute -left-2 sm:-left-4 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-[#1C120B]/90 text-gold-300 border border-gold-500/40 shadow-xl backdrop-blur-md flex items-center justify-center hover:bg-gold-500 hover:text-maroon-950 active:scale-90 transition-all opacity-80 group-hover/carousel:opacity-100 cursor-pointer"
-            aria-label="Swipe left"
-          >
-            <ChevronLeft className="w-5 h-5" />
-          </button>
+          {/* Floating Left Button (Visible on hover / mobile if multiple slides) */}
+          {totalOriginal > visibleCount && (
+            <button
+              onClick={prevSlide}
+              onMouseEnter={() => {
+                setIsHovered(true);
+                setIsPaused(true);
+              }}
+              className="absolute -left-2 sm:-left-4 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-[#1C120B]/90 text-gold-300 border border-gold-500/40 shadow-xl backdrop-blur-md flex items-center justify-center hover:bg-gold-500 hover:text-maroon-950 active:scale-90 transition-all opacity-80 group-hover/carousel:opacity-100 cursor-pointer"
+              aria-label="Swipe left"
+            >
+              <ChevronLeft className="w-5 h-5" />
+            </button>
+          )}
 
-          {/* Floating Right Button (Visible on hover / mobile) */}
-          <button
-            onClick={nextSlide}
-            onMouseEnter={() => {
-              setIsHovered(true);
-              setIsPaused(true);
-            }}
-            className="absolute -right-2 sm:-right-4 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-[#1C120B]/90 text-gold-300 border border-gold-500/40 shadow-xl backdrop-blur-md flex items-center justify-center hover:bg-gold-500 hover:text-maroon-950 active:scale-90 transition-all opacity-80 group-hover/carousel:opacity-100 cursor-pointer"
-            aria-label="Swipe right"
-          >
-            <ChevronRight className="w-5 h-5" />
-          </button>
+          {/* Floating Right Button (Visible on hover / mobile if multiple slides) */}
+          {totalOriginal > visibleCount && (
+            <button
+              onClick={nextSlide}
+              onMouseEnter={() => {
+                setIsHovered(true);
+                setIsPaused(true);
+              }}
+              className="absolute -right-2 sm:-right-4 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-[#1C120B]/90 text-gold-300 border border-gold-500/40 shadow-xl backdrop-blur-md flex items-center justify-center hover:bg-gold-500 hover:text-maroon-950 active:scale-90 transition-all opacity-80 group-hover/carousel:opacity-100 cursor-pointer"
+              aria-label="Swipe right"
+            >
+              <ChevronRight className="w-5 h-5" />
+            </button>
+          )}
 
           {/* Swipeable Track */}
           <div

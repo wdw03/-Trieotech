@@ -36,6 +36,11 @@ export const ProductCarousel = ({
   const [isHovered, setIsHovered] = useState(false);
   const [isTransitioning, setIsTransitioning] = useState(true);
   const [visibleCount, setVisibleCount] = useState(4);
+  const [isInView, setIsInView] = useState(true);
+  const [isDocumentVisible, setIsDocumentVisible] = useState(true);
+
+  const sectionRef = useRef(null);
+  const resetTimeoutRef = useRef(null);
 
   // Drag & Touch tracking refs
   const isDraggingRef = useRef(false);
@@ -47,7 +52,30 @@ export const ProductCarousel = ({
   useEffect(() => {
     return () => {
       if (touchPauseTimeoutRef.current) clearTimeout(touchPauseTimeoutRef.current);
+      if (resetTimeoutRef.current) clearTimeout(resetTimeoutRef.current);
     };
+  }, []);
+
+  // IntersectionObserver to only auto-scroll when section is in viewport
+  useEffect(() => {
+    if (!sectionRef.current) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        setIsInView(entry.isIntersecting);
+      },
+      { threshold: 0.05 }
+    );
+    observer.observe(sectionRef.current);
+    return () => observer.disconnect();
+  }, []);
+
+  // Page visibility listener: pause when browser tab is inactive/minimized
+  useEffect(() => {
+    const handleVisibility = () => {
+      setIsDocumentVisible(document.visibilityState === 'visible');
+    };
+    document.addEventListener('visibilitychange', handleVisibility);
+    return () => document.removeEventListener('visibilitychange', handleVisibility);
   }, []);
 
   // Responsive visible count
@@ -68,7 +96,7 @@ export const ProductCarousel = ({
   }, []);
 
   // Build cloned array for smooth infinite wrap-around sliding
-  const bufferMultiplier = totalOriginal > 0 ? Math.max(3, Math.ceil(12 / totalOriginal)) : 3;
+  const bufferMultiplier = totalOriginal > 0 ? Math.max(3, Math.ceil((visibleCount * 3) / totalOriginal)) : 3;
   const displayItems = [];
   for (let i = 0; i < bufferMultiplier; i++) {
     displayItems.push(...displayProducts);
@@ -82,39 +110,88 @@ export const ProductCarousel = ({
     }
   }, [totalOriginal]);
 
-  // Slide navigation
+  // Slide navigation with strict index normalization & timeout fallback
   const nextSlide = useCallback(() => {
-    if (totalOriginal <= 0) return;
+    if (totalOriginal <= visibleCount) return;
+    if (resetTimeoutRef.current) clearTimeout(resetTimeoutRef.current);
     setIsTransitioning(true);
-    setCurrentIndex((prev) => prev + 1);
-  }, [totalOriginal]);
+
+    setCurrentIndex((prev) => {
+      let base = prev;
+      if (base >= 2 * totalOriginal) {
+        base = totalOriginal + ((base - 2 * totalOriginal) % totalOriginal);
+      }
+      const next = base + 1;
+
+      if (next >= 2 * totalOriginal) {
+        resetTimeoutRef.current = setTimeout(() => {
+          setIsTransitioning(false);
+          setCurrentIndex((idx) => (idx >= 2 * totalOriginal ? totalOriginal + ((idx - 2 * totalOriginal) % totalOriginal) : idx));
+        }, 520);
+      }
+
+      return next;
+    });
+  }, [totalOriginal, visibleCount]);
 
   const prevSlide = useCallback(() => {
-    if (totalOriginal <= 0) return;
+    if (totalOriginal <= visibleCount) return;
+    if (resetTimeoutRef.current) clearTimeout(resetTimeoutRef.current);
     setIsTransitioning(true);
-    setCurrentIndex((prev) => prev - 1);
-  }, [totalOriginal]);
 
-  // Reset at loop boundaries seamlessly without transition
-  const handleTransitionEnd = () => {
+    setCurrentIndex((prev) => {
+      let base = prev;
+      if (base < totalOriginal) {
+        base = totalOriginal + (base % totalOriginal);
+      }
+      const next = base - 1;
+
+      if (next < totalOriginal) {
+        resetTimeoutRef.current = setTimeout(() => {
+          setIsTransitioning(false);
+          setCurrentIndex((idx) => (idx < totalOriginal ? totalOriginal + (idx % totalOriginal) : idx));
+        }, 520);
+      }
+
+      return next;
+    });
+  }, [totalOriginal, visibleCount]);
+
+  // Seamlessly re-arm transitions after instant snap
+  useEffect(() => {
+    if (!isTransitioning) {
+      const raf = requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          setIsTransitioning(true);
+        });
+      });
+      return () => cancelAnimationFrame(raf);
+    }
+  }, [isTransitioning]);
+
+  // Reset at loop boundaries seamlessly without transition (with bubbling filter)
+  const handleTransitionEnd = (e) => {
+    if (e && e.target !== e.currentTarget) return;
+    if (resetTimeoutRef.current) clearTimeout(resetTimeoutRef.current);
+
     if (totalOriginal <= 0) return;
     if (currentIndex >= 2 * totalOriginal) {
       setIsTransitioning(false);
-      setCurrentIndex((prev) => prev - totalOriginal);
+      setCurrentIndex((prev) => (prev >= 2 * totalOriginal ? totalOriginal + ((prev - 2 * totalOriginal) % totalOriginal) : prev));
     } else if (currentIndex < totalOriginal) {
       setIsTransitioning(false);
-      setCurrentIndex((prev) => prev + totalOriginal);
+      setCurrentIndex((prev) => (prev < totalOriginal ? totalOriginal + (prev % totalOriginal) : prev));
     }
   };
 
-  // Auto-scroll every 3.5 seconds - strictly frozen when hovering or dragging
+  // Auto-scroll every 3.5 seconds - strictly frozen when hovering, dragging, or out of view
   useEffect(() => {
-    if (isHovered || isPaused || totalOriginal <= visibleCount) return;
+    if (isHovered || isPaused || !isInView || !isDocumentVisible || totalOriginal <= visibleCount) return;
     const interval = setInterval(() => {
       nextSlide();
     }, 3500);
     return () => clearInterval(interval);
-  }, [isHovered, isPaused, nextSlide, totalOriginal, visibleCount]);
+  }, [isHovered, isPaused, isInView, isDocumentVisible, nextSlide, totalOriginal, visibleCount]);
 
   // Touch handlers (Mobile swipe)
   const handleTouchStart = (e) => {
@@ -149,8 +226,6 @@ export const ProductCarousel = ({
 
   // Mouse drag handlers (Desktop click-and-drag swipe)
   const handleMouseDown = (e) => {
-    // Only drag on left mouse click
-    if (e.button !== 0) return;
     setIsPaused(true);
     isDraggingRef.current = true;
     dragStartXRef.current = e.clientX;
@@ -190,13 +265,14 @@ export const ProductCarousel = ({
   const activeDotIndex = totalOriginal > 0 ? ((currentIndex % totalOriginal) + totalOriginal) % totalOriginal : 0;
 
   const goToSlide = (dotIdx) => {
+    if (resetTimeoutRef.current) clearTimeout(resetTimeoutRef.current);
     setIsTransitioning(true);
-    const currentBase = Math.floor(currentIndex / totalOriginal) * totalOriginal;
-    setCurrentIndex(currentBase + dotIdx);
+    setCurrentIndex(totalOriginal + dotIdx);
   };
 
   return (
     <section
+      ref={sectionRef}
       className={`py-10 sm:py-16 ${bgClass} relative overflow-hidden`}
       onMouseEnter={() => {
         setIsHovered(true);
