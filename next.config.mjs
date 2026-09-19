@@ -85,6 +85,10 @@ const nextConfig = {
             key: 'Vary',
             value: 'RSC, Next-Router-State-Tree, Next-Router-Prefetch, Next-Url, Accept, Accept-Encoding',
           },
+          {
+            key: 'Alt-Svc',
+            value: 'clear',
+          },
         ],
       },
       {

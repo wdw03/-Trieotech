@@ -31,6 +31,9 @@ export async function middleware(request) {
     request,
   });
 
+  // Instruct browsers to discard unstable QUIC/UDP HTTP/3 and stick to stable TCP HTTP/2
+  supabaseResponse.headers.set('Alt-Svc', 'clear');
+
   if (pathname.startsWith('/api')) {
     supabaseResponse.headers.set('Access-Control-Allow-Origin', '*');
     supabaseResponse.headers.set('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS');
@@ -87,6 +90,7 @@ export async function middleware(request) {
         res.headers.set('CDN-Cache-Control', 'no-store');
         res.headers.set('Vercel-CDN-Cache-Control', 'no-store');
         res.headers.set('Vary', 'RSC, Next-Router-State-Tree, Next-Router-Prefetch, Next-Url, Accept, Accept-Encoding');
+        res.headers.set('Alt-Svc', 'clear');
         return res;
       };
 
@@ -219,6 +223,7 @@ export async function middleware(request) {
     supabaseResponse.headers.set('CDN-Cache-Control', 'no-store');
     supabaseResponse.headers.set('Vercel-CDN-Cache-Control', 'no-store');
     supabaseResponse.headers.set('Vary', 'RSC, Next-Router-State-Tree, Next-Router-Prefetch, Next-Url, Accept, Accept-Encoding');
+    supabaseResponse.headers.set('Alt-Svc', 'clear');
   }
 
   return supabaseResponse;

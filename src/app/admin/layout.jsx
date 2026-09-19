@@ -28,6 +28,45 @@ export default function AdminRootLayout({ children }) {
     };
   }, []);
 
+  useEffect(() => {
+    // Intercept and gracefully suppress browser extension & network/QUIC drops from crashing React
+    const handleUnhandledRejection = (event) => {
+      const reason = event?.reason;
+      const message = String(reason?.message || reason || '');
+      const isNetworkOrExtensionDrop =
+        message.includes('network error') ||
+        message.includes('Failed to fetch') ||
+        message.includes('QUIC') ||
+        message.includes('ObjectMultiplex') ||
+        message.includes('app-init-liveness') ||
+        (reason?.name === 'TypeError' && message.includes('fetch'));
+
+      if (isNetworkOrExtensionDrop) {
+        console.warn('[AdminPortal] Safely caught network/extension event:', message);
+        event.preventDefault();
+      }
+    };
+
+    const handleError = (event) => {
+      const message = String(event?.message || '');
+      if (
+        message.includes('ObjectMultiplex') ||
+        message.includes('contentscript') ||
+        message.includes('QUIC')
+      ) {
+        event.preventDefault();
+      }
+    };
+
+    window.addEventListener('unhandledrejection', handleUnhandledRejection);
+    window.addEventListener('error', handleError);
+
+    return () => {
+      window.removeEventListener('unhandledrejection', handleUnhandledRejection);
+      window.removeEventListener('error', handleError);
+    };
+  }, []);
+
   return (
     <div
       suppressHydrationWarning
