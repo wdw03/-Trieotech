@@ -30,8 +30,8 @@ export async function GET() {
     const formatted = (categories || []).map((c) => {
       const lower = String(c.name || '').toLowerCase().trim();
       let img = c.image || '';
-      if (img.includes('peacock-figure2') || (c.slug === 'decorative-items' && !img)) {
-        img = '/products/decorated-golden-gota-moti-chudi-1.jpg';
+      if (img.includes('peacock-figure2') || (c.slug === 'decorative-items' && (!img || img.includes('peacock-figure2')))) {
+        img = 'https://gkskeljvgphslkzctjfp.supabase.co/storage/v1/object/public/products/1789727938517-lotus-wall-hanging.jpg';
       }
       return {
         id: c.id,
