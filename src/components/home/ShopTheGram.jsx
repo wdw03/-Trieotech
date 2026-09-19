@@ -302,7 +302,7 @@ const ReelCard = ({
         }`}
     >
       <article
-        className="group relative rounded-2xl sm:rounded-3xl overflow-hidden border border-white/10 bg-[#12100d] shadow-xl transition-all duration-500 md:hover:border-[#ee2a7b]/50 md:hover:-translate-y-1.5 md:hover:shadow-[0_20px_50px_rgba(238,42,123,0.22)]"
+        className="group relative rounded-2xl sm:rounded-3xl overflow-hidden border border-white/10 bg-[#12100d] shadow-xl transition-all duration-500 md:hover:border-[#d4af37]/50 md:hover:-translate-y-1.5 md:hover:shadow-[0_20px_50px_rgba(212,175,55,0.2)]"
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
         onTouchStart={handleTouchStart}
@@ -323,11 +323,17 @@ const ReelCard = ({
               </div>
             </div>
             <div className="leading-tight min-w-0">
-              <span className="gram-body flex items-center gap-1 text-white text-[11px] sm:text-xs font-bold truncate">
+              <span
+                className="gram-body flex items-center gap-1 text-white text-xs font-bold truncate"
+                title={post.handle}
+              >
                 {post.handle}
                 {post.verified && <BadgeCheck size={12} className="text-[#4a9eff] shrink-0" />}
               </span>
-              <span className="gram-body text-white/50 text-[9px] sm:text-[10px] block truncate">
+              <span
+                className="gram-body text-stone-300 text-xs block truncate"
+                title={`${post.followers} followers`}
+              >
                 {post.followers} followers
               </span>
             </div>
@@ -340,17 +346,17 @@ const ReelCard = ({
                 target="_blank"
                 rel="noopener noreferrer"
                 onClick={(e) => e.stopPropagation()}
-                className="gram-body group/igpill inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-full bg-gradient-to-r from-[#f09433] via-[#dc2743] to-[#bc1888] text-white text-[9px] sm:text-[10px] font-black uppercase tracking-wider shadow-[0_2px_10px_rgba(220,39,67,0.45)] hover:shadow-[0_4px_16px_rgba(220,39,67,0.7)] hover:scale-105 active:scale-95 transition-all duration-200 border border-white/25 shrink-0 cursor-pointer"
+                className="gram-body group/igpill inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-full bg-gradient-to-r from-[#d4af37] via-[#f59e0b] to-[#9B1B30] text-white text-xs font-bold uppercase tracking-wider shadow-md hover:scale-105 active:scale-95 transition-all duration-200 border border-white/25 shrink-0 cursor-pointer"
                 title="Watch original reel on Instagram"
               >
                 <InstagramGlyph className="w-3.5 h-3.5 shrink-0 transition-transform group-hover/igpill:rotate-12" />
-                <span className="hidden xs:inline sm:inline">View Reel</span>
+                <span className="hidden xs:inline sm:inline">Watch Reel</span>
                 <span className="xs:hidden sm:hidden">Reel</span>
-                <ExternalLink size={10} className="opacity-90 transition-transform group-hover/igpill:translate-x-0.5 group-hover/igpill:-translate-y-0.5" />
+                <ExternalLink size={10} className="opacity-90" />
               </a>
             ) : null}
-            <span className="gram-body gram-float-badge inline-flex items-center gap-1 bg-black/60 backdrop-blur-md text-white text-[8px] sm:text-[9px] font-black uppercase tracking-wider px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full border border-white/15 shadow-sm">
-              <Play size={8} className="fill-white" /> {post.views}
+            <span className="gram-body gram-float-badge inline-flex items-center gap-1 bg-black/60 backdrop-blur-md text-white text-xs font-bold uppercase tracking-wider px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full border border-white/15 shadow-sm">
+              <Play size={10} className="fill-white" /> {post.views}
             </span>
           </div>
         </div>
@@ -394,7 +400,7 @@ const ReelCard = ({
           <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/20 to-transparent pointer-events-none opacity-85 md:group-hover:opacity-95 transition-opacity" />
 
           {/* Tag Chip */}
-          <span className="gram-body absolute top-12 sm:top-14 left-3 sm:left-4 z-10 bg-[#d4af37] text-[#171310] text-[8px] sm:text-[9px] font-black uppercase tracking-wider px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full shadow-md pointer-events-none">
+          <span className="gram-body absolute top-12 sm:top-14 left-3 sm:left-4 z-10 bg-[#d4af37] text-[#171310] text-xs font-bold uppercase tracking-wider px-2.5 py-1 rounded-full shadow-md pointer-events-none">
             {post.tag}
           </span>
 
@@ -442,7 +448,7 @@ const ReelCard = ({
           {/* Floating Double-Tap Heart Animation */}
           {showHeartPop && (
             <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-30">
-              <Heart size={76} className="gram-heart-pop fill-[#ee2a7b] text-[#ee2a7b] drop-shadow-[0_0_24px_rgba(238,42,123,0.9)]" />
+              <Heart size={76} className="gram-heart-pop fill-rose-500 text-rose-500 drop-shadow-[0_0_24px_rgba(244,63,94,0.9)]" />
             </div>
           )}
 
@@ -456,11 +462,11 @@ const ReelCard = ({
               className="flex flex-col items-center gap-0.5 group/heart transition-transform active:scale-75"
             >
               <Heart
-                size={19}
-                className={`transition-colors ${isLiked ? 'fill-[#ee2a7b] text-[#ee2a7b]' : 'text-white hover:text-[#ee2a7b]'
+                size={20}
+                className={`transition-colors ${isLiked ? 'fill-rose-500 text-rose-500' : 'text-white hover:text-rose-400'
                   }`}
               />
-              <span className="gram-body text-white text-[9px] font-bold">
+              <span className="gram-body text-white text-xs font-bold">
                 {likesCount >= 1000 ? `${(likesCount / 1000).toFixed(1)}K` : likesCount}
               </span>
             </button>
@@ -475,8 +481,8 @@ const ReelCard = ({
               }}
               className="flex flex-col items-center gap-0.5 transition-transform active:scale-75"
             >
-              <MessageCircle size={18} className="text-white hover:text-[#4a9eff] transition-colors" />
-              <span className="gram-body text-white text-[9px] font-bold">{post.comments}</span>
+              <MessageCircle size={19} className="text-white hover:text-gold-400 transition-colors" />
+              <span className="gram-body text-white text-xs font-bold">{post.comments}</span>
             </button>
 
             {/* Share */}
@@ -487,44 +493,27 @@ const ReelCard = ({
               className="flex flex-col items-center gap-0.5 transition-transform active:scale-75"
             >
               {copied ? (
-                <Check size={18} className="text-emerald-400" />
+                <Check size={19} className="text-emerald-400" />
               ) : (
-                <Send size={18} className="text-white hover:text-[#d4af37] transition-colors" />
+                <Send size={19} className="text-white hover:text-[#d4af37] transition-colors" />
               )}
-              <span className="gram-body text-white text-[9px] font-bold">Share</span>
+              <span className="gram-body text-white text-xs font-bold">Share</span>
             </button>
-
-            {/* Direct Watch on Instagram Reel button */}
-            {post.instagramUrl ? (
-              <a
-                href={post.instagramUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                onClick={(e) => e.stopPropagation()}
-                className="flex flex-col items-center gap-0.5 group/igrail transition-transform active:scale-75 cursor-pointer"
-                title="Watch original reel on Instagram"
-              >
-                <div className="w-7 h-7 rounded-full bg-gradient-to-tr from-[#f09433] via-[#dc2743] to-[#bc1888] flex items-center justify-center shadow-md border border-white/25 group-hover/igrail:scale-110 transition-transform">
-                  <InstagramGlyph className="w-3.5 h-3.5 text-white" />
-                </div>
-                <span className="gram-body text-white text-[8px] font-extrabold drop-shadow">Insta</span>
-              </a>
-            ) : null}
           </div>
 
           {/* Bottom Caption & Music Bar Overlay */}
           <div className="absolute bottom-1 inset-x-0 z-10 p-3 sm:p-4 pointer-events-none">
-            <p className="gram-body text-white/95 text-[11px] sm:text-xs leading-snug line-clamp-2 mb-1.5 pr-12 drop-shadow-md">
+            <p className="gram-body text-white text-xs leading-snug line-clamp-2 mb-1.5 pr-12 drop-shadow-md">
               <b className="text-white font-semibold">{post.handle}</b> {post.caption}
             </p>
             <div className="flex items-center gap-2">
-              <Music2 size={11} className="text-white/70 shrink-0" />
+              <Music2 size={12} className="text-gold-400 shrink-0" />
               <span className="flex items-end gap-[2px] h-2.5 shrink-0">
-                <span className={`gram-music-bar w-[2px] h-full bg-[#ee2a7b] rounded-full ${!isPlaying ? 'opacity-40' : ''}`} />
-                <span className={`gram-music-bar w-[2px] h-full bg-[#ee2a7b] rounded-full [animation-delay:0.2s] ${!isPlaying ? 'opacity-40' : ''}`} />
-                <span className={`gram-music-bar w-[2px] h-full bg-[#ee2a7b] rounded-full [animation-delay:0.4s] ${!isPlaying ? 'opacity-40' : ''}`} />
+                <span className={`gram-music-bar w-[2px] h-full bg-gold-400 rounded-full ${!isPlaying ? 'opacity-40' : ''}`} />
+                <span className={`gram-music-bar w-[2px] h-full bg-gold-400 rounded-full [animation-delay:0.2s] ${!isPlaying ? 'opacity-40' : ''}`} />
+                <span className={`gram-music-bar w-[2px] h-full bg-gold-400 rounded-full [animation-delay:0.4s] ${!isPlaying ? 'opacity-40' : ''}`} />
               </span>
-              <span className="gram-body text-white/70 text-[9px] sm:text-[10px] tracking-wide truncate">{post.song}</span>
+              <span className="gram-body text-stone-300 text-xs tracking-wide truncate">{post.song}</span>
             </div>
           </div>
 
@@ -532,7 +521,7 @@ const ReelCard = ({
           <div className="absolute bottom-0 inset-x-0 h-1 bg-white/20 z-20 pointer-events-none">
             <div
               ref={progressBarRef}
-              className="h-full bg-gradient-to-r from-[#ee2a7b] to-[#d4af37] transition-all duration-100 ease-linear pointer-events-none"
+              className="h-full bg-gradient-to-r from-[#d4af37] to-[#9B1B30] transition-all duration-100 ease-linear pointer-events-none"
               style={{ width: '0%' }}
             />
           </div>
@@ -543,43 +532,29 @@ const ReelCard = ({
           <div className="min-w-0 flex-1">
             <Link
               href={`/product/${post.slug}`}
-              className="gram-body text-white text-[11px] sm:text-xs font-semibold truncate block hover:text-[#d4af37] transition-colors"
+              className="gram-body text-white text-xs sm:text-sm font-semibold line-clamp-2 min-h-[2.5rem] block hover:text-[#d4af37] transition-colors leading-tight"
+              title={post.product}
               onClick={(e) => e.stopPropagation()}
             >
               {post.product}
             </Link>
-            <div className="flex items-baseline gap-1.5 mt-0.5">
+            <div className="flex items-baseline gap-1.5 mt-1">
               <span className="text-[#d4af37] font-bold text-xs sm:text-sm">{post.price}</span>
-              <span className="text-white/35 line-through text-[9px] sm:text-[10px]">{post.oldPrice}</span>
-              <span className="text-emerald-400 text-[9px] font-bold">{post.discount}</span>
+              <span className="text-stone-400 line-through text-xs">{post.oldPrice}</span>
+              <span className="text-emerald-400 text-xs font-bold">{post.discount}</span>
             </div>
           </div>
 
           <div className="flex items-center gap-1.5 shrink-0">
-            {post.instagramUrl ? (
-              <a
-                href={post.instagramUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                onClick={(e) => e.stopPropagation()}
-                className="gram-body group/igfoot inline-flex items-center gap-1 bg-gradient-to-r from-[#f09433] via-[#dc2743] to-[#bc1888] text-white text-[9px] sm:text-[10px] font-black uppercase tracking-wider px-2.5 sm:px-3 py-2 sm:py-2.5 rounded-full transition-all hover:scale-105 active:scale-95 shadow-md border border-white/20"
-                title="Watch original reel on Instagram"
-              >
-                <InstagramGlyph className="w-3 h-3 transition-transform group-hover/igfoot:rotate-12" />
-                <span className="hidden xs:inline">View Reel</span>
-                <span className="xs:hidden">Reel</span>
-                <ExternalLink size={9} className="opacity-80" />
-              </a>
-            ) : null}
             <button
               type="button"
               onClick={(e) => {
                 e.stopPropagation();
                 onAddToCart(post);
               }}
-              className="gram-body group/cart shrink-0 inline-flex items-center gap-1.5 bg-[#d4af37] text-[#171310] text-[9px] sm:text-[10px] font-black uppercase tracking-wider px-3 sm:px-3.5 py-2 sm:py-2.5 rounded-full transition-all hover:scale-105 active:scale-95 shadow-md cursor-pointer"
+              className="gram-body group/cart shrink-0 inline-flex items-center gap-1.5 bg-[#d4af37] hover:bg-[#c5a028] text-[#171310] text-xs font-bold uppercase tracking-wider px-3.5 sm:px-4 py-2 sm:py-2.5 rounded-full transition-all hover:scale-105 active:scale-95 shadow-md cursor-pointer"
             >
-              <ShoppingBag size={12} className="transition-transform group-hover/cart:-rotate-12" />
+              <ShoppingBag size={13} className="transition-transform group-hover/cart:-rotate-12" />
               <span>Add to Cart</span>
             </button>
           </div>
@@ -840,7 +815,7 @@ const ReelModal = ({ post, isOpen, onClose, onAddToCart, onBuyNow, onNext, onPre
             {/* Floating Double-Tap Heart Animation */}
             {showHeartPop && (
               <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-30">
-                <Heart size={96} className="gram-heart-pop fill-[#ee2a7b] text-[#ee2a7b] drop-shadow-[0_0_35px_rgba(238,42,123,0.95)]" />
+                <Heart size={96} className="gram-heart-pop fill-rose-500 text-rose-500 drop-shadow-[0_0_35px_rgba(244,63,94,0.95)]" />
               </div>
             )}
 
@@ -858,21 +833,21 @@ const ReelModal = ({ post, isOpen, onClose, onAddToCart, onBuyNow, onNext, onPre
               <button type="button" onClick={toggleLike} className="flex flex-col items-center gap-0.5">
                 <Heart
                   size={24}
-                  className={`transition-all ${isLiked ? 'fill-[#ee2a7b] text-[#ee2a7b]' : 'text-white'}`}
+                  className={`transition-all ${isLiked ? 'fill-rose-500 text-rose-500' : 'text-white'}`}
                 />
-                <span className="gram-body text-white text-[9px] font-bold">
+                <span className="gram-body text-white text-xs font-bold">
                   {likesCount >= 1000 ? `${(likesCount / 1000).toFixed(1)}K` : likesCount}
                 </span>
               </button>
 
               <button type="button" onClick={handleShare} className="flex flex-col items-center gap-0.5">
                 {copied ? <Check size={22} className="text-emerald-400" /> : <Send size={22} className="text-white" />}
-                <span className="gram-body text-white text-[9px] font-bold">Share</span>
+                <span className="gram-body text-white text-xs font-bold">Share</span>
               </button>
 
               <button type="button" onClick={toggleMute} className="flex flex-col items-center gap-0.5">
                 {isMuted ? <VolumeX size={22} className="text-white/80" /> : <Volume2 size={22} className="text-[#d4af37]" />}
-                <span className="gram-body text-white text-[9px] font-bold">{isMuted ? 'Mute' : 'Audio'}</span>
+                <span className="gram-body text-white text-xs font-bold">{isMuted ? 'Mute' : 'Audio'}</span>
               </button>
 
               {post?.instagramUrl && (
@@ -883,29 +858,29 @@ const ReelModal = ({ post, isOpen, onClose, onAddToCart, onBuyNow, onNext, onPre
                   className="flex flex-col items-center gap-0.5 group/morig transition-transform active:scale-75"
                   title="Watch original reel on Instagram"
                 >
-                  <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-[#f09433] via-[#dc2743] to-[#bc1888] flex items-center justify-center shadow-md border border-white/25 group-hover/morig:scale-110 transition-transform">
+                  <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-[#d4af37] via-[#f59e0b] to-[#9B1B30] flex items-center justify-center shadow-md border border-white/25 group-hover/morig:scale-110 transition-transform">
                     <InstagramGlyph className="w-4 h-4 text-white" />
                   </div>
-                  <span className="gram-body text-white text-[8px] font-extrabold">Insta</span>
+                  <span className="gram-body text-white text-[10px] font-extrabold">Insta</span>
                 </a>
               )}
             </div>
 
             {/* Caption & Music Bar on Mobile (Overlaid at bottom of video) */}
             <div className="lg:hidden absolute bottom-16 inset-x-0 z-20 p-3.5 bg-gradient-to-t from-black/95 via-black/60 to-transparent pointer-events-none">
-              <p className="gram-body text-white/95 text-[11px] leading-snug line-clamp-2 pr-14 mb-1.5 drop-shadow-md">
-                <b className="text-white">{post.handle}</b> {post.caption}
+              <p className="gram-body text-white text-xs leading-snug line-clamp-2 pr-14 mb-1.5 drop-shadow-md">
+                <b className="text-white font-semibold">{post.handle}</b> {post.caption}
               </p>
               <div className="flex items-center gap-2">
-                <Music2 size={11} className="text-white/70" />
-                <span className="gram-body text-white/70 text-[9px] truncate">{post.song}</span>
+                <Music2 size={12} className="text-gold-400" />
+                <span className="gram-body text-stone-300 text-xs truncate">{post.song}</span>
               </div>
             </div>
 
             {/* Video Scrub Progress Line */}
             <div className="absolute bottom-0 inset-x-0 h-1 bg-white/20 z-20">
               <div
-                className="h-full bg-gradient-to-r from-[#ee2a7b] to-[#d4af37] transition-all duration-100 ease-linear"
+                className="h-full bg-gradient-to-r from-[#d4af37] to-[#9B1B30] transition-all duration-100 ease-linear"
                 style={{ width: `${progress}%` }}
               />
             </div>
@@ -916,14 +891,15 @@ const ReelModal = ({ post, isOpen, onClose, onAddToCart, onBuyNow, onNext, onPre
             <Link
               href={`/product/${post.slug}`}
               className="flex items-center gap-2 min-w-0 flex-1"
+              title={post.product}
               onClick={onClose}
             >
               <img src={post.productImage || post.img} alt={post.product} className="w-10 h-10 rounded-lg object-cover border border-white/10 shrink-0" />
               <div className="min-w-0">
-                <p className="gram-body text-white text-xs font-bold truncate">{post.product}</p>
+                <p className="gram-body text-white text-xs font-bold line-clamp-1" title={post.product}>{post.product}</p>
                 <div className="flex items-baseline gap-1.5">
                   <span className="gram-body text-xs text-[#d4af37] font-bold">{post.price}</span>
-                  <span className="gram-body text-[10px] text-white/40 line-through">{post.oldPrice}</span>
+                  <span className="gram-body text-xs text-stone-400 line-through">{post.oldPrice}</span>
                 </div>
               </div>
             </Link>
@@ -932,16 +908,16 @@ const ReelModal = ({ post, isOpen, onClose, onAddToCart, onBuyNow, onNext, onPre
               <button
                 type="button"
                 onClick={() => onAddToCart(post)}
-                className="gram-body bg-white/10 hover:bg-white/20 text-white text-[9px] font-bold uppercase tracking-wider px-2.5 py-2 rounded-full transition-all active:scale-95 cursor-pointer"
+                className="gram-body bg-white/10 hover:bg-white/20 text-white text-xs font-bold uppercase tracking-wider px-3 py-2 rounded-full transition-all active:scale-95 cursor-pointer"
               >
                 Add
               </button>
               <button
                 type="button"
                 onClick={() => onBuyNow(post)}
-                className="gram-body bg-[#d4af37] text-black text-[9px] font-black uppercase tracking-wider px-3 py-2 rounded-full transition-all active:scale-95 shadow-md flex items-center gap-1 cursor-pointer"
+                className="gram-body bg-[#d4af37] text-black text-xs font-black uppercase tracking-wider px-3.5 py-2 rounded-full transition-all active:scale-95 shadow-md flex items-center gap-1 cursor-pointer"
               >
-                <Zap size={11} className="fill-black" />
+                <Zap size={12} className="fill-black" />
                 <span>Buy</span>
               </button>
             </div>
@@ -1004,12 +980,12 @@ const ReelModal = ({ post, isOpen, onClose, onAddToCart, onBuyNow, onNext, onPre
             </p>
 
             <div className="flex items-center gap-2 p-2.5 rounded-xl bg-white/[0.04] border border-white/5">
-              <Music2 size={13} className="text-[#ee2a7b]" />
+              <Music2 size={13} className="text-gold-400" />
               <span className="gram-body text-white/80 text-xs font-medium truncate">{post.song}</span>
               <span className="ml-auto flex items-end gap-[2px] h-3 shrink-0">
-                <span className="gram-music-bar w-[2px] h-full bg-[#ee2a7b] rounded-full" />
-                <span className="gram-music-bar w-[2px] h-full bg-[#ee2a7b] rounded-full [animation-delay:0.2s]" />
-                <span className="gram-music-bar w-[2px] h-full bg-[#ee2a7b] rounded-full [animation-delay:0.4s]" />
+                <span className="gram-music-bar w-[2px] h-full bg-gold-400 rounded-full" />
+                <span className="gram-music-bar w-[2px] h-full bg-gold-400 rounded-full [animation-delay:0.2s]" />
+                <span className="gram-music-bar w-[2px] h-full bg-gold-400 rounded-full [animation-delay:0.4s]" />
               </span>
             </div>
           </div>
@@ -1054,19 +1030,19 @@ const ReelModal = ({ post, isOpen, onClose, onAddToCart, onBuyNow, onNext, onPre
                     />
                     <div className="min-w-0 flex-1 flex flex-col justify-between">
                       <div>
-                        <div className="flex items-center gap-2 text-[10px] text-white/50 uppercase tracking-wider font-semibold">
+                        <div className="flex items-center gap-2 text-xs text-stone-300 uppercase tracking-wider font-semibold">
                           <span>{post.tag}</span>
                           <span>•</span>
                           <span className="text-emerald-400 font-bold">● In Stock</span>
                         </div>
-                        <h4 className="gram-body text-white font-bold text-sm line-clamp-2 mt-0.5 leading-snug">
+                        <h4 className="gram-body text-white font-bold text-sm sm:text-base line-clamp-2 mt-0.5 leading-snug">
                           {post.product}
                         </h4>
                       </div>
 
                       <div className="flex items-baseline gap-2">
                         <span className="text-[#d4af37] font-black text-lg">{post.price}</span>
-                        <span className="text-white/40 line-through text-xs">{post.oldPrice}</span>
+                        <span className="text-stone-400 line-through text-xs">{post.oldPrice}</span>
                         <span className="text-emerald-400 text-xs font-bold bg-emerald-950/60 border border-emerald-500/30 px-2 py-0.5 rounded-full">
                           {post.discount}
                         </span>
@@ -1075,7 +1051,7 @@ const ReelModal = ({ post, isOpen, onClose, onAddToCart, onBuyNow, onNext, onPre
                   </div>
 
                   {/* Quality Assurance Badges */}
-                  <div className="mt-3 pt-3 border-t border-white/5 grid grid-cols-2 gap-2 text-[11px] text-white/60">
+                  <div className="mt-3 pt-3 border-t border-white/5 grid grid-cols-2 gap-2 text-xs text-stone-300">
                     <span className="flex items-center gap-1.5">
                       <ShieldCheck size={13} className="text-[#d4af37]" /> Authentic Artisan Piece
                     </span>
@@ -1105,7 +1081,7 @@ const ReelModal = ({ post, isOpen, onClose, onAddToCart, onBuyNow, onNext, onPre
                   {/* Link to Full Product Page */}
                   <Link
                     href={`/product/${post.slug}`}
-                    className="gram-body mt-2.5 text-center block text-[11px] text-[#d4af37] hover:underline font-semibold"
+                    className="gram-body mt-2.5 text-center block text-xs text-[#d4af37] hover:underline font-semibold"
                     onClick={onClose}
                   >
                     View Full Product Details &amp; Specifications →
@@ -1117,7 +1093,7 @@ const ReelModal = ({ post, isOpen, onClose, onAddToCart, onBuyNow, onNext, onPre
                       href={post.instagramUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="mt-3.5 w-full py-3 px-4 rounded-xl bg-gradient-to-r from-[#f09433] via-[#e6683c] via-[#dc2743] via-[#cc2366] to-[#bc1888] hover:opacity-95 text-white text-xs font-black uppercase tracking-wider transition-all flex items-center justify-center gap-2.5 shadow-[0_6px_20px_rgba(220,39,67,0.45)] hover:shadow-[0_8px_28px_rgba(220,39,67,0.7)] hover:scale-[1.02] active:scale-[0.98] border border-white/25 group/igcta"
+                      className="mt-3.5 w-full py-3 px-4 rounded-xl bg-gradient-to-r from-[#d4af37] via-[#f59e0b] to-[#9B1B30] hover:opacity-95 text-white text-xs font-black uppercase tracking-wider transition-all flex items-center justify-center gap-2.5 shadow-md hover:scale-[1.02] active:scale-[0.98] border border-white/25 group/igcta"
                     >
                       <InstagramGlyph className="w-4 h-4 transition-transform group-hover/igcta:rotate-12" />
                       <span>Watch Original Reel on Instagram</span>
@@ -1127,7 +1103,7 @@ const ReelModal = ({ post, isOpen, onClose, onAddToCart, onBuyNow, onNext, onPre
                 </div>
 
                 {/* Keyboard controls helper pill */}
-                <div className="p-3 rounded-xl bg-black/40 border border-white/5 text-[10px] text-white/40 flex items-center justify-between font-mono">
+                <div className="p-3 rounded-xl bg-black/40 border border-white/5 text-xs text-stone-300 flex items-center justify-between font-mono">
                   <span>KEYBOARD:</span>
                   <span>↑ / ↓ : Navigate</span>
                   <span>Space : Play/Pause</span>
@@ -1139,15 +1115,15 @@ const ReelModal = ({ post, isOpen, onClose, onAddToCart, onBuyNow, onNext, onPre
               <div className="space-y-3.5">
                 {post.commentsList && post.commentsList.map((c, i) => (
                   <div key={i} className="flex gap-2.5 text-xs">
-                    <div className="w-7 h-7 rounded-full bg-gradient-to-tr from-[#ee2a7b] to-[#d4af37] flex items-center justify-center text-white font-bold text-[10px] shrink-0">
+                    <div className="w-7 h-7 rounded-full bg-gradient-to-tr from-[#d4af37] to-[#9B1B30] flex items-center justify-center text-white font-bold text-xs shrink-0">
                       {c.user[0].toUpperCase()}
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
-                        <span className="text-white font-bold text-[11px]">{c.user}</span>
-                        <span className="text-white/40 text-[9px]">{c.time}</span>
+                        <span className="text-white font-bold text-xs">{c.user}</span>
+                        <span className="text-stone-400 text-xs">{c.time}</span>
                       </div>
-                      <p className="text-white/80 text-xs mt-0.5 leading-snug">{c.text}</p>
+                      <p className="text-stone-200 text-xs mt-0.5 leading-snug">{c.text}</p>
                     </div>
                   </div>
                 ))}
@@ -1161,9 +1137,9 @@ const ReelModal = ({ post, isOpen, onClose, onAddToCart, onBuyNow, onNext, onPre
               <button
                 type="button"
                 onClick={toggleLike}
-                className="flex items-center gap-1.5 text-white hover:text-[#ee2a7b] transition-colors cursor-pointer"
+                className="flex items-center gap-1.5 text-white hover:text-rose-500 transition-colors cursor-pointer"
               >
-                <Heart size={20} className={isLiked ? 'fill-[#ee2a7b] text-[#ee2a7b]' : ''} />
+                <Heart size={20} className={isLiked ? 'fill-rose-500 text-rose-500' : ''} />
                 <span className="gram-body text-xs font-bold">{likesCount}</span>
               </button>
 
@@ -1570,14 +1546,14 @@ export default function ShopTheGram() {
                 <div className="absolute inset-[2.5px] sm:inset-[3px] rounded-full bg-[#0a0807] flex items-center justify-center">
                   <Camera className="w-5 h-5 sm:w-8 sm:h-8 text-white/90" />
                 </div>
-                <span className="gram-body absolute -bottom-1 left-1/2 -translate-x-1/2 bg-[#ee2a7b] text-white text-[7px] sm:text-[8px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full shadow-md">
+                <span className="gram-body absolute -bottom-1 left-1/2 -translate-x-1/2 bg-rose-600 text-white text-[10px] font-black uppercase tracking-widest px-2.5 py-0.5 rounded-full shadow-md">
                   LIVE
                 </span>
               </div>
 
               <div>
                 <div className="flex items-center gap-1.5 mb-1">
-                  <span className="gram-body text-white/40 text-[9px] sm:text-[10px] font-bold uppercase tracking-[0.35em]">Community Feed</span>
+                  <span className="gram-body text-gold-400 text-xs font-bold uppercase tracking-wider">Community Feed</span>
                   <BadgeCheck size={14} className="text-[#4a9eff]" />
                 </div>
                 <h2 className="gram-heading text-2xl xs:text-3xl sm:text-5xl md:text-6xl text-white font-semibold leading-tight">
@@ -1593,7 +1569,7 @@ export default function ShopTheGram() {
                 </h2>
 
                 {/* Profile Stats Row */}
-                <div className="gram-body flex items-center gap-3 sm:gap-5 mt-1.5 sm:mt-3 text-white/50 text-[11px] sm:text-xs tracking-wide flex-wrap">
+                <div className="gram-body flex items-center gap-3 sm:gap-5 mt-1.5 sm:mt-3 text-stone-300 text-xs tracking-wide flex-wrap">
                   <span><b className="text-white font-bold">1.4M</b> followers</span>
                   <span><b className="text-white font-bold">{loading ? '...' : posts.length}</b> creators</span>
                   <span className="hidden sm:inline"><b className="text-white font-bold">100%</b> shoppable</span>
@@ -1606,7 +1582,7 @@ export default function ShopTheGram() {
               {/* Expanding Search Input */}
               <div
                 className={`flex items-center border rounded-full transition-all duration-300 overflow-hidden ${searchOpen
-                  ? 'border-[#ee2a7b]/60 bg-white/[0.08] w-44 sm:w-60'
+                  ? 'border-gold-500/60 bg-white/[0.08] w-44 sm:w-60'
                   : 'border-white/15 bg-white/[0.03] w-9 sm:w-11'
                   } h-9 sm:h-11`}
               >
@@ -1678,7 +1654,7 @@ export default function ShopTheGram() {
                     type="button"
                     aria-label="Previous reel"
                     onClick={() => scrollBy(-1)}
-                    className="w-9 sm:w-11 h-9 sm:h-11 rounded-full border border-white/15 text-white/70 flex items-center justify-center hover:border-[#ee2a7b] hover:text-[#ee2a7b] active:scale-90 transition-all cursor-pointer"
+                    className="w-9 sm:w-11 h-9 sm:h-11 rounded-full border border-white/15 text-white/70 flex items-center justify-center hover:border-gold-500 hover:text-gold-400 active:scale-90 transition-all cursor-pointer"
                   >
                     <ArrowLeft size={15} />
                   </button>
@@ -1686,7 +1662,7 @@ export default function ShopTheGram() {
                     type="button"
                     aria-label="Next reel"
                     onClick={() => scrollBy(1)}
-                    className="w-9 sm:w-11 h-9 sm:h-11 rounded-full border border-white/15 text-white/70 flex items-center justify-center hover:border-[#ee2a7b] hover:text-[#ee2a7b] active:scale-90 transition-all cursor-pointer"
+                    className="w-9 sm:w-11 h-9 sm:h-11 rounded-full border border-white/15 text-white/70 flex items-center justify-center hover:border-gold-500 hover:text-gold-400 active:scale-90 transition-all cursor-pointer"
                   >
                     <ArrowRight size={15} />
                   </button>
@@ -1696,7 +1672,7 @@ export default function ShopTheGram() {
               {/* View All Shop Link */}
               <Link
                 href="/shop"
-                className="gram-body group relative overflow-hidden border border-[#d4af37]/40 text-[#d4af37] text-[9px] sm:text-[10px] font-black uppercase tracking-widest px-3.5 sm:px-5 h-9 sm:h-11 rounded-full inline-flex items-center justify-center transition-all duration-300 hover:text-[#171310] hover:border-[#d4af37]"
+                className="gram-body group relative overflow-hidden border border-[#d4af37]/40 text-[#d4af37] text-xs font-bold uppercase tracking-wider px-3.5 sm:px-5 h-9 sm:h-11 rounded-full inline-flex items-center justify-center transition-all duration-300 hover:text-[#171310] hover:border-[#d4af37]"
               >
                 <span className="absolute inset-0 bg-[#d4af37] -translate-x-full group-hover:translate-x-0 transition-transform duration-300 ease-out" />
                 <span className="relative inline-flex items-center gap-1.5">
@@ -1709,8 +1685,8 @@ export default function ShopTheGram() {
 
         {/* Subtitle Description */}
         <Reveal delay={100}>
-          <p className="gram-body text-white/50 text-xs sm:text-sm max-w-2xl leading-relaxed tracking-wide mb-6 sm:mb-8 text-pretty">
-            Real creators, authentic festive styling, and pure handcrafted decor. Tag <span className="text-[#ee2a7b] font-semibold">#TrioEcart</span> on Instagram
+          <p className="gram-body text-stone-300 text-xs sm:text-sm max-w-2xl leading-relaxed tracking-wide mb-6 sm:mb-8 text-pretty">
+            Real creators, authentic festive styling, and pure handcrafted decor. Tag <span className="text-gold-400 font-semibold">#TrioEcart</span> on Instagram
             to get featured. Tap any card on your phone to watch with sound, double-tap to like, or add the exact handcrafted piece directly to your cart!
           </p>
         </Reveal>
@@ -1782,13 +1758,13 @@ export default function ShopTheGram() {
             <div className="mt-4 sm:mt-6 flex flex-col items-center gap-2">
               <div className="w-32 sm:w-48 h-1 bg-white/10 rounded-full overflow-hidden">
                 <div
-                  className="h-full bg-gradient-to-r from-[#ee2a7b] to-[#d4af37] rounded-full transition-all duration-150"
+                  className="h-full bg-gradient-to-r from-[#d4af37] to-[#9B1B30] rounded-full transition-all duration-150"
                   style={{ width: `${Math.max(15, scrollProgress)}%` }}
                 />
               </div>
 
-              <p className="gram-body flex items-center justify-center gap-2 text-white/30 text-[9px] uppercase tracking-[0.25em]">
-                <ArrowLeft size={9} /> Swipe or use arrows to explore reels <ArrowRight size={9} />
+              <p className="gram-body flex items-center justify-center gap-2 text-stone-300 text-xs font-medium tracking-wide">
+                <ArrowLeft size={14} className="text-[#d4af37]" /> Swipe or use arrows to explore reels <ArrowRight size={14} className="text-[#d4af37]" />
               </p>
             </div>
           </div>
@@ -1799,37 +1775,37 @@ export default function ShopTheGram() {
       <div className="relative mt-12 sm:mt-16 border-t border-b border-white/5 py-3.5 sm:py-4 overflow-hidden">
         <div className="gram-marquee flex whitespace-nowrap w-max hover:[animation-play-state:paused] cursor-default">
           <div className="flex items-center" aria-hidden="false">
-            <span className="gram-body inline-flex items-center gap-2.5 mx-4 sm:mx-6 text-white/40 text-[9px] sm:text-[10px] font-bold uppercase tracking-[0.3em]">
-              <Sparkles size={10} className="text-[#ee2a7b]" /> #TrioEcart
+            <span className="gram-body inline-flex items-center gap-2.5 mx-4 sm:mx-6 text-stone-300 text-xs font-bold uppercase tracking-wider">
+              <Sparkles size={12} className="text-[#d4af37]" /> #TrioEcart
             </span>
-            <span className="gram-body inline-flex items-center gap-2.5 mx-4 sm:mx-6 text-white/40 text-[9px] sm:text-[10px] font-bold uppercase tracking-[0.3em]">
-              <Sparkles size={10} className="text-[#ee2a7b]" /> Tag Us To Get Featured
+            <span className="gram-body inline-flex items-center gap-2.5 mx-4 sm:mx-6 text-stone-300 text-xs font-bold uppercase tracking-wider">
+              <Sparkles size={12} className="text-[#d4af37]" /> Tag Us To Get Featured
             </span>
-            <span className="gram-body inline-flex items-center gap-2.5 mx-4 sm:mx-6 text-white/40 text-[9px] sm:text-[10px] font-bold uppercase tracking-[0.3em]">
-              <Sparkles size={10} className="text-[#ee2a7b]" /> 1.4M Strong Community
+            <span className="gram-body inline-flex items-center gap-2.5 mx-4 sm:mx-6 text-stone-300 text-xs font-bold uppercase tracking-wider">
+              <Sparkles size={12} className="text-[#d4af37]" /> 1.4M Strong Community
             </span>
-            <span className="gram-body inline-flex items-center gap-2.5 mx-4 sm:mx-6 text-white/40 text-[9px] sm:text-[10px] font-bold uppercase tracking-[0.3em]">
-              <Sparkles size={10} className="text-[#ee2a7b]" /> Handcrafted Artisan Decor
+            <span className="gram-body inline-flex items-center gap-2.5 mx-4 sm:mx-6 text-stone-300 text-xs font-bold uppercase tracking-wider">
+              <Sparkles size={12} className="text-[#d4af37]" /> Handcrafted Artisan Decor
             </span>
-            <span className="gram-body inline-flex items-center gap-2.5 mx-4 sm:mx-6 text-white/40 text-[9px] sm:text-[10px] font-bold uppercase tracking-[0.3em]">
-              <Sparkles size={10} className="text-[#ee2a7b]" /> Every Look Shoppable
+            <span className="gram-body inline-flex items-center gap-2.5 mx-4 sm:mx-6 text-stone-300 text-xs font-bold uppercase tracking-wider">
+              <Sparkles size={12} className="text-[#d4af37]" /> Every Look Shoppable
             </span>
           </div>
           <div className="flex items-center" aria-hidden="true">
-            <span className="gram-body inline-flex items-center gap-2.5 mx-4 sm:mx-6 text-white/40 text-[9px] sm:text-[10px] font-bold uppercase tracking-[0.3em]">
-              <Sparkles size={10} className="text-[#ee2a7b]" /> #TrioEcart
+            <span className="gram-body inline-flex items-center gap-2.5 mx-4 sm:mx-6 text-stone-300 text-xs font-bold uppercase tracking-wider">
+              <Sparkles size={12} className="text-[#d4af37]" /> #TrioEcart
             </span>
-            <span className="gram-body inline-flex items-center gap-2.5 mx-4 sm:mx-6 text-white/40 text-[9px] sm:text-[10px] font-bold uppercase tracking-[0.3em]">
-              <Sparkles size={10} className="text-[#ee2a7b]" /> Tag Us To Get Featured
+            <span className="gram-body inline-flex items-center gap-2.5 mx-4 sm:mx-6 text-stone-300 text-xs font-bold uppercase tracking-wider">
+              <Sparkles size={12} className="text-[#d4af37]" /> Tag Us To Get Featured
             </span>
-            <span className="gram-body inline-flex items-center gap-2.5 mx-4 sm:mx-6 text-white/40 text-[9px] sm:text-[10px] font-bold uppercase tracking-[0.3em]">
-              <Sparkles size={10} className="text-[#ee2a7b]" /> 1.4M Strong Community
+            <span className="gram-body inline-flex items-center gap-2.5 mx-4 sm:mx-6 text-stone-300 text-xs font-bold uppercase tracking-wider">
+              <Sparkles size={12} className="text-[#d4af37]" /> 1.4M Strong Community
             </span>
-            <span className="gram-body inline-flex items-center gap-2.5 mx-4 sm:mx-6 text-white/40 text-[9px] sm:text-[10px] font-bold uppercase tracking-[0.3em]">
-              <Sparkles size={10} className="text-[#ee2a7b]" /> Handcrafted Artisan Decor
+            <span className="gram-body inline-flex items-center gap-2.5 mx-4 sm:mx-6 text-stone-300 text-xs font-bold uppercase tracking-wider">
+              <Sparkles size={12} className="text-[#d4af37]" /> Handcrafted Artisan Decor
             </span>
-            <span className="gram-body inline-flex items-center gap-2.5 mx-4 sm:mx-6 text-white/40 text-[9px] sm:text-[10px] font-bold uppercase tracking-[0.3em]">
-              <Sparkles size={10} className="text-[#ee2a7b]" /> Every Look Shoppable
+            <span className="gram-body inline-flex items-center gap-2.5 mx-4 sm:mx-6 text-stone-300 text-xs font-bold uppercase tracking-wider">
+              <Sparkles size={12} className="text-[#d4af37]" /> Every Look Shoppable
             </span>
           </div>
         </div>

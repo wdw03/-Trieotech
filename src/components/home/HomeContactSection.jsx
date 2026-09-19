@@ -182,13 +182,13 @@ export default function HomeContactSection() {
             </div>
 
             {/* Link to Full Dedicated Contact Page */}
-            <div className="pt-2 flex items-center justify-between border-t border-gold-500/20">
-              <span className="text-[11px] text-stone-400 flex items-center gap-1">
-                <ShieldCheck className="w-3.5 h-3.5 text-gold-400" /> Replies within 2 to 4 business hours
+            <div className="pt-2 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-t border-gold-500/20">
+              <span className="text-xs text-stone-400 flex items-center gap-1.5">
+                <ShieldCheck className="w-3.5 h-3.5 text-gold-400 shrink-0" /> Replies within 2 to 4 business hours
               </span>
               <Link
                 href="/contact"
-                className="text-gold-400 hover:text-gold-300 font-bold text-xs inline-flex items-center gap-1.5 hover:underline"
+                className="btn-secondary text-xs px-3.5 py-1.5 rounded-full inline-flex items-center gap-1.5 hover:shadow-gold-xs transition-all"
               >
                 <span>Full Contact Page</span>
                 <ArrowRight className="w-3.5 h-3.5" />
@@ -244,7 +244,7 @@ export default function HomeContactSection() {
                     <span className="flex items-center gap-1.5">
                       Choose Inquiry Topic <span className="text-rose-400">*</span>
                     </span>
-                    <span className="text-[11px] font-normal text-gold-400 lowercase tracking-normal">
+                    <span className="text-xs font-normal text-gold-400 lowercase tracking-normal">
                       5 specialized options
                     </span>
                   </label>
@@ -263,7 +263,7 @@ export default function HomeContactSection() {
                       <input
                         type="text"
                         required
-                        placeholder="e.g. Radhika Sharma"
+                        placeholder="e.g. Ananya Sharma"
                         value={form.name}
                         onChange={(e) => setForm({ ...form, name: e.target.value })}
                         className="w-full px-3.5 py-2.5 rounded-xl bg-stone-900/90 border border-gold-500/30 text-white placeholder:text-stone-500 outline-none focus:border-gold-400 transition-colors"
@@ -275,7 +275,7 @@ export default function HomeContactSection() {
                       <input
                         type="email"
                         required
-                        placeholder="e.g. radhika@example.com"
+                        placeholder="ananya@example.com"
                         value={form.email}
                         onChange={(e) => setForm({ ...form, email: e.target.value })}
                         className="w-full px-3.5 py-2.5 rounded-xl bg-stone-900/90 border border-gold-500/30 text-white placeholder:text-stone-500 outline-none focus:border-gold-400 transition-colors"
@@ -285,7 +285,7 @@ export default function HomeContactSection() {
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="space-y-1">
-                      <label className="font-semibold text-stone-300">Phone / WhatsApp</label>
+                      <label className="font-semibold text-stone-300">Phone / WhatsApp (Optional)</label>
                       <input
                         type="tel"
                         placeholder="+91 98234 56789"
@@ -319,11 +319,11 @@ export default function HomeContactSection() {
                     />
                   </div>
 
-                  <div className="pt-1 flex flex-col sm:flex-row items-center justify-between gap-3">
+                  <div className="pt-2 flex flex-col sm:flex-row items-start sm:items-center gap-3.5">
                     <button
                       type="submit"
                       disabled={isSubmitting}
-                      className="btn-primary w-full sm:w-auto py-3 px-8 text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 shadow-maroon-md disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="btn-primary w-full sm:w-auto py-3 px-8 text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 shadow-maroon-md disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
                     >
                       {isSubmitting ? (
                         <>
@@ -338,7 +338,7 @@ export default function HomeContactSection() {
                       )}
                     </button>
 
-                    <span className="text-[11px] text-stone-400">
+                    <span className="text-xs text-stone-400 flex items-center gap-1.5">
                       🔒 Your contact information is kept strictly private.
                     </span>
                   </div>

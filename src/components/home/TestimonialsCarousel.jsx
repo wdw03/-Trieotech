@@ -374,14 +374,14 @@ export const TestimonialsCarousel = () => {
                     <div className="space-y-3">
                       <div className="flex items-center justify-between">
                         <RatingStars rating={rev.rating} size="sm" />
-                        <span className="text-[10px] font-bold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 px-2.5 py-0.5 rounded-full border border-emerald-500/30 flex items-center gap-1 font-inter">
-                          <CheckCircle2 className="w-3 h-3" /> Verified Buyer
+                        <span className="text-xs font-semibold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 px-2.5 py-0.5 rounded-full border border-emerald-500/30 flex items-center gap-1 font-inter">
+                          <CheckCircle2 className="w-3.5 h-3.5" /> Verified Buyer
                         </span>
                       </div>
 
-                      <h4 className="font-inter font-bold text-sm text-stone-900 dark:text-ivory-100 leading-snug">
+                      <h3 className="font-inter font-bold text-sm text-stone-900 dark:text-ivory-100 leading-snug">
                         "{rev.title}"
-                      </h4>
+                      </h3>
 
                       <p className="text-xs text-stone-600 dark:text-stone-300 leading-relaxed italic font-inter font-medium line-clamp-4">
                         "{rev.comment}"
@@ -396,10 +396,10 @@ export const TestimonialsCarousel = () => {
                         className="w-10 h-10 rounded-full object-cover border-2 border-gold-500/40 shrink-0"
                       />
                       <div className="min-w-0 font-inter">
-                        <h5 className="font-bold text-xs text-stone-900 dark:text-ivory-100 truncate">
+                        <p className="font-bold text-xs text-stone-900 dark:text-ivory-100 truncate">
                           {rev.user}
-                        </h5>
-                        <p className="text-[10px] text-stone-400 truncate">{rev.location}</p>
+                        </p>
+                        <p className="text-xs text-stone-500 dark:text-stone-400 truncate">{rev.location}</p>
                       </div>
                     </div>
                   </div>

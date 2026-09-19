@@ -14,7 +14,8 @@ export const ProductCarousel = ({
   limit = 8,
   onQuickView = null,
   bgClass = "bg-transparent",
-  isLoading = false
+  isLoading = false,
+  layout = "carousel"
 }) => {
   if (isLoading) {
     return (
@@ -289,7 +290,7 @@ export const ProductCarousel = ({
         <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 border-b border-gold-500/20 pb-4">
           <div className="space-y-1 text-center sm:text-left">
             {badge && (
-              <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-gold-700 dark:text-gold-400 flex items-center justify-center sm:justify-start gap-1.5 font-inter">
+              <span className="text-xs font-bold uppercase tracking-wider text-gold-700 dark:text-gold-400 flex items-center justify-center sm:justify-start gap-1.5 font-inter">
                 <Sparkles className="w-3.5 h-3.5 text-gold-600" /> {badge}
               </span>
             )}
@@ -316,97 +317,115 @@ export const ProductCarousel = ({
           )}
         </div>
 
-        {/* Carousel Slider Track Container with Floating Controls & Drag/Swipe */}
-        <div className="relative group/carousel">
-          
-          {/* Floating Left Button */}
-          {totalOriginal > visibleCount && (
-            <button
-              onClick={prevSlide}
-              onMouseEnter={() => {
-                setIsHovered(true);
-                setIsPaused(true);
-              }}
-              className="absolute -left-2 sm:-left-4 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-[#1C120B]/90 text-gold-300 border border-gold-500/40 shadow-xl backdrop-blur-md flex items-center justify-center hover:bg-gold-500 hover:text-maroon-950 active:scale-90 transition-all opacity-80 group-hover/carousel:opacity-100 cursor-pointer"
-              aria-label="Previous products"
-            >
-              <ChevronLeft className="w-5 h-5" />
-            </button>
-          )}
-
-          {/* Floating Right Button */}
-          {totalOriginal > visibleCount && (
-            <button
-              onClick={nextSlide}
-              onMouseEnter={() => {
-                setIsHovered(true);
-                setIsPaused(true);
-              }}
-              className="absolute -right-2 sm:-right-4 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-[#1C120B]/90 text-gold-300 border border-gold-500/40 shadow-xl backdrop-blur-md flex items-center justify-center hover:bg-gold-500 hover:text-maroon-950 active:scale-90 transition-all opacity-80 group-hover/carousel:opacity-100 cursor-pointer"
-              aria-label="Next products"
-            >
-              <ChevronRight className="w-5 h-5" />
-            </button>
-          )}
-
-          {/* Swipeable Track with Real-Time Scaling */}
-          <div
-            className="relative overflow-hidden w-full select-none cursor-grab active:cursor-grabbing touch-pan-y py-2"
-            onMouseEnter={() => {
-              setIsHovered(true);
-              setIsPaused(true);
-            }}
-            onTouchStart={handleTouchStart}
-            onTouchMove={handleTouchMove}
-            onTouchEnd={handleTouchEnd}
-            onMouseDown={handleMouseDown}
-            onMouseMove={handleMouseMove}
-            onMouseUp={handleMouseUp}
-            onMouseLeave={handleMouseLeave}
-          >
-            <div
-              className={`flex ${isTransitioning ? 'transition-transform duration-500 ease-out' : 'transition-none'}`}
-              style={{
-                transform: `translateX(-${currentIndex * (100 / visibleCount)}%)`,
-              }}
-              onTransitionEnd={handleTransitionEnd}
-            >
-              {displayItems.map((product, idx) => (
-                <div
-                  key={`${product.id}-${idx}`}
-                  className="shrink-0 px-1.5 sm:px-2.5 transition-all duration-300 transform hover:scale-[1.02]"
-                  style={{ width: `${100 / visibleCount}%` }}
+        {layout === 'grid' ? (
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-6 pt-2">
+            {displayProducts.map((product) => (
+              <div
+                key={product.id}
+                className="transition-all duration-300 transform hover:scale-[1.02]"
+              >
+                <ProductCard
+                  product={product}
+                  onQuickView={onQuickView}
+                />
+              </div>
+            ))}
+          </div>
+        ) : (
+          <>
+            {/* Carousel Slider Track Container with Floating Controls & Drag/Swipe */}
+            <div className="relative group/carousel">
+              
+              {/* Floating Left Button */}
+              {totalOriginal > visibleCount && (
+                <button
+                  onClick={prevSlide}
                   onMouseEnter={() => {
                     setIsHovered(true);
                     setIsPaused(true);
                   }}
+                  className="absolute -left-2 sm:-left-4 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-[#1C120B]/90 text-gold-300 border border-gold-500/40 shadow-xl backdrop-blur-md flex items-center justify-center hover:bg-gold-500 hover:text-maroon-950 active:scale-90 transition-all opacity-80 group-hover/carousel:opacity-100 cursor-pointer"
+                  aria-label="Previous products"
                 >
-                  <ProductCard
-                    product={product}
-                    onQuickView={onQuickView}
-                  />
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
+                  <ChevronLeft className="w-5 h-5" />
+                </button>
+              )}
 
-        {/* Dynamic Pagination Dots */}
-        {totalOriginal > visibleCount && (
-          <div className="flex items-center justify-center gap-2 pt-1">
-            {displayProducts.map((_, dotIdx) => (
-              <button
-                key={dotIdx}
-                onClick={() => goToSlide(dotIdx)}
-                className={`transition-all duration-300 rounded-full h-1.5 sm:h-2 ${
-                  activeDotIndex === dotIdx
-                    ? 'w-6 sm:w-8 bg-gradient-to-r from-maroon-700 via-gold-500 to-maroon-700 shadow-gold-sm'
-                    : 'w-1.5 sm:w-2 bg-stone-300 dark:bg-stone-700 hover:bg-gold-500/50 cursor-pointer'
-                }`}
-                aria-label={`Go to product slide ${dotIdx + 1}`}
-              />
-            ))}
-          </div>
+              {/* Floating Right Button */}
+              {totalOriginal > visibleCount && (
+                <button
+                  onClick={nextSlide}
+                  onMouseEnter={() => {
+                    setIsHovered(true);
+                    setIsPaused(true);
+                  }}
+                  className="absolute -right-2 sm:-right-4 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-[#1C120B]/90 text-gold-300 border border-gold-500/40 shadow-xl backdrop-blur-md flex items-center justify-center hover:bg-gold-500 hover:text-maroon-950 active:scale-90 transition-all opacity-80 group-hover/carousel:opacity-100 cursor-pointer"
+                  aria-label="Next products"
+                >
+                  <ChevronRight className="w-5 h-5" />
+                </button>
+              )}
+
+              {/* Swipeable Track with Real-Time Scaling */}
+              <div
+                className="relative overflow-hidden w-full select-none cursor-grab active:cursor-grabbing touch-pan-y py-2"
+                onMouseEnter={() => {
+                  setIsHovered(true);
+                  setIsPaused(true);
+                }}
+                onTouchStart={handleTouchStart}
+                onTouchMove={handleTouchMove}
+                onTouchEnd={handleTouchEnd}
+                onMouseDown={handleMouseDown}
+                onMouseMove={handleMouseMove}
+                onMouseUp={handleMouseUp}
+                onMouseLeave={handleMouseLeave}
+              >
+                <div
+                  className={`flex ${isTransitioning ? 'transition-transform duration-500 ease-out' : 'transition-none'}`}
+                  style={{
+                    transform: `translateX(-${currentIndex * (100 / visibleCount)}%)`,
+                  }}
+                  onTransitionEnd={handleTransitionEnd}
+                >
+                  {displayItems.map((product, idx) => (
+                    <div
+                      key={`${product.id}-${idx}`}
+                      className="shrink-0 px-1.5 sm:px-2.5 transition-all duration-300 transform hover:scale-[1.02]"
+                      style={{ width: `${100 / visibleCount}%` }}
+                      onMouseEnter={() => {
+                        setIsHovered(true);
+                        setIsPaused(true);
+                      }}
+                    >
+                      <ProductCard
+                        product={product}
+                        onQuickView={onQuickView}
+                      />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Dynamic Pagination Dots */}
+            {totalOriginal > visibleCount && (
+              <div className="flex items-center justify-center gap-2 pt-1">
+                {displayProducts.map((_, dotIdx) => (
+                  <button
+                    key={dotIdx}
+                    onClick={() => goToSlide(dotIdx)}
+                    className={`transition-all duration-300 rounded-full h-1.5 sm:h-2 ${
+                      activeDotIndex === dotIdx
+                        ? 'w-6 sm:w-8 bg-gradient-to-r from-maroon-700 via-gold-500 to-maroon-700 shadow-gold-sm'
+                        : 'w-1.5 sm:w-2 bg-stone-300 dark:bg-stone-700 hover:bg-gold-500/50 cursor-pointer'
+                    }`}
+                    aria-label={`Go to product slide ${dotIdx + 1}`}
+                  />
+                ))}
+              </div>
+            )}
+          </>
         )}
 
       </div>

@@ -29,13 +29,17 @@ export async function GET() {
 
     const formatted = (categories || []).map((c) => {
       const lower = String(c.name || '').toLowerCase().trim();
+      let img = c.image || '';
+      if (img.includes('peacock-figure2') || (c.slug === 'decorative-items' && !img)) {
+        img = '/products/decorated-golden-gota-moti-chudi-1.jpg';
+      }
       return {
         id: c.id,
         name: c.name,
         slug: c.slug,
         description: c.description || '',
-        image: c.image || '',
-        banner: c.banner || '',
+        image: img,
+        banner: c.banner || img,
         productCount: counts[lower] ?? c.product_count ?? 0,
         subcategories: Array.isArray(c.subcategories) ? c.subcategories : [],
         sort_order: c.sort_order || 0,

@@ -220,22 +220,23 @@ export const Navbar = () => {
           </div>
 
           {/* Desktop Search Bar with Live Dropdown Floating Above Content */}
-          <div ref={searchContainerRef} className="hidden md:block flex-1 max-w-xl mx-4 relative z-40 min-w-0">
-            <form onSubmit={handleSearchSubmit} className="relative">
+          <div ref={searchContainerRef} className="hidden md:block flex-1 max-w-md mx-auto relative z-40 min-w-0 px-2">
+            <form onSubmit={handleSearchSubmit} className="relative flex items-center">
               <input
                 id="navbar_search_desktop"
                 name="search_query"
                 type="text"
-                placeholder="Search embroidery patches, copper bottles, pooja aasans, gamchas..."
+                placeholder="Search patches, copperware, pooja items..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 onFocus={() => debouncedSearch.trim().length > 1 && setIsSearchOpen(true)}
-                className="w-full pl-10 pr-24 py-2.5 bg-ivory-100 dark:bg-stone-900/80 text-stone-900 dark:text-ivory-100 text-xs sm:text-sm rounded-full border border-gold-500/30 focus:border-maroon-700 dark:focus:border-gold-500 focus:ring-2 focus:ring-gold-500/20 outline-none transition-all placeholder:text-stone-400"
+                className="w-full pl-10 pr-24 py-2 bg-ivory-100 dark:bg-stone-900/80 text-stone-900 dark:text-ivory-100 text-xs sm:text-sm rounded-full border border-gold-500/30 focus:border-maroon-700 dark:focus:border-gold-500 focus:ring-2 focus:ring-gold-500/20 outline-none transition-all placeholder:text-stone-400"
               />
-              <Search className="w-4 h-4 text-stone-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+              <Search className="w-4 h-4 text-stone-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
               <button
                 type="submit"
-                className="absolute right-1.5 top-1/2 -translate-y-1/2 px-4 py-1.5 bg-maroon-700 hover:bg-maroon-800 text-white text-xs font-bold rounded-full transition-colors shadow-xs"
+                aria-label="Submit Search"
+                className="absolute right-1.5 top-1/2 -translate-y-1/2 h-7 px-3.5 inline-flex items-center justify-center text-center bg-maroon-700 hover:bg-maroon-800 text-white text-xs font-bold rounded-full transition-colors shadow-xs leading-none"
               >
                 Search
               </button>
@@ -518,28 +519,31 @@ export const Navbar = () => {
             {/* All Categories Dropdown */}
             <div className="relative group">
               <button
-                className="flex items-center gap-1.5 py-1 text-maroon-800 dark:text-gold-400 font-bold hover:text-gold-600 transition-colors uppercase tracking-wider"
+                className="flex items-center gap-1.5 py-1 text-maroon-800 dark:text-gold-400 font-bold hover:text-gold-600 transition-colors uppercase tracking-wider cursor-pointer"
+                aria-haspopup="true"
               >
                 <Menu className="w-4 h-4" />
                 <span>All Craft Categories</span>
-                <ChevronDown className="w-3.5 h-3.5" />
+                <ChevronDown className="w-3.5 h-3.5 group-hover:rotate-180 transition-transform duration-200" />
               </button>
 
-              {/* Mega Dropdown Menu */}
-              <div className="absolute top-full left-0 mt-2 w-72 bg-white dark:bg-[#1A110B] rounded-2xl border border-gold-500/30 shadow-2xl py-3 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50 divide-y divide-stone-100 dark:divide-stone-800">
-                {categoriesList.map((cat) => (
-                  <Link
-                    key={cat.id}
-                    href={`/category/${cat.slug}`}
-                    className="flex items-center gap-3 px-4 py-2.5 hover:bg-gold-50/70 dark:hover:bg-stone-800 transition-colors"
-                  >
-                    <img src={cat.image} alt={cat.name} className="w-8 h-8 rounded-lg object-cover border border-gold-500/30" />
-                    <div>
-                      <p className="font-bold text-stone-900 dark:text-ivory-100 text-xs">{cat.name}</p>
-                      <p className="text-[10px] text-stone-400">{cat.productCount} Products</p>
-                    </div>
-                  </Link>
-                ))}
+              {/* Mega Dropdown Menu (No gap, attached to trigger) */}
+              <div className="absolute top-full left-0 pt-1 w-72 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+                <div className="bg-white dark:bg-[#1A110B] rounded-2xl border border-gold-500/30 shadow-2xl py-2 divide-y divide-stone-100 dark:divide-stone-800">
+                  {categoriesList.map((cat) => (
+                    <Link
+                      key={cat.id}
+                      href={`/category/${cat.slug}`}
+                      className="flex items-center gap-3 px-4 py-2.5 hover:bg-gold-50/70 dark:hover:bg-stone-800 transition-colors"
+                    >
+                      <img src={cat.image} alt={cat.name} className="w-8 h-8 rounded-lg object-cover border border-gold-500/30" />
+                      <div>
+                        <p className="font-bold text-stone-900 dark:text-ivory-100 text-xs">{cat.name}</p>
+                        <p className="text-xs text-stone-400">{cat.productCount} Products</p>
+                      </div>
+                    </Link>
+                  ))}
+                </div>
               </div>
             </div>
 

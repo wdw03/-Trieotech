@@ -71,19 +71,19 @@ export const BrandStoryStrip = () => {
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 pt-4 border-t border-gold-500/20">
               <div className="space-y-1">
                 <span className="font-serif font-black text-2xl sm:text-3xl text-gold-400">150+</span>
-                <p className="text-[11px] text-stone-400 uppercase tracking-wider font-semibold">Master Artisans</p>
+                <p className="text-xs text-stone-300 font-medium">Master Artisans</p>
               </div>
               <div className="space-y-1">
                 <span className="font-serif font-black text-2xl sm:text-3xl text-gold-400">43+</span>
-                <p className="text-[11px] text-stone-400 uppercase tracking-wider font-semibold">Unique Handcrafts</p>
+                <p className="text-xs text-stone-300 font-medium">Unique Handcrafts</p>
               </div>
               <div className="space-y-1">
                 <span className="font-serif font-black text-2xl sm:text-3xl text-gold-400">25,000+</span>
-                <p className="text-[11px] text-stone-400 uppercase tracking-wider font-semibold">Happy Devotees</p>
+                <p className="text-xs text-stone-300 font-medium">Happy Devotees</p>
               </div>
               <div className="space-y-1">
                 <span className="font-serif font-black text-2xl sm:text-3xl text-gold-400">100%</span>
-                <p className="text-[11px] text-stone-400 uppercase tracking-wider font-semibold">Desi Handcrafted</p>
+                <p className="text-xs text-stone-300 font-medium">Desi Handcrafted</p>
               </div>
             </div>
 

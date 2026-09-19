@@ -183,14 +183,15 @@ export default function HomeClient() {
         </section>
       )}
 
-      {/* 5. New Arrivals Carousel */}
+      {/* 5. New Arrivals Curated Showcase (Grid layout to eliminate carousel fatigue) */}
       <ProductCarousel
         title="Fresh from the Artisan Ateliers"
         subtitle="Newly woven cotton gamchas, pure copper sets, and floral decor recently completed by our craft collective."
         badge="Just Arrived"
         products={newArrivals}
         viewAllLink="/shop?sort=newest"
-        limit={10}
+        limit={8}
+        layout="grid"
         onQuickView={setQuickViewProduct}
       />
 
