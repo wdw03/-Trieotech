@@ -71,18 +71,28 @@ export async function middleware(request) {
     }
 
     // ─────────────────────────────────────────────────────────────
+    // ─────────────────────────────────────────────────────────────
     // STRICT ADMIN ROUTE PROTECTION (/admin and /admin/*)
     // ─────────────────────────────────────────────────────────────
     if (pathname.startsWith('/admin')) {
+      const createAdminRedirect = (targetUrl) => {
+        const res = NextResponse.redirect(targetUrl);
+        res.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0');
+        res.headers.set('Pragma', 'no-cache');
+        res.headers.set('CDN-Cache-Control', 'no-store');
+        res.headers.set('Vary', 'RSC, Next-Router-State-Tree, Next-Router-Prefetch, Next-Url, Accept, Accept-Encoding');
+        return res;
+      };
+
       // 1. Unauthenticated visitors: redirect immediately to login
       if (!user) {
         const url = request.nextUrl.clone();
         url.pathname = '/login';
         url.searchParams.set('redirect', pathname);
-        return NextResponse.redirect(url);
+        return createAdminRedirect(url);
       }
 
-      // 2. Authenticated user: verify staff role (Super Admin or SEO Manager)
+      // 2. Authenticated user: verify staff role (Super Admin or SEO/CMS Manager)
       const userEmail = (user.email || '').toLowerCase();
       const isMasterAdmin =
         userEmail === 'trioenterprises10@gmail.com' ||
@@ -91,9 +101,10 @@ export async function middleware(request) {
 
       let hasStaffAccess =
         isMasterAdmin ||
-        ['super_admin', 'superadmin', 'admin', 'seo_manager', 'seo'].includes(metaRole) ||
+        ['super_admin', 'superadmin', 'admin', 'seo_manager', 'seo', 'cms', 'csm'].includes(metaRole) ||
         metaRole.includes('seo') ||
-        metaRole.includes('cms');
+        metaRole.includes('cms') ||
+        metaRole.includes('csm');
 
       // If not determined via metadata or master email, check profiles table
       if (!hasStaffAccess && !isMasterAdmin) {
@@ -108,7 +119,9 @@ export async function middleware(request) {
             dbRole === 'admin' ||
             dbRole === 'super_admin' ||
             dbRole === 'seo_manager' ||
-            dbRole.includes('seo')
+            dbRole.includes('seo') ||
+            dbRole.includes('cms') ||
+            dbRole.includes('csm')
           ) {
             hasStaffAccess = true;
           }
@@ -120,26 +133,29 @@ export async function middleware(request) {
         const url = request.nextUrl.clone();
         url.pathname = '/';
         url.search = '';
-        return NextResponse.redirect(url);
+        return createAdminRedirect(url);
       }
 
-      // 3. SEO Manager route restrictions
+      // 3. SEO / CMS Manager route restrictions
       const isSeo =
         !isMasterAdmin &&
         (metaRole === 'seo_manager' ||
           metaRole === 'seo' ||
+          metaRole === 'cms' ||
+          metaRole === 'csm' ||
           metaRole.includes('seo') ||
-          metaRole.includes('cms'));
+          metaRole.includes('cms') ||
+          metaRole.includes('csm'));
 
       if (isSeo) {
         // If at root /admin or /admin/, route to /admin/cms/home
         if (pathname === '/admin' || pathname === '/admin/') {
           const url = request.nextUrl.clone();
           url.pathname = '/admin/cms/home';
-          return NextResponse.redirect(url);
+          return createAdminRedirect(url);
         }
 
-        // Only allow SEO/CMS pages for SEO Manager
+        // Only allow SEO/CMS pages for SEO/CMS Manager
         const allowedSeoPrefixes = [
           '/admin/cms',
           '/admin/categories',
@@ -151,7 +167,7 @@ export async function middleware(request) {
         if (!isAllowed) {
           const url = request.nextUrl.clone();
           url.pathname = '/admin/cms/home';
-          return NextResponse.redirect(url);
+          return createAdminRedirect(url);
         }
       }
     }
@@ -185,6 +201,13 @@ export async function middleware(request) {
   } catch (err) {
     console.error('Middleware execution notice:', err);
     // Never crash the request
+  }
+
+  if (pathname.startsWith('/admin')) {
+    supabaseResponse.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0');
+    supabaseResponse.headers.set('Pragma', 'no-cache');
+    supabaseResponse.headers.set('CDN-Cache-Control', 'no-store');
+    supabaseResponse.headers.set('Vary', 'RSC, Next-Router-State-Tree, Next-Router-Prefetch, Next-Url, Accept, Accept-Encoding');
   }
 
   return supabaseResponse;

@@ -20,9 +20,16 @@ export const ProtectedRoute = ({ children }) => {
 
   const userEmail = (user?.email || '').toLowerCase();
   const isMasterAdmin = userEmail === 'trioenterprises10@gmail.com' || userEmail === 'admin@trioenterprises.com';
-  const role = (profile?.role || user?.user_metadata?.role || user?.role || '').toLowerCase();
-  const isSeo = !isMasterAdmin && (role === 'seo_manager' || role === 'seo' || role.includes('seo') || isSeoManager());
-  const isSuper = isMasterAdmin || role === 'super_admin' || role === 'admin';
+  const role = (user?.user_metadata?.role || profile?.role || user?.role || '').toLowerCase();
+  const isSeo = !isMasterAdmin && (
+    role === 'seo_manager' ||
+    role === 'seo' ||
+    role.includes('seo') ||
+    role.includes('cms') ||
+    role.includes('csm') ||
+    isSeoManager()
+  );
+  const isSuper = isMasterAdmin || (!isSeo && (role === 'super_admin' || role === 'superadmin'));
   
   // Only users with verified staff permissions have admin access
   const hasAdminAccess = isMasterAdmin || isSuper || isSeo || (!user && isAuthenticated);

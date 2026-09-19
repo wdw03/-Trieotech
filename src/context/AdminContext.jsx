@@ -123,20 +123,26 @@ export const AdminProvider = ({ children }) => {
       const email = (authUser.email || '').toLowerCase();
       const isMaster = email === 'trioenterprises10@gmail.com' || email === 'admin@trioenterprises.com';
       const metaRole = (authUser.user_metadata?.role || '').toLowerCase();
-      const isSeo = !isMaster && (authRole === 'seo_manager' || authIsSeoManager || metaRole.includes('seo') || metaRole === 'seo_manager');
+      const isSeo =
+        !isMaster &&
+        (authRole === 'seo_manager' ||
+          authIsSeoManager ||
+          metaRole.includes('seo') ||
+          metaRole.includes('cms') ||
+          metaRole.includes('csm'));
 
       const roleDisplay = isMaster
         ? 'Super Admin'
-        : (isSeo ? 'SEO Manager' : (authRole === 'super_admin' ? 'Super Admin' : 'Admin'));
+        : (isSeo ? 'SEO / CMS Manager' : (authRole === 'super_admin' ? 'Super Admin' : 'Staff Admin'));
       const roleKey = isMaster ? 'super_admin' : (isSeo ? 'seo_manager' : authRole);
 
       return {
         id: authUser.id,
-        name: authProfile?.full_name || authUser.name || (isMaster ? 'Trio Super Admin' : (isSeo ? 'SEO Manager' : 'Administrator')),
+        name: authProfile?.full_name || authUser.name || (isMaster ? 'Trio Super Admin' : (isSeo ? 'SEO & CMS Manager' : 'Administrator')),
         email,
         role: roleDisplay,
         roleKey,
-        avatar: isSeo ? 'SEO' : 'SA',
+        avatar: isSeo ? 'CMS' : 'SA',
         lastLogin: new Date().toISOString()
       };
     }
@@ -144,11 +150,11 @@ export const AdminProvider = ({ children }) => {
       return localSession.user;
     }
     return {
-      name: 'Trio Super Admin',
-      email: 'trioenterprises10@gmail.com',
-      role: 'Super Admin',
-      roleKey: 'super_admin',
-      avatar: 'SA',
+      name: 'Unauthenticated Staff',
+      email: '',
+      role: 'Staff',
+      roleKey: 'staff',
+      avatar: 'U',
       lastLogin: null
     };
   }, [authUser, authProfile, authIsAdmin, authRole, authIsSeoManager, localSession]);
@@ -159,22 +165,28 @@ export const AdminProvider = ({ children }) => {
       const email = (authUser.email || '').toLowerCase();
       const isMaster = email === 'trioenterprises10@gmail.com' || email === 'admin@trioenterprises.com';
       const metaRole = (authUser.user_metadata?.role || '').toLowerCase();
-      const isSeo = !isMaster && (authRole === 'seo_manager' || authIsSeoManager || metaRole.includes('seo') || metaRole === 'seo_manager');
+      const isSeo =
+        !isMaster &&
+        (authRole === 'seo_manager' ||
+          authIsSeoManager ||
+          metaRole.includes('seo') ||
+          metaRole.includes('cms') ||
+          metaRole.includes('csm'));
 
       const roleDisplay = isMaster
         ? 'Super Admin'
-        : (isSeo ? 'SEO Manager' : (authRole === 'super_admin' ? 'Super Admin' : 'Admin'));
+        : (isSeo ? 'SEO / CMS Manager' : (authRole === 'super_admin' ? 'Super Admin' : 'Staff Admin'));
       const roleKey = isMaster ? 'super_admin' : (isSeo ? 'seo_manager' : authRole);
 
       const sessionData = {
         active: true,
         user: {
           id: authUser.id,
-          name: authProfile?.full_name || authUser.name || (isMaster ? 'Trio Super Admin' : (isSeo ? 'SEO Manager' : 'Administrator')),
+          name: authProfile?.full_name || authUser.name || (isMaster ? 'Trio Super Admin' : (isSeo ? 'SEO & CMS Manager' : 'Administrator')),
           email,
           role: roleDisplay,
           roleKey,
-          avatar: isSeo ? 'SEO' : 'SA',
+          avatar: isSeo ? 'CMS' : 'SA',
           lastLogin: new Date().toISOString()
         },
         token: `trio_auth_${Date.now()}`
@@ -206,17 +218,31 @@ export const AdminProvider = ({ children }) => {
     if (authIsSeoManager || authRole === 'seo_manager') return true;
 
     const metaRole = (authUser?.user_metadata?.role || '').toLowerCase();
-    if (metaRole === 'seo_manager' || metaRole === 'seo' || metaRole.includes('seo') || metaRole.includes('cms')) {
+    if (
+      metaRole === 'seo_manager' ||
+      metaRole === 'seo' ||
+      metaRole.includes('seo') ||
+      metaRole.includes('cms') ||
+      metaRole.includes('csm')
+    ) {
       return true;
     }
 
     const role = (adminUser?.role || localSession?.user?.role || '').toLowerCase();
     const roleKey = (adminUser?.roleKey || localSession?.user?.roleKey || '').toLowerCase();
-    return role.includes('seo') || roleKey === 'seo_manager' || roleKey === 'seo';
+    return (
+      role.includes('seo') ||
+      role.includes('cms') ||
+      role.includes('csm') ||
+      roleKey === 'seo_manager' ||
+      roleKey === 'seo' ||
+      roleKey === 'cms' ||
+      roleKey === 'csm'
+    );
   };
 
   const isSuperAdmin = () => {
-    // SEO Managers are strictly restricted from Super Admin access
+    // SEO / CMS Managers are strictly restricted from Super Admin access
     if (isSeoManager()) return false;
 
     const email = (authUser?.email || adminUser?.email || localSession?.user?.email || '').toLowerCase();
@@ -226,7 +252,7 @@ export const AdminProvider = ({ children }) => {
 
     const role = (adminUser?.role || localSession?.user?.role || '').toLowerCase();
     const roleKey = (adminUser?.roleKey || localSession?.user?.roleKey || '').toLowerCase();
-    return role.includes('super') || roleKey === 'super_admin';
+    return (role.includes('super') || roleKey === 'super_admin') && !isSeoManager();
   };
 
   // SEO Manager allowed paths (Home/Banners, Reels, Blogs, Contact Inquiries, Static Pages)

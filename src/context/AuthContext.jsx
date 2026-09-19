@@ -636,23 +636,33 @@ export const AuthProvider = ({ children }) => {
 
   // Determine effectiveRole:
   // 1. Primary master owner is always super_admin
-  // 2. Specific metadata role ('seo_manager' / 'seo') takes precedence over generic DB 'admin'
+  // 2. Specific metadata role ('seo_manager' / 'seo' / 'cms' / 'csm') takes precedence
   let effectiveRole = 'customer';
-  if (isMasterAdmin) {
-    effectiveRole = 'super_admin';
-  } else if (
+  const isCmsOrSeo =
     roleFromMeta === 'seo_manager' ||
     roleFromMeta === 'seo' ||
     roleFromMeta.includes('seo') ||
     roleFromMeta.includes('cms') ||
+    roleFromMeta.includes('csm') ||
     roleFromDb === 'seo_manager' ||
-    roleFromDb.includes('seo')
-  ) {
+    roleFromDb.includes('seo') ||
+    roleFromDb.includes('cms') ||
+    roleFromDb.includes('csm');
+
+  const isExplicitSuper =
+    roleFromMeta === 'super_admin' ||
+    roleFromMeta === 'superadmin' ||
+    roleFromMeta === 'master';
+
+  if (isMasterAdmin) {
+    effectiveRole = 'super_admin';
+  } else if (isCmsOrSeo) {
     effectiveRole = 'seo_manager';
-  } else if (roleFromMeta === 'super_admin' || roleFromMeta === 'superadmin') {
+  } else if (isExplicitSuper) {
     effectiveRole = 'super_admin';
   } else if (roleFromMeta === 'admin' || roleFromDb === 'admin') {
-    effectiveRole = 'super_admin';
+    // If generic admin without explicit super_admin meta, restrict to seo_manager for safety
+    effectiveRole = 'seo_manager';
   } else {
     effectiveRole = roleFromMeta || roleFromDb || 'customer';
   }

@@ -19,7 +19,16 @@ export async function POST(request) {
       );
     }
 
-    const cleanRole = String(newRole || '').trim().toLowerCase();
+    let cleanRole = String(newRole || '').trim().toLowerCase();
+    // Normalize aliases for CMS / SEO role
+    if (['cms', 'csm', 'cms_manager', 'cms_editor', 'seo', 'seo_manager', 'editor', 'content_manager'].includes(cleanRole)) {
+      cleanRole = 'seo_manager';
+    } else if (['super_admin', 'superadmin', 'admin'].includes(cleanRole)) {
+      cleanRole = 'super_admin';
+    } else if (['customer', 'user', 'none'].includes(cleanRole)) {
+      cleanRole = 'customer';
+    }
+
     if (!ALLOWED_ROLES.includes(cleanRole)) {
       return NextResponse.json(
         {
@@ -33,33 +42,28 @@ export async function POST(request) {
     let targetUserId = userId;
     let targetUserEmail = email ? String(email).trim().toLowerCase() : '';
 
-    if (!targetUserId && targetUserEmail) {
-      // Find user by email in auth
-      const { data: userList } = await supabaseAdmin.auth.admin.listUsers();
-      const match = userList?.users?.find(
-        (u) => (u.email || '').toLowerCase() === targetUserEmail
-      );
-      if (match) {
-        targetUserId = match.id;
+    const { data: userList } = await supabaseAdmin.auth.admin.listUsers();
+    let foundAuthUser = null;
+
+    if (targetUserId) {
+      foundAuthUser = userList?.users?.find((u) => u.id === targetUserId);
+      if (foundAuthUser && !targetUserEmail) {
+        targetUserEmail = (foundAuthUser.email || '').toLowerCase();
       }
     }
 
-    if (!targetUserId) {
-      // Check in profiles table
-      const { data: p } = await supabaseAdmin
-        .from('profiles')
-        .select('id, email')
-        .ilike('email', targetUserEmail)
-        .maybeSingle();
-
-      if (p) {
-        targetUserId = p.id;
+    if (!foundAuthUser && targetUserEmail) {
+      foundAuthUser = userList?.users?.find(
+        (u) => (u.email || '').toLowerCase() === targetUserEmail
+      );
+      if (foundAuthUser) {
+        targetUserId = foundAuthUser.id;
       }
     }
 
     if (!targetUserId) {
       return NextResponse.json(
-        { error: `User with email "${targetUserEmail}" not found` },
+        { error: `User with email "${targetUserEmail}" not found in auth system.` },
         { status: 404 }
       );
     }
@@ -72,14 +76,19 @@ export async function POST(request) {
       );
     }
 
-    // 3. Update profiles table
+    // 3. Update or Upsert profiles table
     // PostgreSQL constraint 'profiles_role_check' expects 'admin' or 'customer'
     const profileRole = cleanRole === 'customer' ? 'customer' : 'admin';
     try {
       const { error: profileUpdateErr } = await supabaseAdmin
         .from('profiles')
-        .update({ role: profileRole, updated_at: new Date().toISOString() })
-        .eq('id', targetUserId);
+        .upsert({
+          id: targetUserId,
+          role: profileRole,
+          full_name: foundAuthUser?.user_metadata?.full_name || 'Artisan Patron',
+          phone: foundAuthUser?.user_metadata?.phone || '',
+          updated_at: new Date().toISOString(),
+        }, { onConflict: 'id' });
 
       if (profileUpdateErr) {
         console.warn('Profile table role update warning:', profileUpdateErr.message);
@@ -88,10 +97,11 @@ export async function POST(request) {
       console.warn('Profile table update exception:', pErr.message);
     }
 
-    // 4. Update auth.users metadata with exact role ('super_admin', 'seo_manager', or 'customer')
+    // 4. Update auth.users metadata with exact granular role ('super_admin', 'seo_manager', or 'customer')
     try {
+      const existingMeta = foundAuthUser?.user_metadata || {};
       await supabaseAdmin.auth.admin.updateUserById(targetUserId, {
-        user_metadata: { role: cleanRole },
+        user_metadata: { ...existingMeta, role: cleanRole },
       });
     } catch (authErr) {
       console.warn('Auth metadata role update error:', authErr.message);
