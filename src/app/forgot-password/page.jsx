@@ -1,5 +1,7 @@
 import { Suspense } from 'react';
 import ForgotPasswordClient from '../../components/auth/ForgotPasswordClient';
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
 export const metadata = {
   title: 'Reset Account Password | Trio Enterprises',

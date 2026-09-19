@@ -29,7 +29,15 @@ export default function LoginClient() {
       const userEmail = (user.email || '').toLowerCase();
       const isMasterAdmin = userEmail === 'trioenterprises10@gmail.com' || userEmail === 'admin@trioenterprises.com';
       const role = (profile?.role || user.user_metadata?.role || user.role || '').toLowerCase();
-      const isSeo = !isMasterAdmin && (role === 'seo_manager' || role === 'seo' || role.includes('seo') || role.includes('cms'));
+      const isSeo = !isMasterAdmin && (
+        role === 'seo_manager' ||
+        role === 'seo' ||
+        role === 'cms' ||
+        role === 'csm' ||
+        role.includes('seo') ||
+        role.includes('cms') ||
+        role.includes('csm')
+      );
       const isAdminUser = isMasterAdmin || ['super_admin', 'admin'].includes(role) || isSeo;
 
       if (isAdminUser) {
@@ -51,6 +59,7 @@ export default function LoginClient() {
           };
           try {
             localStorage.setItem('trio_superadmin_session', JSON.stringify(sessionData));
+            document.cookie = 'admin_session_active=1; path=/; max-age=86400; SameSite=Lax';
           } catch (_) {}
         }
         const target = isSeo ? '/admin/cms/home' : (redirectParam && redirectParam.startsWith('/admin') ? redirectParam : '/admin');
@@ -79,7 +88,15 @@ export default function LoginClient() {
         const userEmail = (cleanEmail || result.user?.email || '').toLowerCase();
         const isMasterAdmin = userEmail === 'trioenterprises10@gmail.com' || userEmail === 'admin@trioenterprises.com';
         const role = (result.profile?.role || result.user?.user_metadata?.role || '').toLowerCase();
-        const isSeo = !isMasterAdmin && (role === 'seo_manager' || role === 'seo' || role.includes('seo') || role.includes('cms'));
+        const isSeo = !isMasterAdmin && (
+          role === 'seo_manager' ||
+          role === 'seo' ||
+          role === 'cms' ||
+          role === 'csm' ||
+          role.includes('seo') ||
+          role.includes('cms') ||
+          role.includes('csm')
+        );
         const isAdminUser = isMasterAdmin || ['super_admin', 'admin'].includes(role) || isSeo;
 
         if (isAdminUser) {
@@ -100,6 +117,7 @@ export default function LoginClient() {
             };
             try {
               localStorage.setItem('trio_superadmin_session', JSON.stringify(sessionData));
+              document.cookie = 'admin_session_active=1; path=/; max-age=86400; SameSite=Lax';
             } catch (_) {}
             const target = isSeo ? '/admin/cms/home' : (redirectParam && redirectParam.startsWith('/admin') ? redirectParam : '/admin');
             window.location.href = target;

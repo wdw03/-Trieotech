@@ -1,5 +1,7 @@
 import { Suspense } from 'react';
 import LoginClient from '../../components/auth/LoginClient';
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
 export const metadata = {
   title: 'Sign In to Your Account | Trio Enterprises',

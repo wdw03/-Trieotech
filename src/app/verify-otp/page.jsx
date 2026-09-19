@@ -1,5 +1,7 @@
 import { Suspense } from 'react';
 import VerifyOtpClient from '../../components/auth/VerifyOtpClient';
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
 export const metadata = {
   title: 'Verify Email & Login | Trio Enterprises',

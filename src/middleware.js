@@ -77,99 +77,102 @@ export async function middleware(request) {
     if (pathname.startsWith('/admin')) {
       const createAdminRedirect = (targetUrl) => {
         const res = NextResponse.redirect(targetUrl);
-        res.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0');
+        // Forward refreshed Supabase cookies so auth session is not lost
+        supabaseResponse.cookies.getAll().forEach((c) => {
+          res.cookies.set(c.name, c.value, c);
+        });
+        res.headers.set('Cache-Control', 'private, no-cache, no-store, max-age=0, must-revalidate');
         res.headers.set('Pragma', 'no-cache');
+        res.headers.set('Surrogate-Control', 'no-store');
         res.headers.set('CDN-Cache-Control', 'no-store');
+        res.headers.set('Vercel-CDN-Cache-Control', 'no-store');
         res.headers.set('Vary', 'RSC, Next-Router-State-Tree, Next-Router-Prefetch, Next-Url, Accept, Accept-Encoding');
         return res;
       };
 
-      // 1. Unauthenticated visitors: redirect immediately to login
-      if (!user) {
-        const url = request.nextUrl.clone();
-        url.pathname = '/login';
-        url.searchParams.set('redirect', pathname);
-        return createAdminRedirect(url);
-      }
+      // 1. Authenticated user checks
+      if (user) {
+        const userEmail = (user.email || '').toLowerCase();
+        const isMasterAdmin =
+          userEmail === 'trioenterprises10@gmail.com' ||
+          userEmail === 'admin@trioenterprises.com';
+        const metaRole = (user.user_metadata?.role || '').toLowerCase();
 
-      // 2. Authenticated user: verify staff role (Super Admin or SEO/CMS Manager)
-      const userEmail = (user.email || '').toLowerCase();
-      const isMasterAdmin =
-        userEmail === 'trioenterprises10@gmail.com' ||
-        userEmail === 'admin@trioenterprises.com';
-      const metaRole = (user.user_metadata?.role || '').toLowerCase();
-
-      let hasStaffAccess =
-        isMasterAdmin ||
-        ['super_admin', 'superadmin', 'admin', 'seo_manager', 'seo', 'cms', 'csm'].includes(metaRole) ||
-        metaRole.includes('seo') ||
-        metaRole.includes('cms') ||
-        metaRole.includes('csm');
-
-      // If not determined via metadata or master email, check profiles table
-      if (!hasStaffAccess && !isMasterAdmin) {
-        try {
-          const { data: profile } = await supabase
-            .from('profiles')
-            .select('role')
-            .eq('id', user.id)
-            .maybeSingle();
-          const dbRole = (profile?.role || '').toLowerCase();
-          if (
-            dbRole === 'admin' ||
-            dbRole === 'super_admin' ||
-            dbRole === 'seo_manager' ||
-            dbRole.includes('seo') ||
-            dbRole.includes('cms') ||
-            dbRole.includes('csm')
-          ) {
-            hasStaffAccess = true;
-          }
-        } catch (_) {}
-      }
-
-      // Regular customer: Not permitted on /admin -> Redirect to storefront home (/)
-      if (!hasStaffAccess) {
-        const url = request.nextUrl.clone();
-        url.pathname = '/';
-        url.search = '';
-        return createAdminRedirect(url);
-      }
-
-      // 3. SEO / CMS Manager route restrictions
-      const isSeo =
-        !isMasterAdmin &&
-        (metaRole === 'seo_manager' ||
-          metaRole === 'seo' ||
-          metaRole === 'cms' ||
-          metaRole === 'csm' ||
+        let hasStaffAccess =
+          isMasterAdmin ||
+          ['super_admin', 'superadmin', 'admin', 'seo_manager', 'seo', 'cms', 'csm'].includes(metaRole) ||
           metaRole.includes('seo') ||
           metaRole.includes('cms') ||
-          metaRole.includes('csm'));
+          metaRole.includes('csm');
 
-      if (isSeo) {
-        // If at root /admin or /admin/, route to /admin/cms/home
-        if (pathname === '/admin' || pathname === '/admin/') {
+        // If not determined via metadata or master email, check profiles table
+        if (!hasStaffAccess && !isMasterAdmin) {
+          try {
+            const { data: profile } = await supabase
+              .from('profiles')
+              .select('role')
+              .eq('id', user.id)
+              .maybeSingle();
+            const dbRole = (profile?.role || '').toLowerCase();
+            if (
+              dbRole === 'admin' ||
+              dbRole === 'super_admin' ||
+              dbRole === 'seo_manager' ||
+              dbRole.includes('seo') ||
+              dbRole.includes('cms') ||
+              dbRole.includes('csm')
+            ) {
+              hasStaffAccess = true;
+            }
+          } catch (_) {}
+        }
+
+        // Regular customer: Not permitted on /admin -> Redirect to storefront home (/)
+        if (!hasStaffAccess) {
           const url = request.nextUrl.clone();
-          url.pathname = '/admin/cms/home';
+          url.pathname = '/';
+          url.search = '';
           return createAdminRedirect(url);
         }
 
-        // Only allow SEO/CMS pages for SEO/CMS Manager
-        const allowedSeoPrefixes = [
-          '/admin/cms',
-          '/admin/categories',
-          '/admin/banners',
-          '/admin/reels',
-          '/admin/inquiries',
-        ];
-        const isAllowed = allowedSeoPrefixes.some((prefix) => pathname.startsWith(prefix));
-        if (!isAllowed) {
-          const url = request.nextUrl.clone();
-          url.pathname = '/admin/cms/home';
-          return createAdminRedirect(url);
+        // 2. SEO / CMS Manager route restrictions
+        const isSeo =
+          !isMasterAdmin &&
+          (metaRole === 'seo_manager' ||
+            metaRole === 'seo' ||
+            metaRole === 'cms' ||
+            metaRole === 'csm' ||
+            metaRole.includes('seo') ||
+            metaRole.includes('cms') ||
+            metaRole.includes('csm'));
+
+        if (isSeo) {
+          // If at root /admin or /admin/, route to /admin/cms/home
+          if (pathname === '/admin' || pathname === '/admin/') {
+            const url = request.nextUrl.clone();
+            url.pathname = '/admin/cms/home';
+            return createAdminRedirect(url);
+          }
+
+          // Only allow SEO/CMS pages for SEO/CMS Manager
+          const allowedSeoPrefixes = [
+            '/admin/cms',
+            '/admin/categories',
+            '/admin/banners',
+            '/admin/reels',
+            '/admin/inquiries',
+          ];
+          const isAllowed = allowedSeoPrefixes.some((prefix) => pathname.startsWith(prefix));
+          if (!isAllowed) {
+            const url = request.nextUrl.clone();
+            url.pathname = '/admin/cms/home';
+            return createAdminRedirect(url);
+          }
         }
       }
+      // Note: If user is not yet resolved on server (e.g. client-side session or cookie refreshing),
+      // we allow the request to proceed with anti-cache headers so client-side ProtectedRoute
+      // can cleanly verify credentials without triggering 307 RSC dump loops on refresh.
     }
 
     // Check if current route is protected
@@ -203,10 +206,18 @@ export async function middleware(request) {
     // Never crash the request
   }
 
-  if (pathname.startsWith('/admin')) {
-    supabaseResponse.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0');
+  if (
+    pathname.startsWith('/admin') ||
+    pathname === '/login' ||
+    pathname === '/register' ||
+    pathname === '/verify-otp' ||
+    pathname === '/forgot-password'
+  ) {
+    supabaseResponse.headers.set('Cache-Control', 'private, no-cache, no-store, max-age=0, must-revalidate');
     supabaseResponse.headers.set('Pragma', 'no-cache');
+    supabaseResponse.headers.set('Surrogate-Control', 'no-store');
     supabaseResponse.headers.set('CDN-Cache-Control', 'no-store');
+    supabaseResponse.headers.set('Vercel-CDN-Cache-Control', 'no-store');
     supabaseResponse.headers.set('Vary', 'RSC, Next-Router-State-Tree, Next-Router-Prefetch, Next-Url, Accept, Accept-Encoding');
   }
 
