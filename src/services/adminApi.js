@@ -1,8 +1,7 @@
 import { supabase } from './adminSupabase.js';
-// Centralized API Client for Trio Ecart Admin Dashboard
-// Direct live production backend fallback for Vercel deployments
+// Direct live production backend fallback
 const API_BASE = '/api';
-const TRIOTECH_FALLBACK = 'https://trieotech.vercel.app/api';
+const TRIOTECH_FALLBACK = 'https://trioenterprises.in/api';
 
 async function request(endpoint, options = {}) {
   const url = `${API_BASE}${endpoint.startsWith('/') ? endpoint : `/${endpoint}`}`;
@@ -36,7 +35,7 @@ async function request(endpoint, options = {}) {
     return await res.json();
   } catch (err) {
     console.warn(`[API] Request failed for ${endpoint}:`, err.message);
-    // Fallback to trieotech.vercel.app if primary backend fails
+    // Fallback to trioenterprises.in if primary backend fails
     try {
       const fallbackUrl = `${TRIOTECH_FALLBACK}${endpoint.startsWith('/') ? endpoint : `/${endpoint}`}`;
       const fbRes = await fetch(fallbackUrl, { ...options, headers });

@@ -12,7 +12,8 @@ export const resend = getResendClient();
 const PRIMARY_FROM = 'Trio Enterprises <noreply@trioenterprises.in>';
 const FALLBACK_FROM = 'Trio Enterprises <onboarding@resend.dev>';
 
-const BASE_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://trieotech.vercel.app';
+const rawBaseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://trioenterprises.in';
+const BASE_URL = rawBaseUrl.includes('vercel.app') ? 'https://trioenterprises.in' : rawBaseUrl;
 
 /**
  * Send order confirmation & invoice details email

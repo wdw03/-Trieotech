@@ -20,6 +20,15 @@ export async function POST(request) {
 
     const cleanEmail = email.trim().toLowerCase();
 
+    const host = request.headers.get('host') || '';
+    let baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://trioenterprises.in';
+    if (baseUrl.includes('vercel.app')) {
+      baseUrl = 'https://trioenterprises.in';
+    }
+    if (host && !host.includes('localhost') && !host.includes('vercel.app')) {
+      baseUrl = `https://${host}`;
+    }
+
     // Generate secure 6-digit OTP
     const otp = String(Math.floor(100000 + Math.random() * 900000));
     const expiresAt = Date.now() + 10 * 60 * 1000; // 10 minutes
@@ -76,12 +85,12 @@ export async function POST(request) {
             </div>
 
             <div style="margin: 20px 0 24px;">
-              <a href="https://trieotech.vercel.app/verify-otp?email=${encodeURIComponent(cleanEmail)}&otp=${otp}&token=${verificationToken}&expires=${expiresAt}"
+              <a href="${baseUrl}/verify-otp?email=${encodeURIComponent(cleanEmail)}&otp=${otp}&token=${verificationToken}&expires=${expiresAt}"
                  style="display: inline-block; background: linear-gradient(135deg, #7F1D1D 0%, #4a0404 100%); color: #ffffff; text-decoration: none; font-weight: 700; font-size: 14px; padding: 14px 28px; border-radius: 12px; border: 1px solid #D4AF37; letter-spacing: 0.5px; box-shadow: 0 4px 12px rgba(127, 29, 29, 0.3);">
                 ✨ Click Here to Verify &amp; Login Directly
               </a>
               <p style="font-size: 11px; color: #78716c; margin-top: 10px;">
-                Or open: <a href="https://trieotech.vercel.app/verify-otp?email=${encodeURIComponent(cleanEmail)}" style="color: #4a0404; font-weight: 600;">https://trieotech.vercel.app/verify-otp</a>
+                Or open: <a href="${baseUrl}/verify-otp?email=${encodeURIComponent(cleanEmail)}" style="color: #4a0404; font-weight: 600;">${baseUrl}/verify-otp</a>
               </p>
             </div>
 

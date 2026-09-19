@@ -20,6 +20,15 @@ export async function POST(request) {
 
     const cleanEmail = email.trim().toLowerCase();
 
+    const host = request.headers.get('host') || '';
+    let baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://trioenterprises.in';
+    if (baseUrl.includes('vercel.app')) {
+      baseUrl = 'https://trioenterprises.in';
+    }
+    if (host && !host.includes('localhost') && !host.includes('vercel.app')) {
+      baseUrl = `https://${host}`;
+    }
+
     // Verify if account exists in Supabase
     try {
       const { data: userList } = await supabaseAdmin.auth.admin.listUsers({ page: 1, perPage: 1000 });
@@ -93,7 +102,7 @@ export async function POST(request) {
           </div>
           <div class="footer">
             &copy; ${new Date().getFullYear()} Trio Enterprises. Handcrafted with devotion in Jaipur, Rajasthan.<br>
-            <a href="https://trieotech.vercel.app">Visit Storefront</a>
+            <a href="${baseUrl}">Visit Storefront</a>
           </div>
         </div>
       </body>
@@ -127,7 +136,7 @@ export async function POST(request) {
       // Trigger Supabase native recovery email as backup
       try {
         await supabaseAdmin.auth.resetPasswordForEmail(cleanEmail, {
-          redirectTo: 'https://trieotech.vercel.app/forgot-password',
+          redirectTo: `${baseUrl}/forgot-password`,
         });
       } catch (supErr) {
         console.warn('Supabase reset backup notice:', supErr);
